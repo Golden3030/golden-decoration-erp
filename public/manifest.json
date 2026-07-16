@@ -1,0 +1,22 @@
+{
+  "short_name": "Golden Decor",
+  "name": "Golden Decoration | احسب تكاليف تشطيب شقتك",
+  "description": "احسب تكلفة تشطيب شقتك من موبايلك خلال ثوانٍ — مؤشر أسعار التشطيبات الذكي 2026",
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#020308",
+  "theme_color": "#D4AF37",
+  "display": "standalone",
+  "orientation": "portrait"
+}
