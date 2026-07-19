@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useCRM } from "./context/CRMContext";
 import { supabase } from "@/lib/supabaseClient";
 import InitialEstimate from "./estimate/InitialEstimate";
@@ -27,12 +27,22 @@ export default function FinishingTabs() {
 
   const active = crmData.activeTab || "توزيع المساحات";
 
-  // 🌟 معالجة الصلاحيات بالخلفية لتمكين الملاك والمديرين من فك تجميد المقايسات تعاقدياً من لوحة الـ CRM
+  // مرجع للانتقال المباشر للتاب المختار فور الضغط
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // معالجة الصلاحيات بالخلفية لتمكين الملاك والمديرين من فك تجميد المقايسات تعاقدياً
   const [userRole, setUserRole] = useState<string>("sales");
 
   useEffect(() => {
     loadCurrentUserRole();
   }, []);
+
+  // مراقبة تغيير التبويب المختار للانتقال التلقائي والتركيز البصري
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [active]);
 
   async function loadCurrentUserRole() {
     try {
@@ -53,7 +63,8 @@ export default function FinishingTabs() {
 
   const groups = [
     {
-      title: "🚧 مرحلة التوزيع والهيكل الإنشائي",
+      title: "مرحلة التوزيع والهيكل الإنشائي",
+      emoji: "🚧",
       items: [
         { label: "توزيع المساحات", emoji: "📐" },
         { label: "تعديل معماري", emoji: "🔨" },
@@ -61,7 +72,8 @@ export default function FinishingTabs() {
       ]
     },
     {
-      title: "🛠️ مرحلة التأسيس الفني والحراري",
+      title: "مرحلة التأسيس الفني والحراري",
+      emoji: "🛠️",
       items: [
         { label: "أعمال المحارة", emoji: "🧱" },
         { label: "الكهرباء", emoji: "🔌" },
@@ -72,7 +84,8 @@ export default function FinishingTabs() {
       ]
     },
     {
-      title: "✨ مرحلة الكسوة والتشطيب والديكور الفاخر",
+      title: "مرحلة الكسوة والتشطيب والديكور الفاخر",
+      emoji: "✨",
       items: [
         { label: "الأبواب", emoji: "🚪" },
         { label: "الشبابيك", emoji: "🪟" },
@@ -86,23 +99,32 @@ export default function FinishingTabs() {
   ];
 
   return (
+    /* 🌟 الكارت الرئيسي بنمط الأونيكس الداكن مذهب الأطراف */
     <div 
       dir="rtl" 
-      className="bg-[#07132a] border border-[#D4AF37]/25 rounded-2xl p-6 shadow-2xl transition-all duration-300 hover:border-[#D4AF37]/45 text-right font-alexandria"
+      className="bg-gradient-to-br from-[#07132a] via-[#040e20] to-[#020B1C] border-2 border-[#D4AF37]/30 rounded-[2.5rem] p-8 shadow-2xl transition-all duration-300 hover:border-[#D4AF37]/50 text-right font-alexandria"
     >
       
-      {/* تم تحويل الرأس بالكامل ليتمركز بكسلياً في المنتصف المطلق للكارت بنسق متزن وملك فخم */}
-      <div className="flex flex-col items-center justify-center border-b border-[#D4AF37]/15 pb-4 mb-6 text-center w-full select-none">
-        <h2 className="text-[#D4AF37] text-xl md:text-2xl font-black flex items-center justify-center gap-2 leading-none">
+      {/* رأس الكارت متمركز بصرياً وبكسلياً كشعار العائلة الملكية */}
+      <div className="flex flex-col items-center justify-center border-b border-[#D4AF37] pb-5 mb-6 text-center w-full select-none">
+        <h2 className="text-[#D4AF37] text-lg md:text-xl font-black flex items-center justify-center gap-3 leading-none tracking-wide">
           <span>مواصفات وتفاصيل مراحل التشطيب الفاخرة</span>
-          <span className="text-[#D4AF37] drop-shadow-[0_0_8px_rgba(212,175,55,0.4)]">⚜️</span>
+          <span className="text-[#D4AF37] drop-shadow-[0_0_12px_rgba(212,175,55,0.6)]">⚜️</span>
         </h2>
       </div>
 
-      <div className="space-y-6 mb-8 select-none">
+      {/* حاوية المراحل المضيئة */}
+      <div className="space-y-4 mb-8 select-none">
         {groups.map((group, groupIdx) => (
-          <div key={groupIdx} className="p-4 rounded-xl bg-[#020B1C]/50 border border-[#1f2d4d]/60 space-y-3">
-            <span className="text-xl md:text-xl text-[#D4AF37] tracking-wider block">{group.title}</span>
+          <div key={groupIdx} className="p-4 rounded-3xl bg-[#020B1C]/40 border border-[#1f2d4d]/60 space-y-3 shadow-inner">
+            
+            {/* 🌟 ترويسة إمبراطورية لكل مرحلة من المراحل الإنشائية */}
+            <div className="flex items-center gap-2 border-b border-[#1f2d4d]/30 pb-2 mb-2">
+              <span className="w-1.5 h-3.5 bg-[#D4AF37] rounded-full inline-block shadow-[0_0_8px_#D4AF37]" />
+              <span className="text-xs font-bold text-gray-400 block">{group.emoji}</span>
+              <span className="text-lg text-[#D4AF37] drop-shadow-[0_0_12px_rgba(212,175,55,0.6)] font-bold block pr-2">{group.title}</span>
+            </div>
+
             <div className="flex flex-wrap gap-2.5 justify-start">
               {group.items.map((tab) => {
                 const isCurrent = active === tab.label;
@@ -115,14 +137,24 @@ export default function FinishingTabs() {
                         activeTab: tab.label
                       })
                     }
-                    className={`px-4.5 py-3 rounded-xl transition-all duration-300 cursor-pointer text-[10px] md:text-sm shadow-md border flex items-center gap-1.5 ${
+                    className={`px-5 py-3 rounded-2xl transition-all duration-300 cursor-pointer text-xs md:text-sm shadow-xl border relative overflow-hidden flex items-center gap-2.5 select-none ${
                       isCurrent
-                        ? "bg-gradient-to-r from-[#D4AF37] via-[#F0E6D2] to-[#D4AF37] text-[#020B1C] border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.3)] scale-[1.03] font-black"
-                        : "bg-[#07132a] text-white border-[#1f2d4d] hover:border-[#D4AF37]/50 hover:bg-[#020B1C] hover:text-[#D4AF37]"
+                        ? "bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.3)] scale-[1.03] font-black"
+                        : "bg-[#07132a] text-white border-[#1f2d4d] hover:border-[#D4AF37]/50 hover:bg-[#020B1C] hover:text-[#D4AF37] hover:scale-[1.01]"
                     }`}
                   >
-                    <span>{tab.label}</span>
-                    <span className="text-base">{tab.emoji}</span>
+                    {/* نبضة نيون ذهبية صغيرة تظهر بجانب الخيار النشط */}
+                    {isCurrent && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] shadow-[0_0_6px_#D4AF37] animate-pulse" />
+                    )}
+
+                    <span className="text-xs font-bold leading-none">{tab.label}</span>
+                    <span className="text-sm filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]">{tab.emoji}</span>
+
+                    {/* 🌟 خط نيون سفلي متدرج يشع بنعومة ومطابق لشاشات اللمس الفارهة */}
+                    {isCurrent && (
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)] animate-pulse" />
+                    )}
                   </button>
                 );
               })}
@@ -131,7 +163,11 @@ export default function FinishingTabs() {
         ))}
       </div>
 
-      <div className="bg-[#020B1C]/80 border border-[#1f2d4d] rounded-2xl p-6 shadow-inner transition duration-150">
+      {/* حاوية عرض المكونات الفعالة مع دمج مرجع التركيز البصري التلقائي وهامش الإزاحة */}
+      <div 
+        ref={contentRef} 
+        className="bg-[#020B1C]/80 border border-[#1f2d4d] rounded-3xl p-6 shadow-inner transition duration-150 scroll-mt-10"
+      >
         
         {active === "توزيع المساحات" && <Areas />}
 
@@ -165,7 +201,7 @@ export default function FinishingTabs() {
 
         {active === "المقايسة" && (
           crmData.estimate?.status === "نهائية" 
-            ? <FinalEstimate userRole={userRole} />  // 🌟 تم تعديل التمرير هنا لضمان فتح الـ 14 تابة للمدير
+            ? <FinalEstimate userRole={userRole} />  
             : <InitialEstimate />
         )}
 
@@ -185,7 +221,7 @@ export default function FinishingTabs() {
           active !== "الدهانات" &&
           active !== "الديكورات" &&
           active !== "المقايسة" && (
-            <div className="text-center text-[#F0E6D2] py-20 text-xl font-bold select-none animate-pulse">
+            <div className="text-center text-[#D4AF37] py-20 text-xl font-bold select-none animate-pulse">
               جاري مزامنة وتجهيز مواصفات التشطيب المعتمدة ...
             </div>
           )}

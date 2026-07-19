@@ -216,7 +216,7 @@ export default function Areas() {
       <div className="space-y-4">
         <div className="flex items-center gap-2 p-2 border-r-4 border-[#D4AF37] select-none">
           <Layers className="w-5 h-5 text-[#D4AF37]" />
-          <h4 className="text-base font-bold text-[#D4AF37]">أولاً: حصر وتوزيع مساحات الغرف والصالات الأساسية للوحدة:</h4>
+          <h4 className="text-base font-bold text-[#D4AF37]">أولاً: حصر وتوزيع مساحات الريسبشن والغرف الأساسية للوحدة:</h4>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -232,14 +232,11 @@ export default function Areas() {
                     <Home className="w-5 h-5" />
                   </div>
                   <div className="text-right">
-                    {/* 🌟 1. تم تعديل لون اسم الغرفة بالكامل ليصبح بالذهب الإمبراطوري الفخم #D4AF37 */}
-                    <h5 className="text-sm text-[#D4AF37] font-black leading-tight">{room.label}</h5>
-                    {/* 🌟 2. تم زيادة الهامش البيني mt-3.5 وتدريج اللون عاجياً ناعماً بنسبة 60% عتامة */}
-                    <p className="text-[10px] text-[#F0E6D2]/60 mt-3.5 font-bold">المقترحة للمقايسة: {room.defaultSize} م²</p>
+                    <h5 className="text-xs text-white block font-bold">{room.label}</h5>
+                    <p className="text-[10px] text-[#D4AF37] mt-3.5 font-bold">المقترحة للمقايسة: {room.defaultSize} م²</p>
                   </div>
                 </div>
 
-                {/* 🌟 3. تم تحويل الخط الفاصل ليتلون بالذهب النيوني الرقيق border-[#D4AF37]/30 وتعديل عداد الغرفة الفردي ليتطابق بكسلياً بارتفاع h-11 */}
                 <div className="pt-3 border-t border-[#D4AF37]/30 flex items-center justify-between">
                   <span className="text-xs text-gray-400 font-bold select-none">المساحة الموزعة:</span>
                   <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
@@ -269,150 +266,157 @@ export default function Areas() {
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         <div className="flex items-center gap-1.5 p-1 border-r-4 border-[#D4AF37] mr-2">
           <span className="text-base">💎</span>
           <h4 className="text-sm font-black text-[#D4AF37]">ثانياً: تفعيل وحصر كماليات الممرات الخارجية واللاندسكيب (جاردن):</h4>
         </div>
 
-        <div 
-          onClick={() => {
-            if (isLocked) return;
-            const nextVal = !corridorsActive;
-            toggleCorridors(nextVal);
-          }}
-          className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-6 select-none ${
-            corridorsActive 
-              ? 'border-[#D4AF37] bg-gradient-to-r from-[#07132a] to-[#D4AF37]/5 font-black' 
-              : 'border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/25'
-          }`}
-        >
-          <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-right flex-1 w-full">
-            <div className={`p-3 rounded-full transition-all duration-300 ${corridorsActive ? 'bg-[#D4AF37] text-[#020B1C]' : 'bg-[#1f2d4d] text-gray-500'}`}>
-              <Layers className="w-6 h-6" />
-            </div>
-            <div className="space-y-1 w-full text-right">
-              <h4 className="text-base font-bold text-[#D4AF37]"> الطرقات والممرات الداخلية بالوحدة</h4>
-              <p className="text-[10px] text-gray-400 mt-1 font-bold">تفعيل هذا الخيار يحسب طرقات الشقة لتصفية دهانها بدقة بالمقايسة:</p>
-              
-              {corridorsActive && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3 p-3 bg-[#020B1C]/50 rounded-xl border border-[#1f2d4d] text-right" onClick={e => e.stopPropagation()}>
-                  
-                  {/* 🎯 تعديل عداد الطرقة الرئيسية بحدود مذهبة ونبيذية وخط مذهب فاخر */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[#D4AF37] font-black">الطرقة الرئيسية:</span>
-                    <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
-                      <button 
-                        type="button" 
-                        disabled={isLocked}
-                        onClick={() => handleValueChange("الطرقة الرئيسية", Math.max(0, Number(values["الطرقة الرئيسية"] || 10) - 1))} 
-                        className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
-                      >
-                        <Minus size={12} className="stroke-[3]" />
-                      </button>
-                      <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[20px] text-center">{values["الطرقة الرئيسية"] || 10}</span>
-                      <button 
-                        type="button" 
-                        disabled={isLocked}
-                        onClick={() => handleValueChange("الطرقة الرئيسية", Number(values["الطرقة الرئيسية"] || 10) + 1)} 
-                        className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
-                      >
-                        <Plus size={12} className="stroke-[3]" />
-                      </button>
-                      <span className="text-[9px] text-gray-500 font-bold">م²</span>
-                    </div>
-                  </div>
-
-                  {/* 🎯 تعديل عداد الطرقة الفرعية بحدود مذهبة ونبيذية وخط مذهب فاخر */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-[#D4AF37] font-black">الطرقة الفرعية:</span>
-                    <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
-                      <button 
-                        type="button" 
-                        disabled={isLocked}
-                        onClick={() => handleValueChange("الطرقة الفرعية", Math.max(0, Number(values["الطرقة الفرعية"] || 10) - 1))} 
-                        className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
-                      >
-                        <Minus size={12} className="stroke-[3]" />
-                      </button>
-                      <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[20px] text-center">{values["الطرقة الفرعية"] || 10}</span>
-                      <button 
-                        type="button" 
-                        disabled={isLocked}
-                        onClick={() => handleValueChange("الطرقة الفرعية", Number(values["الطرقة الفرعية"] || 10) + 1)} 
-                        className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
-                      >
-                        <Plus size={12} className="stroke-[3]" />
-                      </button>
-                      <span className="text-[9px] text-gray-500 font-bold">م²</span>
-                    </div>
-                  </div>
-
+        {/* 🌟 شبكة تقسيم لاندسكيب على سطر واحد للشاشات الكبيرة ومتتابعة في الجوال */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          
+          {/* كارت الطرقات والممرات الداخلية */}
+          <div 
+            onClick={() => {
+              if (isLocked) return;
+              const nextVal = !corridorsActive;
+              toggleCorridors(nextVal);
+            }}
+            className={`p-5 rounded-3xl border transition-all duration-300 cursor-pointer flex flex-col justify-between h-full select-none ${
+              corridorsActive 
+                ? 'border-[#D4AF37] bg-gradient-to-r from-[#07132a] to-[#D4AF37]/5 font-black' 
+                : 'border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/25'
+            }`}
+          >
+            <div className="flex flex-col items-center sm:items-start gap-4 text-center sm:text-right flex-1 w-full">
+              <div className="flex items-center gap-3 w-full border-b border-[#1f2d4d]/30 pb-3">
+                <div className={`p-3 rounded-xl transition-all duration-300 ${corridorsActive ? 'bg-[#D4AF37] text-[#020B1C]' : 'bg-[#1f2d4d] text-gray-500'}`}>
+                  <Layers className="w-5 h-5" />
                 </div>
-              )}
+                <h4 className="text-base text-white block font-bold text-right">الطرقات والممرات الداخلية</h4>
+              </div>
+              <div className="space-y-1 w-full text-right mt-1">
+                <p className="text-[10px] text-gray-400 font-bold">تفعيل هذا الخيار يحسب طرقات الشقة لتصفية دهانها بدقة بالمقايسة:</p>
+                
+                {corridorsActive && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 p-3 bg-[#020B1C]/50 rounded-2xl border border-[#1f2d4d] text-right w-full" onClick={e => e.stopPropagation()}>
+                    
+                    {/* تعديل عداد الطرقة الرئيسية */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs text-[#D4AF37] font-black shrink-0">الرئيسية:</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 select-none h-11 w-full max-w-[120px]" dir="ltr">
+                        <button 
+                          type="button" 
+                          disabled={isLocked}
+                          onClick={() => handleValueChange("الطرقة الرئيسية", Math.max(0, Number(values["الطرقة الرئيسية"] || 10) - 1))} 
+                          className="w-5 h-5 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans"
+                        >
+                          -
+                        </button>
+                        <span className="text-xs font-black text-[#D4AF37] font-mono">{values["الطرقة الرئيسية"] || 10}</span>
+                        <button 
+                          type="button" 
+                          disabled={isLocked}
+                          onClick={() => handleValueChange("الطرقة الرئيسية", Number(values["الطرقة الرئيسية"] || 10) + 1)} 
+                          className="w-5 h-5 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* تعديل عداد الطرقة الفرعية */}
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs text-[#D4AF37] font-black shrink-0">الفرعية:</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 select-none h-11 w-full max-w-[120px]" dir="ltr">
+                        <button 
+                          type="button" 
+                          disabled={isLocked}
+                          onClick={() => handleValueChange("الطرقة الفرعية", Math.max(0, Number(values["الطرقة الفرعية"] || 10) - 1))} 
+                          className="w-5 h-5 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans"
+                        >
+                          -
+                        </button>
+                        <span className="text-xs font-black text-[#D4AF37] font-mono">{values["الطرقة الفرعية"] || 10}</span>
+                        <button 
+                          type="button" 
+                          disabled={isLocked}
+                          onClick={() => handleValueChange("الطرقة الفرعية", Number(values["الطرقة الفرعية"] || 10) + 1)} 
+                          className="w-5 h-5 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        <div 
-          onClick={() => {
-            if (isLocked) return;
-            const nextVal = !gardenActive;
-            handleValueChange("الحديقة / الجاردن", nextVal ? 30 : 0);
-          }}
-          className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-6 select-none ${
-            gardenActive 
-              ? 'border-[#D4AF37] bg-gradient-to-r from-[#07132a] to-[#D4AF37]/5 font-black' 
-              : 'border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/25'
-          }`}
-        >
-          <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-right flex-1 w-full">
-            <div className={`p-3 rounded-full transition-all duration-300 ${gardenActive ? 'bg-[#D4AF37] text-[#020B1C]' : 'bg-[#1f2d4d] text-gray-500'}`}>
-              <Home className="w-6 h-6" />
-            </div>
-            <div className="space-y-1 w-full text-right">
-              <h4 className="text-base font-bold text-[#D4AF37]"> الحديقة المفتوحة للوحدة (جاردن)</h4>
-              <p className="text-[10px] text-gray-400 mt-1 font-bold">تخصيص مسطحات اللاندسكيب للوحدات الأرضية أو الدوبلكس بالمقايسة:</p>
-              
-              {gardenActive && (
-                /* 🎯 تعديل عداد الجاردن ليتطابق بكسلياً بارتفاع h-11 والدواير الرشيقة w-6 h-6 مع دستور الـ ERP وخط فاصل مذهب */
-                <div className="flex items-center justify-between mt-3 p-3 bg-[#020B1C]/50 rounded-xl border border-[#D4AF37]/30" onClick={e => e.stopPropagation()}>
-                  <span className="text-xs text-[#D4AF37] font-black">مساحة الجاردن :</span>
-                  <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
-                    <button 
-                      type="button" 
-                      disabled={isLocked}
-                      onClick={() => handleValueChange("الحديقة / الجاردن", Math.max(0, Number(values["الحديقة / الجاردن"] || 30) - 5))} 
-                      className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
-                    >
-                      <Minus size={12} className="stroke-[3]" />
-                    </button>
-                    <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[20px] text-center">{values["الحديقة / الجاردن"] || 30}</span>
-                    <button 
-                      type="button" 
-                      disabled={isLocked}
-                      onClick={() => handleValueChange("الحديقة / الجاردن", Number(values["الحديقة / الجاردن"] || 30) + 5)} 
-                      className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
-                    >
-                      <Plus size={12} className="stroke-[3]" />
-                    </button>
-                    <span className="text-[9px] text-gray-500 font-bold">م²</span>
-                  </div>
+          {/* كارت الحديقة / الجاردن */}
+          <div 
+            onClick={() => {
+              if (isLocked) return;
+              const nextVal = !gardenActive;
+              handleValueChange("الحديقة / الجاردن", nextVal ? 30 : 0);
+            }}
+            className={`p-5 rounded-3xl border transition-all duration-300 cursor-pointer flex flex-col justify-between h-full select-none ${
+              gardenActive 
+                ? 'border-[#D4AF37] bg-gradient-to-r from-[#07132a] to-[#D4AF37]/5 font-black' 
+                : 'border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/25'
+            }`}
+          >
+            <div className="flex flex-col items-center sm:items-start gap-4 text-center sm:text-right flex-1 w-full">
+              <div className="flex items-center gap-3 w-full border-b border-[#1f2d4d]/30 pb-3">
+                <div className={`p-3 rounded-xl transition-all duration-300 ${gardenActive ? 'bg-[#D4AF37] text-[#020B1C]' : 'bg-[#1f2d4d] text-gray-500'}`}>
+                  <Home className="w-5 h-5" />
                 </div>
-              )}
+                <h4 className="text-base text-white block font-bold text-right">الحديقة المفتوحة (جاردن)</h4>
+              </div>
+              <div className="space-y-1 w-full text-right mt-1">
+                <p className="text-[10px] text-gray-400 font-bold">تخصيص مسطحات اللاندسكيب للوحدات الأرضية أو الدوبلكس أو الفلل:</p>
+                
+                {gardenActive && (
+                  <div className="flex items-center justify-between mt-4 p-3 bg-[#020B1C]/50 rounded-2xl border border-[#D4AF37]/30 w-full" onClick={e => e.stopPropagation()}>
+                    <span className="text-xs text-[#D4AF37] font-black">مساحة الجاردن:</span>
+                    <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 select-none h-11 w-32" dir="ltr">
+                      <button 
+                        type="button" 
+                        disabled={isLocked}
+                        onClick={() => handleValueChange("الحديقة / الجاردن", Math.max(0, Number(values["الحديقة / الجاردن"] || 30) - 5))} 
+                        className="w-5 h-5 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans"
+                      >
+                        -
+                      </button>
+                      <span className="text-xs font-black text-[#D4AF37] font-mono">{values["الحديقة / الجاردن"] || 30}</span>
+                      <button 
+                        type="button" 
+                        disabled={isLocked}
+                        onClick={() => handleValueChange("الحديقة / الجاردن", Number(values["الحديقة / الجاردن"] || 30) + 5)} 
+                        className="w-5 h-5 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
+
         </div>
 
       </div>
 
       <div className="p-6 rounded-2xl bg-[#020B1C] border border-[#1f2d4d] flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="space-y-1 text-center sm:text-right">
-          <h4 className="text-sm font-bold text-[#D4AF37] flex items-center gap-2">
+          <h4 className="text-base text-[#D4AF37] flex items-center gap-2">
             <Cpu className="w-5 h-5 text-[#D4AF37]" />
-            محرك تدقيق اتساق المساحات الموزعة بالمقايسة:
+            محرك تدقيق المساحات الموزعة بالمقايسة:
           </h4>
-          <p className="text-[11px] text-white">يقارن النظام حركياً إجمالي مساحات الغرف المفردة ({sumOfRoomAreas} م²) بالمساحة المتعاقد عليها بالصفحة الأولى ({totalArea} م²)</p>
+          <p className="text-[11px] text-gray-400 font-bold">يقارن النظام حركياً إجمالي مساحات الغرف ({sumOfRoomAreas} م²) بالمساحة المتعاقد عليها ({totalArea} م²)</p>
         </div>
 
         {areaDiscrepancy === 0 ? (
@@ -438,7 +442,7 @@ export default function Areas() {
           value={notes}
           disabled={isLocked}
           onChange={(e) => handleNotesChange(e.target.value)}
-          className="w-full h-32 bg-[#07132a] border border-[#1f2d4d] rounded-lg p-3 text-white text-sm md:text-base outline-none focus:border-[#D4AF37] leading-relaxed font-bold disabled:opacity-50"
+          className="w-full h-32 bg-[#07132a] border border-[#1f2d4d] rounded-lg p-3 text-white text-sm md:text-base outline-none focus:border-[#D4AF37] leading-relaxed disabled:opacity-50"
           placeholder="شروط تصفية أمتار الحوائط والأسقف، نسبة هالك بلاط السيراميك والبورسلين..."
         />
       </div>

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useCRM } from "../context/CRMContext";
 import { supabase } from "../../../lib/supabaseClient"; 
+import TabActivationBanner from './TabActivationBanner'; // 👈 استدعاء المكون المشترك الموحد للأجهزة اللمسية للشركة
 import { 
   Zap, 
   Layers, 
@@ -20,7 +21,8 @@ import {
   Wind,
   HardHat,
   Truck,
-  Volume2
+  Volume2,
+  ChevronDown
 } from 'lucide-react';
 
 interface VentilationProps {
@@ -51,8 +53,7 @@ interface VentLineItem {
   isCustom?: boolean;
 }
 
-// البنود التفصيلية الافتراضية المطابقة لجدول مقايستك المرفق بالصورة
-
+// البنود التفصيلية الافتراضية المطابقة لجدول مقايستك
 const DEFAULT_VENT_ITEMS: VentLineItem[] = [
   { key: 'blower_5', label: 'بلاور (حمامات)', qty: 2, unit: 'جهاز', price: 3500, product_id: '', company: 'سمارت' },
   { key: 'grille_5', label: 'جريلة (حمامات)', qty: 3, unit: 'عدد', price: 700, product_id: '', company: 'سمارت' },
@@ -131,7 +132,7 @@ export default function Ventilation({ projectId }: VentilationProps) {
     if (crmData?.finishing?.ventilation) {
       const ventContext = crmData.finishing.ventilation;
 
-      // تصفية أمنة لحذف بند المصنعيات القديم من الجدول في حال تحميل مشروع قديم
+      // تصفية آمنة لحذف بند المصنعيات القديم من الجدول في حال تحميل مشروع قديم
       const itemsList = ventContext.items && Array.isArray(ventContext.items) && ventContext.items.length > 0
         ? ventContext.items.filter((item: any) => item.key !== 'labor')
         : DEFAULT_VENT_ITEMS;
@@ -173,12 +174,12 @@ export default function Ventilation({ projectId }: VentilationProps) {
     const uniqueKey = `custom_vent_${Date.now()}`;
     const newItem: VentLineItem = {
       key: uniqueKey,
-      label: 'بند شفاط مخصص جديد',
+      label: '',
       qty: 1,
       unit: 'عدد',
-      price: 500,
+      price: 0,
       product_id: '',
-      company: 'مورد معتمد',
+      company: '',
       isCustom: true
     };
     updateStateAndSave(prev => ({
@@ -225,7 +226,7 @@ export default function Ventilation({ projectId }: VentilationProps) {
     ? state.items.reduce((sum, item) => sum + ((item.qty || 0) * (item.price || 0)), 0) + state.laborCost
     : 0;
 
-  // ب. الإشراف الهندسي (15% من إجمالي البنود كما هو محدد بمقايستك المرفقة)
+  // ب. الإشراف الهندسي (15% من إجمالي البنود كما هو محدد بمقايستك)
   const supervisionEstimate = subtotalEstimate * 0.15;
 
   // ج. تكاليف النقل والتشوين المضاف للمقايسة
@@ -240,145 +241,145 @@ export default function Ventilation({ projectId }: VentilationProps) {
   }, [dbProducts]);
 
   return (
-    /* تضييق الحاوية لتكون ملمومة ببيئة العمل مثل بقية الأجهزة والشاشات */
-    <div className="space-y-8 select-none text-right font-sans max-w-5xl mx-auto w-full px-4 md:px-0" dir="rtl">
+    <div className="space-y-8 select-none text-right font-alexandria max-w-5xl mx-auto w-full px-4 md:px-0" dir="rtl">
 
-      {/* كارت التفعيل الرئيسي (On / Off) ذو الطابع الفاخر والماوس اليد المضيء */}
-      <div 
-        onClick={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
-        className={`p-6 rounded-[2.5rem] border transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl cursor-pointer select-none ${
-          state.enabled 
-            ? 'bg-[#07132a] border-[#D4AF37] shadow-[0_0_30px_rgba(212,175,55,0.15)] hover:shadow-[0_0_40px_rgba(212,175,55,0.25)]' 
-            : 'bg-[#07132a]/40 border-[#1f2d4d] hover:border-gray-600'
-        }`}
-      >
-        <div className="flex items-center gap-4 w-full sm:w-auto pr-2">
-          <div className={`p-5 rounded-2xl transition-all duration-500 flex-shrink-0 ${state.enabled ? 'bg-[#D4AF37] text-black shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'bg-[#020B1C] text-gray-600'}`}>
-            <Wind className="w-10 h-10" />
-          </div>
-          <div className="text-right">
-            <h4 className="text-xl font-black text-[#F0E6D2]">أعمال الشفاطات والتهوية الميكانيكية</h4>
-            <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest leading-none">VENTILATION & FANS SYSTEM</p>
-          </div>
-        </div>
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap');
+        
+        .font-alexandria {
+          font-family: 'Alexandria', Arial, sans-serif !important;
+          letter-spacing: normal !important;
+        }
+      `}</style>
 
-        <div
-          className={`px-10 py-3 rounded-2xl border-2 font-black text-base transition-all duration-300 flex items-center gap-3 flex-shrink-0 ${
-            state.enabled 
-              ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-              : 'bg-[#020B1C] border-[#D4AF37]/60 text-[#D4AF37]'
-          }`}
-        >
-          {state.enabled ? <CheckCircle2 className="w-6 h-6 text-[#D4AF37]" /> : <Lock className="w-5 h-5 text-gray-500" />}
-          {state.enabled ? 'القسم مفعل' : 'القسم مقفل'}
-        </div>
-      </div>
+      {/* 🌟 ضبط كارت التفعيل بالمقابية واستدعاء الراية اللمسية الموحدة للشركة */}
+      <TabActivationBanner 
+        title="منظومة التهوية والشفاطات الميكانيكية"
+        subtitle="VENTILATION & MECHANICAL FANS SYSTEM"
+        icon={Wind}
+        enabled={state.enabled}
+        onToggle={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
+      />
 
       {/* حظر التفاعل وتعتيم الشاشة عند الإغلاق التام للبند */}
       <div className={`space-y-8 transition-opacity duration-300 ${state.enabled ? 'opacity-100 pointer-events-auto' : 'opacity-25 pointer-events-none filter grayscale'}`}>
         
-        {/* جدول حصر خامات الأرضيات والوزرة التفاعلي */}
-        <div className="bg-[#07132a] border border-[#1f2d4d] p-6 rounded-2xl space-y-4 shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1f2d4d]/40 pb-3">
+        {/* جدول حصر خامات ومستلزمات الشفاطات بتصميم أرستقراطي مذهل */}
+        <div className="bg-[#07132a] border border-[#D4AF37] p-6 rounded-[2rem] space-y-4 shadow-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D4AF37] pb-4">
             <div className="flex items-center gap-2 text-[#D4AF37]">
-              <Layers className="w-6 h-6 animate-pulse" />
-              <h4 className="text-xl font-bold text-[#F0E6D2]">جدول تفصيل بنود تمديد تأسيس الشفاطات بالمطبخ والحمامات:</h4>
+              <Layers className="w-6 h-6" />
+              <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2">تفصيل تمديد تأسيس الشفاطات والتهوية بالموقع:</h4>
             </div>
+            
+            {/* زر إضافة بند مخصص بتصميم ذهبي متوهج */}
             <button
               type="button"
               disabled={!state.enabled}
               onClick={handleAddCustomRow}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 text-sm font-bold transition-all cursor-pointer"
+              className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] border border-[#D4AF37]/30 text-xs font-black transition-all cursor-pointer shadow-md"
             >
-              <PlusCircle className="w-5 h-5" />
-              <span>إضافة بند تهوية مخصص جديد</span>
+              <PlusCircle className="w-4 h-4" />
+              <span>إضافة بند </span>
             </button>
           </div>
 
-          <div className="overflow-x-auto">
-            {/* حذف min-w-[1000px] لجعل حجم الجدول مضغوطاً وسريع الاستجابة بدون أي شريط تمرير */}
+          <div className="overflow-hidden rounded-2xl border border-[#D4AF37]/60 bg-[#020B1C]/40">
             <table className="w-full text-right border-collapse table-auto">
               <thead>
-                <tr className="border-b border-[#1f2d4d] text-[#94a3b8] text-xs font-bold pb-2">
-                  <th className="py-3 text-right pl-2 w-1/4">توصيف البند</th>
-                  <th className="py-3 text-right w-1/12">الشركة الموردة</th>
-                  <th className="py-3 text-right w-1/4"> المنتج</th>
-                  <th className="py-3 text-center w-1/12">الكمية</th>
-                  <th className="py-3 text-center w-1/6">سعر الوحدة</th>
-                  <th className="py-3 text-center w-1/12">إجمالي التكلفة</th>
-                  <th className="py-3 text-center w-1/12">حذف</th>
+                <tr className="bg-[#020B1C] text-[#D4AF37] text-xs font-semibold select-none border-b border-[#D4AF37]">
+                  <th className="py-4 pr-6 text-right w-1/4">اسم بند التهوية والتوصيف</th>
+                  <th className="py-4 text-center w-1/6">الشركة الموردة</th>
+                  <th className="py-4 text-center w-1/4"> خامة كتالوج المخزن</th>
+                  <th className="py-4 text-center w-1/12">الكمية</th>
+                  <th className="py-4 text-center w-1/6">سعر الوحدة</th>
+                  <th className="py-4 text-center w-1/12">الإجمالي</th>
+                  <th className="py-4 text-center w-1/12 pl-4">حذف</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[#1f2d4d]/30">
                 {state.items.map((row) => {
                   const current = row;
                   const rowProducts = dbProducts.filter(p => p.company === current.company);
                   const isCustom = row.isCustom === true;
 
                   return (
-                    <tr key={row.key} className="border-b border-[#1f2d4d]/60 hover:bg-[#020B1C]/40 transition-colors duration-200">
-                      <td className="py-3 text-[#F0E6D2] font-semibold text-xs pl-2">
+                    <tr key={row.key} className="hover:bg-[#020B1C]/60 transition-colors duration-200">
+                      
+                      {/* توصيف البند: يدعم التحرير الحر للبند اليدوي والمنوع */}
+                      <td className="py-4 pr-6 text-[#F0E6D2] font-bold text-xs">
                         {isCustom ? (
                           <input 
                             type="text"
                             value={row.label}
                             onChange={(e) => handleItemRowEdit(row.key, { label: e.target.value })}
-                            className="bg-transparent border-b border-[#D4AF37]/30 focus:border-[#D4AF37] outline-none text-[#F0E6D2] font-bold text-xs w-full"
-                            placeholder="اكتب اسم البند المخصص..."
+                            className="bg-transparent border-b border-[#D4AF37]/40 focus:border-[#D4AF37] outline-none text-[#F0E6D2] font-bold text-xs w-full max-w-[220px]"
+                            placeholder="بند يدوي غير مسجل..."
                           />
                         ) : row.label}
                       </td>
-                      <td className="py-3">
-                        <select
-                          value={current.company}
-                          onChange={(e) => handleItemRowEdit(row.key, { company: e.target.value, product_id: '', price: 0 })}
-                          className="bg-[#020B1C] border border-[#1f2d4d] p-1.5 rounded-lg text-white font-bold outline-none cursor-pointer focus:border-[#D4AF37] text-[11px]"
-                        >
-                          <option value="">-- اختر --</option>
-                          {availableCompanies.length > 0 ? availableCompanies.map(c => <option key={c} value={c}>{c}</option>) : <option value="سمارت">سمارت</option>}
-                        </select>
+
+                      {/* الشركة الموردة */}
+                      <td className="py-4 text-center">
+                        <div className="relative inline-block w-28 text-center select-none">
+                          <select
+                            value={current.company}
+                            onChange={(e) => handleItemRowEdit(row.key, { company: e.target.value, product_id: '', price: 0 })}
+                            className="w-full bg-[#020B1C] border border-[#1f2d4d] py-1.5 px-3 rounded-lg text-white font-bold text-[11px] appearance-none outline-none focus:border-[#D4AF37] cursor-pointer"
+                          >
+                            <option value="">-- اختر --</option>
+                            {availableCompanies.length > 0 ? availableCompanies.map(c => <option key={c} value={c}>{c}</option>) : <option value="سمارت">سمارت</option>}
+                          </select>
+                          <ChevronDown className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#D4AF37] pointer-events-none" />
+                        </div>
                       </td>
-                      <td className="py-3">
-                        <select
-                          disabled={!current.company}
-                          value={current.product_id}
-                          onChange={(e) => handleItemRowEdit(row.key, { product_id: e.target.value })}
-                          className="bg-[#020B1C] border border-[#1f2d4d] p-1.5 rounded-lg text-[#B48C34] font-black outline-none cursor-pointer focus:border-[#D4AF37] text-[11px] disabled:opacity-40 max-w-[200px]"
-                        >
-                          {/* تعديل نص الخيار البرمجي تلبية لطلبك الصارم */}
-                          <option value="">-- اختر المنتج --</option>
-                          {rowProducts.map(p => (
-                            <option key={p.id} value={p.id}>{p.product_name}</option>
-                          ))}
-                        </select>
+
+                      {/* المنتج المعتمد من سوبابيز */}
+                      <td className="py-4 text-center">
+                        <div className="relative inline-block w-48 text-center select-none">
+                          <select
+                            disabled={!current.company}
+                            value={current.product_id}
+                            onChange={(e) => handleItemRowEdit(row.key, { product_id: e.target.value })}
+                            className="w-full bg-[#020B1C] border border-[#1f2d4d] py-1.5 px-3 rounded-lg text-[#B48C34] font-black text-[11px] appearance-none outline-none focus:border-[#D4AF37] cursor-pointer disabled:opacity-40"
+                          >
+                            <option value="">-- اختر المنتج من الكتالوج --</option>
+                            {rowProducts.map(p => (
+                              <option key={p.id} value={p.id}>{p.product_name}</option>
+                            ))}
+                          </select>
+                          <ChevronDown className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#D4AF37] pointer-events-none" />
+                        </div>
                       </td>
-                      <td className="py-3 text-center">
-                        {/* عداد الكمية التفاعلي الفاخر المذهب مع أزرار النقصان الحمراء */}
-                        <div className="flex items-center justify-center gap-1.5">
+
+                      {/* 🌟 عداد الكمية التفاعلي الموحد بدقة h-11 الرشيقة وعناصر التحكم الدائرية */}
+                      <td className="py-4 text-center select-none">
+                        <div className="flex items-center justify-center gap-1.5 h-11" dir="ltr">
                           <button
                             type="button"
                             onClick={() => handleItemRowEdit(row.key, { qty: current.qty + 1 })}
-                            className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold cursor-pointer transition-all"
+                            className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] flex items-center justify-center font-bold cursor-pointer transition-all active:scale-95 text-xs font-sans"
                           >
-                            <Plus className="w-3 h-3" />
+                            +
                           </button>
-                          <span className="text-sm font-bold text-[#D4AF37] font-mono min-w-[25px] text-center">{current.qty}</span>
+                          <span className="text-sm font-black text-white font-mono min-w-[20px] text-center">{current.qty}</span>
                           <button
                             type="button"
                             onClick={() => handleItemRowEdit(row.key, { qty: Math.max(0, current.qty - 1) })}
-                            className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold cursor-pointer"
+                            className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 text-rose-400 hover:bg-rose-600 hover:text-white flex items-center justify-center font-bold cursor-pointer transition-all active:scale-95 text-xs font-sans"
                           >
-                            <Minus className="w-3 h-3" />
+                            -
                           </button>
                         </div>
                       </td>
-                      <td className="py-3">
-                        {/* عداد السعر تفاعلي ويدوي ثنائي الوظيفة ومذهب مع نقصان أحمر */}
-                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-lg h-9 px-1.5 select-none w-32 mx-auto" onClick={(e) => e.stopPropagation()}>
+
+                      {/* سعر الوحدة: حقل تفاعلي دقيق h-11 مع إمكانية الكتابة الفورية */}
+                      <td className="py-4 text-center select-none">
+                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2.5 w-32 mx-auto" onClick={(e) => e.stopPropagation()}>
                           <button 
                             type="button" 
                             onClick={() => handleItemRowEdit(row.key, { price: current.price + 100 })}
-                            className="w-5 h-5 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none"
+                            className="w-5 h-5 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] font-bold text-xs flex items-center justify-center cursor-pointer transition-all"
                           >
                             +
                           </button>
@@ -387,29 +388,36 @@ export default function Ventilation({ projectId }: VentilationProps) {
                               type="number"
                               value={current.price}
                               onChange={(e) => handleItemRowEdit(row.key, { price: Number(e.target.value) })}
-                              className="w-12 bg-transparent text-[#D4AF37] text-xs font-black outline-none text-center focus:border-transparent"
+                              className="w-14 bg-transparent text-[#D4AF37] text-xs font-black outline-none text-center focus:border-transparent [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
-                            <span className="text-[9px] text-gray-500 font-bold">ج</span>
+                            <span className="text-[9px] text-gray-500 font-bold mr-0.5">ج</span>
                           </div>
                           <button 
                             type="button" 
                             onClick={() => handleItemRowEdit(row.key, { price: Math.max(0, current.price - 100) })}
-                            className="w-5 h-5 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none"
+                            className="w-5 h-5 rounded bg-[#020B1C] border border-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white font-bold text-xs flex items-center justify-center cursor-pointer transition-all"
                           >
                             -
                           </button>
                         </div>
                       </td>
-                      <td className="py-3 text-center font-black text-[#D4AF37] font-mono text-sm">{(current.qty * current.price).toLocaleString()} <span className="text-[9px] text-gray-500 font-normal">ج</span></td>
-                      <td className="py-3 text-center">
+
+                      {/* إجمالي التكلفة التراكمية */}
+                      <td className="py-4 text-center font-black text-[#D4AF37] font-mono text-sm">
+                        {(current.qty * current.price).toLocaleString()} <span className="text-[9px] text-gray-500 font-normal">ج</span>
+                      </td>
+
+                      {/* حذف السطر */}
+                      <td className="py-4 text-center pl-4 select-none">
                         <button
                           type="button"
                           onClick={() => handleRemoveRow(row.key)}
-                          className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"
+                          className="p-2 text-red-500/40 hover:text-red-500 transition-all cursor-pointer rounded-lg hover:bg-rose-500/10"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4.5 h-4.5" />
                         </button>
                       </td>
+
                     </tr>
                   );
                 })}
@@ -418,32 +426,32 @@ export default function Ventilation({ projectId }: VentilationProps) {
           </div>
         </div>
 
-        {/* كارت مصنعيات عمالة تركيب وتوصيل الشفاطات المستقل التفاعلي بالكامل */}
-        <div className="p-6 rounded-3xl bg-[#07132a] border border-[#D4AF37]/20 flex flex-col sm:flex-row items-center justify-between gap-6 hover:border-[#D4AF37]/40 shadow-lg transition-all duration-300 select-none">
+        {/* كارت مصنعيات تركيب وتوصيل الشفاطات المستقل */}
+        <div className="p-6 rounded-[1.8rem] bg-[#07132a] border border-[#D4AF37] flex flex-col sm:flex-row items-center justify-between gap-6 shadow-xl select-none">
           <div className="text-right space-y-1 flex-1 pl-4">
             <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2">
               <HardHat className="w-5 h-5 text-[#D4AF37]" />
-              أجور مصنعية تركيب وتوصيل الشفاطات وتفتيح الكور:
+             مصنعية تركيب وتوصيل تأسيس الشفاطات وتفتيح الكور:
             </h4>
-            <p className="text-xs text-gray-400 leading-normal">
-              أجور العمالة الفنية لفتح فتحات الكور الخرسانية، تمديد وتوصيل الخراطيم المرنة، وتثبيت وتجريب البلاورات بالمطبخ والحمامات بالموقع:
+            <p className="text-xs text-white leading-normal">
+              مصنعية الفنيين لفتحات الكور الخرسانية وتثبيت وتوصيل الخراطيم المرنة بالمطبخ والحمامات:
             </p>
           </div>
           
-          {/* عداد مالي تفاعلي لضبط أجر المصنعيات المجمعة حراً بالزيادة والنقصان */}
+          {/* عداد مصنعية التهوية حركي ومذهب h-11 */}
           <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-44" onClick={(e) => e.stopPropagation()}>
             <button 
               type="button" 
               onClick={() => updateStateAndSave(prev => ({ laborCost: prev.laborCost + 500 }))}
-              className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none"
+              className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans"
             >
               +
             </button>
-            <span className="text-base font-black text-white font-mono">{state.laborCost.toLocaleString()} <span className="text-[10px] text-gray-500 font-normal">ج</span></span>
+            <span className="text-base font-black text-[#D4AF37] font-mono">{state.laborCost.toLocaleString()} <span className="text-[10px] text-gray-500 font-normal">ج</span></span>
             <button 
               type="button" 
               onClick={() => updateStateAndSave(prev => ({ laborCost: Math.max(0, prev.laborCost - 500) }))}
-              className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none"
+              className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans"
             >
               -
             </button>
@@ -456,11 +464,11 @@ export default function Ventilation({ projectId }: VentilationProps) {
             if (!state.enabled) return;
             updateStateAndSave(prev => ({ hasTransportation: !prev.hasTransportation }));
           }}
-          className={`p-6 rounded-3xl border transition-all duration-300 flex flex-col sm:flex-row items-center justify-between gap-6 select-none ${
+          className={`p-6 rounded-[1.8rem] border transition-all duration-300 flex flex-col sm:flex-row items-center justify-between gap-6 select-none ${
             state.enabled ? 'cursor-pointer' : 'cursor-not-allowed'
           } ${
             state.hasTransportation && state.enabled
-              ? 'border-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
+              ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
               : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-40 hover:opacity-100'
           }`}
         >
@@ -468,20 +476,20 @@ export default function Ventilation({ projectId }: VentilationProps) {
             <div className={`p-4 rounded-xl border transition-all duration-300 flex-shrink-0 ${
               state.hasTransportation && state.enabled ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37]' : 'bg-[#020B1C] border-[#1f2d4d] text-gray-500'
             }`}>
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h8a1 1 0 001-1zm0 0h5l4 4M5 20h14a1 1 0 001-1v-4a1 1 0 00-1-1h-5" /></svg>
+              <Truck className="w-8 h-8" />
             </div>
             <div className="text-right">
-              <h4 className="text-xl font-bold text-[#F0E6D2]">تكاليف النقل وتشوين خامات ومراوح التهوية بالدور</h4>
-              <p className="text-xs text-gray-400 mt-1">تأمين نقل الأجهزة ومراوح البلاور وتشوينها يدوياً للأدوار لسلامة الأجهزة من الخدش والكسر، حرّرها يدوياً:</p>
+              <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2">تكاليف النقل وتشوين خامات ومراوح التهوية بالدور</h4>
+              <p className="text-xs text-white mt-1">تأمين نقل الأجهزة ومراوح البلاور وتشوينها يدوياً للأدوار لسلامة الأجهزة من الخدش والكسر:</p>
               
-              {/* عداد تكاليف نقل وتشوين الألوميتال */}
+              {/* عداد تكاليف النقل اللوجستي والتشوين h-11 */}
               <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-44">
+                <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-44">
                   <button
                     type="button"
                     disabled={!state.hasTransportation || !state.enabled}
                     onClick={() => updateStateAndSave(prev => ({ transportationPrice: prev.transportationPrice + 100 }))}
-                    className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center"
+                    className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center font-sans"
                   >
                     +
                   </button>
@@ -492,7 +500,7 @@ export default function Ventilation({ projectId }: VentilationProps) {
                     type="button"
                     disabled={!state.hasTransportation || !state.enabled}
                     onClick={() => updateStateAndSave(prev => ({ transportationPrice: Math.max(0, prev.transportationPrice - 100) }))}
-                    className="w-6 h-6 rounded bg-[#07132a] text-gray-400 hover:bg-red-500 hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center"
+                    className="w-6 h-6 rounded bg-[#07132a] text-gray-400 hover:bg-red-500 hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center font-sans"
                   >
                     -
                   </button>
@@ -501,51 +509,48 @@ export default function Ventilation({ projectId }: VentilationProps) {
             </div>
           </div>
           <div className="text-center sm:text-left min-w-[145px] border-t sm:border-t-0 sm:border-r border-[#1f2d4d]/40 pt-4 sm:pt-0 sm:pr-6 w-full sm:w-auto select-none text-right">
-            <span className="text-xs text-gray-500 block font-semibold">كلفة التشوين المعتمدة:</span>
-            <span className="text-2xl font-black text-[#D4AF37] font-mono">{activeTransportationCost.toLocaleString('en-US')} ج.م</span>
+            <span className="text-xs text-white block font-semibold">تكلفة التشوين المعتمدة:</span>
+            <span className="text-xl font-black text-[#D4AF37] font-mono">{activeTransportationCost.toLocaleString('en-US')} ج.م</span>
           </div>
         </div>
 
-        {/* صندوق الملاحظات النصية المدمج */}
-        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-3">
-          <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#1f2d4d] pb-2 text-right">
+        {/* صندوق الملاحظات النصية الفاخر المدمج */}
+        <div className="p-6 rounded-[1.8rem] bg-[#07132a] border border-[#D4AF37] space-y-3">
+          <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#D4AF37] pb-2 text-right">
             <FileText className="w-5 h-5" />
-            <h4 className="text-base font-bold">اتفاقات وبنود مخصصة لأعمال وتجليد السلم الداخلي (اتفاقات العقد):</h4>
+            <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2">اتفاقات وبنود مخصصة لأعمال وتجليد السلم الداخلي:</h4>
           </div>
           <textarea
             value={notesInput}
             onChange={(e) => setNotesInput(e.target.value)}
             onBlur={handleNotesBlur}
-            placeholder="اكتب مواصفات الدهانات وملاحظات العقد الفنية بالتفصيل للعمال..."
+            placeholder="اكتب مواصفات التهوية الميكانيكية وملاحظات العقد الفنية بالتفصيل للعمال..."
             className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-lg text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none text-base leading-relaxed text-right font-semibold"
           />
           <div className="flex justify-between items-center text-xs text-gray-500 px-1">
             <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
-            <span>حالة الاتصال: متصل وسحابي</span>
+            <span>حالة الاتصال: متصل </span>
           </div>
         </div>
 
-        {/* كارت الملخص المالي النهائي الموحد الفاخر والمقتبس تماماً من كارت الكهرباء */}
-        <div className="p-6 rounded-2xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_25px_rgba(212,175,55,0.06)] flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
-          
-          {/* تصميم مذهب جانبي يعكس الطراز الملكي الفخم لشركة جولد ديكوريشن */}
-          <div className="absolute right-0 top-0 bottom-0 w-2 bg-[#D4AF37]" />
-
-          <div className="space-y-1 text-center sm:text-right pr-2 flex-1">
-            <h4 className="text-xl font-bold text-[#D4AF37]">الملخص المالي التقديري لأعمال الشفاطات والتهوية الميكانيكية بالـ BOQ:</h4>
-            <p className="text-sm text-gray-400 leading-relaxed mt-2 text-right">
-              حصر مالي كامل لبنود التأسيس المجمعة بقيمة ( {subtotalEstimate.toLocaleString()} ج.م) مضافاً إليها كلفة **الإشراف الهندسي المعتمد (15%)** بقيمة قدرها ({supervisionEstimate.toLocaleString()} ج.م) مع احتساب تكاليف النقل واللوجستيات لجميع الأجهزة والبلورات.
+        {/* 🌟 كارت الملخص المالي الإجمالي بعد تكبيره وتفخيمه ليتطابق مع القوانين الأرستقراطية للنظام */}
+       <div className="p-5 rounded-xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_20px_rgba(212,175,55,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden font-alexandria">
+          <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D4AF37]" />
+          <div className="space-y-1 text-center sm:text-right pr-1 select-none">
+            <h4 className="text-lg font-bold text-[#D4AF37]">الملخص المالي النهائي المعتمد لأعمال الشفاطات والتهوية الميكانيكية بالـ BOQ:</h4>
+           <p className="text-xs text-white font-normal leading-relaxed max-w-2xl text-right">
+              الاحتساب التلقائي اللحظي يمثل: مجموع كلفة أعمال تمديد وتأسيس خامات الشفاطات المجمعة بقيمة قدرها ({subtotalEstimate.toLocaleString()} ج.م) مضافاً إليها كلفة **الإشراف الهندسي الفني المعتمد للشركة (15%)** بقيمة قدرها ({supervisionEstimate.toLocaleString()} ج.م) مع احتساب أجور النقل والتشوين الميداني.
             </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-[#07132a] px-8 py-5 rounded-xl border border-[#1f2d4d]">
-            <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
-              <DollarSign className="w-8 h-8 animate-pulse" />
-            </div>
-            <div className="text-right">
-              <span className="text-xs text-gray-500 block font-semibold text-right">إجمالي تكلفة أعمال التهوية بالكامل:</span>
-              <span className="text-3xl font-black text-[#F0E6D2] font-mono">
-                {grandTotalEstimate.toLocaleString('en-US')} <span className="text-sm font-normal text-[#D4AF37]">ج.م</span>
+            <div className="flex items-center gap-3 bg-[#07132a] px-6 py-4 rounded-lg border border-[#1f2d4d]">
+                      <div className="p-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
+                        <DollarSign className="w-6 h-6" />
+                      </div>
+                      <div className="text-right">
+              <span className="text-[10px] text-white block font-semibold text-right">إجمالي تكلفة أعمال التهوية بالكامل:</span>
+              <span className="text-2xl font-black text-[#D4AF37] font-mono">
+                {grandTotalEstimate.toLocaleString('en-US')} <span className="text-xs font-normal">ج.م</span>
               </span>
             </div>
           </div>

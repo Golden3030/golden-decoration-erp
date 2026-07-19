@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useCRM } from "../context/CRMContext";
 import { supabase } from '@/lib/supabaseClient';
+import TabActivationBanner from './TabActivationBanner'; // 👈 استدعاء المكون المشترك الموحد للأجهزة اللمسية للشركة
 import {
   Check,
   ClipboardList,
@@ -98,11 +99,11 @@ const DEFAULT_PLASTER_STATE = {
   meshMetalPrice: 180,   
   meshFiberPrice: 90,     
   nailsBoxPrice: 75,      
-  waterLogisticsPrice: 150, // سعر خرطوم المياه الفردي
-  waterLogisticsQty: 0,     // عدد الخراطيم المطلوبة للمحارة
-  meshMetalQty: 0,          // كمية شبك السلك المجلفن
-  meshFiberQty: 0,          // كمية شبك الفايبر
-  nailsBoxesQty: 0,         // كمية علب المسامير
+  waterLogisticsPrice: 150, 
+  waterLogisticsQty: 0,     
+  meshMetalQty: 0,          
+  meshFiberQty: 0,          
+  nailsBoxesQty: 0,         
   logisticsFlat: 1500,
   repairsData: {
     description: "عمل مرمات محارة وتسكير فتحات الكهرباء والسباكة ومعالجة الشروخ بالكامل بمونة الجبس السريعة.",
@@ -163,7 +164,7 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
         if (specsData) setDbSpecs(specsData);
         if (productsData) setDbProducts(productsData);
       } catch (error) {
-        console.error("خطأ أثناء جلب مكتبات التشطيبات السحابية للحساب الحي:", error);
+        console.error("خطأ أثناء جلب بيانات اعمال المحارة للحساب :", error);
       } finally {
         setLoading(false);
       }
@@ -171,7 +172,7 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
     if (projectId) fetchLibraries();
   }, [projectId]);
 
-  // اقتران ومزامنة البيانات المحفوظة مسبقاً لمشروع العميل الحالي
+  // اقتران ومزامنة البيانات المخزنة مسبقاً لمشروع العميل الحالي
   useEffect(() => {
     if (crmData?.finishing?.plaster) {
       const plasterContext = crmData.finishing.plaster;
@@ -199,7 +200,7 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
         nailsBoxesQty: plasterContext.nailsBoxesQty ?? 0,
         logisticsFlat: plasterContext.logisticsFlat ?? 1500,
         repairsData: {
-          description: plasterContext.repairsData?.description ?? "عمل مرمات محارة وتسكير فتحات الكهرباء والسباكة ومعالجة الشروخ بالكامل بمونة الجبس السريعة.",
+          description: plasterContext.repairsData?.description ?? "عمل مرمات تسكير فتحات الكهرباء ومعالجة الشروخ بالكامل.",
           laborCost: plasterContext.repairsData?.laborCost ?? 0,
           logisticsCost: plasterContext.repairsData?.logisticsCost ?? 0,
           repairsCementQty: plasterContext.repairsData?.repairsCementQty ?? 0,   
@@ -357,42 +358,29 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
 
   return (
     
-    <div className="space-y-8 text-right font-sans p-1 select-none" dir="rtl">
+    <div className="space-y-8 text-right font-alexandria p-1 select-none" dir="rtl">
       
-      {/* 1. هيدر التفعيل الرئيسي ذو الطابع الملكي الفاخر والمضاء كلياً */}
-      <div 
-        onClick={toggleMainHeader}
-        className={`p-6 rounded-[2.5rem] border transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl cursor-pointer select-none ${
-          isSectionActive 
-            ? 'bg-[#07132a] border-[#D4AF37] shadow-[0_0_30px_rgba(212,175,55,0.15)] hover:shadow-[0_0_40px_rgba(212,175,55,0.25)]' 
-            : 'bg-[#07132a]/40 border-[#1f2d4d] hover:border-gray-600'
-        }`}
-      >
-        <div className="flex items-center gap-6 pr-2">
-          <div className={`p-5 rounded-2xl transition-all duration-500 ${isSectionActive ? 'bg-[#D4AF37] text-black shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'bg-[#020B1C] text-gray-600'}`}>
-            <Layers className="w-10 h-10" />
-          </div>
-          <div className="text-right">
-            <h4 className="text-xl font-black text-[#F0E6D2]">أعمال بياض المحارة والترميم</h4>
-            <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest leading-none">PLASTERING & REPAIR SYSTEM</p>
-          </div>
-        </div>
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap');
+        
+        .font-alexandria {
+          font-family: 'Alexandria', Arial, sans-serif !important;
+          letter-spacing: normal !important;
+        }
+      `}</style>
 
-        <div
-          className={`px-10 py-3 rounded-2xl border-2 font-black text-base transition-all duration-300 flex items-center gap-3 flex-shrink-0 ${
-            isSectionActive 
-              ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-              : 'bg-[#020B1C] border-[#1f2d4d] text-[#D4AF37]'
-          }`}
-        >
-          {isSectionActive ? <CheckCircle2 className="w-6 h-6 text-[#D4AF37]" /> : <Lock className="w-5 h-5 text-gray-500" />}
-          {isSectionActive ? 'القسم مفعل' : 'القسم مقفل'}
-        </div>
-      </div>
+      {/* 🌟 تم تسييل واستدعاء كارت التفعيل اللمسي المشترك الموحد للشركة (بدون سويتش On/Off ومضاء بكامل حيز الكارت) */}
+      <TabActivationBanner 
+        title="أعمال المحارة والمصيص والترميم"
+        subtitle="PLASTERING & REPAIR SYSTEM"
+        icon={Layers}
+        enabled={isSectionActive}
+        onToggle={toggleMainHeader}
+      />
 
       <div className={`space-y-8 transition-opacity duration-300 ${isSectionActive ? 'opacity-100' : 'opacity-25 pointer-events-none filter grayscale'}`}>
 
-        {/* 2. المبدل الحصري: محارة إنشائية / مرمات وترميم بتصميم تفاعلي فاخر باليد */}
+        {/* 2. المبدل الحصري: محارة إنشائية / مرمات وترميم */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 select-none">
           
           {/* المحارة الإنشائية */}
@@ -407,12 +395,29 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 <Layers className="w-7 h-7" />
               </div>
               <div className="text-right">
-                <h4 className="text-xl font-bold text-[#F0E6D2]">أعمال بياض المحارة الإنشائية</h4>
-                <p className="text-xs text-gray-500 mt-1">حساب تلقائي متكامل بالمساحات، الكماليات، المون، واللوجستيات</p>
+                <h4 className="text-lg font-bold text-[#D4AF37]">أعمال بياض المحارة والمصيص الإنشائية</h4>
+                <p className="text-xs text-white mt-1">حساب تلقائي متكامل بالمساحات، الكماليات، المون، واللوجستيات</p>
               </div>
             </div>
-            <div className={`h-8 w-14 rounded-full relative transition-all cursor-pointer ${state.enabled ? 'bg-[#D4AF37]' : 'bg-gray-700'}`}>
-              <div className={`absolute top-1 h-6 w-6 rounded-full bg-white transition-all ${state.enabled ? 'right-7' : 'right-1'}`} />
+            
+            {/* مجرى السحب المنزلق المذهب المصقول التفاعلي الموحد */}
+            <div className="flex items-center gap-3 shrink-0 select-none" onClick={(e) => e.stopPropagation()}>
+              <div 
+                onClick={() => togglePlasterMode(!state.enabled)}
+                className={`w-12 h-6 rounded-full relative p-0.5 transition-all duration-300 cursor-pointer ${
+                  state.enabled 
+                    ? 'bg-[#020B1C] border border-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.15)]' 
+                    : 'bg-[#020B1C]/80 border border-[#1f2d4d]'
+                }`}
+              >
+                <div 
+                  className={`w-4.5 h-4.5 rounded-full absolute top-[3px] transition-all duration-300 ${
+                    state.enabled 
+                      ? 'right-[25px] bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] shadow-[0_0_10px_#D4AF37]' 
+                      : 'right-[3px] bg-gray-600'
+                  }`}
+                />
+              </div>
             </div>
           </div>
 
@@ -428,12 +433,29 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 <Notebook className="w-7 h-7" />
               </div>
               <div className="text-right">
-                <h4 className="text-xl font-bold text-[#F0E6D2]">نظام المرمات وتسكير الفتحات يدوياً</h4>
-                <p className="text-xs text-gray-500 mt-1">تسجيل مقطوعات أجور الفنيين مع حصر خامات المونة والجبس للمرمات</p>
+                <h4 className="text-lg font-bold text-[#D4AF37]"> ترميم التسكير والفتحات يدوياً (المرمات) </h4>
+                <p className="text-xs text-white mt-1">تسجيل مقطوعات مصنعية الفنيين مع حصر خامات المونة والجبس للمرمات</p>
               </div>
             </div>
-            <div className={`h-8 w-14 rounded-full relative transition-all cursor-pointer ${state.isRepairsEnabled ? 'bg-[#D4AF37]' : 'bg-gray-700'}`}>
-              <div className={`absolute top-1 h-6 w-6 rounded-full bg-white transition-all ${state.isRepairsEnabled ? 'right-7' : 'right-1'}`} />
+            
+            {/* مجرى السحب المنزلق المذهب المصقول التفاعلي الموحد */}
+            <div className="flex items-center gap-3 shrink-0 select-none" onClick={(e) => e.stopPropagation()}>
+              <div 
+                onClick={() => toggleRepairsMode(!state.isRepairsEnabled)}
+                className={`w-12 h-6 rounded-full relative p-0.5 transition-all duration-300 cursor-pointer ${
+                  state.isRepairsEnabled 
+                    ? 'bg-[#020B1C] border border-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.15)]' 
+                    : 'bg-[#020B1C]/80 border border-[#1f2d4d]'
+                }`}
+              >
+                <div 
+                  className={`w-4.5 h-4.5 rounded-full absolute top-[3px] transition-all duration-300 ${
+                    state.isRepairsEnabled 
+                      ? 'right-[25px] bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] shadow-[0_0_10px_#D4AF37]' 
+                      : 'right-[3px] bg-gray-600'
+                  }`}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -444,8 +466,8 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
             {/* كروت اختيار باقة ومواصفة الاستلام */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 p-2 border-r-4 border-[#D4AF37] mr-2">
-                <span className="text-lg">📐</span>
-                <h4 className="text-lg font-black text-[#B48C34]">أولاً: حدد مواصفة ونوع أعمال المحارة المعتمدة للوحدة:</h4>
+                <Layers className="w-5 h-5 text-[#D4AF37]" />
+                <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2">أولاً: حدد مواصفة ونوع أعمال المحارة المعتمدة للوحدة:</h4>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -494,73 +516,70 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
             </div>
 
             {/* كارت حصر وتقدير المساحات التلقائي بالعداد الفخم */}
-            <div className="p-8 rounded-3xl bg-gradient-to-br from-[#07132a] via-[#020B1C] to-[#07132a] border border-[#1f2d4d] space-y-6">
-              <div className="border-b border-[#1f2d4d] pb-4 text-right">
-                <h4 className="text-xl font-bold text-[#D4AF37] flex items-center gap-2">
-                  <span>📐</span> كارت حصر وتقدير مساحات أعمال المحارة بالوحدة
+            <div className="p-8 rounded-3xl bg-[#07132a] border border-[#D4AF37] space-y-6">
+              <div className="border-b border-[#D4AF37] pb-4 text-right">
+                <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2">
+                  <span>📐</span>  حصر وتقدير مساحات أعمال المحارة بالوحدة
                 </h4>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className="text-xs text-white mt-1">
                   يقوم النظام بضرب مساحة الشقة الإجمالية ({totalUnitArea} م²) في معدل حصر الجدران القياسي المعتمد (× 3)، ومساحة الأسقف القياسية (× 1) تلقائياً
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* مساحة محارة الجدران */}
+                
+                {/* مساحة محارة الجدران المحدّثة بـ h-11 والدواير w-6 h-6 بكسلياً طبقا للدستور */}
                 <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between">
                   <div className="text-right">
-                    <span className="text-sm font-semibold text-[#F0E6D2] block">مساحة محارة الجدران الإجمالية</span>
-                    <p className="text-xs text-gray-500 mt-1">المساحة القياسية لجدران الشقة (مساحة الشقة × 3)</p>
+                    <span className="text-sm font-semibold text-[#D4AF37] block">إجمالي مساحة حوائط المشروع</span>
+                    <p className="text-xs text-white mt-1">المساحة القياسية لجدران الشقة (مساحة الوحدة × 3)</p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => updateStateAndSave(prev => ({ wallArea: prev.wallArea + 5 }))}
-                      className="w-10 h-10 rounded-xl bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] hover:border-[#D4AF37] flex items-center justify-center transition-all cursor-pointer"
+                  <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-36" dir="ltr">
+                    <button 
+                      type="button" 
+                      onClick={() => updateStateAndSave(prev => ({ wallArea: prev.wallArea + 5 }))} 
+                      className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-sm transition active:scale-90"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus size={12} className="stroke-[3]" />
                     </button>
-                    <span className="text-2xl font-bold text-[#D4AF37] min-w-[30px] text-center font-mono">
-                      {state.wallArea} <span className="text-xs font-normal text-gray-500">م²</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => updateStateAndSave(prev => ({ wallArea: Math.max(0, prev.wallArea - 5) }))}
-                      className="w-10 h-10 rounded-xl bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center transition-all cursor-pointer"
+                    <span className="text-base font-black text-white font-mono">{state.wallArea} <span className="text-[10px] text-gray-500 font-bold">م²</span></span>
+                    <button 
+                      type="button" 
+                      onClick={() => updateStateAndSave(prev => ({ wallArea: Math.max(0, prev.wallArea - 5) }))} 
+                      className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                     >
-                      <Minus className="w-4 h-4" />
+                      <Minus size={12} className="stroke-[3]" />
                     </button>
                   </div>
                 </div>
 
-                {/* مساحة محارة الأسقف */}
+                {/* مساحة محارة الأسقف المحدّثة بـ h-11 والدواير w-6 h-6 بكسلياً طبقا للدستور */}
                 <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between">
                   <div className="text-right">
-                    <span className="text-sm font-semibold text-[#F0E6D2] block">مساحة محارة الأسقف الإجمالية</span>
-                    <p className="text-xs text-gray-500 mt-1">المساحة القياسية لأسقف الشقة (مساحة الشقة × 1)</p>
+                    <span className="text-sm font-semibold text-[#D4AF37] block">إجمالي مساحة أسقف المشروع</span>
+                    <p className="text-xs text-white mt-1">المساحة القياسية لأسقف الوحدة (مساحة الوحدة × 1)</p>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => updateStateAndSave(prev => ({ ceilingArea: prev.ceilingArea + 5 }))}
-                      className="w-10 h-10 rounded-xl bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] hover:border-[#D4AF37] flex items-center justify-center transition-all cursor-pointer"
+                  <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-36" dir="ltr">
+                    <button 
+                      type="button" 
+                      onClick={() => updateStateAndSave(prev => ({ ceilingArea: prev.ceilingArea + 5 }))} 
+                      className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-sm transition active:scale-90"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus size={12} className="stroke-[3]" />
                     </button>
-                    <span className="text-2xl font-bold text-[#D4AF37] min-w-[30px] text-center font-mono">
-                      {state.ceilingArea} <span className="text-xs font-normal text-gray-500">م²</span>
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => updateStateAndSave(prev => ({ ceilingArea: Math.max(0, prev.ceilingArea - 5) }))}
-                      className="w-10 h-10 rounded-xl bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center transition-all cursor-pointer"
+                    <span className="text-base font-black text-white font-mono">{state.ceilingArea} <span className="text-[10px] text-gray-500 font-bold">م²</span></span>
+                    <button 
+                      type="button" 
+                      onClick={() => updateStateAndSave(prev => ({ ceilingArea: Math.max(0, prev.ceilingArea - 5) }))} 
+                      className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                     >
-                      <Minus className="w-4 h-4" />
+                      <Minus size={12} className="stroke-[3]" />
                     </button>
                   </div>
                 </div>
               </div>
 
-              {/* خيار إدراج محارة السقف بالباقة باليد الفاخرة */}
+              {/* خيار إدراج محارة السقف بالباقة */}
               <div
                 onClick={() => {
                   updateStateAndSave(prev => ({ includeCeilings: !prev.includeCeilings }));
@@ -572,8 +591,8 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 }`}
               >
                 <div className="text-right">
-                  <span className="text-base font-bold text-[#F0E6D2]">إدراج واحتساب محارة الأسقف بالمقايسة الإنشائية</span>
-                  <span className="text-xs text-gray-400 block mt-1 font-normal">
+                  <span className="text-base font-bold text-[#D4AF37]">إدراج واحتساب محارة الأسقف بالمقايسة الإنشائية</span>
+                  <span className="text-xs text-white block mt-1 font-normal">
                     تفعيل هذا الخيار يضيف مسطح الأسقف المتري ({state.ceilingArea} م²) إلى الحساب المالي الإجمالي لبند المحارة
                   </span>
                 </div>
@@ -583,16 +602,16 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                     state.includeCeilings ? 'bg-[#D4AF37] text-[#020B1C]' : 'bg-[#1f2d4d] text-gray-500'
                   }`}
                 >
-                  {state.includeCeilings ? 'محتسب بالباقة' : 'عرض ترقية وإضافة'}
+                  {state.includeCeilings ? ' تم اضافة السقف' : 'اضف السقف للمقايسة'}
                 </button>
               </div>
             </div>
 
             {/* الخطوات الفنية للاستلام الاسترشادي الهندسي مذهب العنوان */}
-            <div className="p-8 rounded-3xl bg-[#07132a] border border-[#1f2d4d] space-y-6 select-none">
-              <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#1f2d4d] pb-4 text-right">
+            <div className="p-8 rounded-3xl bg-[#07132a] border border-[#D4AF37] space-y-6 select-none">
+              <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#D4AF37] pb-4 text-right">
                 <ClipboardList className="w-6 h-6 animate-pulse" />
-                <h4 className="text-xl font-bold text-[#B48C34]">خطوات التأكيد الفني والاستلام الهندسي للبند بموقع العميل:</h4>
+                <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2">خطوات التنفيذ الفني والاستلام الهندسي للبند :</h4>
               </div>
 
               {stepsToRender.length > 0 ? (
@@ -616,11 +635,11 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
               )}
             </div>
 
-            {/* قسم الخامات الأساسية (رمل وأسمنت) باللون الأخضر المتوهج الفاخر والواضح جداً */}
-            <div className="p-8 rounded-3xl bg-[#07132a] border border-[#1f2d4d] space-y-6">
-              <div className="flex items-center gap-2 border-b border-[#1f2d4d] pb-4 text-[#D4AF37] text-right">
+            {/* قسم الخامات الأساسية رمل وأسمنت بالتوهج الفاخر والواضح جداً */}
+            <div className="p-8 rounded-3xl bg-[#07132a] border border-[#D4AF37] space-y-6">
+              <div className="flex items-center gap-2 border-b border-[#D4AF37] pb-4 text-[#D4AF37] text-right">
                 <Layers className="w-5 h-5 animate-pulse" />
-                <h4 className="text-xl font-bold text-[#B48C34]">ثالثاً: مون وتأسيس أعمال المحارة المعتمدة للخلط 🧪:</h4>
+                <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2">ثالثاً: مون التأسيس لأعمال المحارة المعتمدة  🧪:</h4>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -628,7 +647,7 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 {/* الأسمنت باللون الأخضر الصريح والفاخر */}
                 <div className="p-6 rounded-3xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[160px] space-y-4 hover:border-[#D4AF37]/30 transition-all text-right">
                   <div>
-                    <span className="text-sm font-semibold text-[#F0E6D2] block">نوع براند أسمنت التمليط والتركيب:</span>
+                    <span className="text-sm font-semibold text-[#F0E6D2] block">نوع براند الأسمنت:</span>
                     <select value={state.selectedCementId} onChange={(e) => handleMaterialBrandSave('cement', e.target.value)} className="p-2 rounded-lg bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] text-xs font-bold outline-none cursor-pointer w-full mt-2">
                       <option value="">-- اختر براند الأسمنت المعتمد --</option>
                       {cementProducts.map((p) => (
@@ -641,13 +660,13 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                   {state.selectedCementId && activeCement && (
                     <div className="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/30 text-emerald-400 flex flex-col justify-center gap-1.5 animate-fade-in select-none text-right">
                       <div className="flex justify-between items-center text-xs font-bold">
-                        <span>الكمية المطلوبة للمساحة ({totalPlasterArea} م²):</span>
+                        <span> المطلوبة للمساحة ({totalPlasterArea} م²):</span>
                         <span className="text-emerald-300 font-black font-mono text-sm">
                           {requiredCementBags} شكارة ({((requiredCementBags * 50) / 1000).toFixed(2)} طن)
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-xs border-t border-emerald-500/10 pt-1.5 mt-0.5">
-                        <span className="font-bold">إجمالي كلفة الأسمنت:</span>
+                        <span className="font-bold">إجمالي تكلفة الأسمنت:</span>
                         <span className="text-emerald-400 font-black font-mono text-base">= {totalCementCost.toLocaleString('en-US')} ج.م</span>
                       </div>
                     </div>
@@ -657,9 +676,9 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 {/* الرمل باللون الأخضر الصريح والفاخر والواضح جداً */}
                 <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[160px] space-y-4 hover:border-[#D4AF37]/30 transition-all text-right">
                   <div>
-                    <span className="text-sm font-semibold text-[#F0E6D2] block">مورد الرمل المصفى المعتمد:</span>
+                    <span className="text-sm font-semibold text-[#F0E6D2] block">مورد الرمل المعتمد:</span>
                     <select value={state.selectedSandId} onChange={(e) => handleMaterialBrandSave('sand', e.target.value)} className="p-2 rounded-lg bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] text-xs font-bold outline-none cursor-pointer w-full mt-2">
-                      <option value="">-- اختر مورد الرمل المصفى --</option>
+                      <option value="">-- اختر مورد الرمل  --</option>
                       {sandProducts.map((p) => (
                         <option key={p.id} value={p.id} className="bg-[#020B1C] text-white">
                           {p.company || "مورد معتمد"} - {p.product_name} ({p.price} ج.م / {p.unit})
@@ -676,7 +695,7 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                         </span>
                       </div>
                       <div className="flex justify-between items-center text-xs border-t border-emerald-500/10 pt-1.5 mt-0.5">
-                        <span className="font-bold">إجمالي كلفة الرمل المصفى:</span>
+                        <span className="font-bold">إجمالي تكلفة الرمل :</span>
                         <span className="text-emerald-400 font-black font-mono text-base">= {totalSandCost.toLocaleString('en-US')} ج.م</span>
                       </div>
                     </div>
@@ -686,10 +705,10 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
             </div>
 
             {/* مخزن كماليات وإكسسوارات بياض المحارة بالعداد المذهب الفاخر المحرر للأسعار والكميات بالكامل */}
-            <div className="p-8 rounded-3xl bg-[#07132a] border border-[#1f2d4d] space-y-6 select-none">
-              <div className="border-b border-[#1f2d4d] pb-4 flex items-center gap-2 text-right">
+            <div className="p-8 rounded-3xl bg-[#07132a] border border-[#D4AF37] space-y-6 select-none">
+              <div className="border-b border-[#D4AF37] pb-4 flex items-center gap-2 text-right">
                 <Wrench className="w-6 h-6 text-[#D4AF37]" />
-                <h4 className="text-xl font-bold text-[#B48C34]">رابعاً: مخزن الكماليات وإكسسوارات بياض المحارة المعتمدة 🛠️:</h4>
+                <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2">رابعاً: الكماليات وإكسسوارات بياض المحارة المعتمدة 🛠️:</h4>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -697,7 +716,7 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 {/* شبك سلك مجلفن */}
                 <div className="p-4 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[155px] space-y-2 hover:border-[#D4AF37]/40 transition-all">
                   <div className="space-y-1 text-right">
-                    <span className="text-xs font-bold text-[#F0E6D2] block">شبك سلك تمديد مجلفن</span>
+                    <span className="text-xs font-bold text-[#D4AF37] block">شبك سلك تمديد مجلفن</span>
                     
                     {/* تحرير سعر لفة السلك تفاعلياً */}
                     <div className="flex items-center gap-1 mt-1.5 justify-between" onClick={(e) => e.stopPropagation()}>
@@ -709,12 +728,13 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                       </div>
                     </div>
                   </div>
+                  {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                   <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-2" dir="rtl" onClick={(e) => e.stopPropagation()}>
                     <span className="text-[10px] text-gray-500 font-bold">الكمية:</span>
-                    <div className="flex items-center bg-[#07132a] border border-[#1f2d4d] rounded-xl h-9 px-1.5 gap-2 select-none" dir="ltr">
-                      <button type="button" onClick={() => updateStateAndSave(prev => ({ meshMetalQty: prev.meshMetalQty + 1 }))} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] cursor-pointer">+</button>
+                    <div className="flex items-center bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-1.5 gap-2 select-none" dir="ltr">
+                      <button type="button" onClick={() => updateStateAndSave(prev => ({ meshMetalQty: prev.meshMetalQty + 1 }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] cursor-pointer">+</button>
                       <span className="text-xs font-bold text-white font-mono min-w-[16px] text-center">{state.meshMetalQty || 0}</span>
-                      <button type="button" onClick={() => updateStateAndSave(prev => ({ meshMetalQty: Math.max(0, prev.meshMetalQty - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                      <button type="button" onClick={() => updateStateAndSave(prev => ({ meshMetalQty: Math.max(0, prev.meshMetalQty - 1) }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
                     </div>
                   </div>
                 </div>
@@ -722,7 +742,7 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 {/* شبك فايبر */}
                 <div className="p-4 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[155px] space-y-2 hover:border-[#D4AF37]/40 transition-all">
                   <div className="space-y-1 text-right">
-                    <span className="text-xs font-bold text-[#F0E6D2] block">شبك فايبر لمعالجة الشروخ</span>
+                    <span className="text-xs font-bold text-[#D4AF37] block">شبك فايبر لمعالجة الشروخ</span>
                     
                     {/* تحرير سعر بكرة شبك الفايبر */}
                     <div className="flex items-center gap-1 mt-1.5 justify-between" onClick={(e) => e.stopPropagation()}>
@@ -734,12 +754,13 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                       </div>
                     </div>
                   </div>
+                  {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                   <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-2" dir="rtl">
                     <span className="text-[10px] text-gray-500 font-bold">العدد:</span>
-                    <div className="flex items-center bg-[#07132a] border border-[#1f2d4d] rounded-xl h-9 px-1.5 gap-2 select-none" dir="ltr" onClick={(e) => e.stopPropagation()}>
-                      <button type="button" onClick={() => updateStateAndSave(prev => ({ meshFiberQty: (prev.meshFiberQty || 0) + 1 }))} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] cursor-pointer">+</button>
+                    <div className="flex items-center bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-1.5 gap-2 select-none" dir="ltr" onClick={(e) => e.stopPropagation()}>
+                      <button type="button" onClick={() => updateStateAndSave(prev => ({ meshFiberQty: (prev.meshFiberQty || 0) + 1 }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] cursor-pointer">+</button>
                       <span className="text-xs font-bold text-white font-mono min-w-[16px] text-center">{state.meshFiberQty || 0}</span>
-                      <button type="button" onClick={() => updateStateAndSave(prev => ({ meshFiberQty: Math.max(0, (state.meshFiberQty || 0) - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                      <button type="button" onClick={() => updateStateAndSave(prev => ({ meshFiberQty: Math.max(0, (state.meshFiberQty || 0) - 1) }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
                     </div>
                   </div>
                 </div>
@@ -747,7 +768,7 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 {/* مسامير وورد التثبيت */}
                 <div className="p-4 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[155px] space-y-2 hover:border-[#D4AF37]/40 transition-all">
                   <div className="space-y-1 text-right">
-                    <span className="text-xs font-bold text-[#F0E6D2] block">مسامير وورد تثبيت الشبك</span>
+                    <span className="text-xs font-bold text-[#D4AF37] block">مسامير وورد تثبيت الشبك</span>
                     
                     {/* تحرير سعر علبة المسامير */}
                     <div className="flex items-center gap-1 mt-1.5 justify-between" onClick={(e) => e.stopPropagation()}>
@@ -759,12 +780,13 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                       </div>
                     </div>
                   </div>
+                  {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                   <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-2" dir="rtl">
                     <span className="text-[10px] text-gray-500 font-bold">العدد:</span>
-                    <div className="flex items-center bg-[#07132a] border border-[#1f2d4d] rounded-xl h-9 px-1.5 gap-2 select-none" dir="ltr" onClick={(e) => e.stopPropagation()}>
-                      <button type="button" onClick={() => updateStateAndSave(prev => ({ nailsBoxesQty: prev.nailsBoxesQty + 1 }))} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] cursor-pointer">+</button>
+                    <div className="flex items-center bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-1.5 gap-2 select-none" dir="ltr" onClick={(e) => e.stopPropagation()}>
+                      <button type="button" onClick={() => updateStateAndSave(prev => ({ nailsBoxesQty: prev.nailsBoxesQty + 1 }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] cursor-pointer">+</button>
                       <span className="text-xs font-bold text-white font-mono min-w-[16px] text-center">{state.nailsBoxesQty || 0}</span>
-                      <button type="button" onClick={() => updateStateAndSave(prev => ({ nailsBoxesQty: Math.max(0, prev.nailsBoxesQty - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                      <button type="button" onClick={() => updateStateAndSave(prev => ({ nailsBoxesQty: Math.max(0, prev.nailsBoxesQty - 1) }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
                     </div>
                   </div>
                 </div>
@@ -786,12 +808,13 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                       </div>
                     </div>
                   </div>
+                  {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                   <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-2" dir="rtl" onClick={(e) => e.stopPropagation()}>
                     <span className="text-[10px] text-gray-500 font-bold">العدد:</span>
-                    <div className="flex items-center bg-[#07132a] border border-[#1f2d4d] rounded-xl h-9 px-1.5 gap-2 select-none" dir="ltr">
-                      <button type="button" onClick={() => updateStateAndSave(prev => ({ waterLogisticsQty: prev.waterLogisticsQty + 1 }))} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] cursor-pointer">+</button>
+                    <div className="flex items-center bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-1.5 gap-2 select-none" dir="ltr">
+                      <button type="button" onClick={() => updateStateAndSave(prev => ({ waterLogisticsQty: prev.waterLogisticsQty + 1 }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] cursor-pointer">+</button>
                       <span className="text-sm font-bold text-[#D4AF37] font-mono min-w-[16px] text-center">{state.waterLogisticsQty || 0}</span>
-                      <button type="button" onClick={() => updateStateAndSave(prev => ({ waterLogisticsQty: Math.max(0, prev.waterLogisticsQty - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                      <button type="button" onClick={() => updateStateAndSave(prev => ({ waterLogisticsQty: Math.max(0, prev.waterLogisticsQty - 1) }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
                     </div>
                   </div>
                 </div>
@@ -803,23 +826,24 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 <div className="flex items-center gap-3 text-right">
                   <Truck className="w-5 h-5 text-[#D4AF37]" />
                   <div>
-                    <span className="text-sm font-bold text-[#F0E6D2] block">تكاليف وتشوين الرمل والأسمنت بالدور (مقطوعية)</span>
+                    <span className="text-sm font-bold text-[#D4AF37] flex items-center gap-2">تكاليف تشوين الرمل والأسمنت  (مقطوعية)</span>
                     <span className="text-xs text-gray-500 block mt-1 leading-normal">تشمل الرفع بالعمالة اليدوية أو الأوناش لسلامة الموقع من الأضرار، حرّر تكلفتها يدويًا:</span>
                   </div>
                 </div>
+                {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                 <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-44">
-                  <button type="button" onClick={() => updateStateAndSave(prev => ({ logisticsFlat: prev.logisticsFlat + 100 }))} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                  <button type="button" onClick={() => updateStateAndSave(prev => ({ logisticsFlat: prev.logisticsFlat + 100 }))} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                   <span className="text-base font-black text-white font-mono">{(state.logisticsFlat || 0).toLocaleString()} <span className="text-[10px] text-gray-500 font-normal">ج</span></span>
-                  <button type="button" onClick={() => updateStateAndSave(prev => ({ logisticsFlat: Math.max(0, (state.logisticsFlat || 0) - 100) }))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                  <button type="button" onClick={() => updateStateAndSave(prev => ({ logisticsFlat: Math.max(0, (state.logisticsFlat || 0) - 100) }))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                 </div>
               </div>
             </div>
 
             {/* صندوق الملاحظات */}
-            <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-3">
-              <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#1f2d4d]/60 pb-2 text-right">
+            <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-3">
+              <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#D4AF37]/60 pb-2 text-right">
                 <FileText className="w-5 h-5" />
-                <h4 className="text-base font-bold">ملاحظات وشروط أعمال بياض المحارة (بنود العقد الفنية):</h4>
+                <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2">ملاحظات وشروط أعمال بياض المحارة :</h4>
               </div>
               <textarea
                 value={notesInput}
@@ -830,10 +854,10 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
               />
               <div className="flex justify-between items-center text-xs text-gray-500 px-1">
                 <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
-                <span>حالة الاتصال: متصل وسحابي</span>
+                <span>حالة الاتصال: متصل </span>
               </div>
             </div>
-            </div>
+          </div>
 
           
         )}
@@ -841,35 +865,35 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
         {/* 4. مسار المرمات وتسكير الفتحات */}
         {state.isRepairsEnabled && (
           <div className="space-y-6 animate-fade-in text-right">
-            <div className="p-8 rounded-3xl bg-[#07132a] border border-[#D4AF37]/30 shadow-2xl space-y-8">
-              <div className="flex items-center gap-3 text-[#D4AF37] border-b border-[#1f2d4d] pb-4 text-right">
+            <div className="p-8 rounded-3xl bg-[#07132a] border border-[#D4AF37] shadow-2xl space-y-8">
+              <div className="flex items-center gap-3 text-[#D4AF37] border-b border-[#D4AF37] pb-4 text-right">
                 <Notebook className="w-8 h-8 animate-pulse" />
-                <h4 className="text-2xl font-black text-[#B48C34]">خامساً: أعمال المرمات والترميم الفنية بموقع العميل 🛠️:</h4>
+                <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2"> أعمال المرمات والترميم الفنية بالمشروع  🛠️:</h4>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="md:col-span-2 space-y-3 text-right">
-                  <label className="text-lg text-gray-400 font-bold block pr-2">توصيف المرمات المطلوبة:</label>
+                  <label className="text-lg text-[#D4AF37] font-bold block pr-2">توصيف المرمات المطلوبة:</label>
                   <textarea
                     value={repairsData.description}
                     onChange={(e) => handleRepairsChange({ description: e.target.value })}
-                    className="w-full h-32 p-5 rounded-2xl bg-[#020B1C] border border-[#1f2d4d] text-[#F0E6D2] text-xl outline-none focus:border-[#D4AF37] leading-loose shadow-inner text-right font-semibold"
+                    className="w-full h-32 p-5 rounded-2xl bg-[#020B1C] border border-[#1f2d4d] text-[#F0E6D2] text-md outline-none focus:border-[#D4AF37] leading-loose shadow-inner text-right font-semibold"
                   />
                 </div>
 
                 {/* حصر خامات المرمات يدوياً بأسعار وكميات مذهبة كبيرة وعريضة الخط لسهولة قراءة المبيعات وتحرير الأسعار بالكامل */}
-                <div className="md:col-span-2 p-6 rounded-3xl bg-[#020B1C]/60 border border-[#1f2d4d] space-y-4">
-                  <span className="text-sm font-bold text-[#D4AF37] block border-b border-[#1f2d4d]/40 pb-2">خامات مون ومونة المرمات المخصصة للبند (عدادات أسعار وكميات حرة بالكامل):</span>
+                <div className="md:col-span-2 p-6 rounded-3xl bg-[#020B1C]/60 border border-[#D4AF37] space-y-4">
+                  <span className="text-lg font-bold text-[#D4AF37] flex items-center gap-2 border-b border-[#D4AF37] pb-2">خامات مون المرمات المطلوبة  (عدادات أسعار وكميات حرة بالكامل):</span>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     
                     {/* أسمنت المرمات - تحرير الكمية وتحرير سعر الشكارة يدوياً بالعداد الفخم */}
                     <div className="p-5 rounded-2xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[160px] space-y-4 hover:border-[#D4AF37]/40 transition-all select-none">
                       <div className="text-right">
-                        <span className="text-base font-black text-[#F0E6D2] block">أسمنت المرمات (شكارة)</span>
+                        <span className="text-sm font-black text-[#D4AF37] block">أسمنت المرمات (شكارة)</span>
                         
                         {/* عداد تحرير سعر شكارة أسمنت المرمات يدوياً */}
                         <div className="flex items-center gap-1 mt-1.5 justify-between" onClick={(e) => e.stopPropagation()}>
-                          <span className="text-[10px] text-gray-500">سعر الشكارة:</span>
+                          <span className="text-[11px] text-white">سعر الشكارة:</span>
                           <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-lg h-8 px-1 w-24">
                             <button type="button" onClick={() => handleRepairsChange({ repairsCementPrice: repairsCementPrice + 10 })} className="w-5 h-5 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-[9px] flex items-center justify-center cursor-pointer">+</button>
                             <span className="text-xs font-bold text-white font-mono">{repairsCementPrice}</span>
@@ -878,8 +902,8 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                         </div>
                       </div>
                       <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-3" dir="rtl" onClick={(e) => e.stopPropagation()}>
-                        <span className="text-xs text-gray-400 font-semibold">الكمية:</span>
-                        <div className="flex items-center bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-32" dir="ltr">
+                        <span className="text-xs text-white font-semibold">الكمية:</span>
+                        <div className="flex items-center bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-25" dir="ltr">
                           <button type="button" onClick={() => handleRepairsChange({ repairsCementQty: (repairsData.repairsCementQty || 0) + 1 })} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
                           <span className="text-base font-black text-white font-mono min-w-[24px] text-center">{repairsData.repairsCementQty || 0}</span>
                           <button type="button" onClick={() => handleRepairsChange({ repairsCementQty: Math.max(0, (repairsData.repairsCementQty || 0) - 1) })} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
@@ -890,11 +914,11 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                     {/* رمل المرمات - تحرير الكمية وتحرير سعر المتر يدوياً بالعداد الفخم */}
                     <div className="p-5 rounded-2xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[160px] space-y-4 hover:border-[#D4AF37]/40 transition-all select-none">
                       <div className="text-right">
-                        <span className="text-base font-black text-[#F0E6D2] block">رمل المرمات المصفى (م³)</span>
+                        <span className="text-ms font-black text-[#D4AF37] block">رمل المرمات  (م³)</span>
                         
                         {/* عداد تحرير سعر متر رمل المرمات يدوياً */}
                         <div className="flex items-center gap-1 mt-1.5 justify-between" onClick={(e) => e.stopPropagation()}>
-                          <span className="text-[10px] text-gray-500">سعر المتر:</span>
+                          <span className="text-[10px] text-white">سعر المتر:</span>
                           <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-lg h-8 px-1 w-24">
                             <button type="button" onClick={() => handleRepairsChange({ repairsSandPrice: repairsSandPrice + 25 })} className="w-5 h-5 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-[9px] flex items-center justify-center cursor-pointer">+</button>
                             <span className="text-xs font-bold text-white font-mono">{repairsSandPrice}</span>
@@ -903,8 +927,8 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                         </div>
                       </div>
                       <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-3" dir="rtl" onClick={(e) => e.stopPropagation()}>
-                        <span className="text-xs text-gray-400 font-semibold">الكمية:</span>
-                        <div className="flex items-center bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-32" dir="ltr">
+                        <span className="text-xs text-white font-semibold">الكمية:</span>
+                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 pr-2 pl-4 select-none w-30" dir="ltr">
                           <button type="button" onClick={() => handleRepairsChange({ repairsSandQty: Number(((repairsData.repairsSandQty || 0) + 0.25).toFixed(2)) })} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
                           <span className="text-base font-black text-white font-mono min-w-[24px] text-center">{repairsData.repairsSandQty || 0}</span>
                           <button type="button" onClick={() => handleRepairsChange({ repairsSandQty: Math.max(0, Number(((repairsData.repairsSandQty || 0) - 0.25).toFixed(2))) })} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
@@ -915,11 +939,11 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                     {/* جبس المرمات - تحرير الكمية وتحرير سعر الشكارة يدوياً بالعداد الفخم */}
                     <div className="p-5 rounded-2xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[160px] space-y-4 hover:border-[#D4AF37]/40 transition-all select-none">
                       <div className="text-right">
-                        <span className="text-base font-black text-[#F0E6D2] block">جبس المرمات سريع الشك</span>
+                        <span className="text-sm font-black text-[#d4af37] block">جبس المرمات سريع الشك</span>
                         
                         {/* عداد تحرير سعر شكارة جبس المرمات يدوياً */}
                         <div className="flex items-center gap-1 mt-1.5 justify-between" onClick={(e) => e.stopPropagation()}>
-                          <span className="text-[10px] text-gray-500">سعر الشكارة:</span>
+                          <span className="text-[11px] text-white">سعر الشكارة:</span>
                           <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-lg h-8 px-1 w-24">
                             <button type="button" onClick={() => handleRepairsChange({ repairsGypsumPrice: repairsGypsumPrice + 10 })} className="w-5 h-5 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-[9px] flex items-center justify-center cursor-pointer">+</button>
                             <span className="text-xs font-bold text-white font-mono">{repairsGypsumPrice}</span>
@@ -928,8 +952,8 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                         </div>
                       </div>
                       <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-3" dir="rtl" onClick={(e) => e.stopPropagation()}>
-                        <span className="text-xs text-gray-400 font-semibold">الكمية:</span>
-                        <div className="flex items-center bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-32" dir="ltr">
+                        <span className="text-xs text-white font-semibold">الكمية:</span>
+                        <div className="flex items-center bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-24" dir="ltr">
                           <button type="button" onClick={() => handleRepairsChange({ repairsGypsumQty: (repairsData.repairsGypsumQty || 0) + 1 })} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
                           <span className="text-base font-black text-white font-mono min-w-[24px] text-center">{repairsData.repairsGypsumQty || 0}</span>
                           <button type="button" onClick={() => handleRepairsChange({ repairsGypsumQty: Math.max(0, (repairsData.repairsGypsumQty || 0) - 1) })} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
@@ -943,32 +967,32 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 {/* مصنعية المرمات */}
                 <div className="p-6 rounded-2xl bg-[#020B1C] border border-[#1f2d4d] flex items-center justify-between hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="text-right">
-                    <span className="text-base font-black text-[#F0E6D2] block">إجمالي أجور مصنعية المرمات (مقطوعية)</span>
-                    <p className="text-xs text-gray-500 mt-1">تسكير خامات الكهرباء والسباكة ومعالجة شروخ جلود الحوائط</p>
+                    <span className="text-sm font-black text-[#D4AF37] block">إجمالي أجور مصنعية المرمات </span>
+                    <p className="text-xs text-white mt-2">معالجة تسكير الكهرباء ومعالجة شروخ الحوائط</p>
                   </div>
                   <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-44">
-                    <button type="button" onClick={() => handleRepairsChange({ laborCost: (repairsData.laborCost || 0) + 100 })} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                    <button type="button" onClick={() => handleRepairsChange({ laborCost: (repairsData.laborCost || 0) + 100 })} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                     <span className="text-base font-black text-white font-mono">{(repairsData.laborCost || 0).toLocaleString()} <span className="text-[10px] text-gray-500 font-normal">ج</span></span>
-                    <button type="button" onClick={() => handleRepairsChange({ laborCost: Math.max(0, (repairsData.laborCost || 0) - 100) })} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                    <button type="button" onClick={() => handleRepairsChange({ laborCost: Math.max(0, (repairsData.laborCost || 0) - 100) })} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                   </div>
                 </div>
 
                 {/* نقل وتشوين المرمات */}
                 <div className="p-6 rounded-2xl bg-[#020B1C] border border-[#1f2d4d] flex items-center justify-between hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="text-right">
-                    <span className="text-base font-black text-[#F0E6D2] block">تكاليف النقل والتشوين للمرمات (مقطوعية)</span>
-                    <p className="text-xs text-gray-500 mt-1">تشوين الأسمنت والرمل والجبس بالونش أو الرفع اليدوي</p>
+                    <span className="text-sm font-black text-[#D4AF37] block">تكاليف النقل والتشوين للمرمات </span>
+                    <p className="text-xs text-white mt-1">تشوين الأسمنت والرمل والجبس بالونش أو الرفع اليدوي</p>
                   </div>
                   <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-44">
-                    <button type="button" onClick={() => handleRepairsChange({ logisticsCost: (repairsData.logisticsCost || 0) + 50 })} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                    <button type="button" onClick={() => handleRepairsChange({ logisticsCost: (repairsData.logisticsCost || 0) + 50 })} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                     <span className="text-base font-black text-white font-mono">{(repairsData.logisticsCost || 0).toLocaleString()} <span className="text-[10px] text-gray-500 font-normal">ج</span></span>
-                    <button type="button" onClick={() => handleRepairsChange({ logisticsCost: Math.max(0, (repairsData.logisticsCost || 0) - 50) })} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                    <button type="button" onClick={() => handleRepairsChange({ logisticsCost: Math.max(0, (repairsData.logisticsCost || 0) - 50) })} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                   </div>
                 </div>
 
                 {/* ملاحظات المرمات */}
                 <div className="md:col-span-2 space-y-3 text-right">
-                  <label className="text-lg text-gray-400 font-bold block pr-2">ملاحظات إضافية للمرمات والترميم:</label>
+                  <label className="text-lg font-bold text-[#D4AF37] border-b border-[#D4AF37] flex items-center gap-2">ملاحظات إضافية للمرمات والترميم :</label>
                   <textarea
                     value={repairsData.notes}
                     onChange={(e) => handleRepairsChange({ notes: e.target.value })}
@@ -982,11 +1006,12 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
         )}
 
         {/* 5. الملخص المالي التكيفي الموحد */}
-        <div className="p-6 rounded-2xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_25px_rgba(212,175,55,0.06)] flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
-          <div className="absolute right-0 top-0 bottom-0 w-2 bg-[#D4AF37]" />
-          <div className="space-y-1 text-center sm:text-right pr-2">
-            <h4 className="text-xl font-bold text-[#D4AF37]">الملخص المالي المعتمد بالـ BOQ لبند أعمال المحارة:</h4>
-            <p className="text-sm text-gray-400 font-normal leading-relaxed text-right">
+        {/* 🌟 تم صياغة كارت الملخص المالي بالكامل ليتوافق بكسلياً مع شاشات التموضع المعتمدة للشركة */}
+        <div className="p-5 rounded-xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_20px_rgba(212,175,55,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden font-alexandria">
+          <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D4AF37]" />
+          <div className="space-y-1 text-center sm:text-right pr-1 select-none">
+            <h4 className="text-lg font-bold text-[#D4AF37]">الملخص المالي المعتمد بالـ BOQ لبند أعمال المحارة:</h4>
+            <p className="text-xs text-white font-normal leading-relaxed max-w-2xl text-right">
               {state.enabled
                 ? `تكامل مالي تام؛ كلفة المصنعية الإنشائية (${totalLaborCost.toLocaleString('en-US')} ج.م) لـ مساحة (${totalPlasterArea} م²) + كلفة خامات المونة والتأسيس والكماليات المحددة (${totalMaterialsCost.toLocaleString('en-US')} ج.م) + تشوين وتعتيق بالدور (${logisticsFlatCost.toLocaleString('en-US')} ج.م)`
                 : state.isRepairsEnabled
@@ -994,15 +1019,15 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 : "برجاء تفعيل أحد أنظمة المحارة (إنشائي أو مرمات) لتظهر الحسابات حركياً"}
             </p>
           </div>
-          <div className="flex items-center gap-4 bg-[#07132a] px-8 py-5 rounded-xl border border-[#1f2d4d]">
-            <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
-              <DollarSign className="w-8 h-8" />
+          <div className="flex items-center gap-3 bg-[#07132a] px-6 py-4 rounded-lg border border-[#1f2d4d]">
+            <div className="p-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
+              <DollarSign className="w-6 h-6" />
             </div>
             <div className="text-right">
-              <span className="text-xs text-gray-500 block font-semibold text-right">إجمالي التكلفة المقدرة:</span>
-              <span className="text-3xl font-black text-[#F0E6D2] block tracking-tighter">
+              <span className="text-[10px] text-white block font-semibold text-right">إجمالي تكلفة أعمال المحارة:</span>
+              <span className="text-2xl font-black text-[#D4AF37] font-mono">
                 {(state.enabled ? totalPlasterEstimate : state.isRepairsEnabled ? totalRepairsEstimate : 0).toLocaleString('en-US')}{' '}
-                <span className="text-sm font-normal">ج.م</span>
+                <span className="text-xs font-normal">ج.م</span>
               </span>
             </div>
           </div>

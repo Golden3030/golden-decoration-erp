@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useCRM } from "../context/CRMContext";
 import { supabase } from '@/lib/supabaseClient'; 
+import TabActivationBanner from './TabActivationBanner'; // 👈 استدعاء المكون المشترك الموحد للأجهزة اللمسية للشركة
 import { 
   Zap, 
   Layers, 
@@ -309,44 +310,32 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in select-none font-sans text-right" dir="rtl">
+    <div className="space-y-8 animate-fade-in select-none font-alexandria text-right" dir="rtl">
+      
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap');
+        
+        .font-alexandria {
+          font-family: 'Alexandria', Arial, sans-serif !important;
+          letter-spacing: normal !important;
+        }
+      `}</style>
 
-      <div 
-        onClick={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
-        className={`p-6 rounded-[2.5rem] border transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl cursor-pointer select-none ${
-          state.enabled 
-            ? 'bg-[#07132a] border-[#D4AF37] shadow-[0_0_30px_rgba(212,175,55,0.15)] hover:shadow-[0_0_40px_rgba(212,175,55,0.25)]' 
-            : 'bg-[#07132a]/40 border-[#1f2d4d] hover:border-gray-600'
-        }`}
-      >
-        <div className="flex items-center gap-4 pr-2">
-          <div className={`p-5 rounded-2xl transition-all duration-500 ${state.enabled ? 'bg-[#D4AF37] text-black shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'bg-[#020B1C] text-gray-600'}`}>
-            <span className="text-2xl">🏠</span>
-          </div>
-          <div className="text-right">
-            <h3 className="text-xl font-black text-[#F0E6D2]">منظومة الأسقف المعلقة وأعمال الجبس بورد الحرة</h3>
-            <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest leading-none">CEILING & GYPSUM BOARD SYSTEM</p>
-          </div>
-        </div>
-
-        <div
-          className={`px-10 py-3 rounded-2xl border-2 font-black text-base transition-all duration-300 flex items-center gap-3 ${
-            state.enabled 
-              ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-              : 'bg-[#020B1C] border-[#1f2d4d] text-gray-500'
-          }`}
-        >
-          {state.enabled ? <CheckCircle2 className="w-6 h-6 text-[#D4AF37]" /> : <Lock className="w-5 h-5 text-gray-500" />}
-          {state.enabled ? 'القسم مفعل' : 'القسم مقفل'}
-        </div>
-      </div>
+      {/* 🌟 تم استدعاء البار المنزلق اللمسي الموحد (TabActivationBanner) كبديل للبار الضخم القديم */}
+      <TabActivationBanner 
+        title="منظومة الأسقف المعلقة وأعمال الجبس بورد الحرة"
+        subtitle="CEILING & GYPSUM BOARD SYSTEM"
+        icon={Home}
+        enabled={state.enabled}
+        onToggle={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
+      />
 
       <div className={`space-y-8 transition-opacity duration-300 ${state.enabled ? 'opacity-100' : 'opacity-25 pointer-events-none filter grayscale'}`}>
 
         <div className="space-y-4">
           <div className="flex items-center gap-2 p-2 border-r-4 border-[#D4AF37]">
-            <span className="text-lg">📐</span>
-            <h4 className="text-lg font-bold text-[#F0E6D2]">حصر وتخصيص باقة السقف والجبس بورد لكل مكان بالمنزل:</h4>
+            <Layers className="w-5 h-5 text-[#D4AF37] shrink-0" />
+            <h4 className="text-xl font-bold text-[#D4AF37]">حصر اعمال السقف والجبس بورد:</h4>
           </div>
 
           <div className="space-y-4">
@@ -366,18 +355,18 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
                     className={`p-6 rounded-2xl border transition-all duration-300 cursor-pointer select-none ${
                       config.enabled 
                         ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_15px_rgba(212,175,55,0.06)] hover:shadow-[0_0_25px_rgba(212,175,55,0.1)]' 
-                        : 'border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/30'
+                        : 'border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]'
                     }`}
                   >
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                       <div className="flex items-center gap-4 text-center sm:text-right">
-                        <div className={`p-3 rounded-full ${config.enabled ? 'bg-[#D4AF37] text-black shadow-[0_0_15px_rgba(212,175,55,0.2)]' : 'bg-[#1f2d4d] text-gray-500'}`}>
-                          <span className="text-xl font-bold">🏠</span>
+                        <div className={`p-3 rounded-full ${config.enabled ? 'bg-[#D4AF37] text-black shadow-[0_0_15px_rgba(212,175,55,0.2)]' : 'bg-[#1f2d4d] text-[#D4AF37]'}`}>
+                          <Home className="w-5 h-5" />
                         </div>
                         <div className="text-right">
-                          <h5 className="text-lg font-black text-[#F0E6D2]">{area.name}</h5>
-                          <p className="text-xs text-gray-500 mt-1">المساحة المحصورة للشقة: {area.areaSize} م²</p>
-                          <p className="text-xs text-gray-400 mt-0.5">الباقة المخصصة: {dbSpecs.find(o => o.uuid === config.type || o.code === config.type)?.spec_name || 'سقف فلات مستوي'} — {config.area} م²</p>
+                          <h5 className="text-md font-black text-[#D4AF37]">{area.name}</h5>
+                          <p className="text-xs text-gray-500 mt-1">المساحة المحصورة للفراغ: {area.areaSize} م²</p>
+                          <p className="text-xs text-white mt-0.5">الباقة المخصصة: {dbSpecs.find(o => o.uuid === config.type || o.code === config.type)?.spec_name || 'سقف فلات مستوي'} — {config.area} م²</p>
                         </div>
                       </div>
 
@@ -385,7 +374,7 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
                         
                         {/* 🎯 تعديل عداد مسطح الجبس بورد ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
                         <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                          <span className="text-xs text-white font-bold block select-none">مسطح الجبس بورد:</span>
+                          <span className="text-xs text-gray-400 font-bold block select-none">مسطح الجبس بورد:</span>
                           <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none min-w-[130px]" dir="ltr">
                             <button 
                               type="button" 
@@ -413,9 +402,9 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
                                 e.stopPropagation(); 
                                 setExpandedSpaceId(isExpanded ? null : area.id);
                               }}
-                              className="px-3 py-2 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold text-[#D4AF37] hover:border-[#D4AF37] flex items-center gap-1.5 cursor-pointer"
+                              className="px-2.5 py-1.5 rounded bg-black/60 border border-[#D4AF37]/45 text-[10px] font-black text-[#D4AF37] hover:border-[#D4AF37] flex items-center gap-1.5 cursor-pointer"
                             >
-                              <span>تخصيص وملاحظة الاستلام</span>
+                              <span>تخصيص الخامات</span>
                               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                             </button>
                           )}
@@ -425,7 +414,7 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
                               config.enabled ? 'bg-[#D4AF37] text-[#020B1C]' : 'bg-[#1f2d4d] text-[#F0E6D2] border border-[#1f2d4d]'
                             }`}
                           >
-                            {config.enabled ? 'مفعّل بالبند' : 'إدراج بالبند'}
+                            {config.enabled ? 'مفعل بالمقايسة' : 'إدراج البند'}
                           </div>
                         </div>
                       </div>
@@ -438,7 +427,7 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
                       >
                         
                         <div className="space-y-2">
-                          <span className="text-xs text-gray-500 font-semibold block text-right">اختر طراز ونوع سقف الجبس بورد لـ ({area.name}):</span>
+                          <span className="text-xs text-gray-500 font-semibold block text-right">اختر نوع سقف الجبس بورد لـ ({area.name}):</span>
                           <div className="flex flex-wrap gap-1.5 justify-start">
                             {dbSpecs.map((spec, specIdx) => {
                               const optionRate = CEILING_OPTIONS_MAP[spec.code] ?? spec.base_rate ?? 0;
@@ -459,16 +448,16 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
                         </div>
 
                         {getExpandedSpaceSteps(area.id).length > 0 && (
-                          <div className="p-4 rounded-xl bg-[#020B1C]/60 border border-[#1f2d4d] space-y-3">
-                            <span className="text-xs text-[#D4AF37] font-bold block flex items-center gap-1.5 text-right">
-                              <ClipboardList className="w-4 h-4" />
-                              خطوات التأكيد الفني لاستلام سقف ({area.name}) بالموقع:
+                          <div className="p-2.5 rounded bg-[#020B1C] border border-[#1f2d4d]/60 space-y-1.5 text-right">
+                            <span className="text-[10px] text-[#D4AF37] font-bold block flex items-center gap-1 select-none">
+                              <ClipboardList className="w-3.5 h-3.5 text-[#D4AF37]" />
+                              خطوات الفحص والاستلام الفني للغرفة:
                             </span>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1 text-right">
                               {getExpandedSpaceSteps(area.id).map((stepText, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-2.5 bg-[#07132a] border border-[#1f2d4d]/60 rounded-xl text-right">
-                                  <p className="text-xs text-[#F0E6D2] leading-relaxed flex-1 pl-3 text-right font-semibold">{stepText}</p>
-                                  <div className="w-6 h-6 rounded-full border border-[#D4AF37] text-[#D4AF37] flex items-center justify-center font-bold text-xs flex-shrink-0">{idx + 1}</div>
+                                <div key={idx} className="flex items-center justify-between p-1.5 bg-[#07132a] border border-[#1f2d4d]/40 rounded text-right gap-2">
+                                  <p className="text-[10px] text-[#F0E6D2]/80 leading-normal flex-1">{stepText}</p>
+                                  <div className="w-4 h-4 rounded-full bg-black/60 border border-[#D4AF37] text-[#D4AF37] flex items-center justify-center font-bold text-[8px] shrink-0">{idx + 1}</div>
                                 </div>
                               ))}
                             </div>
@@ -483,18 +472,18 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
               })
             ) : (
               <div className="p-8 rounded-2xl bg-[#020B1C] border border-[#1f2d4d] border-dashed text-center">
-                <p className="text-lg text-gray-400 font-medium">لم يتم إدخال أو تفعيل أي غرف في تابة المساحات بعد.</p>
-                <p className="text-xs text-gray-500 mt-2">يرجى تسجيل وتثبيت مساحات الشقة بتابة "توزيع المساحات والـ Areas" أولاً لتظهر تلقائياً هنا وبدقة متكاملة.</p>
+                <p className="text-lg text-gray-400 font-medium font-alexandria">لم يتم إدخال أو تفعيل أي غرف في المساحات بعد.</p>
+                <p className="text-xs text-gray-500 mt-2 font-alexandria">يرجى تسجيل مساحات الوحدة "توزيع المساحات والـ Areas" أولاً لتظهر تلقائياً هنا.</p>
               </div>
             )}
           </div>
         </div>
 
         {/* 🎯 تعديل عدادات الأمتار الطولية للكماليات لتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-10 مع دستور الـ ERP */}
-        <div className="p-8 rounded-3xl bg-gradient-to-br from-[#07132a] via-[#020B1C] to-[#07132a] border border-[#1f2d4d] space-y-6">
-          <div className="border-b border-[#1f2d4d] pb-4 text-right select-none">
-            <h4 className="text-xl font-bold text-[#D4AF37]">ترقية كماليات الإضاءة والإكسسوارات الفاخرة للأسقف:</h4>
-            <p className="text-xs text-gray-400 mt-1">عناصر حصرية تدعم حوار المبيعات الترويجي وتثبت دقة حصر المقايسة والـ BOQ بالمتر الطولي</p>
+        <div className="p-8 rounded-3xl bg-gradient-to-br from-[#07132a] via-[#020B1C] to-[#07132a] border border-[#D4AF37] space-y-6">
+          <div className="border-b border-[#D4AF37] pb-4 text-right select-none">
+            <h4 className="text-xl font-bold text-[#D4AF37]">ادراج كماليات الإضاءة والإكسسوارات للأسقف:</h4>
+            <p className="text-xs text-white mt-1">عناصر حصرية تدعم حوار المبيعات الترويجي وتثبت دقة حصر المقايسة والـ BOQ بالمتر الطولي</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -503,7 +492,7 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
             <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[160px] space-y-4 shadow-md hover:border-[#D4AF37]/30 transition-all">
               <div className="text-right select-none font-bold">
                 <span className="text-sm text-[#F0E6D2] block">ماجنتك تراك (Magnetic Track)</span>
-                <span className="text-xs text-gray-500 mt-1 block">التأسيس والمسار: {MAGNETIC_TRACK_RATE} ج.م / م.ط</span>
+                <span className="text-xs text-gray-500 mt-1 block font-semibold">التأسيس والمسار: {MAGNETIC_TRACK_RATE} ج.م / م.ط</span>
               </div>
               <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-3" dir="rtl">
                 <span className="text-xs text-gray-400 font-semibold select-none">الكمية:</span>
@@ -533,7 +522,7 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
             <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[160px] space-y-4 shadow-md hover:border-[#D4AF37]/30 transition-all">
               <div className="text-right select-none font-bold">
                 <span className="text-sm text-[#F0E6D2] block">ليد بروفايل مدمج (Led Profile)</span>
-                <span className="text-xs text-gray-500 mt-1 block">التوريد والتركيب واللصق: {LED_PROFILE_RATE} ج.م /  م.ط</span>
+                <span className="text-xs text-gray-500 mt-1 block font-semibold">التوريد والتركيب واللصق: {LED_PROFILE_RATE} ج.م /  م.ط</span>
               </div>
               <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-3" dir="rtl">
                 <span className="text-xs text-gray-400 font-semibold select-none">الكمية:</span>
@@ -563,7 +552,7 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
             <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] hover:border-[#D4AF37]/30 transition-all flex flex-col justify-between min-h-[160px] space-y-4 shadow-md">
               <div className="text-right select-none font-bold">
                 <span className="text-sm text-[#F0E6D2] block">شادوجاب عادية (Shadow Gap)</span>
-                <span className="text-xs text-gray-500 mt-1 block">فصل جداري مضاد للتشقق: {SHADOW_GAP_RATE} ج.م / م.ط</span>
+                <span className="text-xs text-gray-500 mt-1 block font-semibold">فصل جداري مضاد للتشقق: {SHADOW_GAP_RATE} ج.م / م.ط</span>
               </div>
               <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-3" dir="rtl">
                 <span className="text-xs text-gray-400 font-semibold select-none">الكمية:</span>
@@ -593,7 +582,7 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
             <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] hover:border-[#D4AF37]/30 transition-all flex flex-col justify-between min-h-[160px] space-y-4 shadow-md">
               <div className="text-right select-none font-bold">
                 <span className="text-sm text-[#F0E6D2] block">شادوجاب ليد عائمة (Shadow Gap Light)</span>
-                <span className="text-xs text-gray-500 mt-1 block">مجرى وفراغ الإنارة الأسفل: {SHADOW_GAP_LIGHT_RATE} ج.م / م.ط</span>
+                <span className="text-xs text-gray-500 mt-1 block font-semibold">مجرى وفراغ الإنارة الأسفل: {SHADOW_GAP_LIGHT_RATE} ج.م / م.ط</span>
               </div>
               <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-3" dir="rtl">
                 <span className="text-xs text-gray-400 font-semibold select-none">الكمية:</span>
@@ -622,10 +611,10 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
           </div>
         </div>
 
-        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-3">
-          <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#1f2d4d] pb-2 text-right">
+        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-3">
+          <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#D4AF37] pb-2 text-right">
             <FileText className="w-5 h-5" />
-            <h4 className="text-base font-bold">اتفاقات وبنود مخصصة للجبس بورد والأسقف المعلقة (ملاحظات العقد):</h4>
+            <h4 className="text-xl font-bold text-[#D4AF37]">اتفاقات وبنود مخصصة للجبس بورد والأسقف المعلقة :</h4>
           </div>
           <textarea
             value={notesInput}
@@ -638,24 +627,29 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
           />
           <div className="flex justify-between items-center text-xs text-gray-500 px-1 select-none">
             <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
-            <span>حالة الاتصال: متصل وسحابي</span>
+            <span>حالة الاتصال: متصل </span>
           </div>
         </div>
 
-        <div className="p-6 rounded-2xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_25px_rgba(212,175,55,0.06)] flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
-          <div className="absolute right-0 top-0 bottom-0 w-2 bg-[#D4AF37]" />
-          <div className="space-y-1 text-center sm:text-right pr-2">
-            <h4 className="text-xl font-bold text-[#D4AF37]">الملخص المالي المعتمد لبند الأسقف المعلقة والجبس بورد:</h4>
-            <p className="text-sm text-gray-400 font-normal leading-relaxed text-right">الحساب التلقائي الإجمالي للبند يمثل: مساحة الأسقف المفعّلة حركياً ({totalCeilingArea} م²) ضرب ريت التوصيف المختار لكل غرفة + تكلفة الأمتار المحصورة للكماليات</p>
+        {/* 🌟 تم إعادة تصميم كارت الملخص المالي والتقدير المالي الإجمالي لبند الأسقف والجبس بورد ليطابق تماًاماً نمط التكييف والألوميتال المعتمد */}
+        <div className="p-5 rounded-xl bg-[#020B1C] border border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+          <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D4AF37]" />
+          
+          <div className="space-y-1 text-center sm:text-right pr-1">
+            <h4 className="text-lg font-bold text-[#D4AF37]">الملخص المالي المعتمد لبند الأسقف المعلقة والجبس بورد:</h4>
+            <p className="text-xs text-white font-normal leading-relaxed max-w-2xl text-right">
+              الحساب الإجمالي لبند الأسقف المفعّلة  ({totalCeilingArea} م²) ضرب التوصيف  لكل غرفة + تكلفة الأمتار المحصورة للكماليات والإكسسوارات الإجمالية ({totalAccessoriesCost.toLocaleString('en-US')} ج.م).
+            </p>
           </div>
-          <div className="flex items-center gap-4 bg-[#07132a] px-8 py-5 rounded-xl border border-[#1f2d4d]">
-            <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
-              <DollarSign className="w-8 h-8" />
+
+          <div className="flex items-center gap-3 bg-[#07132a] px-6 py-4 rounded-lg border border-[#1f2d4d]">
+            <div className="p-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
+              <DollarSign className="w-6 h-6" />
             </div>
             <div className="text-right">
-              <span className="text-xs text-gray-500 block font-semibold">إجمالي التكلفة المقدرة للأسقف:</span>
-              <span className="text-3xl font-black text-[#F0E6D2] font-mono">
-                {totalCeilingEstimate.toLocaleString('en-US')} <span className="text-sm font-normal">ج.م</span>
+              <span className="text-[10px] text-white block">إجمالي التكلفة المقدرة للأسقف:</span>
+              <span className="text-2xl font-black text-[#D4AF37] font-mono">
+                {totalCeilingEstimate.toLocaleString('en-US')} <span className="text-xs font-normal">ج.م</span>
               </span>
             </div>
           </div>

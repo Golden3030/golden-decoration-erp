@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCRM } from "../context/CRMContext";
 import { supabase } from "@/lib/supabaseClient"; 
+import TabActivationBanner from './TabActivationBanner'; // 👈 استدعاء المكون المشترك الموحد للأجهزة اللمسية للشركة
 import { 
   Layers, 
   FileText, 
@@ -73,7 +74,6 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
   });
 
   const [notesInput, setNotesInput] = useState<string>('');
-
   const [activeEditorSectorUuid, setActiveEditorSectorUuid] = useState<string>('');
 
   const totalUnitArea = Number(crmData?.project?.area || 100);
@@ -343,50 +343,40 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
     : activeEditorSector.base_rate;
 
   return (
-    <div className="space-y-8 font-sans text-right" dir="rtl">
+    <div className="space-y-8 font-alexandria text-right" dir="rtl">
+      
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap');
+        
+        .font-alexandria {
+          font-family: 'Alexandria', Arial, sans-serif !important;
+          letter-spacing: normal !important;
+        }
+      `}</style>
 
-      <div 
-        onClick={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
-        className={`p-6 rounded-[2.5rem] border transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl cursor-pointer select-none ${
-          state.enabled 
-            ? 'bg-[#07132a] border-[#D4AF37] shadow-[0_0_30px_rgba(212,175,55,0.15)] hover:shadow-[0_0_40px_rgba(212,175,55,0.25)]' 
-            : 'bg-[#07132a]/40 border-[#1f2d4d] hover:border-gray-600'
-        }`}
-      >
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-          <div className={`p-5 rounded-2xl transition-all duration-500 ${state.enabled ? 'bg-[#D4AF37] text-black shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'bg-[#020B1C] text-gray-600'}`}>
-            <Layers className="w-10 h-10" />
-          </div>
-          <div className="text-right">
-            <h4 className="text-xl font-black text-[#D4AF37]">اعمال قطاعات الألوميتال والزجاج العازل</h4>
-            <p className="text-[11px] text-gray-400 mt-5 uppercase font-bold tracking-widest leading-none">Aluminum & Glass ERP System</p>
-          </div>
-        </div>
-        <div
-          className={`px-10 py-3 rounded-2xl border-2 font-black text-base transition-all duration-300 flex items-center gap-3 ${
-            state.enabled 
-              ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-              : 'bg-[#020B1C] border-[#1f2d4d] text-gray-500'
-          }`}
-        >
-          {state.enabled ? <CheckCircle2 className="w-6 h-6 text-[#D4AF37]" /> : <Lock className="w-5 h-5 text-gray-500" />}
-          {state.enabled ? 'الغاء تفعيل القسم' : ' تفعيل القسم'}
-        </div>
-      </div>
+      {/* استدعاء شريط التفعيل المنزلق اللمسي الموحد للشركة */}
+      <TabActivationBanner 
+        title="اعمال قطاعات الألوميتال والزجاج العازل"
+        subtitle="Aluminum & Glass ERP System"
+        icon={Layers}
+        enabled={state.enabled}
+        onToggle={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
+      />
 
       <div className={`space-y-8 transition-all duration-500 ${state.enabled ? 'opacity-100 pointer-events-auto' : 'opacity-25 pointer-events-none filter grayscale'}`}>
 
-        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-4">
-          <div className="border-b border-[#1f2d4d] pb-2 flex items-center gap-2 text-[#D4AF37] select-none">
+        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-4">
+          <div className="border-b border-[#D4AF37] pb-2 flex items-center gap-2 text-[#D4AF37] select-none font-bold">
             <Cpu className="w-5 h-5" />
-            <h4 className="text-xl font-bold"> أسعار متر الألوميتال بالمقايسة:</h4>
+            <h4 className="text-lg font-black text-[#D4AF37]"> أسعار متر الألوميتال والزجاج والإكسسوارات  بالمقايسة:</h4>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <div className="p-4 rounded-xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between space-y-3">
+            {/* الكارت 1: تحديد سعر القطاع المعتمد */}
+            <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between space-y-4">
               <div>
-                <span className="text-xs text-[#D4AF37] font-bold block mb-1 select-none">القطاع المعتمد:</span>
+                <span className="text-xs text-[#D4AF37] font-bold block mb-1 select-none">القطاع المعتمد للتشغيل:</span>
                 <select
                   disabled={!state.enabled}
                   value={activeEditorSectorUuid ?? ''}
@@ -399,11 +389,11 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
                     </option>
                   ))}
                 </select>
-                <span className="text-[10px] text-gray-500 block mt-1 select-none">السعر الأصلي بمكتبة الشركة: {(activeEditorSector.base_rate ?? 0).toLocaleString('en-US')} ج.م / م²</span>
+                <span className="text-[10px] text-gray-500 block mt-1.5 select-none">السعر الأصلي بمكتبة الشركة: {(activeEditorSector.base_rate ?? 0).toLocaleString('en-US')} ج.م / م²</span>
               </div>
               
               <div className="space-y-1">
-                <span className="text-xs text-[#D4AF37] font-bold block mb-1 select-none">سعر المتر القطاع للعميل (م²):</span>
+                <span className="text-xs text-[#D4AF37] font-bold block mb-1.5 select-none font-alexandria">سعر المتر القطاع للعميل (م²):</span>
                 <div className="flex items-center justify-between bg-[#07132a] border border-[#D4AF37] rounded-xl h-11 px-2 select-none">
                   <button
                     type="button"
@@ -414,7 +404,7 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
                     <Plus size={12} className="stroke-[3]" />
                   </button>
                   <span className="text-base font-black text-white font-mono">
-                    {activeEditorPrice.toLocaleString()} <span className="text-[10px] text-white font-normal">ج.م</span>
+                    {activeEditorPrice.toLocaleString()} <span className="text-[10px] text-[#F0E6D2] font-normal">ج.م</span>
                   </span>
                   <button
                     type="button"
@@ -428,11 +418,13 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#020B1C]/60 border border-[#1f2d4d] grid grid-cols-2 gap-3 items-center">
+            {/* 🌟 كارت 2: أسعار الزجاج الفردية (تم تحويلها لصفوف رأسية متراصة وعدادات h-11 سفلية بملء الحاوية) */}
+            <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col gap-4.5 justify-center">
               
-              <div className="space-y-1">
-                <span className="text-xs text-[#D4AF37] font-bold block mb-1 select-none">سعر زجاج دبل (م²):</span>
-                <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none">
+              {/* الصف الأول: زجاج دبل عازل */}
+              <div className="space-y-1.5">
+                <span className="text-xs text-[#D4AF37] font-bold block select-none">سعر زجاج دبل عازل (م²):</span>
+                <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-3 hover:border-[#D4AF37]/50 transition-all select-none">
                   <button
                     type="button"
                     disabled={!state.enabled}
@@ -441,23 +433,24 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
                   >
                     <Plus size={12} className="stroke-[3]" />
                   </button>
-                  <span className="text-sm font-bold text-white font-mono">
-                    {(state.accessoriesRates.glassDoubleRate ?? 1200).toLocaleString()} <span className="text-[9px] text-white font-normal">ج.م</span>
+                  <span className="text-sm font-black text-white font-mono">
+                    {(state.accessoriesRates.glassDoubleRate ?? 1200).toLocaleString()} <span className="text-[10px] text-[#F0E6D2]/60 font-normal">ج.م</span>
                   </span>
                   <button
                     type="button"
                     disabled={!state.enabled}
                     onClick={() => handleAccessoryRateChange('glassDoubleRate', Math.max(0, (state.accessoriesRates.glassDoubleRate ?? 1200) - 100))}
-                    className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold cursor-pointer transition-all active:scale-90"
+                    className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition-all active:scale-90"
                   >
                     <Minus size={12} className="stroke-[3]" />
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <span className="text-xs text-[#D4AF37] font-bold block mb-1 select-none">سعر زجاج جورجيا (م²):</span>
-                <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none">
+              {/* الصف الثاني: زجاج جورجيا فاخر */}
+              <div className="space-y-1.5">
+                <span className="text-xs text-[#D4AF37] font-bold block select-none">سعر زجاج جورجيا فاخر (م²):</span>
+                <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-3 hover:border-[#D4AF37]/50 transition-all select-none">
                   <button
                     type="button"
                     disabled={!state.enabled}
@@ -466,14 +459,14 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
                   >
                     <Plus size={12} className="stroke-[3]" />
                   </button>
-                  <span className="text-sm font-bold text-white font-mono">
-                    {(state.accessoriesRates.glassGeorgiaRate ?? 2200).toLocaleString()} <span className="text-[9px] text-white font-normal">ج.م</span>
+                  <span className="text-sm font-black text-white font-mono">
+                    {(state.accessoriesRates.glassGeorgiaRate ?? 2200).toLocaleString()} <span className="text-[10px] text-[#F0E6D2]/60 font-normal">ج.م</span>
                   </span>
                   <button
                     type="button"
                     disabled={!state.enabled}
                     onClick={() => handleAccessoryRateChange('glassGeorgiaRate', Math.max(0, (state.accessoriesRates.glassGeorgiaRate ?? 2200) - 100))}
-                    className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold cursor-pointer transition-all active:scale-90"
+                    className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition-all active:scale-90"
                   >
                     <Minus size={12} className="stroke-[3]" />
                   </button>
@@ -481,11 +474,13 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
               </div>
             </div>
 
-            <div className="p-4 rounded-xl bg-[#020B1C]/60 border border-[#1f2d4d] grid grid-cols-2 gap-3 items-center">
+            {/* 🌟 كارت 3: أسعار السلك والإكسسوارات (تم تحويلها لصفوف رأسية متراصة وعدادات h-11 سفلية بملء الحاوية) */}
+            <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col gap-4.5 justify-center">
               
-              <div className="space-y-1">
-                <span className="text-xs text-[#D4AF37] font-bold block mb-1 select-none">سلك ناموس بليسيه (وحدة):</span>
-                <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none">
+              {/* الصف الأول: سلك ناموس بليسيه مطوي */}
+              <div className="space-y-1.5">
+                <span className="text-xs text-[#D4AF37] font-bold block select-none">سلك ناموس بليسيه مطوي (وحدة):</span>
+                <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-3 hover:border-[#D4AF37]/50 transition-all select-none">
                   <button
                     type="button"
                     disabled={!state.enabled}
@@ -494,23 +489,24 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
                   >
                     <Plus size={12} className="stroke-[3]" />
                   </button>
-                  <span className="text-sm font-bold text-white font-mono">
-                    {(state.accessoriesRates.screenPleatedRate ?? 800).toLocaleString()} <span className="text-[9px] text-white font-normal">ج.م</span>
+                  <span className="text-sm font-black text-white font-mono">
+                    {(state.accessoriesRates.screenPleatedRate ?? 800).toLocaleString()} <span className="text-[10px] text-[#F0E6D2]/60 font-normal">ج.م</span>
                   </span>
                   <button
                     type="button"
                     disabled={!state.enabled}
                     onClick={() => handleAccessoryRateChange('screenPleatedRate', Math.max(0, (state.accessoriesRates.screenPleatedRate ?? 800) - 50))}
-                    className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold cursor-pointer transition-all active:scale-90"
+                    className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition-all active:scale-90"
                   >
                     <Minus size={12} className="stroke-[3]" />
                   </button>
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <span className="text-xs text-[#D4AF37] font-bold block mb-1 select-none"> تركيب اكسسوارات قلاب:</span>
-                <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none">
+              {/* الصف الثاني: تركيب إكسسوارات مفصلي قلاب */}
+              <div className="space-y-1.5">
+                <span className="text-xs text-[#D4AF37] font-bold block select-none">سعر تركيب إكسسوارات مفصلي قلاب:</span>
+                <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-3 hover:border-[#D4AF37]/50 transition-all select-none">
                   <button
                     type="button"
                     disabled={!state.enabled}
@@ -519,14 +515,14 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
                   >
                     <Plus size={12} className="stroke-[3]" />
                   </button>
-                  <span className="text-sm font-bold text-white font-mono">
-                    {(state.accessoriesRates.smallWindowRate ?? 1500).toLocaleString()} <span className="text-[9px] text-white font-normal">ج.م</span>
+                  <span className="text-sm font-black text-white font-mono">
+                    {(state.accessoriesRates.smallWindowRate ?? 1500).toLocaleString()} <span className="text-[10px] text-[#F0E6D2]/60 font-normal">ج.م</span>
                   </span>
                   <button
                     type="button"
                     disabled={!state.enabled}
                     onClick={() => handleAccessoryRateChange('smallWindowRate', Math.max(0, (state.accessoriesRates.smallWindowRate ?? 1500) - 50))}
-                    className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold cursor-pointer transition-all active:scale-90"
+                    className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition-all active:scale-90"
                   >
                     <Minus size={12} className="stroke-[3]" />
                   </button>
@@ -537,16 +533,16 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1f2d4d] pb-2 select-none">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D4AF37] pb-2 select-none">
           <div className="flex items-center gap-2 text-[#D4AF37]">
             <Layers className="w-6 h-6 animate-pulse" />
-            <h4 className="text-xl">فتحات النوافذ والأبواب بالأبعاد والمساحة (حصر دقيق للشبابيك):</h4>
+            <h4 className="text-lg font-black text-[#D4AF37]">فتحات النوافذ والأبواب بالأبعاد والمساحة (حصر دقيق للشبابيك):</h4>
           </div>
           <button
             type="button"
             disabled={!state.enabled}
             onClick={handleAddWindowRow}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 text-sm font-bold transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 text-sm font-bold transition-all cursor-pointer font-alexandria"
           >
             <PlusCircle className="w-5 h-5" />
             <span>إضافة فتحة شباك/بلكونة مخصصة</span>
@@ -556,7 +552,7 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
         {loading ? (
           <div className="flex items-center justify-center p-16 bg-[#07132a] rounded-3xl border border-[#1f2d4d] gap-3 text-[#D4AF37] select-none">
             <RefreshCw className="w-6 h-6 animate-spin" />
-            <span className="text-base font-semibold">جاري جلب جدول الحصر الفردي للنوافذ من قاعدة البيانات السحابية...</span>
+            <span className="text-base font-semibold">جاري جلب جدول الحصر الفردي للنوافذ من قاعدة البيانات ...</span>
           </div>
         ) : state.windows.length === 0 ? (
           <div className="text-center p-12 bg-[#020B1C]/40 rounded-3xl border border-[#1f2d4d]/40 select-none">
@@ -725,7 +721,7 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
                       </div>
 
                       <div className="space-y-2 select-none">
-                        <span className="text-xs text-gray-400 font-bold block">جودة وترقية عزل الزجاج:</span>
+                        <span className="text-xs text-gray-400 font-bold block">جودة ونوع عزل الزجاج:</span>
                         <div className="grid grid-cols-3 gap-2">
                           {(['single', 'double', 'georgia'] as const).map((g) => (
                             <button
@@ -801,7 +797,7 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
               <Star className="w-8 h-8" />
             </div>
             <div className="text-right">
-              <h4 className="text-xl font-bold text-[#D4AF37]">تكاليف النقل وتشوين القطاعات والزجاج بالدور</h4>
+              <h4 className="text-lg font-black text-[#D4AF37]">تكاليف النقل وتشوين القطاعات والزجاج بالدور</h4>
               <p className="text-xs text-white mt-1">تأمين نقل الألواح وتشوينها للأدوار العليا لسلامة الزجاج من الخدش والكسر</p>
               
               {/* 🎯 تعديل عداد تكاليف النقل والتشوين المذهب ليتطابق بكسلياً بالدواير الرشيقة h-10 w-6 h-6 مع دستور الـ ERP */}
@@ -831,17 +827,17 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
             </div>
           </div>
           <div className="text-center sm:text-left min-w-[145px] border-t sm:border-t-0 sm:border-r border-[#1f2d4d]/40 pt-4 sm:pt-0 sm:pr-6 w-full sm:w-auto select-none">
-            <span className="text-xs text-gray-500 block font-semibold">كلفة التشوين المعتمدة:</span>
+            <span className="text-xs text-gray-500 block font-semibold">تكلفة التشوين المعتمدة:</span>
             <span className="text-2xl font-black text-[#D4AF37] font-mono">{activeTransportationCost.toLocaleString('en-US')} ج.م</span>
           </div>
         </div>
 
       </div>
 
-      <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-3">
-        <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#1f2d4d] pb-2">
+      <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-3">
+        <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#D4AF37] pb-2">
           <FileText className="w-5 h-5" />
-          <h4 className="text-base font-bold">اتفاقات وبنود مخصصة لأعمال الألوميتال والشبابيك (ملاحظات العقد):</h4>
+          <h4 className="text-lg font-black text-[#D4AF37]">اتفاقات وبنود مخصصة لأعمال الألوميتال والشبابيك :</h4>
         </div>
         <textarea
           value={notesInput}
@@ -851,31 +847,33 @@ export default function AluminumTab({ projectId }: AluminumTabProps) {
             updateStateAndSave(prev => ({ notes: notesInput }));
           }}
           placeholder="اكتب هنا أي تفاصيل مخصصة، درجات فوم عزل النوافذ، جودة المقابض والمفصلات الإيطالية، أو شروط تصنيع إضافية تم الاتفاق عليها مع العميل لحفظها مباشرة بالعقد..."
-          className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-lg text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none leading-relaxed"
+          className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none leading-relaxed"
         />
         <div className="flex justify-between items-center text-xs text-gray-500 px-1 select-none">
           <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
-          <span>حالة الاتصال: متصل وسحابي</span>
+          <span>حالة الاتصال: متصل </span>
         </div>
       </div>
 
-      <div className="p-6 rounded-2xl bg-[#020B1C] border-[#D4AF37]/30 shadow-[0_0_25px_rgba(212,175,55,0.06)] flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+      {/* 🌟 تم إعادة هيكلة كارت الملخص المالي الإجمالي لبند الألوميتال والشبابيك ليطابق بالكامل تصميم كارت التكييف المعتمد */}
+      <div className="p-5 rounded-xl bg-[#020B1C] border border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D4AF37]" />
         
-        <div className="absolute right-0 top-0 bottom-0 w-2 bg-[#D4AF37]" />
-
-        <div className="space-y-1 text-center sm:text-right pr-2 select-none">
-          <h4 className="text-2xl font-bold text-[#D4AF37]">الملخص المالي النهائي لبند الألوميتال والزجاج بالوحدة:</h4>
-          <p className="text-xs text-white ">التسعير بالكامل؛ إجمالي مساحة النوافذ المحصورة بالأمتار الفردية ({totalSquareMetersCount.toFixed(2)} م² للوحدة بالكامل) شاملة قطاعاتها والكماليات ومصنعيات التركيب وتكاليف التشوين بالنقل</p>
+        <div className="space-y-1 text-center sm:text-right pr-1 select-none font-alexandria">
+          <h4 className="text-lg font-bold text-[#D4AF37]">الملخص المالي النهائي لبند الألوميتال والزجاج بالوحدة:</h4>
+          <p className="text-xs text-[#F0E6D2]/60 font-normal leading-relaxed max-w-2xl text-right">
+            التسعير بالكامل؛ إجمالي مساحة النوافذ المحصورة بالأمتار الفردية ({totalSquareMetersCount.toFixed(2)} م² للوحدة بالكامل) شاملة قطاعاتها والكماليات ومصنعيات التركيب وتكاليف التشوين بالنقل ({activeTransportationCost.toLocaleString('en-US')} ج.م).
+          </p>
         </div>
 
-        <div className="flex items-center gap-4 bg-[#07132a] px-8 py-5 rounded-xl border border-[#1f2d4d]">
-          <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
-            <DollarSign className="w-8 h-8" />
+        <div className="flex items-center gap-3 bg-[#07132a] px-6 py-4 rounded-lg border border-[#1f2d4d]">
+          <div className="p-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
+            <DollarSign className="w-6 h-6" />
           </div>
           <div className="text-right">
-            <span className="text-xs text-gray-400 block font-semibold">إجمالي تكلفة النوافذ المقدرة:</span>
-            <span className="text-4xl font-black text-[#D4AF37] font-mono">
-              {totalAluminumEstimate.toLocaleString('en-US')} <span className="text-sm font-normal">ج.م</span>
+            <span className="text-[10px] text-white block font-semibold">إجمالي تكلفة النوافذ :</span>
+            <span className="text-2xl font-black text-[#D4AF37] font-mono">
+              {totalAluminumEstimate.toLocaleString('en-US')} <span className="text-xs font-normal">ج.م</span>
             </span>
           </div>
         </div>

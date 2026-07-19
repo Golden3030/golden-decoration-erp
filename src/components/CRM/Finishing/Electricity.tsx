@@ -4,6 +4,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCRM } from "../context/CRMContext";
 import { supabase } from '@/lib/supabaseClient'; 
+import TabActivationBanner from './TabActivationBanner'; // 👈 استدعاء المكون المشترك الموحد للأجهزة اللمسية للشركة
 import { 
   Zap, 
   Layers, 
@@ -12,7 +13,6 @@ import {
   Star, 
   DollarSign, 
   Cpu, 
-  Check, 
   FileText, 
   Volume2, 
   PlusCircle, 
@@ -20,7 +20,8 @@ import {
   RefreshCw, 
   CheckCircle2, 
   Lock,
-  Package
+  Package,
+  Check
 } from 'lucide-react';
 
 interface ElectricityTabProps {
@@ -123,6 +124,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
     blankInsertCount: 5,
     breakerFinishingCount: 12,
     acSwitchCount: 3,
+    breakerFinishingRate: 120,
     heaterSwitchCount: 2,
     bellSwitchCount: 1,
     customFinishingList: [] as CustomFinishingItem[],
@@ -247,6 +249,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
         blankInsertCount: elecContext.blankInsertCount ?? 5,
         breakerFinishingCount: elecContext.breakerFinishingCount ?? 12,
         acSwitchCount: elecContext.acSwitchCount ?? Math.ceil(totalUnitArea * 0.03),
+        breakerFinishingRate: elecContext.breakerFinishingRate ?? 120,
         heaterSwitchCount: elecContext.heaterSwitchCount ?? 2,
         bellSwitchCount: elecContext.bellSwitchCount ?? 1,
         customFinishingList: elecContext.customFinishingList || [],
@@ -491,41 +494,27 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
     : 0;
 
   return (
-    <div> 
-    <div className="space-y-8 select-none text-right" dir="rtl">
+    <div className="font-alexandria" dir="rtl"> 
+    
+    <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap');
+        
+        .font-alexandria {
+          font-family: 'Alexandria', Arial, sans-serif !important;
+          letter-spacing: normal !important;
+        }
+    `}</style>
+    
+    <div className="space-y-8 select-none text-right font-alexandria">
 
-      {/* كارت التفعيل الموحد (On / Off) ذو الطابع الفاخر والماوس اليد المضيء */}
-      <div 
-        onClick={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
-        className={`p-6 rounded-[2.5rem] border transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl cursor-pointer select-none ${
-          state.enabled 
-            ? 'bg-[#07132a] border-[#D4AF37] shadow-[0_0_30px_rgba(212,175,55,0.15)] hover:shadow-[0_0_40px_rgba(212,175,55,0.25)]' 
-            : 'bg-[#07132a]/40 border-[#1f2d4d] hover:border-gray-600'
-        }`}
-      >
-        <div className="flex items-center gap-4 w-full sm:w-auto pr-2">
-          <div className={`p-5 rounded-2xl transition-all duration-500 flex-shrink-0 ${
-            state.enabled ? 'bg-[#D4AF37] text-black shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'bg-[#020B1C] text-gray-600'
-          }`}>
-            <Zap className="w-10 h-10" />
-          </div>
-          <div className="text-right">
-            <h4 className="text-xl font-black text-[#F0E6D2]">منظومة تأسيس وتشطيب شبكة الكهرباء</h4>
-            <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest leading-none">ELECTRICAL WIRING & NETWORKS SYSTEM</p>
-          </div>
-        </div>
-
-        <div
-          className={`px-10 py-3 rounded-2xl border-2 font-black text-base transition-all duration-300 flex items-center gap-3 flex-shrink-0 ${
-            state.enabled 
-              ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-              : 'bg-[#020B1C] border-[#D4AF37]/60 text-[#D4AF37]'
-          }`}
-        >
-          {state.enabled ? <CheckCircle2 className="w-6 h-6 text-[#D4AF37]" /> : <Lock className="w-5 h-5 text-gray-500" />}
-          {state.enabled ? 'القسم مفعل' : 'القسم مقفل'}
-        </div>
-      </div>
+      {/* 🌟 استدعاء البار المنزلق اللمسي الموحد (TabActivationBanner) كبديل للبار الضخم القديم */}
+      <TabActivationBanner 
+        title=" تأسيس وتشطيب شبكة الكهرباء والتحكم الذكي"
+        subtitle="ELECTRICAL WIRING & NETWORKS SYSTEM"
+        icon={Zap}
+        enabled={state.enabled}
+        onToggle={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
+      />
 
       {/* حظر التفاعل وتعتيم الشاشة عند الإغلاق التام للبند */}
       <div className={`space-y-8 transition-opacity duration-300 ${state.enabled ? 'opacity-100' : 'opacity-25 pointer-events-none filter grayscale'}`}>
@@ -534,7 +523,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
         <div className="space-y-4">
           <div className="flex items-center gap-2 border-b border-[#1f2d4d] pb-2 text-[#D4AF37]">
             <Layers className="w-5 h-5 animate-pulse" />
-            <h4 className="text-xl font-bold text-[#F0E6D2]">القسم الأول: مرحلة أعمال تأسيس خراطيم ورميات كهرباء الشقة:</h4>
+            <h4 className="text-lg font-bold text-[#D4AF37]">القسم الأول: مرحلة أعمال تأسيس الكهرباء الوحدة:</h4>
           </div>
 
           {/* كارت تأسيس كامل لكهرباء الشقة الملتزم تماماً بالتصميم الملكي الفاخر */}
@@ -545,26 +534,26 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
             }}
             className={`p-6 rounded-3xl border transition-all duration-300 cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-6 ${
               state.roughInActive 
-                ? 'border-[#D4AF37] bg-gradient-to-r from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
+                ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
                 : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-70 hover:opacity-100'
             }`}
           >
             <div className="flex-shrink-0">
               {state.roughInActive ? (
-                <div className="py-3 px-6 rounded-2xl bg-[#D4AF37] text-[#020B1C] font-bold text-base flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                <div className="py-3 px-6 rounded-2xl bg-[#D4AF37] text-[#020B1C] text-base flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
                   <Check className="w-5 h-5 stroke-[3]" />
-                  <span>مفعّل بالباقة</span>
+                  <span>تفعيل التأسيس</span>
                 </div>
               ) : (
-                <div className="py-3 px-6 rounded-2xl bg-[#1c2844] text-[#F0E6D2] font-bold text-base border border-[#1f2d4d]">
-                  <span>تفعيل التأسيس</span>
+                <div className="py-3 px-6 rounded-2xl bg-[#1c2844] text-[#F0E6D2] text-base border border-[#1f2d4d]">
+                  <span>الغاء تفعيل التأسيس</span>
                 </div>
               )}
             </div>
 
             <div className="flex-1 text-center sm:text-right space-y-1 pr-4">
-              <h4 className="text-xl font-bold text-[#F0E6D2]">باقة التأسيس الكاملة لكهرباء الشقة</h4>
-              <p className="text-sm text-gray-400 leading-relaxed">تشمل خراطيم علاء الدين، العلب الماجيك، وأسلاك السويدي النحاسية المعتمدة والتشوين والعمالة شاملة المصنعية</p>
+              <h4 className="text-md font-bold text-[#D4AF37]">تفعيل تأسيس كهرباء الشقة بالكامل</h4>
+              <p className="text-sm text-white leading-relaxed">تشمل الخراطيم والعلب الماجيك، وأسلاك السويدي المعتمدة وكل ما يخص تأسيس الكهرباء والتشوين وشاملة المصنعية</p>
             </div>
 
             <div className={`p-4 rounded-full flex-shrink-0 transition-all duration-300 ${state.roughInActive ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'bg-[#1f2d4d]/30 text-gray-500'}`}>
@@ -582,33 +571,33 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* العلب الماجيك */}
                 <div className="p-5 rounded-[2rem] bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[190px] space-y-4 hover:border-[#D4AF37]/40 transition-all shadow-md">
                   <div className="text-right">
-                    <span className="text-sm font-black text-[#F0E6D2] block">العلب الماجيك (Magic Backbox)</span>
-                    <span className="text-xs text-slate-400 mt-1 block">علب تأسيس مفاتيح وبرايز الإنارة</span>
+                    <span className="text-sm font-black text-[#D4AF37] block">العلب الماجيك</span>
+                    <span className="text-xs text-white mt-1 block">علب تأسيس مفاتيح وبرايز الإنارة</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 pt-2">
-                    {/* عداد الكمية */}
-                    <div className="bg-[#020B1C] p-2.5 rounded-xl border border-[#1f2d4d] flex flex-col items-center justify-between gap-1.5 select-none">
-                      <span className="text-[10px] text-gray-400 font-bold">الكمية (قطعة)</span>
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-11 flex flex-col items-center justify-between gap-1 select-none">
+                      <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية (قطعة)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ backboxCount: prev.backboxCount + 5 }))} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ backboxCount: prev.backboxCount + 5 }))} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                         <span className="text-xs font-bold text-white font-mono min-w-[20px] text-center">{state.backboxCount}</span>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ backboxCount: Math.max(0, prev.backboxCount - 5) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ backboxCount: Math.max(0, prev.backboxCount - 5) }))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans">-</button>
                       </div>
                     </div>
-                    {/* عداد السعر الفردي */}
-                    <div className="bg-[#020B1C] p-2.5 rounded-xl border border-[#1f2d4d] flex flex-col items-center justify-between gap-1.5 select-none">
-                      <span className="text-[10px] text-gray-400 font-bold">السعر (ج.م)</span>
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-11 flex flex-col items-center justify-between gap-1 select-none">
+                      <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج.م)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
-                        <button type="button" onClick={() => handleRateChange('backboxRate', (state.accessoriesRates.backboxRate ?? 8) + 1)} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                        <button type="button" onClick={() => handleRateChange('backboxRate', (state.accessoriesRates.backboxRate ?? 8) + 1)} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                         <span className="text-xs font-bold text-white font-mono min-w-[20px] text-center">{state.accessoriesRates.backboxRate}</span>
-                        <button type="button" onClick={() => handleRateChange('backboxRate', Math.max(0, (state.accessoriesRates.backboxRate ?? 8) - 1))} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                        <button type="button" onClick={() => handleRateChange('backboxRate', Math.max(0, (state.accessoriesRates.backboxRate ?? 8) - 1))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans">-</button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="border-t border-[#1f2d4d]/40 pt-2 flex items-center justify-between text-xs text-slate-400 select-none">
-                    <span>إجمالي كلفة العلب:</span>
+                  <div className="border-t border-[#1f2d4d]/40 pt-2 flex items-center justify-between text-xs text-white select-none">
+                    <span>إجمالي تكلفة العلب:</span>
                     <span className="text-[#D4AF37] font-black">{totalBackboxCost.toLocaleString()} ج.م</span>
                   </div>
                 </div>
@@ -616,33 +605,33 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* خراطيم الأرضيات */}
                 <div className="p-5 rounded-[2rem] bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[190px] space-y-4 hover:border-[#D4AF37]/40 transition-all shadow-md">
                   <div className="text-right">
-                    <span className="text-sm font-black text-[#F0E6D2] block">خراطيم أرضيات 16مم (علاء الدين)</span>
-                    <span className="text-xs text-slate-400 mt-1 block">خراطيم تمديد أرضية مرنة</span>
+                    <span className="text-sm font-black text-[#D4AF37] block">خراطيم أرضيات </span>
+                    <span className="text-xs text-white mt-1 block ">خراطيم تمديد أرضية مرنة</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 pt-2">
-                    {/* عداد الكمية */}
-                    <div className="bg-[#020B1C] p-2.5 rounded-xl border border-[#1f2d4d] flex flex-col items-center justify-between gap-1.5 select-none">
-                      <span className="text-[10px] text-gray-400 font-bold">الكمية (لفة)</span>
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-11 flex flex-col items-center justify-between gap-1 select-none">
+                      <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية (لفة)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ floorConduitCount: prev.floorConduitCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ floorConduitCount: prev.floorConduitCount + 1 }))} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                         <span className="text-xs font-bold text-white font-mono min-w-[20px] text-center">{state.floorConduitCount}</span>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ floorConduitCount: Math.max(0, prev.floorConduitCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ floorConduitCount: Math.max(0, prev.floorConduitCount - 1) }))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans">-</button>
                       </div>
                     </div>
-                    {/* عداد السعر الفردي */}
-                    <div className="bg-[#020B1C] p-2.5 rounded-xl border border-[#1f2d4d] flex flex-col items-center justify-between gap-1.5 select-none">
-                      <span className="text-[10px] text-gray-400 font-bold">السعر (ج.م)</span>
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-11 flex flex-col items-center justify-between gap-1 select-none">
+                      <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج.م)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
-                        <button type="button" onClick={() => handleRateChange('floorConduitRate', (state.accessoriesRates.floorConduitRate ?? 180) + 10)} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                        <button type="button" onClick={() => handleRateChange('floorConduitRate', (state.accessoriesRates.floorConduitRate ?? 180) + 10)} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer font-sans">+</button>
                         <span className="text-xs font-bold text-white font-mono min-w-[20px] text-center">{state.accessoriesRates.floorConduitRate}</span>
-                        <button type="button" onClick={() => handleRateChange('floorConduitRate', Math.max(0, (state.accessoriesRates.floorConduitRate ?? 180) - 10))} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                        <button type="button" onClick={() => handleRateChange('floorConduitRate', Math.max(0, (state.accessoriesRates.floorConduitRate ?? 180) - 10))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans">-</button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="border-t border-[#1f2d4d]/40 pt-2 flex items-center justify-between text-xs text-slate-400 select-none">
-                    <span>إجمالي كلفة خراطيم الأرضية:</span>
+                  <div className="border-t border-[#1f2d4d]/40 pt-2 flex items-center justify-between text-xs text-white select-none">
+                    <span>إجمالي تكلفة خراطيم الارضيات:</span>
                     <span className="text-[#D4AF37] font-black">{totalFloorConduitCost.toLocaleString()} ج.م</span>
                   </div>
                 </div>
@@ -650,33 +639,33 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* خراطيم الحوائط */}
                 <div className="p-5 rounded-[2rem] bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[190px] space-y-4 hover:border-[#D4AF37]/40 transition-all shadow-md">
                   <div className="text-right">
-                    <span className="text-sm font-black text-[#F0E6D2] block">خراطيم حوائط (مصطفى محمود)</span>
-                    <span className="text-xs text-slate-400 mt-1 block">خراطيم تكسيح وجدران صلبة</span>
+                    <span className="text-sm font-black text-[#D4AF37] block">خراطيم حوائط </span>
+                    <span className="text-xs text-white mt-1 block ">خراطيم حوائط وجدران مرنة</span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 pt-2">
-                    {/* عداد الكمية */}
-                    <div className="bg-[#020B1C] p-2.5 rounded-xl border border-[#1f2d4d] flex flex-col items-center justify-between gap-1.5 select-none">
-                      <span className="text-[10px] text-gray-400 font-bold">الكمية (لفة)</span>
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-11 flex flex-col items-center justify-between gap-1 select-none">
+                      <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية (لفة)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ wallConduitCount: prev.wallConduitCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ wallConduitCount: prev.wallConduitCount + 1 }))} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer font-sans">+</button>
                         <span className="text-xs font-bold text-white font-mono min-w-[20px] text-center">{state.wallConduitCount}</span>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ wallConduitCount: Math.max(0, prev.wallConduitCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ wallConduitCount: Math.max(0, prev.wallConduitCount - 1) }))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans">-</button>
                       </div>
                     </div>
-                    {/* عداد السعر الفردي */}
-                    <div className="bg-[#020B1C] p-2.5 rounded-xl border border-[#1f2d4d] flex flex-col items-center justify-between gap-1.5 select-none">
-                      <span className="text-[10px] text-gray-400 font-bold">السعر (ج.م)</span>
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-11 flex flex-col items-center justify-between gap-1 select-none">
+                      <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج.م)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
-                        <button type="button" onClick={() => handleRateChange('wallConduitRate', (state.accessoriesRates.wallConduitRate ?? 220) + 10)} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-020B1C transition-all cursor-pointer">+</button>
+                        <button type="button" onClick={() => handleRateChange('wallConduitRate', (state.accessoriesRates.wallConduitRate ?? 220) + 10)} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer font-sans">+</button>
                         <span className="text-xs font-bold text-white font-mono min-w-[20px] text-center">{state.accessoriesRates.wallConduitRate}</span>
-                        <button type="button" onClick={() => handleRateChange('wallConduitRate', Math.max(0, (state.accessoriesRates.wallConduitRate ?? 220) - 10))} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                        <button type="button" onClick={() => handleRateChange('wallConduitRate', Math.max(0, (state.accessoriesRates.wallConduitRate ?? 220) - 10))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                       </div>
                     </div>
                   </div>
 
-                  <div className="border-t border-[#1f2d4d]/40 pt-2 flex items-center justify-between text-xs text-slate-400 select-none">
-                    <span>إجمالي كلفة خراطيم الجدران:</span>
+                  <div className="border-t border-[#1f2d4d]/40 pt-2 flex items-center justify-between text-xs text-white select-none">
+                    <span>إجمالي تكلفة خراطيم الحوائط:</span>
                     <span className="text-[#D4AF37] font-black">{totalWallConduitCost.toLocaleString()} ج.م</span>
                   </div>
                 </div>
@@ -684,34 +673,34 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               </div>
 
               {/* جدول حصر ومفاضلة أسلاك السويدي المعتمدة */}
-              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1f2d4d]/40 pb-3">
-                  <span className="text-sm font-bold text-[#D4AF37] block">شبكة حصر وتمديد أسلاك السويدي النحاسية المعتمدة:</span>
+              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D4AF37] pb-3">
+                  <span className="text-lg font-bold text-[#D4AF37] block"> حصر كمية الاسلاك المطلوبة :</span>
                   <button
                     type="button"
                     onClick={handleAddWireRow}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/20 text-xs font-bold cursor-pointer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/20 text-xs font-bold cursor-pointer font-alexandria"
                   >
                     <PlusCircle className="w-4 h-4" />
-                    <span>إضافة مقطع سلك مخصص</span>
+                    <span>إضافة منتج جديد مخصص</span>
                   </button>
                 </div>
 
                 <div className="overflow-x-auto">
                   <table className="w-full text-right border-collapse text-xs text-slate-300">
                     <thead>
-                      <tr className="border-b border-[#1f2d4d] pb-2 text-slate-400 font-bold">
-                        <th className="py-2">نوع ومقطع السلك</th>
+                      <tr className="border-b border-[#D4AF37] pb-2 text-[#D4AF37] font-bold">
+                        <th className="py-2">نوع وقطر السلك</th>
                         <th className="py-2 text-center">الكمية (لفة)</th>
                         <th className="py-2 text-center">سعر اللفة</th>
-                        <th className="py-2 text-left">إجمالي التكلفة</th>
+                        <th className="py-2 text-center">إجمالي التكلفة</th>
                         <th className="py-2 text-center">حذف</th>
                       </tr>
                     </thead>
                     <tbody>
                       {state.wiresList.map((row) => (
                         <tr key={row.id} className="border-b border-[#1f2d4d]/40 hover:bg-[#020B1C]/25 transition-colors">
-                          <td className="py-3 font-semibold text-xs text-white">
+                          <td className="py-3 font-semibold text-xs text-white w-[290px]">
                             <select
                               value={row.wireType}
                               onChange={(e) => handleWireRowEdit(row.id, { wireType: e.target.value })}
@@ -722,23 +711,26 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                               <option>سلك السويدي معتمد م مقطع 3 مم</option>
                               <option>سلك السويدي معتمد م مقطع 4 مم</option>
                               <option>سلك السويدي معتمد م مقطع 6 مم</option>
+                              <option>سلك السويدي معتمد م مقطع 10 مم</option>
                             </select>
                           </td>
                           <td className="py-3 text-center">
-                            <div className="flex items-center justify-center gap-1.5" dir="ltr">
-                              <button type="button" onClick={() => handleWireRowEdit(row.id, { quantity: row.quantity + 1 })} className="w-5 h-5 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] font-bold text-xs flex items-center justify-center cursor-pointer">+</button>
+                            {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                            <div className="flex items-center justify-between px-3 h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] px-2 select-none " dir="ltr">
+                              <button type="button" onClick={() => handleWireRowEdit(row.id, { quantity: row.quantity + 1 })} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] font-bold text-xs flex items-center justify-center cursor-pointer font-sans">+</button>
                               <span className="text-xs font-bold text-white font-mono">{row.quantity}</span>
-                              <button type="button" onClick={() => handleWireRowEdit(row.id, { quantity: Math.max(1, row.quantity - 1) })} className="w-5 h-5 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                              <button type="button" onClick={() => handleWireRowEdit(row.id, { quantity: Math.max(1, row.quantity - 1) })} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                             </div>
                           </td>
                           <td className="py-3 text-center font-mono font-bold text-slate-300">
-                            <div className="flex items-center justify-center font-mono" dir="ltr">
-                              <button type="button" onClick={() => handleWireRowEdit(row.id, { rate: row.rate + 50 })} className="text-[#D4AF37] font-bold text-xs mr-1 cursor-pointer">+</button>
-                              <span className="text-xs">{row.rate}</span>
-                              <button type="button" onClick={() => handleWireRowEdit(row.id, { rate: Math.max(0, row.rate - 50) })} className="text-red-400 font-bold text-xs ml-1 cursor-pointer">-</button>
+                            {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                            <div className="flex items-center justify-between px-3 h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] px-2 select-none w-36 mx-auto" dir="ltr">
+                              <button type="button" onClick={() => handleWireRowEdit(row.id, { rate: row.rate + 50 })} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] font-bold text-xs flex items-center justify-center cursor-pointer font-sans">+</button>
+                              <span className="text-xs font-bold text-white font-mono">{row.rate}</span>
+                              <button type="button" onClick={() => handleWireRowEdit(row.id, { rate: Math.max(0, row.rate - 50) })} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer font-sans">-</button>
                             </div>
                           </td>
-                          <td className="py-3 text-left font-mono font-black text-[#D4AF37]">{(row.quantity * row.rate).toLocaleString()} ج</td>
+                          <td className="py-3 text-center font-mono font-black text-[#D4AF37]">{(row.quantity * row.rate).toLocaleString()} ج</td>
                           <td className="py-3 text-center">
                             <button type="button" onClick={() => handleRemoveWireRow(row.id)} className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition-all cursor-pointer"><Trash2 className="w-4 h-4" /></button>
                           </td>
@@ -762,7 +754,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                   }`}
                 >
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                    <span className="text-sm font-black text-[#F0E6D2]">لوحة كهرباء رئيسية</span>
+                    <span className="text-sm font-black text-white block">لوحة الكهرباء الرئيسية</span>
                     <div className={`p-1 rounded ${state.hasMainPanel ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
                       {state.hasMainPanel ? <Check className="w-4 h-4 stroke-[3]" /> : <Minus className="w-4 h-4" />}
                     </div>
@@ -774,7 +766,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         disabled={!state.enabled}
                         value={state.selectedMainPanelId}
                         onChange={(e) => handleMainPanelChange(e.target.value)}
-                        className="w-full h-11 px-3 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-base font-black text-[#B48C34] outline-none focus:border-[#D4AF37] cursor-pointer"
+                        className="w-full h-11 px-3 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-sm text-[#B48C34] outline-none focus:border-[#D4AF37] cursor-pointer"
                       >
                         {dbProducts.filter(p => p.subcategory === 'لوحة' || p.product_name.toLowerCase().includes('لوح')).map(prod => (
                           <option key={prod.id} value={prod.id} className="bg-[#020B1C] text-white">
@@ -783,10 +775,11 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         ))}
                       </select>
                       
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none">
-                        <button type="button" onClick={() => handleRateChange('mainPanelRate', (state.accessoriesRates.mainPanelRate ?? 1800) + 100)} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                        <button type="button" onClick={() => handleRateChange('mainPanelRate', (state.accessoriesRates.mainPanelRate ?? 1800) + 100)} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-base font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.mainPanelRate ?? 1800).toLocaleString()} <span className="text-[10px] text-gray-500 font-normal">ج.م</span></span>
-                        <button type="button" onClick={() => handleRateChange('mainPanelRate', Math.max(0, (state.accessoriesRates.mainPanelRate ?? 1800) - 100))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => handleRateChange('mainPanelRate', Math.max(0, (state.accessoriesRates.mainPanelRate ?? 1800) - 100))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
                   )}
@@ -795,14 +788,14 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* كارت لوحة التيار الخفيف حركياً بتكبير خط وتلوينه بالبني */}
                 <div 
                   onClick={() => { const nextVal = !state.hasLowCurrentPanel; updateStateAndSave(prev => ({ hasLowCurrentPanel: nextVal })); }}
-                  className={`p-5 rounded-[2rem] border transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[160px] select-none ${
+                  className={`p-5 rounded-[2rem] border transition-all duration-300 flex flex-col justify-between min-h-[160px] select-none ${
                     state.hasLowCurrentPanel
                       ? 'border-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
                       : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-40 hover:opacity-75'
                   }`}
                 >
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                    <span className="text-sm font-black text-[#F0E6D2]">لوحة تيار خفيف وداتا</span>
+                    <span className="text-sm font-black text-white block">لوحة تيار خفيف وداتا</span>
                     <div className={`p-1 rounded ${state.hasLowCurrentPanel ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
                       {state.hasLowCurrentPanel ? <Check className="w-4 h-4 stroke-[3]" /> : <Minus className="w-4 h-4" />}
                     </div>
@@ -814,7 +807,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         disabled={!state.enabled}
                         value={state.selectedLowCurrentPanelId}
                         onChange={(e) => handleLowCurrentPanelChange(e.target.value)}
-                        className="w-full h-11 px-3 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-base font-black text-[#B48C34] outline-none focus:border-[#D4AF37] cursor-pointer"
+                        className="w-full h-11 px-3 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-sm text-[#B48C34] outline-none focus:border-[#D4AF37] cursor-pointer"
                       >
                         {dbProducts.filter(p => p.subcategory === 'لوحة' || p.product_name.toLowerCase().includes('لوح')).map(prod => (
                           <option key={prod.id} value={prod.id} className="bg-[#020B1C] text-white">
@@ -823,10 +816,11 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         ))}
                       </select>
                       
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none">
-                        <button type="button" onClick={() => handleRateChange('lowCurrentPanelRate', (state.accessoriesRates.lowCurrentPanelRate ?? 1200) + 100)} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                        <button type="button" onClick={() => handleLowCurrentPanelChange(state.selectedLowCurrentPanelId)} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-base font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.lowCurrentPanelRate ?? 1200).toLocaleString()} <span className="text-[10px] text-gray-500 font-normal">ج.م</span></span>
-                        <button type="button" onClick={() => handleRateChange('lowCurrentPanelRate', Math.max(0, (state.accessoriesRates.lowCurrentPanelRate ?? 1200) - 100))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => handleLowCurrentPanelChange(state.selectedLowCurrentPanelId)} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
                   )}
@@ -835,25 +829,27 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* مفاتيح اتوماتيك عمومية مع تكبير السعر ووضع عداد فخم */}
                 <div className="p-5 rounded-[2rem] bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[160px] select-none hover:border-[#D4AF37]/40 transition-all shadow-md">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                    <span className="text-sm font-bold text-[#F0E6D2]">مفاتيح أوتوماتيك عمومية</span>
+                    <span className="text-sm font-black text-white block">مفاتيح أوتوماتيك رئيسية</span>
                   </div>
                   
                   <div className="space-y-3 mt-1">
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
                       <span className="text-xs text-gray-500 font-bold">سعر المفتاح:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36">
-                        <button type="button" onClick={() => handleRateChange('automaticBreakerRate', (state.accessoriesRates.automaticBreakerRate ?? 180) + 10)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36">
+                        <button type="button" onClick={() => handleRateChange('automaticBreakerRate', (state.accessoriesRates.automaticBreakerRate ?? 180) + 10)} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.automaticBreakerRate ?? 180)} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                        <button type="button" onClick={() => handleRateChange('automaticBreakerRate', Math.max(0, (state.accessoriesRates.automaticBreakerRate ?? 180) - 10))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => handleRateChange('automaticBreakerRate', Math.max(0, (state.accessoriesRates.automaticBreakerRate ?? 180) - 10))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
 
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">العدد الحالي:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36">
-                        <button type="button" onClick={() => { const val = state.automaticBreakerCount + 1; updateStateAndSave(prev => ({ automaticBreakerCount: val })); }} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-gray-500 font-bold"> الكمية:</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36">
+                        <button type="button" onClick={() => { const val = state.automaticBreakerCount + 1; updateStateAndSave(prev => ({ automaticBreakerCount: val })); }} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-white font-mono">{state.automaticBreakerCount}</span>
-                        <button type="button" onClick={() => { const val = Math.max(0, state.automaticBreakerCount - 1); updateStateAndSave(prev => ({ automaticBreakerCount: val })); }} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => { const val = Math.max(0, state.automaticBreakerCount - 1); updateStateAndSave(prev => ({ automaticBreakerCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
                   </div>
@@ -862,144 +858,144 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               </div>
 
               {/* بطاقات كماليات ومستلزمات التأسيس مع عدادات السعر الفردي التفاعلية الفاخرة للكماليات الأربعة */}
-              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-4 shadow-xl">
-                <span className="text-sm font-bold text-[#D4AF37] block border-b border-[#1f2d4d]/40 pb-2">مستلزمات وكماليات مرحلة التأسيس ومخارج التثبيت:</span>
+              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-4 shadow-xl">
+                <span className="text-lg font-bold text-[#D4AF37] block border-b border-[#D4AF37] pb-2">مستلزمات وكماليات مرحلة التأسيس ومخارج التثبيت:</span>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   
                   {/* شريط شكرتون عازل مع عداد السعر */}
                   <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[170px] space-y-3 hover:border-[#D4AF37]/30 transition-all shadow-sm">
                     <div className="text-right">
-                      <span className="text-xs font-bold text-[#F0E6D2] block">شريط شكرتون عازل</span>
-                      <span className="text-[10px] text-gray-500 mt-1 block">شريط عازل أسود للأسلاك</span>
+                      <span className="text-xs text-[#D4AF37] block">شريط شكرتون عازل</span>
+                      <span className="text-[10px] text-white mt-1 block">شريط عازل للأسلاك</span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 pt-1">
-                      {/* عداد الكمية */}
-                      <div className="bg-[#07132a]/60 p-2 rounded-xl flex flex-col items-center justify-between gap-1 select-none">
-                        <span className="text-[9px] text-gray-400 font-bold">الكمية</span>
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                      <div className="bg-[#07132a]/60 p-2 rounded-xl h-11 flex flex-col items-center justify-between gap-1 select-none">
+                        <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
-                          <button type="button" onClick={() => { const val = state.insulationTapeCount + 1; updateStateAndSave(prev => ({ insulationTapeCount: val })); }} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                          <button type="button" onClick={() => { const val = state.insulationTapeCount + 1; updateStateAndSave(prev => ({ insulationTapeCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                           <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.insulationTapeCount}</span>
-                          <button type="button" onClick={() => { const val = Math.max(0, state.insulationTapeCount - 1); updateStateAndSave(prev => ({ insulationTapeCount: val })); }} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                          <button type="button" onClick={() => { const val = Math.max(0, state.insulationTapeCount - 1); updateStateAndSave(prev => ({ insulationTapeCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
-                      {/* عداد السعر الفردي الجاري تفعيله برغبتك الصارمة */}
-                      <div className="bg-[#07132a]/60 p-2 rounded-xl flex flex-col items-center justify-between gap-1 select-none">
-                        <span className="text-[9px] text-gray-400 font-bold">السعر (ج)</span>
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                      <div className="bg-[#07132a]/60 p-2 rounded-xl h-11 flex flex-col items-center justify-between gap-1 select-none">
+                        <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج)</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
-                          <button type="button" onClick={() => handleRateChange('insulationTapeRate', (state.accessoriesRates.insulationTapeRate ?? 15) + 2)} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                          <button type="button" onClick={() => handleRateChange('insulationTapeRate', (state.accessoriesRates.insulationTapeRate ?? 15) + 2)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                           <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.accessoriesRates.insulationTapeRate}</span>
-                          <button type="button" onClick={() => handleRateChange('insulationTapeRate', Math.max(0, (state.accessoriesRates.insulationTapeRate ?? 15) - 2))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                          <button type="button" onClick={() => handleRateChange('insulationTapeRate', Math.max(0, (state.accessoriesRates.insulationTapeRate ?? 15) - 2))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="border-t border-[#1f2d4d]/30 pt-1.5 flex justify-between items-center text-[10px] text-slate-400 select-none">
-                    <span>الإجمالي البند:</span>
-                    <span className="text-[#D4AF37] font-bold">{totalInsulationTapeCost.toLocaleString()} ج.م</span>
+                    <div className="border-t border-[#1f2d4d]/30 pt-1.5 flex justify-between items-center text-[12px] text-white select-none">
+                      <span>الاجمالى :</span>
+                      <span className="text-xs text-[#D4AF37] font-bold">{totalInsulationTapeCost.toLocaleString()} ج.م</span>
+                    </div>
                   </div>
-                </div>
 
                   {/* لمبات تجريبية مع تفعيل عداد السعر */}
                   <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[170px] space-y-3 hover:border-[#D4AF37]/30 transition-all shadow-sm">
                     <div className="text-right">
-                      <span className="text-xs font-bold text-[#F0E6D2] block">لمبات ليد تجريبية للتسليم</span>
-                      <span className="text-[10px] text-gray-500 mt-1 block">لمبات ليد لتجريب خطوط الإنارة</span>
+                      <span className="text-xs text-[#D4AF37] block">لمبات ليد</span>
+                      <span className="text-[10px] text-white mt-1 block">لمبات ليد لتجريب خطوط الإنارة</span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 pt-1">
-                      {/* عداد الكمية */}
-                      <div className="bg-[#07132a]/60 p-2 rounded-xl flex flex-col items-center justify-between gap-1 select-none">
-                        <span className="text-[9px] text-gray-400 font-bold">الكمية</span>
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                      <div className="bg-[#07132a]/60 p-2 rounded-xl h-11 flex flex-col items-center justify-between gap-1 select-none">
+                        <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
-                          <button type="button" onClick={() => { const val = state.temporaryBulbCount + 1; updateStateAndSave(prev => ({ temporaryBulbCount: val })); }} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                          <button type="button" onClick={() => { const val = state.temporaryBulbCount + 1; updateStateAndSave(prev => ({ temporaryBulbCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                           <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.temporaryBulbCount}</span>
-                          <button type="button" onClick={() => { const val = Math.max(0, state.temporaryBulbCount - 1); updateStateAndSave(prev => ({ temporaryBulbCount: val })); }} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                          <button type="button" onClick={() => { const val = Math.max(0, state.temporaryBulbCount - 1); updateStateAndSave(prev => ({ temporaryBulbCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
-                      {/* عداد السعر الفردي ليد */}
-                      <div className="bg-[#07132a]/60 p-2 rounded-xl flex flex-col items-center justify-between gap-1 select-none">
-                        <span className="text-[9px] text-gray-400 font-bold">السعر (ج)</span>
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                      <div className="bg-[#07132a]/60 p-2 rounded-xl h-11 flex flex-col items-center justify-between gap-1 select-none">
+                        <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج)</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
-                          <button type="button" onClick={() => handleRateChange('temporaryBulbRate', (state.accessoriesRates.temporaryBulbRate ?? 25) + 5)} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                          <button type="button" onClick={() => handleRateChange('temporaryBulbRate', (state.accessoriesRates.temporaryBulbRate ?? 25) + 5)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                           <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.accessoriesRates.temporaryBulbRate}</span>
-                          <button type="button" onClick={() => handleRateChange('temporaryBulbRate', Math.max(0, (state.accessoriesRates.temporaryBulbRate ?? 25) - 5))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                          <button type="button" onClick={() => handleRateChange('temporaryBulbRate', Math.max(0, (state.accessoriesRates.temporaryBulbRate ?? 25) - 5))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
                     </div>
 
-                    <div className="border-t border-[#1f2d4d]/30 pt-1.5 flex justify-between items-center text-[10px] text-slate-400 select-none">
-                      <span>إجمالي البند:</span>
-                      <span className="text-[#D4AF37] font-bold">{totalTemporaryBulbCost.toLocaleString()} ج.م</span>
+                    <div className="border-t border-[#1f2d4d]/30 pt-1.5 flex justify-between items-center text-[12px] text-white select-none">
+                      <span> الاجمالى:</span>
+                      <span className="text-xs text-[#D4AF37] font-bold">{totalTemporaryBulbCost.toLocaleString()} ج.م</span>
                     </div>
                   </div>
 
                   {/* دوايات اختبار مع تفعيل عداد السعر */}
                   <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[170px] space-y-3 hover:border-[#D4AF37]/30 transition-all shadow-sm">
                     <div className="text-right">
-                      <span className="text-xs font-bold text-[#F0E6D2] block">دواية اختبار لمبات</span>
-                      <span className="text-[10px] text-gray-500 mt-1 block">دوايات اختبار للتثبيت المؤقت</span>
+                      <span className="text-xs font-bold text-[#D4AF37] block">دواية لمبات</span>
+                      <span className="text-[10px] text-white mt-1 block">دوايات مؤقتة</span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 pt-1">
-                      {/* عداد الكمية */}
-                      <div className="bg-[#07132a]/60 p-2 rounded-xl flex flex-col items-center justify-between gap-1 select-none">
-                        <span className="text-[9px] text-gray-400 font-bold">الكمية</span>
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                      <div className="bg-[#07132a]/60 p-2 rounded-xl h-11 flex flex-col items-center justify-between gap-1 select-none">
+                        <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
-                          <button type="button" onClick={() => { const val = state.socketTestCount + 1; updateStateAndSave(prev => ({ socketTestCount: val })); }} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                          <button type="button" onClick={() => { const val = state.socketTestCount + 1; updateStateAndSave(prev => ({ socketTestCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                           <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.socketTestCount}</span>
-                          <button type="button" onClick={() => { const val = Math.max(0, state.socketTestCount - 1); updateStateAndSave(prev => ({ socketTestCount: val })); }} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                          <button type="button" onClick={() => { const val = Math.max(0, state.socketTestCount - 1); updateStateAndSave(prev => ({ socketTestCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
-                      {/* عداد السعر الفردي دلاية */}
-                      <div className="bg-[#07132a]/60 p-2 rounded-xl flex flex-col items-center justify-between gap-1 select-none">
-                        <span className="text-[9px] text-gray-400 font-bold">السعر (ج)</span>
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                      <div className="bg-[#07132a]/60 p-2 rounded-xl h-11 flex flex-col items-center justify-between gap-1 select-none">
+                        <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج)</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
-                          <button type="button" onClick={() => handleRateChange('socketTestRate', (state.accessoriesRates.socketTestRate ?? 12) + 2)} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                          <button type="button" onClick={() => handleRateChange('socketTestRate', (state.accessoriesRates.socketTestRate ?? 12) + 2)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                           <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.accessoriesRates.socketTestRate}</span>
-                          <button type="button" onClick={() => handleRateChange('socketTestRate', Math.max(0, (state.accessoriesRates.socketTestRate ?? 12) - 2))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                          <button type="button" onClick={() => handleRateChange('socketTestRate', Math.max(0, (state.accessoriesRates.socketTestRate ?? 12) - 2))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
                     </div>
 
-                    <div className="border-t border-[#1f2d4d]/30 pt-1.5 flex justify-between items-center text-[10px] text-slate-400 select-none">
-                      <span>إجمالي البند:</span>
-                      <span className="text-[#D4AF37] font-bold">{totalSocketTestCost.toLocaleString()} ج.م</span>
+                    <div className="border-t border-[#1f2d4d]/30 pt-1.5 flex justify-between items-center text-[12px] text-white select-none">
+                      <span> الاجمالى:</span>
+                      <span className="text-xs text-[#D4AF37] font-bold">{totalSocketTestCost.toLocaleString()} ج.م</span>
                     </div>
                   </div>
 
                   {/* أسمنت ورمل للتثبيت مع عداد السعر الفردي للشكارة */}
                   <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[170px] space-y-3 hover:border-[#D4AF37]/30 transition-all shadow-sm">
                     <div className="text-right">
-                      <span className="text-xs font-bold text-[#F0E6D2] block">أسمنت ورمل للتثبيت</span>
-                      <span className="text-[10px] text-gray-500 mt-1 block">أسمنت ورمل رميات الخراطيم والعلب</span>
+                      <span className="text-xs text-[#D4AF37] block">أسمنت ورمل </span>
+                      <span className="text-[10px] text-white mt-1 block">أسمنت ورمل للتثبيت   </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 pt-1">
-                      {/* عداد الكمية */}
-                      <div className="bg-[#07132a]/60 p-2 rounded-xl flex flex-col items-center justify-between gap-1 select-none">
-                        <span className="text-[9px] text-gray-400 font-bold">الكمية</span>
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                      <div className="bg-[#07132a]/60 p-2 rounded-xl h-11 flex flex-col items-center justify-between gap-1 select-none">
+                        <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
-                          <button type="button" onClick={() => { const val = state.cementSandBagCount + 1; updateStateAndSave(prev => ({ cementSandBagCount: val })); }} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                          <button type="button" onClick={() => { const val = state.cementSandBagCount + 1; updateStateAndSave(prev => ({ cementSandBagCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                           <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.cementSandBagCount}</span>
-                          <button type="button" onClick={() => { const val = Math.max(0, state.cementSandBagCount - 1); updateStateAndSave(prev => ({ cementSandBagCount: val })); }} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                          <button type="button" onClick={() => { const val = Math.max(0, state.cementSandBagCount - 1); updateStateAndSave(prev => ({ cementSandBagCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
-                      {/* عداد السعر الفردي للشكارة والمخلوط */}
-                      <div className="bg-[#07132a]/60 p-2 rounded-xl flex flex-col items-center justify-between gap-1 select-none">
-                        <span className="text-[9px] text-gray-400 font-bold">السعر (ج)</span>
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                      <div className="bg-[#07132a]/60 p-2 rounded-xl h-11 flex flex-col items-center justify-between gap-1 select-none">
+                        <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج)</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
-                          <button type="button" onClick={() => handleRateChange('cementSandRate', (state.accessoriesRates.cementSandRate ?? 450) + 50)} className="w-6 h-6 rounded bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer">+</button>
+                          <button type="button" onClick={() => handleRateChange('cementSandRate', (state.accessoriesRates.cementSandRate ?? 450) + 50)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                           <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.accessoriesRates.cementSandRate}</span>
-                          <button type="button" onClick={() => handleRateChange('cementSandRate', Math.max(0, (state.accessoriesRates.cementSandRate ?? 450) - 50))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer">-</button>
+                          <button type="button" onClick={() => handleRateChange('cementSandRate', Math.max(0, (state.accessoriesRates.cementSandRate ?? 450) - 50))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
                     </div>
 
-                    <div className="border-t border-[#1f2d4d]/30 pt-1.5 flex justify-between items-center text-[10px] text-slate-400 select-none">
-                      <span>إجمالي البند:</span>
-                      <span className="text-[#D4AF37] font-bold">{totalCementSandCost.toLocaleString()} ج.م</span>
+                    <div className="border-t border-[#1f2d4d]/30 pt-1.5 flex justify-between items-center text-[12px] text-white select-none">
+                      <span> الاجمالى:</span>
+                      <span className="text-xs text-[#D4AF37] font-bold">{totalCementSandCost.toLocaleString()} ج.م</span>
                     </div>
                   </div>
 
@@ -1007,12 +1003,12 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               </div>
 
               {/* إعادة تصميم كروت الإضافة الحرة للتأسيس لتكون فاخرة */}
-              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1f2d4d]/40 pb-3">
-                  <span className="text-sm font-bold text-[#D4AF37]">بنود وخامات تأسيس مخصصة وإضافية للعميل:</span>
-                  <button type="button" onClick={handleAddCustomRoughIn} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/30 text-sm font-bold text-[#D4AF37] transition-all cursor-pointer">
+              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D4AF37] pb-3">
+                  <span className="text-lg font-bold text-[#D4AF37]">بنود وخامات تأسيس مخصصة وإضافية للعميل:</span>
+                  <button type="button" onClick={handleAddCustomRoughIn} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/30 text-sm text-[#D4AF37] transition-all cursor-pointer font-alexandria">
                     <PlusCircle className="w-5 h-5" />
-                    <span>إضافة بند تأسيس مخصص</span>
+                    <span>إضافة بند</span>
                   </button>
                 </div>
 
@@ -1021,7 +1017,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                     <div key={item.id} className="p-5 rounded-3xl border border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/50 shadow-md hover:shadow-[0_0_25px_rgba(212,175,55,0.06)] transition-all duration-300 flex flex-col justify-between gap-4 text-right">
                       <div className="flex justify-between items-center border-b border-[#1f2d4d]/30 pb-3">
                         <span className="px-2 py-0.5 rounded text-[10px] bg-[#D4AF37]/10 text-[#D4AF37] font-semibold border border-[#D4AF37]/20">تأسيس مخصص</span>
-                        <button type="button" onClick={() => handleRemoveCustomRoughIn(item.id)} className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"><Trash2 className="w-5 h-5" /></button>
+                        <button type="button" onClick={() => handleRemoveCustomRoughIn(item.id)} className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"><Trash2 className="w-5 h-5" /></button>
                       </div>
                       <div className="space-y-3">
                         <input type="text" value={item.name} onChange={(e) => handleCustomRoughInEdit(item.id, { name: e.target.value })} className="w-full h-11 px-3 rounded-xl bg-[#07132a] border border-[#1f2d4d] text-sm text-white font-bold outline-none focus:border-[#D4AF37]" placeholder="مسمى البند مخصص..." />
@@ -1029,10 +1025,11 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         <div className="grid grid-cols-3 gap-2">
                           <div className="space-y-1">
                             <span className="text-[10px] text-gray-500 font-bold block mb-1">الكمية:</span>
+                            {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                             <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2">
-                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { quantity: (item.quantity ?? 1) + 1 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer">+</button>
+                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { quantity: (item.quantity ?? 1) + 1 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer font-sans">+</button>
                               <span className="text-sm font-black text-white">{item.quantity}</span>
-                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { quantity: Math.max(1, (item.quantity ?? 1) - 1) })} className="text-red-400 font-bold text-sm cursor-pointer">-</button>
+                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { quantity: Math.max(1, (item.quantity ?? 1) - 1) })} className="text-red-400 font-bold text-sm cursor-pointer font-sans">-</button>
                             </div>
                           </div>
                           <div className="space-y-1">
@@ -1041,10 +1038,11 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                           </div>
                           <div className="space-y-1">
                             <span className="text-[10px] text-gray-500 font-bold block mb-1">السعر:</span>
+                            {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                             <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none">
-                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { rate: (item.rate ?? 0) + 100 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer">+</button>
+                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { rate: (item.rate ?? 0) + 100 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer font-sans">+</button>
                               <span className="text-xs font-black text-[#D4AF37] font-mono">{item.rate}</span>
-                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 100) })} className="text-red-400 font-bold text-sm cursor-pointer">-</button>
+                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 100) })} className="text-red-400 font-bold text-sm cursor-pointer font-sans">-</button>
                             </div>
                           </div>
                         </div>
@@ -1055,15 +1053,16 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               </div>
 
               {/* مصنعية أعمال تأسيس الكهرباء */}
-              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37]/20 flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
+              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] flex flex-col sm:flex-row items-center justify-between gap-4 select-none">
                 <div className="space-y-1 text-center sm:text-right">
-                  <span className="text-sm font-bold text-[#D4AF37] block">إجمالي مصنعية تأسيس وتمرير وتمليط الكهرباء (مقطوعية)</span>
-                  <p className="text-xs text-gray-500">أجور العمالة الفنية لتمديد ومط الخراطيم وتأسيس الميزان بالليزر</p>
+                  <span className="text-md font-bold text-[#D4AF37] block">إجمالي مصنعية تأسيس الكهرباء (مقطوعية)</span>
+                  <p className="text-xs text-white">مصنعية الفنى للتكسير وتركيب العلب وتمديد الخراطيم والاسلاك والتأسيس بميزان ليزر</p>
                 </div>
+                {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                 <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-44">
-                  <button type="button" onClick={() => { const v = state.roughInLaborCost + 500; updateStateAndSave(prev => ({ roughInLaborCost: v })); }} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
-                  <span className="text-base font-black text-white font-mono">{state.roughInLaborCost.toLocaleString()} <span className="text-[9px] text-gray-500 font-normal">ج.م</span></span>
-                  <button type="button" onClick={() => { const v = Math.max(0, state.roughInLaborCost - 500); updateStateAndSave(prev => ({ roughInLaborCost: v })); }} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                  <button type="button" onClick={() => { const v = state.roughInLaborCost + 500; updateStateAndSave(prev => ({ roughInLaborCost: v })); }} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
+                  <span className="text-base font-black text-[#D4AF37] font-mono">{state.roughInLaborCost.toLocaleString()} <span className="text-[9px] text-[#D4AF37] font-normal">ج.م</span></span>
+                  <button type="button" onClick={() => { const v = Math.max(0, state.roughInLaborCost - 500); updateStateAndSave(prev => ({ roughInLaborCost: v })); }} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                 </div>
               </div>
 
@@ -1073,9 +1072,9 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
 
         {/* القسم الثاني: مرحلة تشطيب الكهرباء (Finishing Stage) */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#1f2d4d] pb-2 text-[#D4AF37]">
+          <div className="flex items-center gap-2 border-b border-[#D4AF37] pb-2 text-[#D4AF37]">
             <Zap className="w-5 h-5 animate-pulse" />
-            <h4 className="text-xl font-bold text-[#F0E6D2]">القسم الثاني: مرحلة تركيب وشوش ومفاتيح الإنارة (التشطيب):</h4>
+            <h4 className="text-lg font-bold text-[#D4AF37]">القسم الثاني: مرحلة تركيب وشوش ومفاتيح الإنارة (التشطيب):</h4>
           </div>
 
           <div 
@@ -1091,20 +1090,20 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
           >
             <div className="flex-shrink-0">
               {state.finishingActive ? (
-                <div className="py-3 px-6 rounded-2xl bg-[#D4AF37] text-[#020B1C] font-bold text-base flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                <div className="py-3 px-6 rounded-2xl bg-[#D4AF37] text-[#020B1C]  text-base flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
                   <Check className="w-5 h-5 stroke-[3]" />
-                  <span>مفعّل بالباقة</span>
+                  <span>تفعيل التشطيب</span>
                 </div>
               ) : (
-                <div className="py-3 px-6 rounded-2xl bg-[#1c2844] text-[#F0E6D2] font-bold text-base border border-[#1f2d4d]">
-                  <span>تفعيل التشطيب</span>
+                <div className="py-3 px-6 rounded-2xl bg-[#1c2844] text-[#F0E6D2] text-base border border-[#1f2d4d]">
+                  <span>الغاء تفعيل التشطيب</span>
                 </div>
               )}
             </div>
 
             <div className="flex-1 text-center sm:text-right space-y-1 pr-4">
-              <h4 className="text-xl font-bold text-[#F0E6D2]">باقة التشطيب الكاملة لكهرباء الشقة</h4>
-              <p className="text-sm text-gray-400 leading-relaxed">تشمل المفاتيح واللقم والشاسيهات والوشوش الخارجية (ماركة فينوس أو بتشينو) مع التركيب والضمان والمصنعية</p>
+              <h4 className="text-md font-bold text-[#D4AF37]">تفعيل تشطيب كهرباء الشقة بالكامل </h4>
+              <p className="text-sm text-white leading-relaxed">تشمل المفاتيح واللقم والشاسيهات والوشوش الخارجية والليد والمصنعية</p>
             </div>
 
             <div className={`p-4 rounded-full flex-shrink-0 transition-all duration-300 ${state.finishingActive ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'bg-[#1f2d4d]/30 text-gray-500'}`}>
@@ -1117,10 +1116,10 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
             <div className="p-8 rounded-3xl bg-[#020B1C]/60 border border-[#1f2d4d] space-y-6">
               
               {/* اختيار براند منتجات التشطيب حركياً */}
-              <div className="p-5 rounded-2xl bg-[#07132a] border border-[#1f2d4d] flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="p-5 rounded-2xl bg-[#07132a] border border-[#D4AF37] flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-right">
-                  <span className="text-sm font-bold text-[#F0E6D2] block">اختيار براند وعائلة وشوش ومفاتيح التشطيب:</span>
-                  <span className="text-[10px] text-gray-500 block leading-normal pt-1">سيقوم النظام بضرب أسعار القطع بالكامل حركياً بناءً على سعر البراند المعتمد بسوبابيز</span>
+                  <span className="text-md font-bold text-[#D4AF37] block">اختيار براند الوشوش والمفاتيح للتشطيب:</span>
+                  <span className="text-[10px] text-white block leading-normal pt-1">سيقوم النظام بضرب أسعار القطع بالكامل بناءً على سعر براند التشطيب المعتمد من العميل</span>
                 </div>
                 <div className="flex gap-2">
                    {Array.from(new Set(dbOutlets.map((o: ElectricalProductItem) => o.company).filter(Boolean))).map((brandName) => {
@@ -1148,23 +1147,25 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* مفاتيح إنارة عادية */}
                 <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                    <span className="text-sm font-bold text-[#F0E6D2] block">مفاتيح إنارة عادية</span>
+                    <span className="text-sm font-black text-[#D4AF37] block">مفاتيح إنارة</span>
                   </div>
                   <div className="space-y-3 mt-1">
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">السعر المقدر:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => handleRateChange('rateSwitch', (state.accessoriesRates.rateSwitch ?? 35) + 5)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-white font-bold">السعر :</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => handleRateChange('rateSwitch', (state.accessoriesRates.rateSwitch ?? 35) + 5)} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.rateSwitch ?? 35)} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                        <button type="button" onClick={() => handleRateChange('rateSwitch', Math.max(0, (state.accessoriesRates.rateSwitch ?? 35) - 5))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => handleRateChange('rateSwitch', Math.max(0, (state.accessoriesRates.rateSwitch ?? 35) - 5))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">الكمية الحالية:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ switchCount: prev.switchCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-white font-bold">الكمية:</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ switchCount: prev.switchCount + 1 }))} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-white font-mono">{state.switchCount}</span>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ switchCount: Math.max(0, prev.switchCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ switchCount: Math.max(0, prev.switchCount - 1) }))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
                   </div>
@@ -1173,23 +1174,25 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* برايز ومآخذ شواحن */}
                 <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                    <span className="text-sm font-bold text-[#F0E6D2] block">برايز ومآخذ شواحن</span>
+                    <span className="text-sm font-black text-[#D4AF37] block">برايز</span>
                   </div>
                   <div className="space-y-3 mt-1">
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">السعر المقدر:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => handleRateChange('ratePlug', (state.accessoriesRates.ratePlug ?? 45) + 5)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-white font-bold">السعر :</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => handleRateChange('ratePlug', (state.accessoriesRates.ratePlug ?? 45) + 5)} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.ratePlug ?? 45)} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                        <button type="button" onClick={() => handleRateChange('ratePlug', Math.max(0, (state.accessoriesRates.ratePlug ?? 45) - 5))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => handleRateChange('ratePlug', Math.max(0, (state.accessoriesRates.ratePlug ?? 45) - 5))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">الكمية الحالية:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ plugCount: prev.plugCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-white font-bold">الكمية:</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ plugCount: prev.plugCount + 1 }))} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-white font-mono">{state.plugCount}</span>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ plugCount: Math.max(0, prev.plugCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ plugCount: Math.max(0, prev.plugCount - 1) }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
                   </div>
@@ -1198,23 +1201,25 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* وشوش خارجية فاخرة */}
                 <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                    <span className="text-sm font-bold text-[#F0E6D2] block">وشوش ديكورية خارجية</span>
+                    <span className="text-sm font-black text-[#D4AF37] block">وشوش خارجية</span>
                   </div>
                   <div className="space-y-3 mt-1">
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">السعر المقدر:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => handleRateChange('ratePlate', (state.accessoriesRates.ratePlate ?? 25) + 5)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-white font-bold">السعر :</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => handleRateChange('ratePlate', (state.accessoriesRates.ratePlate ?? 25) + 5)} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.ratePlate ?? 25)} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                        <button type="button" onClick={() => handleRateChange('ratePlate', Math.max(0, (state.accessoriesRates.ratePlate ?? 25) - 5))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => handleRateChange('ratePlate', Math.max(0, (state.accessoriesRates.ratePlate ?? 25) - 5))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">الكمية الحالية:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ plateCount: prev.plateCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-gray-500 font-bold">الكمية:</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ plateCount: prev.plateCount + 1 }))} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-white font-mono">{state.plateCount}</span>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ plateCount: Math.max(0, prev.plateCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ plateCount: Math.max(0, prev.plateCount - 1) }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
                   </div>
@@ -1223,23 +1228,25 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* شاسيهات معدنية */}
                 <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                    <span className="text-sm font-bold text-[#F0E6D2] block">شاسيهات تثبيت اللقم</span>
+                    <span className="text-sm font-black text-[#D4AF37] block">شاسيهات اللقم</span>
                   </div>
                   <div className="space-y-3 mt-1">
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">السعر المقدر:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => handleRateChange('rateFrame', (state.accessoriesRates.rateFrame ?? 15) + 5)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-white font-bold">السعر :</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => handleRateChange('rateFrame', (state.accessoriesRates.rateFrame ?? 15) + 5)} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.rateFrame ?? 15)} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                        <button type="button" onClick={() => handleRateChange('rateFrame', Math.max(0, (state.accessoriesRates.rateFrame ?? 15) - 5))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => handleRateChange('rateFrame', Math.max(0, (state.accessoriesRates.rateFrame ?? 15) - 5))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans">-</button>
                       </div>
                     </div>
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">الكمية الحالية:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ frameCount: prev.frameCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-white font-bold">الكمية:</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ frameCount: prev.frameCount + 1 }))} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-white font-mono">{state.frameCount}</span>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ frameCount: Math.max(0, prev.frameCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ frameCount: Math.max(0, prev.frameCount - 1) }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
                   </div>
@@ -1248,23 +1255,25 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* سدادات وشوش فارغة */}
                 <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                    <span className="text-sm font-bold text-[#F0E6D2] block">سدادات وشوش فارغة</span>
+                    <span className="text-sm font-black text-[#D4AF37] block">سدادات وشوش </span>
                   </div>
                   <div className="space-y-3 mt-1">
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">السعر المقدر:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => handleRateChange('rateBlank', (state.accessoriesRates.rateBlank ?? 8) + 2)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-white font-bold">السعر :</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => handleRateChange('rateBlank', (state.accessoriesRates.rateBlank ?? 8) + 2)} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.rateBlank ?? 8)} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                        <button type="button" onClick={() => handleRateChange('rateBlank', Math.max(0, (state.accessoriesRates.rateBlank ?? 8) - 2))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => handleRateChange('rateBlank', Math.max(0, (state.accessoriesRates.rateBlank ?? 8) - 2))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">الكمية الحالية:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ blankInsertCount: prev.blankInsertCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-white font-bold">الكمية:</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ blankInsertCount: prev.blankInsertCount + 1 }))} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-white font-mono">{state.blankInsertCount}</span>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ blankInsertCount: Math.max(0, prev.blankInsertCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ blankInsertCount: Math.max(0, prev.blankInsertCount - 1) }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
                   </div>
@@ -1273,23 +1282,25 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* لقم قواطع فرعية */}
                 <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                    <span className="text-sm font-bold text-[#F0E6D2] block">لقم قواطع شنايدر فرعية</span>
+                    <span className="text-sm font-black text-[#D4AF37] block">لقم قواطع </span>
                   </div>
                   <div className="space-y-3 mt-1">
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">السعر المقدر:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => handleRateChange('rateBreakerFinishing', (state.accessoriesRates.rateBreakerFinishing ?? 120) + 10)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-white font-bold">السعر :</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => handleRateChange('rateBreakerFinishing', (state.accessoriesRates.rateBreakerFinishing ?? 120) + 10)} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.rateBreakerFinishing ?? 120)} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                        <button type="button" onClick={() => handleRateChange('rateBreakerFinishing', Math.max(0, (state.accessoriesRates.rateBreakerFinishing ?? 120) - 10))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => handleRateChange('rateBreakerFinishing', Math.max(0, (state.accessoriesRates.rateBreakerFinishing ?? 120) - 10))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
+                    {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
-                      <span className="text-xs text-gray-500 font-bold">الكمية الحالية:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ breakerFinishingCount: prev.breakerFinishingCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                      <span className="text-xs text-white font-bold">الكمية:</span>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ breakerFinishingCount: prev.breakerFinishingCount + 1 }))} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-sm font-black text-white font-mono">{state.breakerFinishingCount}</span>
-                        <button type="button" onClick={() => updateStateAndSave(prev => ({ breakerFinishingCount: Math.max(0, prev.breakerFinishingCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                        <button type="button" onClick={() => updateStateAndSave(prev => ({ breakerFinishingCount: Math.max(0, prev.breakerFinishingCount - 1) }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
                   </div>
@@ -1298,30 +1309,32 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               </div>
 
               {/* مفاتيح القوى الثقيلة بالتشطيب */}
-              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-4">
-                <span className="text-sm font-bold text-[#D4AF37] block border-b border-[#1f2d4d]/40 pb-2">لقم ومفاتيح القوى والخدمات المخصصة بالوحدة:</span>
+              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-4">
+                <span className="text-md font-bold text-[#D4AF37] block border-b border-[#D4AF37] pb-2">لقم ومفاتيح القوى والخدمات المخصصة بالوحدة:</span>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   
                   {/* مفتاح تكييف */}
                   <div className="p-5 rounded-3xl bg-[#020B1C]/50 border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/30 transition-all">
                     <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                      <span className="text-sm font-bold text-[#F0E6D2]">مفتاح تكييف ثنائي عريض</span>
+                      <span className="text-sm font-black text-[#D4AF37] block">مفتاح تكييف </span>
                     </div>
                     <div className="space-y-3 mt-1">
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between text-right">
-                        <span className="text-xs text-gray-500 font-bold">السعر المقدر:</span>
-                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                          <button type="button" onClick={() => handleRateChange('rateAcSwitch', (state.accessoriesRates.rateAcSwitch ?? 120) + 5)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                        <span className="text-xs text-white font-bold">السعر :</span>
+                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                          <button type="button" onClick={() => handleRateChange('rateAcSwitch', (state.accessoriesRates.rateAcSwitch ?? 120) + 5)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                           <span className="text-sm font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.rateAcSwitch ?? 120)} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                          <button type="button" onClick={() => handleRateChange('rateAcSwitch', Math.max(0, (state.accessoriesRates.rateAcSwitch ?? 120) - 5))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                          <button type="button" onClick={() => handleRateChange('rateAcSwitch', Math.max(0, (state.accessoriesRates.rateAcSwitch ?? 120) - 5))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                         </div>
                       </div>
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between text-right">
-                        <span className="text-xs text-gray-500 font-bold">الكمية الحالية:</span>
-                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                          <button type="button" onClick={() => updateStateAndSave(prev => ({ acSwitchCount: prev.acSwitchCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                        <span className="text-xs text-white font-bold">الكمية:</span>
+                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                          <button type="button" onClick={() => updateStateAndSave(prev => ({ acSwitchCount: prev.acSwitchCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                           <span className="text-sm font-black text-white font-mono">{state.acSwitchCount}</span>
-                          <button type="button" onClick={() => updateStateAndSave(prev => ({ acSwitchCount: Math.max(0, prev.acSwitchCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                          <button type="button" onClick={() => updateStateAndSave(prev => ({ acSwitchCount: Math.max(0, prev.acSwitchCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                         </div>
                       </div>
                     </div>
@@ -1330,23 +1343,25 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                   {/* مفتاح سخان */}
                   <div className="p-5 rounded-3xl bg-[#020B1C]/50 border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/30 transition-all">
                     <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                      <span className="text-sm font-bold text-[#F0E6D2]">مفتاح سخان ثنائي مضيء</span>
+                      <span className="text-sm font-black text-[#D4AF37] block">مفتاح سخان ثنائي مضيء</span>
                     </div>
                     <div className="space-y-3 mt-1">
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between text-right">
-                        <span className="text-xs text-gray-500 font-bold">السعر المقدر:</span>
-                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                          <button type="button" onClick={() => handleRateChange('rateHeaterSwitch', (state.accessoriesRates.rateHeaterSwitch ?? 120) + 10)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                        <span className="text-xs text-white font-bold">السعر :</span>
+                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                          <button type="button" onClick={() => handleRateChange('rateHeaterSwitch', (state.accessoriesRates.rateHeaterSwitch ?? 120) + 10)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                           <span className="text-sm font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.rateHeaterSwitch ?? 120)} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                          <button type="button" onClick={() => handleRateChange('rateHeaterSwitch', Math.max(0, (state.accessoriesRates.rateHeaterSwitch ?? 120) - 10))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                          <button type="button" onClick={() => handleRateChange('rateHeaterSwitch', Math.max(0, (state.accessoriesRates.rateHeaterSwitch ?? 120) - 10))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                         </div>
                       </div>
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between text-right">
-                        <span className="text-xs text-gray-500 font-bold">الكمية الحالية:</span>
-                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                          <button type="button" onClick={() => updateStateAndSave(prev => ({ heaterSwitchCount: prev.heaterSwitchCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                        <span className="text-xs text-white font-bold">الكمية:</span>
+                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                          <button type="button" onClick={() => updateStateAndSave(prev => ({ heaterSwitchCount: prev.heaterSwitchCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                           <span className="text-sm font-black text-white font-mono">{state.heaterSwitchCount}</span>
-                          <button type="button" onClick={() => updateStateAndSave(prev => ({ heaterSwitchCount: Math.max(0, prev.heaterSwitchCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                          <button type="button" onClick={() => updateStateAndSave(prev => ({ heaterSwitchCount: Math.max(0, prev.heaterSwitchCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                         </div>
                       </div>
                     </div>
@@ -1355,23 +1370,25 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                   {/* مفتاح جرس */}
                   <div className="p-5 rounded-3xl bg-[#020B1C]/50 border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/30 transition-all">
                     <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                      <span className="text-sm font-bold text-[#F0E6D2]">مفتاح جرس مع إضاءة بيانو</span>
+                      <span className="text-sm font-black text-[#D4AF37] block">مفتاح جرس   </span>
                     </div>
                     <div className="space-y-3 mt-1">
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between text-right">
-                        <span className="text-xs text-gray-500 font-bold">السعر المقدر:</span>
-                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                          <button type="button" onClick={() => handleRateChange('rateBellSwitch', (state.accessoriesRates.rateBellSwitch ?? 55) + 5)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                        <span className="text-xs text-white font-bold">السعر :</span>
+                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                          <button type="button" onClick={() => handleRateChange('rateBellSwitch', (state.accessoriesRates.rateBellSwitch ?? 55) + 5)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                           <span className="text-sm font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.rateBellSwitch ?? 55)} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                          <button type="button" onClick={() => handleRateChange('rateBellSwitch', Math.max(0, (state.accessoriesRates.rateBellSwitch ?? 55) - 5))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                          <button type="button" onClick={() => handleRateChange('rateBellSwitch', Math.max(0, (state.accessoriesRates.rateBellSwitch ?? 55) - 5))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                         </div>
                       </div>
+                      {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between text-right">
-                        <span className="text-xs text-gray-500 font-bold">الكمية الحالية:</span>
-                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                          <button type="button" onClick={() => updateStateAndSave(prev => ({ bellSwitchCount: prev.bellSwitchCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                        <span className="text-xs text-white font-bold">الكمية:</span>
+                        <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                          <button type="button" onClick={() => updateStateAndSave(prev => ({ bellSwitchCount: prev.bellSwitchCount + 1 }))} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                           <span className="text-sm font-black text-white font-mono">{state.bellSwitchCount}</span>
-                          <button type="button" onClick={() => updateStateAndSave(prev => ({ bellSwitchCount: Math.max(0, prev.bellSwitchCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                          <button type="button" onClick={() => updateStateAndSave(prev => ({ bellSwitchCount: Math.max(0, prev.bellSwitchCount - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                         </div>
                       </div>
                     </div>
@@ -1381,12 +1398,12 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               </div>
 
               {/* كروت الإضافة الحرة للتشطيب مستقبلاً */}
-              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1f2d4d]/40 pb-3">
-                  <span className="text-sm font-bold text-[#D4AF37]">بنود وإكسسوارات تشطيب مخصصة للعميل:</span>
-                  <button type="button" onClick={handleAddCustomFinishing} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/20 text-xs font-bold text-[#D4AF37] transition-all cursor-pointer">
+              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D4AF37] pb-3">
+                  <span className="text-sm font-bold text-[#D4AF37]"> إكسسوارات التشطيب المخصصة للعميل:</span>
+                  <button type="button" onClick={handleAddCustomFinishing} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/20 text-xs text-[#D4AF37] transition-all cursor-pointer">
                     <PlusCircle className="w-4 h-4" />
-                    <span>إضافة بند تشطيب مخصص</span>
+                    <span>إضافة بند </span>
                   </button>
                 </div>
 
@@ -1403,10 +1420,11 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         <div className="grid grid-cols-3 gap-2">
                           <div className="space-y-1">
                             <span className="text-[10px] text-gray-500 font-bold block mb-1">الكمية:</span>
+                            {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                             <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2">
-                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { quantity: (item.quantity ?? 1) + 1 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer">+</button>
+                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { quantity: (item.quantity ?? 1) + 1 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer font-sans">+</button>
                               <span className="text-sm font-black text-white">{item.quantity}</span>
-                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { quantity: Math.max(1, (item.quantity ?? 1) - 1) })} className="text-red-400 font-bold text-sm cursor-pointer">-</button>
+                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { quantity: Math.max(1, (item.quantity ?? 1) - 1) })} className="text-red-400 font-bold text-sm cursor-pointer font-sans">-</button>
                             </div>
                           </div>
                           <div className="space-y-1">
@@ -1415,10 +1433,11 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                           </div>
                           <div className="space-y-1">
                             <span className="text-[10px] text-gray-500 font-bold block mb-1">السعر:</span>
+                            {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                             <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none">
-                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { rate: (item.rate ?? 0) + 100 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer">+</button>
+                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { rate: (item.rate ?? 0) + 100 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer font-sans">+</button>
                               <span className="text-xs font-black text-[#D4AF37] font-mono">{item.rate}</span>
-                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 100) })} className="text-red-400 font-bold text-sm cursor-pointer">-</button>
+                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 100) })} className="text-red-400 font-bold text-sm cursor-pointer font-sans">-</button>
                             </div>
                           </div>
                         </div>
@@ -1429,15 +1448,16 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               </div>
 
               {/* مصنعية أعمال تشطيب الكهرباء */}
-              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37]/20 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="space-y-1 text-center sm:text-right">
-                  <span className="text-sm font-bold text-[#D4AF37] block">مصنعيات تركيب لقم ووشوش واختبار الإنارة (مقطوعية)</span>
-                  <p className="text-xs text-gray-500">أجور عمالة فنية لتركيب وتوصيل وتجريب واختبار لقم وشواحن وكوالين الشقة</p>
+                  <span className="text-md font-bold text-[#D4AF37] block">مصنعيات تركيب لقم ووشوش واختبار الإنارة (مقطوعية)</span>
+                  <p className="text-xs text-white"> مصنعية فنيين لتركيب وتوصيل وتجريب واختبار لقم وشواحن واضاءة الوحدة</p>
                 </div>
+                {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                 <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-44">
-                  <button type="button" onClick={() => { const v = state.finishingLaborCost + 500; updateStateAndSave(prev => ({ finishingLaborCost: v })); }} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
-                  <span className="text-base font-black text-white font-mono">{state.finishingLaborCost.toLocaleString()} <span className="text-[9px] text-gray-500 font-normal">ج.م</span></span>
-                  <button type="button" onClick={() => { const v = Math.max(0, state.finishingLaborCost - 500); updateStateAndSave(prev => ({ finishingLaborCost: v })); }} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                  <button type="button" onClick={() => { const v = state.finishingLaborCost + 500; updateStateAndSave(prev => ({ finishingLaborCost: v })); }} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
+                  <span className="text-base font-black text-[#D4AF37] font-mono">{state.finishingLaborCost.toLocaleString()} <span className="text-[9px] text-[#D4AF37] font-normal">ج.م</span></span>
+                  <button type="button" onClick={() => { const v = Math.max(0, state.finishingLaborCost - 500); updateStateAndSave(prev => ({ finishingLaborCost: v })); }} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                 </div>
               </div>
 
@@ -1447,9 +1467,9 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
 
         {/* القسم الثالث: ترقية أنظمة التحكم الذكي (Smart Home) */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#1f2d4d] pb-2 text-[#D4AF37]">
+          <div className="flex items-center gap-2 border-b border-[#D4AF37] pb-2 text-[#D4AF37]">
             <Star className="w-5 h-5 animate-pulse" />
-            <h4 className="text-base font-bold">القسم الثالث: ترقية أنظمة الكهرباء الذكية والتحكم عن بعد:</h4>
+            <h4 className="text-base font-bold">القسم الثالث:  أنظمة الكهرباء الذكية والتحكم عن بعد:</h4>
           </div>
 
           <div 
@@ -1465,27 +1485,28 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
           >
             <div className="flex-shrink-0">
               {state.smartActive ? (
-                <button type="button" className="py-3 px-6 rounded-2xl bg-[#D4AF37] text-[#020B1C] font-bold text-base flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                <button type="button" className="py-3 px-6 rounded-2xl bg-[#D4AF37] text-[#020B1C] text-base flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
                   <Check className="w-5 h-5 stroke-[3]" />
-                  <span>مفعّل بالترقية</span>
+                  <span>تفعيل البند </span>
                 </button>
               ) : (
-                <button type="button" className="py-3 px-6 rounded-2xl bg-[#1c2844] text-[#F0E6D2] font-bold text-base border border-[#1f2d4d]">
-                  <span>تفعيل الترقية</span>
+                <button type="button" className="py-3 px-6 rounded-2xl bg-[#1c2844] text-[#F0E6D2] text-base border border-[#1f2d4d]">
+                  <span>البند غير مفعل</span>
                 </button>
               )}
             </div>
 
             <div className="flex-1 text-center sm:text-right space-y-1">
-              <h4 className="text-xl font-bold text-[#F0E6D2]">ترقية أنظمة التحكم الذكي (Smart Home)</h4>
-              <p className="text-sm text-gray-400 leading-relaxed">تأسيس مسارات الكابلات الإضافية ولوحات التحكم الذاتية بالموقع للتحكم بالإنارة والتكييف والستائر عن بعد</p>
+              <h4 className="text-md font-bold text-[#D4AF37]"> أنظمة التحكم الذكي (Smart Home)</h4>
+              <p className="text-sm text-white leading-relaxed">تأسيس مسارات الكابلات الإضافية ولوحات التحكم الذاتية بالموقع للتحكم بالإنارة والتكييف  عن بعد</p>
               
+              {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
               <div className="flex flex-wrap items-center gap-2 mt-2 justify-center sm:justify-start" onClick={(e) => e.stopPropagation()}>
-                <span className="text-xs text-gray-500 font-bold">التكلفة المقطوعية للباقة:</span>
-                <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-44">
-                  <button type="button" onClick={() => handleRateChange('smartHomeFlatRate', (state.accessoriesRates.smartHomeFlatRate ?? 15000) + 1000)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                <span className="text-xs text-white font-bold">التكلفة الاجمالية للبند:</span>
+                <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-44">
+                  <button type="button" onClick={() => handleRateChange('smartHomeFlatRate', (state.accessoriesRates.smartHomeFlatRate ?? 15000) + 1000)} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                   <span className="text-sm font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.smartHomeFlatRate ?? 15000).toLocaleString()} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                  <button type="button" onClick={() => handleRateChange('smartHomeFlatRate', Math.max(0, (state.accessoriesRates.smartHomeFlatRate ?? 15000) - 1000))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                  <button type="button" onClick={() => handleRateChange('smartHomeFlatRate', Math.max(0, (state.accessoriesRates.smartHomeFlatRate ?? 15000) - 1000))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                 </div>
               </div>
             </div>
@@ -1509,27 +1530,28 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
           >
             <div className="flex-shrink-0">
               {state.soundActive ? (
-                <div className="py-3 px-6 rounded-2xl bg-[#D4AF37] text-[#020B1C] font-bold text-base flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                <div className="py-3 px-6 rounded-2xl bg-[#D4AF37] text-[#020B1C] text-base flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
                   <Check className="w-5 h-5 stroke-[3]" />
-                  <span>مفعّل بالترقية</span>
+                  <span>تفعيل البند</span>
                 </div>
               ) : (
-                <div className="py-3 px-6 rounded-2xl bg-[#1c2844] text-[#F0E6D2] font-bold text-base border border-[#1f2d4d]">
-                  <span>تفعيل الترقية</span>
+                <div className="py-3 px-6 rounded-2xl bg-[#1c2844] text-[#F0E6D2] text-base border border-[#1f2d4d]">
+                  <span>البند غير مفعل</span>
                 </div>
               )}
             </div>
 
             <div className="flex-1 text-center sm:text-right space-y-1 pr-4">
-              <h4 className="text-xl font-bold text-[#F0E6D2]">ترقية أنظمة الصوت الموزع والـ (Sound System) بالوحدة</h4>
-              <p className="text-sm text-gray-400 leading-relaxed">تأسيس مسارات وتمديدات مكبرات الصوت وتوزيع سماعات السقف الذكية مع أزرار تحكم مستقلة لكل غرفة وصالة بالكامل</p>
+              <h4 className="text-md font-bold text-[#D4AF37]">ترقية أنظمة الصوت الموزع والـ (Sound System) بالوحدة</h4>
+              <p className="text-sm text-white leading-relaxed">تأسيس مسارات وتمديدات مكبرات الصوت وتوزيع سماعات السقف الذكية مع أزرار تحكم مستقلة لكل غرفة والريسبشن بالكامل</p>
               
+              {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
               <div className="flex flex-wrap items-center gap-2 mt-2 justify-center sm:justify-start" onClick={(e) => e.stopPropagation()}>
-                <span className="text-xs text-gray-500 font-semibold">التكلفة المقطوعية للباقة:</span>
-                <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-44">
-                  <button type="button" onClick={() => handleRateChange('soundSystemFlatRate', (state.accessoriesRates.soundSystemFlatRate ?? 8500) + 500)} className="w-6 h-6 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                <span className="text-xs text-white font-semibold">التكلفة الاجمالية للبند:</span>
+                <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-44">
+                  <button type="button" onClick={() => handleRateChange('soundSystemFlatRate', (state.accessoriesRates.soundSystemFlatRate ?? 8500) + 500)} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                   <span className="text-sm font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.soundSystemFlatRate ?? 8500).toLocaleString()} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                  <button type="button" onClick={() => handleRateChange('soundSystemFlatRate', Math.max(0, (state.accessoriesRates.soundSystemFlatRate ?? 8500) - 500))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                  <button type="button" onClick={() => handleRateChange('soundSystemFlatRate', Math.max(0, (state.accessoriesRates.soundSystemFlatRate ?? 8500) - 500))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                 </div>
               </div>
             </div>
@@ -1542,15 +1564,15 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
         </div>
 
         {/* كارت حصر وتقدير النقاط التفاعلي */}
-        <div className="p-8 rounded-3xl bg-gradient-to-br from-[#07132a] via-[#020B1C] to-[#07132a] border border-[#1f2d4d] space-y-6">
+        <div className="p-8 rounded-3xl bg-gradient-to-br from-[#07132a] via-[#020B1C] to-[#07132a] border border-[#D4AF37] space-y-6">
           
-          <div className="border-b border-[#1f2d4d] pb-4 flex items-center gap-3">
+          <div className="border-b border-[#D4AF37] pb-4 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
               <Cpu className="w-6 h-6" />
             </div>
             <div className="text-right">
               <h4 className="text-xl font-bold text-[#D4AF37]">عداد تقدير وحصر نقاط ومخارج الكهرباء التفاعلي بالوحدة</h4>
-              <p className="text-xs text-gray-400 mt-1">يقوم النظام بتقدير النقاط تلقائياً بناءً على مساحة الشقة، ويمكنك تعديلها لزيادة دقة المقايسة</p>
+              <p className="text-xs text-white mt-1">يقوم النظام بتقدير النقاط تلقائياً بناءً على مساحة الشقة، ويمكنك تعديلها لزيادة دقة المقايسة</p>
             </div>
           </div>
 
@@ -1559,9 +1581,10 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
             {/* نقاط الإنارة */}
             <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between">
               <div className="text-right">
-                <span className="text-sm font-semibold text-[#F0E6D2] block">نقاط الإنارة والرميات الأساسية</span>
-                <p className="text-xs text-gray-500 mt-1">اللمبات والسبوتات الموزعة بالغرف</p>
+                <span className="text-sm font-semibold text-[#F0E6D2] block">نقاط الإنارة الأساسية</span>
+                <p className="text-xs text-gray-500 mt-1">عدد اللمبات الموزعة بالوحدة</p>
               </div>
+              {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
               <div className="flex items-center gap-4">
                 <button 
                   type="button"
@@ -1570,7 +1593,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                     const val = (state.lightPoints ?? 0) + 1;
                     updateStateAndSave(prev => ({ lightPoints: val }));
                   }}
-                  className="w-10 h-10 rounded-xl bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] hover:border-[#D4AF37] flex items-center justify-center transition-all cursor-pointer"
+                  className="w-10 h-10 rounded-xl bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] hover:border-[#D4AF37] flex items-center justify-center transition-all cursor-pointer font-sans"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -1584,7 +1607,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                     const val = Math.max(0, (state.lightPoints ?? 0) - 1);
                     updateStateAndSave(prev => ({ lightPoints: val }));
                   }}
-                  className="w-10 h-10 rounded-xl bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center transition-all cursor-pointer"
+                  className="w-10 h-10 rounded-xl bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center transition-all cursor-pointer font-sans"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
@@ -1597,6 +1620,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 <span className="text-sm font-semibold text-[#F0E6D2] block">مخارج البرايز والقوى وأحمال التكييف</span>
                 <p className="text-xs text-gray-500 mt-1">برايز الأجهزة الكهربائية العادية والأحمال الثقيلة</p>
               </div>
+              {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
               <div className="flex items-center gap-4">
                 <button 
                   type="button"
@@ -1605,7 +1629,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                     const val = (state.powerPoints ?? 0) + 1;
                     updateStateAndSave(prev => ({ powerPoints: val }));
                   }}
-                  className="w-10 h-10 rounded-xl bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] hover:border-[#D4AF37] flex items-center justify-center transition-all cursor-pointer"
+                  className="w-10 h-10 rounded-xl bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] hover:border-[#D4AF37] flex items-center justify-center transition-all cursor-pointer font-sans"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -1619,7 +1643,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                     const val = Math.max(0, (state.powerPoints ?? 0) - 1);
                     updateStateAndSave(prev => ({ powerPoints: val }));
                   }}
-                  className="w-10 h-10 rounded-xl bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center transition-all cursor-pointer"
+                  className="w-10 h-10 rounded-xl bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center transition-all cursor-pointer font-sans"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
@@ -1632,10 +1656,10 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
       </div>
 
       {/* حقل الملاحظات النصية المذهب الفاخر المربوط بـ Supabase بحدث Blur */}
-      <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-3">
-        <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#1f2d4d] pb-2 text-right">
+      <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-3">
+        <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#D4AF37] pb-2 text-right">
           <FileText className="w-5 h-5" />
-          <h4 className="text-base font-bold">اتفاقات وبنود مخصصة للكهرباء (ملاحظات العقد):</h4>
+          <h4 className="text-md font-bold">اتفاقات وبنود مخصصة للكهرباء :</h4>
         </div>
         <textarea
           value={notesInput}
@@ -1647,29 +1671,29 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
         />
         <div className="flex justify-between items-center text-xs text-gray-500 px-1">
           <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
-          <span>حالة الاتصال: متصل وسحابي</span>
+          <span>حالة الاتصال: متصل </span>
         </div>
       </div>
 
-      {/* كارت الملخص المالي النهائي للبند */}
-      <div className="p-6 rounded-2xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_25px_rgba(212,175,55,0.06)] flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+      {/* كارت الملخص المالي النهائي للبند المحدث بالكامل ليطابق تماًاماً نمط التكييف والألوميتال والأسقف المعتمد */}
+      <div className="p-5 rounded-xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_20px_rgba(212,175,55,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D4AF37]" />
         
-        {/* تصميم مذهب جانبي يعكس الطراز الملكي الفخم لشركة جولد ديكوريشن */}
-        <div className="absolute right-0 top-0 bottom-0 w-2 bg-[#D4AF37]" />
-
-        <div className="space-y-1 text-center sm:text-right pr-2">
-          <h4 className="text-xl font-bold text-[#D4AF37]">الملخص المالي التقديري لبند الكهرباء:</h4>
-          <p className="text-sm text-gray-400">البيانات الإجمالية لبند الكهرباء يتم ترحيلها حركياً لحسابات المقايسة الكلية للعميل</p>
+        <div className="space-y-1 text-center sm:text-right pr-1 select-none font-alexandria">
+          <h4 className="text-lg font-bold text-[#D4AF37]">الملخص المالي التقديري لبند الكهرباء والشبكات بالكامل:</h4>
+          <p className="text-xs text-white font-normal leading-relaxed max-w-2xl text-right">
+            التسعير بالكامل؛ يشتمل على مجموع كلفة التأسيس الإجمالية ({finalRoughInCost.toLocaleString('en-US')} ج.م) وباقة تشطيب اللقم والوشوش ({calculatedFinishingCost.toLocaleString('en-US')} ج.م) شاملاً ترقيات التحكم الذكي والأنظمة الصوتية المفعّلة.
+          </p>
         </div>
 
-        <div className="flex items-center gap-4 bg-[#07132a] px-8 py-5 rounded-xl border border-[#1f2d4d]">
-          <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
-            <DollarSign className="w-8 h-8" />
+        <div className="flex items-center gap-3 bg-[#07132a] px-6 py-4 rounded-lg border border-[#1f2d4d]">
+          <div className="p-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
+            <DollarSign className="w-6 h-6" />
           </div>
           <div className="text-right">
-            <span className="text-xs text-gray-500 block font-semibold">إجمالي التكلفة المقدرة للبند:</span>
-            <span className="text-3xl font-black text-[#F0E6D2] font-mono">
-              {totalElectricalEstimate.toLocaleString('en-US')} <span className="text-sm font-normal">ج.م</span>
+            <span className="text-[10px] text-[#F0E6D2] block font-semibold">إجمالي تكلفة بند الكهرباء:</span>
+            <span className="text-2xl font-black text-[#D4AF37] font-mono">
+              {totalElectricalEstimate.toLocaleString('en-US')} <span className="text-xs font-normal">ج.م</span>
             </span>
           </div>
         </div>

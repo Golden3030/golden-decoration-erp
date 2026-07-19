@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCRM } from "../context/CRMContext";
 import { supabase } from '@/lib/supabaseClient'; 
-
+import TabActivationBanner from './TabActivationBanner'; // 👈 استدعاء المكون المشترك الموحد للأجهزة اللمسية للشركة
 import { 
   Layers, 
   FileText, 
@@ -279,43 +279,33 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
   const grandTotalEstimate = state.enabled ? (totalBaseDoorsCost + totalAccessoriesCost + totalCustomWorksCost) : 0;
 
   return (
-    <div className="space-y-8 select-none text-right font-sans" dir="rtl">
+    <div className="space-y-8 select-none text-right font-alexandria" dir="rtl">
 
-      <div 
-        onClick={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
-        className={`p-6 rounded-[2.5rem] border transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl cursor-pointer select-none ${
-          state.enabled 
-            ? 'bg-[#07132a] border-[#D4AF37] shadow-[0_0_30px_rgba(212,175,55,0.15)] hover:shadow-[0_0_40px_rgba(212,175,55,0.25)]' 
-            : 'bg-[#07132a]/40 border-[#1f2d4d] hover:border-gray-600'
-        }`}
-      >
-        <div className="flex items-center gap-4 w-full sm:w-auto">
-          <div className={`p-5 rounded-2xl transition-all duration-500 ${state.enabled ? 'bg-[#D4AF37] text-black shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'bg-[#020B1C] text-gray-600'}`}>
-            <Key className="w-10 h-10" />
-          </div>
-          <div className="text-right">
-            <h4 className="text-xl font-black text-[#F0E6D2]">منظومة الأبواب وإكسسواراتها الفاخرة</h4>
-            <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest leading-none">DOORS & WOODEN ACCESSORIES SYSTEM</p>
-          </div>
-        </div>
-        <div
-          className={`px-10 py-3 rounded-2xl border-2 font-black text-base transition-all duration-300 flex items-center gap-3 ${
-            state.enabled 
-              ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-              : 'bg-[#020B1C] border-[#D4AF37]/60 text-[#D4AF37]'
-          }`}
-        >
-          {state.enabled ? <CheckCircle2 className="w-6 h-6 text-[#D4AF37]" /> : <Lock className="w-5 h-5 text-gray-500" />}
-          {state.enabled ? 'القسم مفعل' : 'القسم مقفل'}
-        </div>
-      </div>
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap');
+        
+        .font-alexandria {
+          font-family: 'Alexandria', Arial, sans-serif !important;
+          letter-spacing: normal !important;
+        }
+      `}</style>
+
+      {/* استدعاء شريط التفعيل المنزلق اللمسي الموحد للشركة */}
+      <TabActivationBanner 
+        title="منظومة الأبواب وإكسسواراتها وتجاليد الخشب"
+        subtitle="DOORS & WOODEN ACCESSORIES SYSTEM"
+        icon={Key}
+        enabled={state.enabled}
+        onToggle={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
+      />
 
       <div className={`space-y-8 transition-opacity duration-300 ${state.enabled ? 'opacity-100' : 'opacity-25 pointer-events-none filter grayscale'}`}>
         
+        {/* أبواب المداخل الرئيسية */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#1f2d4d] pb-2 text-[#D4AF37]">
+          <div className="flex items-center gap-2 border-b border-[#D4AF37] pb-2 text-[#D4AF37]">
             <Lock className="w-5 h-5 animate-pulse" />
-            <h4 className="text-xl font-bold">أولاً: أبواب الشقة والمدخل الرئيسية الفاخرة (حصر وتسعير حركي):</h4>
+            <h4 className="text-lg text-[#D4AF37]">أولاً: أبواب الشقة والمدخل الرئيسية :</h4>
           </div>
 
           {loading ? (
@@ -336,21 +326,18 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                   >
                     <div className="space-y-1 w-full md:flex-1 text-center md:text-right">
                       <div className="flex flex-col sm:flex-row items-center gap-2">
-                        <span className="px-2 py-0.5 rounded text-[10px] bg-[#D4AF37]/10 text-[#D4AF37] font-semibold border border-[#D4AF37]/20 font-mono">
-                          {item.code}
-                        </span>
-                        <h5 className="text-lg font-black text-[#F0E6D2]">{item.spec_name}</h5>
+                        <h5 className="text-ms font-black text-[#D4AF37]">{item.spec_name}</h5>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">توصيف هندسي مخصص لأمان مدخل شقة العميل بمكتبة الشركة</p>
+                      <p className="text-xs text-white mt-1">توصيف معتمد لمدخل الوحدة بمكتبة الشركة</p>
 
-                      {/* 🎯 تعديل لعداد تكلفت الباب ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
+                      {/* عداد تكلفت الباب ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
                       <div className="flex items-center gap-2 mt-4 justify-center md:justify-start" onClick={(e) => e.stopPropagation()}>
                         <span className="text-xs text-gray-400 font-bold select-none">سعر الباب:</span>
                         <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-44" dir="ltr">
                           <button 
                             type="button" 
                             disabled={!state.enabled}
-                            onClick={() => handlePriceOverride(item.uuid, Math.max(0, activeRate - 500))}
+                            onClick={() => handlePriceOverride(item.uuid, Math.max(0, activeRate - 100))}
                             className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                           >
                             <Minus size={12} className="stroke-[3]" />
@@ -368,7 +355,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                           <button 
                             type="button" 
                             disabled={!state.enabled}
-                            onClick={() => handlePriceOverride(item.uuid, activeRate + 500)}
+                            onClick={() => handlePriceOverride(item.uuid, activeRate + 100)}
                             className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                           >
                             <Plus size={12} className="stroke-[3]" />
@@ -378,7 +365,8 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     </div>
 
                     <div className="flex flex-col items-center gap-3 border-t md:border-t-0 md:border-r border-[#1f2d4d]/60 pt-3 md:pt-0 md:pr-6 min-w-[140px] w-full md:w-auto">
-                      {/* 🎯 تعديل لعداد الكمية ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
+                      {/* عداد الكمية للباب الرئيسي */}
+                       <span className="text-[10px] text-white block font-bold mt-1.5"> الكمية:</span>
                       <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none min-w-[120px]" dir="ltr" onClick={(e) => e.stopPropagation()}>
                         <button 
                           type="button" 
@@ -386,8 +374,10 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                           onClick={() => handleQuantityChange(item.uuid, 'decrement')}
                           className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                         >
+                          
                           <Minus size={12} className="stroke-[3]" />
                         </button>
+                        
                         <span className="text-sm font-black text-white font-mono">{item.quantity || 0}</span>
                         <button 
                           type="button" 
@@ -399,7 +389,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                         </button>
                       </div>
                       <div className="text-center select-none">
-                        <span className="text-[10px] text-gray-500 block font-bold">كلفة الفئة المجمعة:</span>
+                        <span className="text-[10px] text-gray-500 block font-bold">التكلفة الاجمالية:</span>
                         <span className="text-base font-black text-[#D4AF37] font-mono">{totalItemCost.toLocaleString('en-US')} ج.م</span>
                       </div>
                     </div>
@@ -410,10 +400,11 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
           )}
         </div>
 
+        {/* الأبواب الداخلية للغرف */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2 border-b border-[#1f2d4d] pb-2 text-[#D4AF37]">
+          <div className="flex items-center gap-2 border-b border-[#D4AF37] pb-2 text-[#D4AF37]">
             <Layers className="w-5 h-5 animate-pulse" />
-            <h4 className="text-xl font-bold">ثانياً: الأبواب الخشبية الداخلية للغرف والمنافع (حصر وتسعير حركي):</h4>
+            <h4 className="text-1g font-bold">ثانياً: الأبواب الخشبية الداخلية للغرف والحمامات :</h4>
           </div>
 
           {loading ? (
@@ -434,14 +425,11 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                   >
                     <div className="space-y-1 w-full md:flex-1 text-center md:text-right">
                       <div className="flex flex-col sm:flex-row items-center gap-2">
-                        <span className="px-2 py-0.5 rounded text-[10px] bg-[#D4AF37]/10 text-[#D4AF37] font-semibold border border-[#D4AF37]/20 font-mono">
-                          {item.code}
-                        </span>
-                        <h5 className="text-lg font-black text-[#F0E6D2]">{item.spec_name}</h5>
+                        <h5 className="text-ms font-black text-[#D4AF37]">{item.spec_name}</h5>
                       </div>
-                      <p className="text-xs text-gray-500 mt-1">توصيف معتمد للغرف، الطرقات والحمامات بالموقع</p>
+                      <p className="text-xs text-white mt-1">توصيف معتمد للغرف، الطرقات والحمامات بالموقع</p>
 
-                      {/* 🎯 تعديل لعداد تكلفت الباب الداخلي ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
+                      {/* عداد تكلفت الباب الداخلي ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
                       <div className="flex items-center gap-2 mt-4 justify-center md:justify-start" onClick={(e) => e.stopPropagation()}>
                         <span className="text-xs text-gray-400 font-bold select-none">سعر الباب:</span>
                         <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-44" dir="ltr">
@@ -476,7 +464,8 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     </div>
 
                     <div className="flex flex-col items-center gap-3 border-t md:border-t-0 md:border-r border-[#1f2d4d]/60 pt-3 md:pt-0 md:pr-6 min-w-[140px] w-full md:w-auto">
-                      {/* 🎯 تعديل لعداد الكمية للغرف ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
+                      {/* عداد الكمية للغرف */}
+                      <span className="text-[10px] text-white block font-bold mt-1.5"> الكمية:</span>
                       <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none min-w-[120px]" dir="ltr" onClick={(e) => e.stopPropagation()}>
                         <button 
                           type="button" 
@@ -497,7 +486,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                         </button>
                       </div>
                       <div className="text-center select-none">
-                        <span className="text-[10px] text-gray-500 block font-bold">كلفة الفئة المجمعة:</span>
+                        <span className="text-[10px] text-gray-500 block font-bold"> التكلفة الاجمالية:</span>
                         <span className="text-base font-black text-[#D4AF37] font-mono">{totalItemCost.toLocaleString('en-US')} ج.م</span>
                       </div>
                     </div>
@@ -508,20 +497,21 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
           )}
         </div>
 
-        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-6">
+        {/* 🌟 إعادة تصميم كروت الكماليات الـ 6 (النجارة والإكسسوارات) لصفوف أفقية متناسقة تمنع التداخل (Stealth Horizontal List) */}
+        <div className="p-6 rounded-3xl bg-[#07132a] border border-[#D4AF37] space-y-6">
           <div className="border-b border-[#1f2d4d] pb-4 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
               <Lock className="w-6 h-6 animate-pulse" />
             </div>
             <div className="text-right">
-              <h4 className="text-xl font-bold text-[#D4AF37]">مخزن الإكسسوارات وكماليات ومصنعيات الأبواب (عدادات ميكرو مذهبة):</h4>
-              <p className="text-xs text-gray-400 mt-1">
-                انقر على أي كارت تفاعلي لتنشيطه فورياً باللون الذهبي الياقوتي وتعديل فئته من خلال عداد الميكرو المطور:
+              <h4 className="text-lg font-black text-[#D4AF37]">الإكسسوارات وكماليات ومصنعيات الأبواب:</h4>
+              <p className="text-xs text-white mt-1">
+                انقر على أي قيد لادراجة بالمقايسة وتعديل قيمته :
               </p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* 1. كارت مصنعية تركيب الأبواب والنجارة */}
             <div 
@@ -530,20 +520,26 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                 const nextVal = !state.hasInstallationLabor;
                 updateStateAndSave(prev => ({ hasInstallationLabor: nextVal }));
               }}
-              className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer select-none flex flex-col justify-between min-h-[160px] ${
+              className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer select-none flex items-center justify-between gap-4 ${
                 state.hasInstallationLabor && state.enabled
-                  ? 'border-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_15px_rgba(212,175,55,0.08)] opacity-100' 
+                  ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_12px_rgba(212,175,55,0.05)] opacity-100' 
                   : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-40 hover:opacity-70'
               }`}
             >
-              <div className="space-y-1 text-right">
-                <span className="text-xs font-bold text-[#F0E6D2] block">مصنعية تركيب الأبواب</span>
-                <span className="text-[10px] text-gray-500 block leading-normal pt-1">
-                  أجر تركيب الباب: {totalActiveDoorsCount} أبواب
-                </span>
-                
-                {/* 🎯 تعديل عداد مصنعية تركيب الباب الواحد ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-10 مع دستور الـ ERP */}
-                <div className="relative flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-lg h-10 px-2 mt-3" dir="ltr" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3 text-right">
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                  state.hasInstallationLabor && state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-500'
+                }`}>
+                  {state.hasInstallationLabor && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-[3]" />}
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#F0E6D2] block ">مصنعية تركيب الأبواب والنجارة</span>
+                  <span className="text-[10px] text-gray-400 block mt-1">المصنعية التقديرية لـ {totalActiveDoorsCount} أبواب بالمشروع</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-40" dir="ltr" onClick={(e) => e.stopPropagation()}>
                   <button 
                     type="button"
                     disabled={!state.hasInstallationLabor || !state.enabled}
@@ -562,10 +558,11 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     <Plus size={12} className="stroke-[3]" />
                   </button>
                 </div>
-              </div>
-              <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-2 text-[#D4AF37] select-none text-right">
-                <span className="text-[9px] text-gray-400">التكلفة:</span>
-                <span className="text-sm font-bold font-mono">{totalInstallationLaborCost.toLocaleString('en-US')} ج.م</span>
+
+                <div className="text-left min-w-[100px] border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
+                  <span className="text-[9px] text-gray-500 block">التكلفة:</span>
+                  <span className="text-sm font-black text-[#D4AF37] font-mono">{totalInstallationLaborCost.toLocaleString('en-US')} ج.م</span>
+                </div>
               </div>
             </div>
 
@@ -576,20 +573,26 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                 const nextVal = !state.hasHinges;
                 updateStateAndSave(prev => ({ hasHinges: nextVal }));
               }}
-              className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer select-none flex flex-col justify-between min-h-[160px] ${
+              className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer select-none flex items-center justify-between gap-4 ${
                 state.hasHinges && state.enabled
-                  ? 'border-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_15px_rgba(212,175,55,0.08)] opacity-100' 
+                  ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_12px_rgba(212,175,55,0.05)] opacity-100' 
                   : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-40 hover:opacity-70'
               }`}
             >
-              <div className="space-y-1 text-right">
-                <span className="text-xs font-bold text-[#F0E6D2] block">مفصلات نحاس ثقيلة</span>
-                <span className="text-[10px] text-gray-500 block leading-normal pt-1">
-                  العدد الحركي: {totalHingesCount} مفصلة
-                </span>
-                
-                {/* 🎯 تعديل عداد مصنعية الكوابيل والمفصلات ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-10 مع دستور الـ ERP */}
-                <div className="relative flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-lg h-10 px-2 mt-3" dir="ltr" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3 text-right">
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                  state.hasHinges && state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-500'
+                }`}>
+                  {state.hasHinges && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-[3]" />}
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#F0E6D2] block">المفصلات</span>
+                  <span className="text-[10px] text-gray-400 block mt-1">العدد: {totalHingesCount} المفصلات</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-40" dir="ltr" onClick={(e) => e.stopPropagation()}>
                   <button 
                     type="button"
                     disabled={!state.hasHinges || !state.enabled}
@@ -608,10 +611,11 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     <Plus size={12} className="stroke-[3]" />
                   </button>
                 </div>
-              </div>
-              <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-2 text-[#D4AF37] select-none text-right">
-                <span className="text-[9px] text-gray-400">التكلفة:</span>
-                <span className="text-sm font-bold font-mono">{totalHingesCost.toLocaleString('en-US')} ج.م</span>
+
+                <div className="text-left min-w-[100px] border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
+                  <span className="text-[9px] text-gray-500 block">التكلفة:</span>
+                  <span className="text-sm font-black text-[#D4AF37] font-mono">{totalHingesCost.toLocaleString('en-US')} ج.م</span>
+                </div>
               </div>
             </div>
 
@@ -622,20 +626,26 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                 const nextVal = !state.hasFrames;
                 updateStateAndSave(prev => ({ hasFrames: nextVal }));
               }}
-              className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer select-none flex flex-col justify-between min-h-[160px] ${
+              className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer select-none flex items-center justify-between gap-4 ${
                 state.hasFrames && state.enabled
-                  ? 'border-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_15px_rgba(212,175,55,0.08)] opacity-100' 
+                  ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_12px_rgba(212,175,55,0.05)] opacity-100' 
                   : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-40 hover:opacity-70'
               }`}
             >
-              <div className="space-y-1 text-right">
-                <span className="text-xs font-bold text-[#F0E6D2] block">حلوق خشب زان</span>
-                <span className="text-[10px] text-gray-500 block leading-normal pt-1">
-                  سعر الحلق الواحد بالمقايسة
-                </span>
-                
-                {/* 🎯 تعديل عداد حلوق الخشب ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-10 مع دستور الـ ERP */}
-                <div className="relative flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-lg h-10 px-2 mt-3" dir="ltr" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3 text-right">
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                  state.hasFrames && state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-500'
+                }`}>
+                  {state.hasFrames && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-[3]" />}
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#F0E6D2] block">حلوق خشب  </span>
+                  <span className="text-[10px] text-gray-400 block mt-1">حلق عمق 2 بوصة لـ {totalActiveDoorsCount} أبواب</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-40" dir="ltr" onClick={(e) => e.stopPropagation()}>
                   <button 
                     type="button"
                     disabled={!state.hasFrames || !state.enabled}
@@ -654,34 +664,41 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     <Plus size={12} className="stroke-[3]" />
                   </button>
                 </div>
-              </div>
-              <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-2 text-[#D4AF37] select-none text-right">
-                <span className="text-[9px] text-gray-400">التكلفة:</span>
-                <span className="text-sm font-bold font-mono">{totalFramesCost.toLocaleString('en-US')} ج.م</span>
+
+                <div className="text-left min-w-[100px] border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
+                  <span className="text-[9px] text-gray-500 block">التكلفة:</span>
+                  <span className="text-sm font-black text-[#D4AF37] font-mono">{totalFramesCost.toLocaleString('en-US')} ج.م</span>
+                </div>
               </div>
             </div>
 
-            {/* 4. كارت البرور */}
+            {/* 4. كارت البرور لإنهاء الحلوق */}
             <div 
               onClick={() => {
                 if (!state.enabled) return;
                 const nextVal = !state.hasArchitraves;
                 updateStateAndSave(prev => ({ hasArchitraves: nextVal }));
               }}
-              className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer select-none flex flex-col justify-between min-h-[160px] ${
+              className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer select-none flex items-center justify-between gap-4 ${
                 state.hasArchitraves && state.enabled
-                  ? 'border-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_15px_rgba(212,175,55,0.08)] opacity-100' 
+                  ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_12px_rgba(212,175,55,0.05)] opacity-100' 
                   : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-40 hover:opacity-70'
               }`}
             >
-              <div className="space-y-1 text-right">
-                <span className="text-xs font-bold text-[#F0E6D2] block">برور تغطية الحلوق</span>
-                <span className="text-[10px] text-gray-500 block leading-normal pt-1">
-                  برور للوجهين للباب الواحد
-                </span>
-                
-                {/* 🎯 تعديل عداد برور الحلوق ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-10 مع دستور الـ ERP */}
-                <div className="relative flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-lg h-10 px-2 mt-3" dir="ltr" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3 text-right">
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                  state.hasArchitraves && state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-500'
+                }`}>
+                  {state.hasArchitraves && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-[3]" />}
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#F0E6D2] block">برور تغطية الحلوق للوجهين</span>
+                  <span className="text-[10px] text-gray-400 block mt-1">تجليد محيط حلق الباب لـ {totalActiveDoorsCount} أبواب</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-40" dir="ltr" onClick={(e) => e.stopPropagation()}>
                   <button 
                     type="button"
                     disabled={!state.hasArchitraves || !state.enabled}
@@ -700,34 +717,41 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     <Plus size={12} className="stroke-[3]" />
                   </button>
                 </div>
-              </div>
-              <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-2 text-[#D4AF37] select-none text-right">
-                <span className="text-[9px] text-gray-400">التكلفة:</span>
-                <span className="text-sm font-bold font-mono">{totalArchitravesCost.toLocaleString('en-US')} ج.م</span>
+
+                <div className="text-left min-w-[100px] border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
+                  <span className="text-[9px] text-gray-500 block">التكلفة:</span>
+                  <span className="text-sm font-black text-[#D4AF37] font-mono">{totalArchitravesCost.toLocaleString('en-US')} ج.م</span>
+                </div>
               </div>
             </div>
 
-            {/* 5. كارت الأكر والمقابض */}
+            {/* 5. كارت الأكر والمقابض الفاخرة */}
             <div 
               onClick={() => {
                 if (!state.enabled) return;
                 const nextVal = !state.hasHandles;
                 updateStateAndSave(prev => ({ hasHandles: nextVal }));
               }}
-              className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer select-none flex flex-col justify-between min-h-[160px] ${
+              className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer select-none flex items-center justify-between gap-4 ${
                 state.hasHandles && state.enabled
-                  ? 'border-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_15px_rgba(212,175,55,0.08)] opacity-100' 
+                  ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_12px_rgba(212,175,55,0.05)] opacity-100' 
                   : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-40 hover:opacity-70'
               }`}
             >
-              <div className="space-y-1 text-right">
-                <span className="text-xs font-bold text-[#F0E6D2] block">أكر ومقابض فخمة</span>
-                <span className="text-[10px] text-gray-500 block leading-normal pt-1">
-                  مقبض تركي مقاوم للصدأ
-                </span>
-                
-                {/* 🎯 تعديل عداد الأكر والمقابض ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-10 مع دستور الـ ERP */}
-                <div className="relative flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-lg h-10 px-2 mt-3" dir="ltr" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3 text-right">
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                  state.hasHandles && state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-500'
+                }`}>
+                  {state.hasHandles && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-[3]" />}
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#F0E6D2] block">أكر ومقابض </span>
+                  <span className="text-[10px] text-gray-400 block mt-1">مقبض تركي مقاوم للصدأ لـ {totalActiveDoorsCount} أبواب</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-40" dir="ltr" onClick={(e) => e.stopPropagation()}>
                   <button 
                     type="button"
                     disabled={!state.hasHandles || !state.enabled}
@@ -746,34 +770,41 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     <Plus size={12} className="stroke-[3]" />
                   </button>
                 </div>
-              </div>
-              <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-2 text-[#D4AF37] select-none text-right">
-                <span className="text-[9px] text-gray-400">التكلفة:</span>
-                <span className="text-sm font-bold">{totalHandlesCost.toLocaleString('en-US')} ج.م</span>
+
+                <div className="text-left min-w-[100px] border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
+                  <span className="text-[9px] text-gray-500 block">التكلفة:</span>
+                  <span className="text-sm font-black text-[#D4AF37] font-mono">{totalHandlesCost.toLocaleString('en-US')} ج.م</span>
+                </div>
               </div>
             </div>
 
-            {/* 6. كارت الكوالين والأقفال */}
+            {/* 6. كارت كوالين النحاس الإيطالي */}
             <div 
               onClick={() => {
                 if (!state.enabled) return;
                 const nextVal = !state.hasLocks;
                 updateStateAndSave(prev => ({ hasLocks: nextVal }));
               }}
-              className={`p-5 rounded-2xl border transition-all duration-300 cursor-pointer select-none flex flex-col justify-between min-h-[160px] ${
+              className={`p-4 rounded-xl border transition-all duration-300 cursor-pointer select-none flex items-center justify-between gap-4 ${
                 state.hasLocks && state.enabled
-                  ? 'border-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_15px_rgba(212,175,55,0.08)] opacity-100' 
+                  ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_12px_rgba(212,175,55,0.05)] opacity-100' 
                   : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-40 hover:opacity-70'
               }`}
             >
-              <div className="space-y-1 text-right">
-                <span className="text-xs font-bold text-[#F0E6D2] block">كوالين نحاس أصلية</span>
-                <span className="text-[10px] text-gray-500 block leading-normal pt-1">
-                  كالون كمبيوتر ييل إيطالي
-                </span>
-                
-                {/* 🎯 تعديل عداد الكوالين والأقفال ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-10 مع دستور الـ ERP */}
-                <div className="relative flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-lg h-10 px-2 mt-3" dir="ltr" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center gap-3 text-right">
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                  state.hasLocks && state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-500'
+                }`}>
+                  {state.hasLocks && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-[3]" />}
+                </div>
+                <div className="text-right">
+                  <span className="text-sm font-bold text-[#F0E6D2] block">كوالين</span>
+                  <span className="text-[10px] text-gray-400 block mt-1">كالون أمان كمبيوتر إيطالي لـ {totalActiveDoorsCount} أبواب</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-40" dir="ltr" onClick={(e) => e.stopPropagation()}>
                   <button 
                     type="button"
                     disabled={!state.hasLocks || !state.enabled}
@@ -792,32 +823,33 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     <Plus size={12} className="stroke-[3]" />
                   </button>
                 </div>
-              </div>
-              <div className="flex items-center justify-between border-t border-[#1f2d4d]/40 pt-2 text-[#D4AF37] select-none text-right">
-                <span className="text-[9px] text-gray-400">التكلفة:</span>
-                <span className="text-sm font-bold font-mono">{totalLocksCost.toLocaleString('en-US')} ج.م</span>
+
+                <div className="text-left min-w-[100px] border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
+                  <span className="text-[9px] text-gray-500 block">التكلفة:</span>
+                  <span className="text-sm font-black text-[#D4AF37] font-mono">{totalLocksCost.toLocaleString('en-US')} ج.م</span>
+                </div>
               </div>
             </div>
 
           </div>
         </div>
 
-        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1f2d4d] pb-4 select-none">
-            <div className="flex items-center gap-2 text-[#D4AF37]">
-              <Layers className="w-5 h-5 animate-pulse" />
-              <h4 className="text-base font-bold">التجاليد الخشبية والأعمال المخصصة الإضافية بالوحدة:</h4>
-            </div>
-            <button
-              type="button"
-              disabled={!state.enabled}
-              onClick={handleAddCustomWork}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 text-sm font-bold transition-all cursor-pointer"
-            >
-              <PlusCircle className="w-5 h-5" />
-              <span>إضافة بند نجارة أو تجليد مخصص جديد</span>
-            </button>
+        {/* التجاليد الخشبية والأعمال المخصصة */}
+        <div className="p-6 rounded-3xl bg-[#07132a] border border-[#D4AF37] space-y-4">
+
+          <div className="border-b border-[#D4AF37] pb-4 flex items-center gap-3 p-2 rounded-lg text-[#D4AF37]">
+            <Layers className="w-5 h-5 animate-pulse text-ms font-bold" />
+            <h4 className="text-lg font-black text-[#D4AF37]">التجاليد الخشبية والأعمال المخصصة الإضافية بالوحدة:</h4>
           </div>
+          <button
+            type="button"
+            disabled={!state.enabled}
+            onClick={handleAddCustomWork}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 text-sm font-bold transition-all cursor-pointer font-alexandria"
+          >
+            <PlusCircle className="w-5 h-5" />
+            <span>إضافة بند نجارة أو تجليد مخصص جديد</span>
+          </button>
 
           {state.customWorks.length === 0 ? (
             <div className="text-center p-6 bg-[#020B1C]/40 rounded-xl border border-[#1f2d4d]/40 text-right select-none">
@@ -841,7 +873,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                         value={work.name ?? ''}
                         onChange={(e) => handleCustomWorkEdit(work.id, { name: e.target.value })}
                         placeholder="مثال: تجليد حائط خشب أرو مسطح..."
-                        className="bg-transparent border-b border-transparent hover:border-[#D4AF37]/30 focus:border-[#D4AF37] text-lg font-black text-[#F0E6D2] placeholder-gray-600 outline-none transition-all w-full"
+                        className="bg-transparent border-b border-transparent hover:border-[#D4AF37]/30 focus:border-[#D4AF37] text-ms text-[#D4AF37] placeholder-gray-400 outline-none transition-all w-full"
                       />
                     </div>
                     <button
@@ -855,9 +887,9 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
                     
-                    {/* 🎯 تعديل عداد كميات التجاليد الخشبية المخصصة ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
+                    {/* تعديل عداد كميات التجاليد الخشبية المخصصة */}
                     <div className="space-y-1 text-right">
-                      <span className="text-xs text-gray-500 font-bold block mb-1 select-none">الكمية المطلوبة:</span>
+                      <span className="text-ms text-gray-500 block mb-1 select-none">الكمية المطلوبة:</span>
                       <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none" dir="ltr">
                         <button
                           type="button"
@@ -867,7 +899,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                         >
                           <Minus size={12} className="stroke-[3]" />
                         </button>
-                        <span className="text-sm font-black text-white font-mono">{work.quantity ?? 1}</span>
+                        <span className="text-xs font-black text-[#D4AF37] font-mono">{work.quantity ?? 1}</span>
                         <button
                           type="button"
                           disabled={!state.enabled}
@@ -887,14 +919,14 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                         onChange={(e) => handleCustomWorkEdit(work.id, { unit: e.target.value })}
                         className="w-full h-11 px-3 rounded-xl bg-[#07132a] border border-[#1f2d4d] focus:border-[#D4AF37] text-sm text-[#F0E6D2] font-bold outline-none cursor-pointer"
                       >
-                        <option value="عدد" className="bg-[#020B1C] text-white">عدد / حبة</option>
+                        <option value="عدد" className="bg-[#020B1C] text-white">عدد / قطعة</option>
                         <option value="م٢" className="bg-[#020B1C] text-white">متر مسطح (م²)</option>
                         <option value="م.ط" className="bg-[#020B1C] text-white">متر طولي (م.ط)</option>
                         <option value="مقطوعية" className="bg-[#020B1C] text-white">مقطوعية ثابتة</option>
                       </select>
                     </div>
 
-                    {/* 🎯 تعديل عداد مالي لتعديل سعر فئة التجاليد المخصصة ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
+                    {/* تعديل عداد مالي لتعديل سعر فئة التجاليد المخصصة */}
                     <div className="space-y-1 text-right">
                       <span className="text-xs text-gray-500 font-bold block mb-1 select-none">سعر الفئة للوحدة:</span>
                       <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none hover:border-[#D4AF37]/30 transition-all" dir="ltr">
@@ -930,7 +962,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                   </div>
 
                   <div className="border-t border-[#1f2d4d]/30 pt-3 flex items-center justify-between mt-2 select-none text-right">
-                    <span className="text-xs text-gray-500 font-bold">إجمالي كلفة هذا البند:</span>
+                    <span className="text-xs text-white font-bold">إجمالي تكلفة هذا البند:</span>
                     <span className="text-xl font-black text-[#D4AF37] font-mono">
                       {((work.quantity ?? 1) * (work.rate ?? 0)).toLocaleString()} <span className="text-xs font-normal">ج.م</span>
                     </span>
@@ -943,10 +975,10 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
 
       </div>
 
-      <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-3">
-        <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#1f2d4d] pb-2 text-right">
+      <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-3">
+        <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#D4AF37] pb-2 text-right">
           <FileText className="w-5 h-5" />
-          <h4 className="text-base font-bold">اتفاقات وبنود مخصصة لنجارة الأبواب (ملاحظات العقد):</h4>
+          <h4 className="text-lg font-black text-[#D4AF37]">اتفاقات وبنود مخصصة لنجارة الأبواب :</h4>
         </div>
         <textarea
           value={notesInput}
@@ -958,27 +990,27 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
         />
         <div className="flex justify-between items-center text-xs text-gray-500 px-1">
           <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
-          <span>حالة الاتصال: متصل وسحابي</span>
+          <span>حالة الاتصال: متصل </span>
         </div>
       </div>
 
-      <div className="p-6 rounded-2xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_25px_rgba(212,175,55,0.06)] flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+      {/* كشف الملخص المالي للبند ليطابق كلياً نمط التكييف المعتمد */}
+      <div className="p-5 rounded-xl bg-[#020B1C] border border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+        <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D4AF37]" />
         
-        <div className="absolute right-0 top-0 bottom-0 w-2 bg-[#D4AF37]" />
-
-        <div className="space-y-1 text-center sm:text-right pr-2">
-          <h4 className="text-xl font-bold text-[#D4AF37]">كشف الملخص المالي للبند (المقايسة الحالية للأبواب والنجارة):</h4>
-          <p className="text-sm text-gray-400">البيانات الإجمالية والكماليات والمفصلات المحصورة يتم ترحيلها حركياً لحسابات المقايسة الكلية للعميل</p>
+        <div className="space-y-1 text-center sm:text-right pr-1 select-none">
+          <h4 className="text-lg font-bold text-[#D4AF37]">كشف الملخص المالي للبند (المقايسة الحالية للأبواب والنجارة):</h4>
+          <p className="text-xs text-white font-normal leading-relaxed max-w-2xl text-right">البيانات الإجمالية والكماليات والمفصلات المحصورة يتم ترحيلها لحسابات المقايسة الكلية للعميل المقدرة ({grandTotalEstimate.toLocaleString('en-US')} ج.م).</p>
         </div>
 
-        <div className="flex items-center gap-4 bg-[#07132a] px-8 py-5 rounded-xl border border-[#1f2d4d]">
-          <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
-            <DollarSign className="w-8 h-8" />
+        <div className="flex items-center gap-3 bg-[#07132a] px-6 py-4 rounded-lg border border-[#1f2d4d]">
+          <div className="p-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
+            <DollarSign className="w-6 h-6" />
           </div>
           <div className="text-right">
-            <span className="text-xs text-gray-400 block font-semibold">إجمالي تكلفة البند المقدرة:</span>
-            <span className="text-3xl font-black text-[#F0E6D2] font-mono">
-              {grandTotalEstimate.toLocaleString('en-US')} <span className="text-sm font-normal">ج.م</span>
+            <span className="text-[10px] text-white block font-semibold">إجمالي تكلفة البند المقدرة:</span>
+            <span className="text-2xl font-black text-[#D4AF37] font-mono">
+              {grandTotalEstimate.toLocaleString('en-US')} <span className="text-xs font-normal">ج.م</span>
             </span>
           </div>
         </div>

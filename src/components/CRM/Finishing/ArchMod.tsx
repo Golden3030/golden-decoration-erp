@@ -1,7 +1,9 @@
 "use client";
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useCRM } from "../context/CRMContext";
+
+import { supabase } from "@/lib/supabaseClient";
+import TabActivationBanner from './TabActivationBanner'; // 👈 استدعاء المكون المشترك الموحد للأجهزة اللمسية للشركة
 import { 
   Plus, 
   Minus, 
@@ -11,7 +13,8 @@ import {
   HardHat, 
   Ruler,
   CheckCircle2,
-  Lock
+  Lock,
+  DollarSign
 } from 'lucide-react';
 
 interface ArchModProps {
@@ -97,37 +100,25 @@ export default function ArchMod({ projectId }: ArchModProps) {
   const totalDemoCost = state.demolitionLab + state.demolitionMat;
 
   return (
-    <div dir="rtl" className="space-y-8 text-right font-sans">
+    <div dir="rtl" className="space-y-8 text-right font-alexandria">
       
-      <div 
-        onClick={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
-        className={`p-6 rounded-[2.5rem] border transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl cursor-pointer select-none ${
-          state.enabled 
-            ? 'bg-[#07132a] border-[#D4AF37] shadow-[0_0_30px_rgba(212,175,55,0.15)] hover:shadow-[0_0_40px_rgba(212,175,55,0.25)]' 
-            : 'bg-[#07132a]/40 border-[#1f2d4d] hover:border-gray-600'
-        }`}
-      >
-        <div className="flex items-center gap-4">
-          <div className={`p-5 rounded-2xl transition-all duration-500 ${state.enabled ? 'bg-[#D4AF37] text-black shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'bg-[#020B1C] text-gray-600'}`}>
-            <ArrowLeftRight className="w-10 h-10" />
-          </div>
-          <div className="text-right">
-            <h3 className="text-xl font-bold text-[#D4AF37]">أعمال التعديل المعماري الفنية</h3>
-            <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest leading-none">Architectural Modifications & Demolition Management</p>
-          </div>
-        </div>
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap');
+        
+        .font-alexandria {
+          font-family: 'Alexandria', Arial, sans-serif !important;
+          letter-spacing: normal !important;
+        }
+      `}</style>
 
-        <div
-          className={`px-10 py-3 rounded-2xl border-2 font-black text-base transition-all duration-300 flex items-center gap-3 ${
-            state.enabled 
-              ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-              : 'bg-[#020B1C] border-[#1f2d4d] text-gray-500'
-          }`}
-        >
-          {state.enabled ? <CheckCircle2 className="w-6 h-6 text-[#D4AF37]" /> : <Lock className="w-5 h-5 text-gray-500" />}
-          {state.enabled ? 'القسم مفعل' : 'القسم مقفل'}
-        </div>
-      </div>
+      {/* 🌟 تم تسييل واستدعاء البار المنزلق اللمسي الموحد (TabActivationBanner) كبديل للبار الضخم القديم */}
+      <TabActivationBanner 
+        title="أعمال التعديل المعماري الفنية"
+        subtitle="Architectural Modifications & Demolition Management"
+        icon={ArrowLeftRight}
+        enabled={state.enabled}
+        onToggle={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
+      />
 
       {state.enabled && (
         <div className="space-y-8 animate-fade-in">
@@ -136,7 +127,7 @@ export default function ArchMod({ projectId }: ArchModProps) {
             
             {/* الكارت 1: مساحة التعديلات التقديرية */}
             <div className="p-6 rounded-2xl border border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/40 hover:shadow-[0_0_20px_rgba(212,175,55,0.05)] transition-all duration-300 flex flex-col justify-between min-h-[160px] group">
-              <div className="flex items-center justify-between border-b border-[#1f2d4d]/60 pb-3 select-none">
+              <div className="flex items-center justify-between border-b border-[#D4AF37] pb-3 select-none">
                 <div className="flex items-center gap-2">
                   <Ruler className="w-4 h-4 text-[#D4AF37] group-hover:scale-110 transition-transform" />
                   <span className="text-sm font-bold text-[#D4AF37]">مساحة التعديلات التقديرية</span>
@@ -152,8 +143,11 @@ export default function ArchMod({ projectId }: ArchModProps) {
                   <Minus size={12} className="stroke-[3]" />
                 </button>
                 <div className="text-center font-bold">
-                   <span className="text-sm font-black text-[#D4AF37] font-mono">{state.demolitionQty}</span>
-                   <span className="text-[10px] text-gray-500 font-bold mr-1">متر </span>
+                   <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[80px] text-center">
+                    {state.demolitionQty}
+                    <span className="text-xs text-gray-500 font-normal ml-2">متر </span>
+                   </span>
+                  
                 </div>
                 <button 
                   onClick={() => updateStateAndSave(prev => ({ demolitionQty: prev.demolitionQty + 1 }))}
@@ -166,7 +160,7 @@ export default function ArchMod({ projectId }: ArchModProps) {
 
             {/* الكارت 2: إجمالي مصنعية التكسير */}
             <div className="p-6 rounded-2xl border border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/40 hover:shadow-[0_0_20px_rgba(212,175,55,0.05)] transition-all duration-300 flex flex-col justify-between min-h-[160px] group">
-              <div className="flex items-center justify-between border-b border-[#1f2d4d]/60 pb-3 select-none">
+              <div className="flex items-center justify-between border-b border-[#D4AF37] pb-3 select-none">
                 <div className="flex items-center gap-2">
                   <HardHat className="w-4 h-4 text-[#D4AF37] group-hover:scale-110 transition-transform" />
                   <span className="text-sm font-bold text-[#D4AF37]">إجمالي مصنعية التكسير</span>
@@ -184,7 +178,7 @@ export default function ArchMod({ projectId }: ArchModProps) {
                 </button>
                 <div className="text-center font-bold">
                    <span className="text-sm font-black text-[#D4AF37] font-mono">{state.demolitionLab.toLocaleString()}</span>
-                   <span className="text-[10px] text-gray-500 font-bold mr-1">ج.م</span>
+                   <span className="text-xs text-gray-500 font-normal ml-2">ج.م</span>
                 </div>
                 <button 
                   onClick={() => updateStateAndSave(prev => ({ demolitionLab: prev.demolitionLab + 500 }))}
@@ -197,12 +191,12 @@ export default function ArchMod({ projectId }: ArchModProps) {
 
             {/* الكارت 3: تكاليف النقل والتشوين */}
             <div className="p-6 rounded-2xl border border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/40 hover:shadow-[0_0_20px_rgba(212,175,55,0.05)] transition-all duration-300 flex flex-col justify-between min-h-[160px] group">
-              <div className="flex items-center justify-between border-b border-[#1f2d4d]/60 pb-3 select-none">
+              <div className="flex items-center justify-between border-b border-[#D4AF37] pb-3 select-none">
                 <div className="flex items-center gap-2">
                   <Truck className="w-4 h-4 text-[#D4AF37] group-hover:scale-110 transition-transform" />
                   <span className="text-sm font-bold text-[#D4AF37]">تكاليف النقل والتشوين</span>
                 </div>
-                <span className="px-2 py-0.5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-[9px] font-bold">مقطوعية</span>
+                <span className=" px-2 py-0.5 rounded-full bg-[#D4AF37]/10 text-[#D4AF37] text-[9px] font-bold">مقطوعية</span>
               </div>
 
               {/* 🎯 تعديل عداد تكاليف نقل وتفريغ لوجستي للأنقاض ليتوافق بكسلياً بارتفاع h-11 والدواير الرشيقة w-6 h-6 مع دستور الـ ERP */}
@@ -215,7 +209,7 @@ export default function ArchMod({ projectId }: ArchModProps) {
                 </button>
                 <div className="text-center font-bold">
                    <span className="text-sm font-black text-[#D4AF37] font-mono">{state.demolitionMat.toLocaleString()}</span>
-                   <span className="text-[10px] text-gray-500 font-bold mr-1">ج.م</span>
+                   <span className="text-[10px] text-gray-500 font-normal ml-2">ج.م</span>
                 </div>
                 <button 
                   onClick={() => updateStateAndSave(prev => ({ demolitionMat: prev.demolitionMat + 500 }))}
@@ -228,10 +222,10 @@ export default function ArchMod({ projectId }: ArchModProps) {
 
           </div>
 
-          <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-4">
-            <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#1f2d4d]/60 pb-3 select-none">
+          <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-4">
+            <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#D4AF37] pb-3 select-none">
               <FileText className="w-5 h-5" />
-              <h4 className="text-[13px] font-bold">ملاحظات وبنود مخصصة للتعديلات المعمارية (اتفاقيات العقد):</h4>
+              <h4 className="text-lg font-bold text-[#D4AF37]">ملاحظات وبنود مخصصة للتعديلات المعمارية :</h4>
             </div>
             <textarea
               value={notesInput}
@@ -244,29 +238,30 @@ export default function ArchMod({ projectId }: ArchModProps) {
             />
             <div className="flex justify-between items-center text-xs text-gray-500 px-1 select-none">
               <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
-              <span>حالة الاتصال: متصل وسحابي</span>
+              <span>حالة الاتصال: متصل </span>
             </div>
           </div>
 
-          <div className="p-7 rounded-3xl bg-[#020B1C] border border-[#1f2d4d] flex flex-col md:flex-row items-center justify-between gap-6 relative overflow-hidden mt-6 shadow-2xl">
-            <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.4)]" />
-            
-            <div className="text-right flex-1 pr-6 order-2 md:order-1 select-none">
-              <h4 className="text-[22px] font-bold text-[#D4AF37] mb-2 tracking-tight">خلاصة أعمال الهدم واللوجستيات:</h4>
-              <p className="text-[13.5px] text-[#F0E6D2] opacity-80 leading-loose max-w-2xl font-light">
-                تقدير كلي شامل {state.demolitionQty} أمتار طولي هدم حوائط، موزعة على تكلفة فنية مقطوعية بقيمة <span className="font-bold underline">({state.demolitionLab.toLocaleString()} ج.م)</span> وتكاليف لوجستية للتنظيف والتشوين مقطوعية بقيمة <span className="font-bold underline">({state.demolitionMat.toLocaleString()} ج.م)</span>.
+          {/* 🌟 تم إعادة هيكلة وتطوير كارت خلاصة الأعمال والملخص المالي النهائي ليطابق كلياً نمط التكييف المعتمد بالمنظومة */}
+          <div className="p-5 rounded-xl bg-[#020B1C] border border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+            <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D4AF37]" />
+
+            <div className="space-y-1 text-center sm:text-right pr-1">
+              <h4 className="text-lg font-bold text-[#D4AF37]">الملخص المالي المعتمد لبند أعمال الهدم والتعديلات المعمارية:</h4>
+              <p className="text-xs text-white font-normal leading-relaxed max-w-2xl">
+                تقدير كلي شامل {state.demolitionQty} أمتار طولي هدم حوائط، موزعة على تكلفة فنية مقطوعية بقيمة ({state.demolitionLab.toLocaleString()} ج.م) وتكاليف لوجستية للتنظيف والتشوين مقطوعية بقيمة ({state.demolitionMat.toLocaleString()} ج.م).
               </p>
             </div>
 
-            <div className="flex items-center gap-8 bg-[#07132a] px-10 py-6 rounded-3xl border border-[#1f2d4d] w-full md:w-auto justify-between md:justify-start order-1 md:order-2 shadow-[inset_0_2px_10px_rgba(0,0,0,0.5)]">
-              <div className="text-center md:text-right min-w-[120px] select-none">
-                <span className="text-[12px] text-gray-500 block font-bold mb-1 opacity-90 uppercase tracking-tighter">الإجمالي المعتمد:</span>
-                <span className="text-[48px] font-black text-[#D4AF37] block leading-none tracking-tight font-mono">
-                  {totalDemoCost.toLocaleString('en-US')}
-                </span>
+            <div className="flex items-center gap-3 bg-[#07132a] px-6 py-4 rounded-lg border border-[#1f2d4d]">
+              <div className="p-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
+                <DollarSign className="w-6 h-6" />
               </div>
-              <div className="w-14 h-14 rounded-2xl bg-[#020B1C] border border-[#1f2d4d] flex items-center justify-center shadow-lg transform transition-transform hover:scale-105">
-                <span className="text-[24px] font-black text-[#D4AF37]">$</span>
+              <div className="text-right">
+                <span className="text-[10px] text-white block font-semibold">الإجمالي المعتمد للتعديلات:</span>
+                <span className="text-2xl font-black text-[#D4AF37] font-mono">
+                  {totalDemoCost.toLocaleString('en-US')} <span className="text-xs font-normal">ج.م</span>
+                </span>
               </div>
             </div>
           </div>

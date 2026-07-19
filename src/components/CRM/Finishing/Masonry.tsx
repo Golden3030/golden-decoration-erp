@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useCRM } from "../context/CRMContext";
 import { supabase } from '@/lib/supabaseClient'; 
-
+import TabActivationBanner from './TabActivationBanner'; // 👈 استدعاء المكون المشترك الموحد للأجهزة اللمسية للشركة
 import { 
   Plus, 
   Minus, 
@@ -16,7 +16,9 @@ import {
   CheckCircle2,
   Lock,
   Columns,
-  DollarSign
+  DollarSign,
+  PlusCircle,
+  Trash2
 } from 'lucide-react';
 
 interface MasonryProps { projectId: string; }
@@ -133,38 +135,25 @@ export default function Masonry({ projectId }: MasonryProps) {
   const totalFinancial = state.enabled ? (totalMaterialsCost + state.laborLumpSum + state.logisticsCost) : 0;
 
   return (
-    <div dir="rtl" className="space-y-8 text-right font-sans select-none" id={projectId}>
+    <div dir="rtl" className="space-y-8 text-right font-alexandria select-none" id={projectId}>
       
-      <div 
-        onClick={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
-        className={`p-6 rounded-[2.5rem] border transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl cursor-pointer select-none ${
-          state.enabled 
-            ? 'bg-[#07132a] border-[#D4AF37] shadow-[0_0_30px_rgba(212,175,55,0.15)] hover:shadow-[0_0_40px_rgba(212,175,55,0.25)]' 
-            : 'bg-[#07132a]/40 border-[#1f2d4d] hover:border-gray-600'
-        }`}
-      >
-        <div className="flex items-center gap-4 pr-2">
-          <div className={`p-5 rounded-2xl transition-all duration-500 flex-shrink-0 ${state.enabled ? 'bg-[#D4AF37] text-black shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'bg-[#020B1C] text-gray-600'}`}>
-            <Columns className="w-10 h-10" />
-          </div>
-          <div className="text-right">
-            <h4 className="text-xl font-black text-[#D4AF37]">أعمال المباني</h4>
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap');
+        
+        .font-alexandria {
+          font-family: 'Alexandria', Arial, sans-serif !important;
+          letter-spacing: normal !important;
+        }
+      `}</style>
 
-            <p className="text-[11px] text-gray-400 mt-5 uppercase font-bold tracking-widest leading-none">BRICKWORK & MATERIALS SYSTEM</p>
-          </div>
-        </div>
-
-        <div
-          className={`px-10 py-3 rounded-2xl border-2 font-black text-base transition-all duration-300 flex items-center gap-3 flex-shrink-0 ${
-            state.enabled 
-              ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-              : 'bg-[#020B1C] border-[#1f2d4d] text-gray-500'
-          }`}
-        >
-          {state.enabled ? <CheckCircle2 className="w-6 h-6 text-[#D4AF37]" /> : <Lock className="w-5 h-5 text-gray-500" />}
-          {state.enabled ? 'الغاء تفعيل القسم' : ' تفعيل القسم'}
-        </div>
-      </div>
+      {/* 🌟 استدعاء شريط التفعيل المنزلق اللمسي الموحد للشركة بدلاً من البار القديم المكرر */}
+      <TabActivationBanner 
+        title="أعمال المباني والمونة الإنشائية"
+        subtitle="BRICKWORK & MATERIALS SYSTEM"
+        icon={Columns}
+        enabled={state.enabled}
+        onToggle={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
+      />
 
       <div className={`space-y-8 transition-opacity duration-300 ${state.enabled ? 'opacity-100' : 'opacity-25 pointer-events-none filter grayscale'}`}>
         
@@ -233,21 +222,22 @@ export default function Masonry({ projectId }: MasonryProps) {
 
         </div>
 
-        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37]/20 shadow-[0_0_20px_rgba(212,175,55,0.04)] flex flex-col sm:flex-row items-center justify-between gap-6 select-none">
-          <div className="text-right pr-2">
-            <h4 className="text-lg font-black text-[#D4AF37]">إجمالي تكلفة المونة والخامات الأساسية:</h4>
-            <p className="text-xs text-white mt-1 leading-relaxed">تشتمل على تكلفة الطوب الطفلي الإجمالي، وشكاير الأسمنت وأمتار الرمل الموردة للموقع</p>
+        {/* كارت كلفة الخامات المون التأسيسية المحدث */}
+        <div className="p-5 rounded-2xl bg-[#07132a] border border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.04)] flex flex-col sm:flex-row items-center justify-between gap-6 select-none font-alexandria">
+          <div className="text-right pr-1">
+            <h4 className="text-base font-black text-[#D4AF37]">إجمالي تكلفة المونة والخامات الأساسية بالمشروع :</h4>
+            <p className="text-xs text-white mt-1 leading-relaxed">تشتمل على تكلفة الطوب الإجمالي، وشكاير الأسمنت وأمتار الرمل الموردة مسبقاً للموقع</p>
           </div>
-          <div className="flex items-center gap-4 bg-[#020B1C] px-6 py-3 rounded-2xl border border-[#1f2d4d]">
-            <span className="text-xs text-gray-500 font-bold">تكلفة الخامات:</span>
-            <span className="text-xl font-black text-[#D4AF37] font-mono">{totalMaterialsCost.toLocaleString()} <span className="text-sm font-normal text-[#D4AF37]">ج.م</span></span>
+          <div className="flex items-center gap-3 bg-[#020B1C] px-6 py-3 rounded-xl border border-[#1f2d4d]">
+            <span className="text-[10px] text-white font-bold">تكلفة الخامات :</span>
+            <span className="text-base font-black text-[#D4AF37] font-mono">{totalMaterialsCost.toLocaleString()} <span className="text-xs font-normal text-[#D4AF37]">ج.م</span></span>
           </div>
         </div>
 
-        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-3">
-          <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#1f2d4d]/60 pb-2 text-right">
+        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-3">
+          <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#D4AF37]/60 pb-2 text-right">
             <FileText className="w-5 h-5" />
-            <h4 className="text-base font-bold">ملاحظات وشروط استلام أعمال المباني والمونة (بنود العقد الفنية):</h4>
+            <h4 className="text-md font-black text-[#D4AF37]">ملاحظات وشروط استلام أعمال المباني والمونة :</h4>
           </div>
           <textarea
             value={notesInput}
@@ -255,31 +245,33 @@ export default function Masonry({ projectId }: MasonryProps) {
             onChange={(e) => setNotesInput(e.target.value)}
             onBlur={handleNotesBlur}
             placeholder="اكتب مواصفات الطوب المستخدم (طفلي أو أسمنتي)، مواصفات تسليح المباني بالكانات الحديدية، ونسب خلط الأسمنت لكل متر رمل بالمونة..."
-            className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-lg text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none leading-relaxed text-right font-semibold"
+            className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-lg text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none text-base leading-relaxed text-right font-semibold"
           />
           <div className="flex justify-between items-center text-xs text-gray-500 px-1">
             <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
-            <span>حالة الاتصال: متصل وسحابي</span>
+            <span>حالة الاتصال: متصل </span>
           </div>
         </div>
 
-        <div className="p-6 rounded-2xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_25px_rgba(212,175,55,0.06)] flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+        {/* 🌟 تم إعادة تصميم كارت الملخص المالي التقديري لبند أعمال المباني والـ BOQ ليطابق كلياً نمط التكييف المعتمد بالمنظومة */}
+        <div className="p-5 rounded-xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_20px_rgba(212,175,55,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden font-alexandria">
+          <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D4AF37]" />
           
-          <div className="absolute right-0 top-0 bottom-0 w-2 bg-[#D4AF37]" />
-
-          <div className="space-y-1 text-center sm:text-right pr-2">
-            <h4 className="text-xl text-[#D4AF37] font-bold">الملخص المالي التقديري لبند أعمال المباني والمونة:</h4>
-            <p className="text-sm text-white">البيانات الإجمالية واللوجستيات والمونة والمصنعيات المحصورة يتم ترحيلها حركياً لحسابات المقايسة الكلية للعميل</p>
+          <div className="space-y-1 text-center sm:text-right pr-1 select-none">
+            <h4 className="text-lg font-bold text-[#D4AF37]">الملخص المالي التقديري لبند أعمال المباني والمونة الإنشائية:</h4>
+            <p className="text-xs text-[#F0E6D2]/60 font-normal leading-relaxed max-w-2xl text-right">
+              التسعير بالكامل؛ يشتمل على إجمالي كلفة الخامات الأساسية الموردة ({totalMaterialsCost.toLocaleString('en-US')} ج.م) وأجور مصنعيات البناء مقطوعية بقيمة ({state.laborLumpSum.toLocaleString('en-US')} ج.م) مضافاً إليها تكاليف النقل اللوجستية وتشوين الأنقاض.
+            </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-[#07132a] px-8 py-5 rounded-xl border border-[#1f2d4d]">
-            <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
-              <DollarSign className="w-8 h-8 animate-pulse" />
+          <div className="flex items-center gap-3 bg-[#07132a] px-6 py-4 rounded-lg border border-[#1f2d4d]">
+            <div className="p-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
+              <DollarSign className="w-6 h-6" />
             </div>
             <div className="text-right">
-              <span className="text-xs text-gray-500 block font-semibold">إجمالي التكلفة التقديرية للبند:</span>
-              <span className="text-3xl font-black text-[#D4AF37] font-mono">
-                {totalFinancial.toLocaleString('en-US')} <span className="text-sm font-normal text-[#D4AF37]">ج.م</span>
+              <span className="text-[10px] text-white block font-semibold text-right">إجمالي تكلفة أعمال المباني:</span>
+              <span className="text-2xl font-black text-[#D4AF37] font-mono">
+                {totalFinancial.toLocaleString('en-US')} <span className="text-xs font-normal">ج.م</span>
               </span>
             </div>
           </div>
@@ -293,9 +285,9 @@ export default function Masonry({ projectId }: MasonryProps) {
 
 function MasonryCard({ title, icon, unit, value, onPlus, onMinus, priceValue, onPricePlus, onPriceMinus, isMaktouya = false, enabled = true }: MasonryCardProps) {
   return (
-    <div className="p-5 rounded-2xl border border-[#1f2d4d] bg-[#020B1C]/50 flex flex-col gap-4 group transition-all duration-300 hover:border-[#D4AF37]/50 hover:shadow-[0_0_25px_rgba(212,175,55,0.05)] shadow-xl text-right select-none">
+    <div className="p-5 rounded-2xl border border-[#1f2d4d] bg-[#020B1C]/50 flex flex-col gap-4 group transition-all duration-300 hover:border-[#D4AF37]/50 hover:shadow-[0_0_25px_rgba(212,175,55,0.05)] shadow-xl text-right select-none font-alexandria">
       
-      <div className="w-full flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
+      <div className="w-full flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2 select-none">
          <div className="flex items-center gap-2">
             <div className="text-[#D4AF37]/70 group-hover:text-[#D4AF37] transition-transform group-hover:scale-110">{icon}</div>
             <span className="text-sm font-black text-[#F0E6D2] group-hover:text-[#D4AF37] transition-all leading-none">{title}</span>

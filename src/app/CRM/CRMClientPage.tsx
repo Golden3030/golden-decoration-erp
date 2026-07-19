@@ -927,7 +927,7 @@ export default function CRMPage() {
                           <th className="py-2.5 px-3.5 font-bold">اسم العميل </th>
                           <th className="py-2.5 px-3.5 font-bold">رقم الموبايل </th>
                           <th className="py-2.5 px-3.5 font-bold">العنوان بالكامل</th>
-                          <th className="py-2.5 px-3.5 font-bold">البريد الإلكتروني</th>
+                          <th className="py-2.5 px-3.5 font-bold">تاريخ التسجيل</th>
                           <th className="py-2.5 px-3.5 text-center font-bold">حالة العميل بالـ CRM</th>
                         </tr>
                       </thead>
@@ -948,7 +948,7 @@ export default function CRMPage() {
                                 {userRole === "engineer" ? "📞 [بيانات محجوبة]" : c.mobile}
                               </td>
                               <td className="py-2.5 px-3.5 text-[#D4AF37] font-bold">{c.address || "-"}</td>
-                              <td className="py-2.5 px-3.5 font-mono text-white">{c.email || "-"}</td>
+                              <td className="py-2.5 px-3.5 font-mono text-white">{c.created_at || "-"}</td>
                               <td className="py-2.5 px-3.5 text-center">
                                 <span className={`px-2.5 py-0.5 rounded text-[10px] font-black ${
                                   c.status === "تم التعاقد" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 animate-pulse" : "bg-brown-500/200 text-green-400"
@@ -1072,8 +1072,8 @@ export default function CRMPage() {
                 <div className="border border-[#1f2d4d] rounded-2xl p-5 bg-[#0b1b3d]/40 shadow-xl space-y-4">
                   <div className="flex items-center justify-between gap-4 select-none">
                     <div className="text-right flex-1">
-                      <h4 className="text-[#F0E6D2] text-sm font-black">باقة الحديقة المفتوحة للوحدة (جاردن)</h4>
-                      <p className="text-gray-400 text-xs mt-1">تخصيص مسطحات اللاندسكيب للوحدات الأرضية أو الدوبلكس بالمقايسة المعتمدة للشركة:</p>
+                      <h4 className="text-[#D4AF37] text-sm font-black">مساحة الحديقة المفتوحة للوحدة (جاردن)</h4>
+                      <p className="text-gray-400 text-xs mt-1">تخصيص مسطحات اللاندسكيب للوحدات الأرضية أو الدوبلكس بالمقايسة المعتمدة :</p>
                     </div>
                     <div className="w-10 h-12 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] flex items-center justify-center shrink-0">
                       <svg className="w-5 h-5 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1128,20 +1128,18 @@ export default function CRMPage() {
                       >
                         <Plus size={12} className="stroke-[3]" />
                       </button>
-                      <span className="text-gray-500 text-[10px] font-bold mr-1">م²</span>
                     </div>
-
-                    <span className="text-white font-bold text-xs select-none">مساحة الجاردن المخططة بالموقع</span>
+          <div className="flex items-center justify-center gap-6 w-full">
+                    <span className=" text-[#00FF00] text-center font-bold text-xs select-none">مساحة الجاردن المخططة بالبلان</span>
                   </div>
                 </div>
-
               </div>
-
+ </div>
               {userRole !== "engineer" && (
-                <div className="bg-[#07132a] border border-[#1f2d4d] rounded-2xl p-6 space-y-4 shadow-2xl animate-fade-in">
-                  <div className="flex justify-between items-center border-b border-[#243556] pb-3 select-none">
-                    <h3 className="text-[#D4AF37] font-black text-2xl flex items-center gap-2">
-                      <span>📞 سجل المحادثات والمتابعة التاريخية للعميل</span>
+                <div className="bg-[#07132a] border border-[#d4af37] rounded-2xl p-6 space-y-4 shadow-2xl animate-fade-in">
+                  <div className="flex justify-between items-center border-b border-[#d4af37] pb-3 select-none">
+                    <h3 className="text-[#D4AF37] text-lg md:text-xl font-black flex items-center justify-center gap-3 leading-none tracking-wide">
+                      <span>📞 سجل المحادثات والمتابعة للعميل</span>
                     </h3>
                     <button
                       onClick={() => setIsFollowUpOpen(true)}

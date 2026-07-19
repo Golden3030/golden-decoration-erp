@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useCRM } from "../context/CRMContext";
+import TabActivationBanner from './TabActivationBanner'; // استدعاء المكون المشترك الموحد للأجهزة اللمسية للشركة
 import { 
   Zap, 
   Layers, 
@@ -55,14 +56,74 @@ export default function DecorationsTab({ projectId }: DecorationsTabProps) {
 
   const [notesInput, setNotesInput] = useState<string>('');
 
+  // 🌟 ترقية وتوحيد محرك استيراد الغرف ليقرأ حيوياً كافة غرف حصر المساحات بدقة تامة دون فقدان أي حقل
   const getActiveRoomsFromAreas = () => {
+    const list: Array<{ name: string }> = [];
     const customAreasValues = crmData?.finishing?.areas?.values || {};
-    return Object.entries(customAreasValues)
-      .filter(([roomName, sizeStr]) => {
-        const size = Number(sizeStr);
-        return size > 0 && roomName !== "الشقة بالكامل" && roomName !== "إجمالي مساحة الغرف";
-      })
-      .map(([roomName]) => ({ name: roomName }));
+
+    const project = crmData?.project || {};
+    const bedroomsVal = Number(project.roomsCount || 2);
+    const bathroomsVal = Number(project.bathroomsCount || 1);
+    const receptionsVal = Number(project.receptionsCount || 1);
+    const kitchensVal = Number(project.kitchensCount || 1);
+    const balconiesVal = Number(project.balconiesCount || 1);
+    const livingVal = Number(project.livingCount || 0);
+
+    // 1. الريسبشنات والقطع
+    for (let i = 1; i <= receptionsVal; i++) {
+      const label = receptionsVal === 1 ? 'الريسبشن الرئيسي للوحدة' : `الريسبشن - قطعة ${i}`;
+      list.push({ name: label });
+    }
+
+    // 2. غرف النوم والأطفال
+    for (let i = 1; i <= bedroomsVal; i++) {
+      const label = i === 1 ? 'غرفة النوم الرئيسية (الماستر)' : `غرفة الأطفال ${i - 1}`;
+      list.push({ name: label });
+    }
+
+    // 3. المطابخ
+    for (let i = 1; i <= kitchensVal; i++) {
+      const label = kitchensVal === 1 ? 'المطبخ الرئيسي' : `المطبخ الفرعي ${i}`;
+      list.push({ name: label });
+    }
+
+    // 4. الحمامات (يتم إدراجها لإتاحة وضع مرايا ديكورية أو تجاليد أكليريك أسقف)
+    for (let i = 1; i <= bathroomsVal; i++) {
+      const label = i === 1 ? 'الحمام الرئيسي للوحدة' : i === 2 ? 'حمام ضيوف مخصص' : `الحمام الفرعي ${i}`;
+      list.push({ name: label });
+    }
+
+    // 5. البلكونات والتراسات
+    for (let i = 1; i <= balconiesVal; i++) {
+      const label = balconiesVal === 1 ? 'البلكونة الرئيسية (التراس)' : `البلكونة الفرعية ${i}`;
+      list.push({ name: label });
+    }
+
+    // 6. غرف المعيشة (الليفنج)
+    for (let i = 1; i <= livingVal; i++) {
+      const label = livingVal === 1 ? 'غرفة المعيشة الرئيسية (ليفنج)' : `غرفة المعيشة (ليفنج) - قطعة ${i}`;
+      list.push({ name: label });
+    }
+
+    // 7. الطرقات والممرات الداخلية (في حال تفعيلها)
+    const hasCorridors = !!(
+      (customAreasValues["الطرقة الرئيسية"] && Number(customAreasValues["الطرقة الرئيسية"]) > 0) || 
+      (customAreasValues["الطرقة الفرعية"] && Number(customAreasValues["الطرقة الفرعية"]) > 0) ||
+      Number(project.corridorsCount || 0) > 0
+    );
+    if (hasCorridors) {
+      list.push({ name: "الطرقة الرئيسية" });
+      list.push({ name: "الطرقة الفرعية" });
+    }
+
+    // 8. الحديقة / الجاردن المفتوحة (في حال تفعيلها)
+    const hasGarden = !!(project.gardenExist && Number(project.gardenArea || 0) > 0) || 
+                      !!(customAreasValues["الحديقة / الجاردن"] && Number(customAreasValues["الحديقة / الجاردن"]) > 0);
+    if (hasGarden) {
+      list.push({ name: "الحديقة / الجاردن" });
+    }
+
+    return list;
   };
 
   const activeRoomsList = getActiveRoomsFromAreas();
@@ -149,50 +210,38 @@ export default function DecorationsTab({ projectId }: DecorationsTabProps) {
     : 0;
 
   return (
-    <div className="space-y-8 text-right select-none font-sans" dir="rtl">
+    <div className="space-y-8 text-right select-none font-alexandria" dir="rtl">
+      
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap');
+        
+        .font-alexandria {
+          font-family: 'Alexandria', Arial, sans-serif !important;
+          letter-spacing: normal !important;
+        }
+      `}</style>
 
-      <div 
-        onClick={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
-        className={`p-6 rounded-[2.5rem] border transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl cursor-pointer select-none ${
-          state.enabled 
-            ? 'bg-[#07132a] border-[#D4AF37] shadow-[0_0_30px_rgba(212,175,55,0.15)] hover:shadow-[0_0_40px_rgba(212,175,55,0.25)]' 
-            : 'bg-[#07132a]/40 border-[#1f2d4d] hover:border-gray-600'
-        }`}
-      >
-        <div className="flex items-center gap-4">
-          <div className={`p-5 rounded-2xl transition-all duration-500 ${state.enabled ? 'bg-[#D4AF37] text-black shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'bg-[#020B1C] text-gray-600'}`}>
-            <Star className="w-10 h-10" />
-          </div>
-          <div className="text-right">
-            <h3 className="text-xl font-black text-[#F0E6D2]">الحقائب الجاهزة للديكورات الجمالية والملحقات</h3>
-            <p className="text-[11px] text-gray-400 mt-1 uppercase font-bold tracking-widest leading-none">DECORATIONS & ACCESSORIES ERP SYSTEM</p>
-          </div>
-        </div>
-
-        <div
-          className={`px-10 py-3 rounded-2xl border-2 font-black text-base transition-all duration-300 flex items-center gap-3 ${
-            state.enabled 
-              ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-              : 'bg-[#020B1C] border-[#D4AF37]/60 text-[#D4AF37]'
-          }`}
-        >
-          {state.enabled ? <CheckCircle2 className="w-6 h-6 text-[#D4AF37]" /> : <Lock className="w-5 h-5 text-gray-500" />}
-          {state.enabled ? 'القسم مفعل' : 'القسم مقفل'}
-        </div>
-      </div>
+      {/* استدعاء البار المنزلق اللمسي الموحد (TabActivationBanner) كبديل للبار الضخم القديم */}
+      <TabActivationBanner 
+        title="البنود الجاهزة للديكورات الجمالية والملحقات"
+        subtitle="DECORATIONS & ACCESSORIES ERP SYSTEM"
+        icon={Star}
+        enabled={state.enabled}
+        onToggle={() => { updateStateAndSave(prev => ({ enabled: !prev.enabled })); }}
+      />
 
       <div className={`space-y-8 transition-opacity duration-300 ${state.enabled ? 'opacity-100 pointer-events-auto' : 'opacity-25 pointer-events-none filter grayscale'}`}>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1f2d4d] pb-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D4AF37] pb-2">
           <div className="flex items-center gap-2 text-[#D4AF37]">
             <Layers className="w-6 h-6 animate-pulse" />
-            <h4 className="text-xl font-bold text-[#F0E6D2]">جدول تفصيل بنود الديكورات الجمالية وحصرها بالوحدة:</h4>
+            <h4 className="text-lg font-black text-[#D4AF37]"> تفاصيل بنود الديكورات الجمالية بالوحدة:</h4>
           </div>
           <button
             type="button"
             disabled={!state.enabled}
             onClick={handleAddCustomDecoration}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 text-sm font-bold transition-all cursor-pointer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 text-sm font-bold transition-all cursor-pointer font-alexandria"
           >
             <PlusCircle className="w-5 h-5" />
             <span>إضافة بند ديكور مخصص جديد</span>
@@ -227,22 +276,22 @@ export default function DecorationsTab({ projectId }: DecorationsTabProps) {
 
                   <div className="space-y-1 w-full">
                     <div className="flex items-center justify-between flex-wrap gap-4">
-                      <h4 className="text-xl font-bold text-[#F0E6D2]">
+                      <h4 className="text-ms font-bold text-[#D4AF37]">
                         {item.name === "أخرى" ? (
                           <input
                             type="text"
                             value={item.customName ?? ""}
                             onClick={(e) => e.stopPropagation()} 
                             onChange={(e) => handleItemChange(idx, { customName: e.target.value })}
-                            placeholder="اسم ديكور مخصص..."
+                            placeholder="اسم ديكور جديد..."
                             className="bg-transparent border-b border-[#D4AF37]/30 focus:border-[#D4AF37] outline-none text-xl font-bold text-[#D4AF37] placeholder-gray-600"
                           />
                         ) : item.name}
                       </h4>
                       
-                      {/* 🎯 تعديل لعداد تكلفت البند ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
+                      {/* عداد تكلفت البند ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
                       <div className="space-y-1 text-right" onClick={(e) => e.stopPropagation()}>
-                        <span className="text-[10px] text-gray-500 font-bold block mb-1">سعر البند الفردي:</span>
+                        <span className="text-[10px] text-white font-bold block mb-1">سعر البند:</span>
                         <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-44" dir="ltr">
                           <button 
                             type="button" 
@@ -274,9 +323,9 @@ export default function DecorationsTab({ projectId }: DecorationsTabProps) {
                     {item.enabled && (
                       <div className="flex flex-col sm:flex-row items-center gap-6 mt-4 justify-center sm:justify-start" onClick={(e) => e.stopPropagation()}>
                         
-                        {/* 🎯 تعديل لعداد الكمية ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
+                        {/* عداد الكمية ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
                         <div className="flex items-center gap-3">
-                          <span className="text-sm text-gray-400 font-bold">الكمية:</span>
+                          <span className="text-sm text-white font-bold">الكمية:</span>
                           <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none min-w-[120px]" dir="ltr">
                             <button 
                               type="button" 
@@ -296,8 +345,9 @@ export default function DecorationsTab({ projectId }: DecorationsTabProps) {
                           </div>
                         </div>
 
+                        {/* منسدل اختيار الغرف المتناسق كلياً مع حصر المساحات الجاري */}
                         <div className="flex items-center gap-3 w-full sm:w-auto">
-                          <span className="text-sm text-gray-400 font-bold">الموقع:</span>
+                          <span className="text-sm text-white font-bold"> اختر الفراغ:</span>
                           <select
                             value={item.location ?? ""}
                             onChange={(e) => handleItemChange(idx, { location: e.target.value })}
@@ -315,7 +365,7 @@ export default function DecorationsTab({ projectId }: DecorationsTabProps) {
                 </div>
 
                 <div className="text-center sm:text-left min-w-[160px] border-t md:border-t-0 md:border-r border-[#1f2d4d] pt-4 md:pt-0 md:pr-6 w-full md:w-auto select-none">
-                  <span className="text-sm text-gray-500 block font-bold">إجمالي البند:</span>
+                  <span className="text-sm text-white block font-bold">إجمالي البند:</span>
                   <span className="text-2xl font-black text-[#D4AF37] font-mono">
                     {totalCardCost.toLocaleString('en-US')}
                   </span>
@@ -326,10 +376,10 @@ export default function DecorationsTab({ projectId }: DecorationsTabProps) {
           })}
         </div>
 
-        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-3">
-          <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#1f2d4d] pb-2 text-right">
+        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-3">
+          <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#D4AF37] pb-2 text-right">
             <FileText className="w-6 h-6" />
-            <h4 className="text-lg font-bold">ملاحظات وشروط استلام أعمال الديكورات (بنود العقد الفنية):</h4>
+            <h4 className="text-lg font-black text-[#D4AF37]">ملاحظات وشروط استلام أعمال الديكورات :</h4>
           </div>
           <textarea
             value={notesInput}
@@ -342,26 +392,30 @@ export default function DecorationsTab({ projectId }: DecorationsTabProps) {
           />
           <div className="flex justify-between items-center text-xs text-gray-500 px-1">
             <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
-            <span>حالة الاتصال: متصل وسحابي</span>
+            <span>حالة الاتصال: متصل </span>
           </div>
         </div>
 
-        <div className="p-6 rounded-2xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_25px_rgba(212,175,55,0.06)] flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
-          <div className="absolute right-0 top-0 bottom-0 w-2 bg-[#D4AF37]" />
-          <div className="space-y-1 text-center sm:text-right pr-2">
-            <h4 className="text-2xl font-bold text-[#D4AF37]">الملخص المالي لبند الديكورات:</h4>
-            <p className="text-sm text-gray-400">جميع الأسعار خاضعة للتعديل المباشر وترحل للمقايسة</p>
+        {/* كارت خلاصة الأعمال والملخص المالي النهائي المحدث ليطابق نمط التكييف والألوميتال والأسقف المعتمد */}
+        <div className="p-5 rounded-xl bg-[#020B1C] border border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+          <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D4AF37]" />
+          
+          <div className="space-y-1 text-center sm:text-right pr-1 select-none font-alexandria">
+            <h4 className="text-lg font-bold text-[#D4AF37]">الملخص المالي النهائي لبند الديكورات المخصصة والملحقات:</h4>
+            <p className="text-xs text-white font-normal leading-relaxed max-w-2xl text-right">
+              التسعير بالكامل؛ تشتمل على تكلفة بنود الديكورات الإنشائية والجمالية الجارية والمحقنة حيوياً بداخل المواقع وغرف الحصر بالوحدة السكنية والملحقات المقدرة ({totalDecorEstimate.toLocaleString('en-US')} ج.م).
+            </p>
           </div>
-          <div className="flex items-center gap-4 bg-[#07132a] px-10 py-6 rounded-2xl border border-[#1f2d4d]">
-            <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
-              <DollarSign className="w-10 h-10" />
+
+          <div className="flex items-center gap-3 bg-[#07132a] px-6 py-4 rounded-lg border border-[#1f2d4d]">
+            <div className="p-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
+              <DollarSign className="w-6 h-6" />
             </div>
             <div className="text-right">
-              <span className="text-xs text-gray-500 block font-bold">التكلفة الإجمالية:</span>
-              <span className="text-4xl font-black text-[#F0E6D2] font-mono">
-                {totalDecorEstimate.toLocaleString('en-US')}
+              <span className="text-[10px] text-white block font-semibold">إجمالي تكلفة بند الديكورات:</span>
+              <span className="text-2xl font-black text-[#D4AF37] font-mono">
+                {totalDecorEstimate.toLocaleString('en-US')} <span className="text-xs font-normal">ج.م</span>
               </span>
-              <span className="text-lg font-normal text-[#F0E6D2] mr-2">ج.م</span>
             </div>
           </div>
         </div>

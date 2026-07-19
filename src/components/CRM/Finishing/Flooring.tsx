@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useCRM } from "../context/CRMContext";
 import { supabase } from '@/lib/supabaseClient'; 
-
+import TabActivationBanner from './TabActivationBanner'; // 👈 استدعاء المكون المشترك الموحد للأجهزة اللمسية للشركة
 import { 
   Zap, 
   Layers, 
@@ -21,10 +21,10 @@ import {
   Palette,
   HardHat,
   Truck,
-  Sparkles,
   Wrench,
   CheckSquare,
-  Square
+  Square,
+  Ruler
 } from 'lucide-react';
 
 interface Product {
@@ -182,15 +182,15 @@ export default function Flooring() {
     // 3. أرضية وحوائط المطابخ
     for (let i = 1; i <= kitchensVal; i++) {
       const size = Number(customValues['المطبخ الرئيسي'] || 10);
-      list.push({ key: `kitchen_floor`, label: 'بلاط أرضيات المطبخ الرئيسي', defaultQty: size });
-      list.push({ key: `kitchen_walls`, label: 'سيراميك جدران وحوائط المطبخ', defaultQty: size * 3 });
+      list.push({ key: `kitchen_floor`, label: ' أرضيات المطبخ الرئيسي', defaultQty: size });
+      list.push({ key: `kitchen_walls`, label: 'حوائط المطبخ', defaultQty: size * 3 });
     }
 
     // 4. أرضية وحوائط الحمامات
     for (let i = 1; i <= bathroomsVal; i++) {
       const size = Number(customValues['الحمام الرئيسي'] || 6);
-      list.push({ key: `bathroom_floor`, label: 'بلاط أرضيات الحمام الرئيسي', defaultQty: size });
-      list.push({ key: `bathroom_walls`, label: 'سيراميك جدران وحوائط الحمام', defaultQty: size * 3 });
+      list.push({ key: `bathroom_floor`, label: ' أرضيات الحمام الرئيسي', defaultQty: size });
+      list.push({ key: `bathroom_walls`, label: 'حوائط الحمام', defaultQty: size * 3 });
     }
 
     // 5. البلكونات (التراس)
@@ -234,7 +234,7 @@ export default function Flooring() {
       return (isFloor && isNotGarden) ? sum + r.defaultQty : sum;
     }, 0);
     
-    list.push({ key: `skirting`, label: 'بلاط الوزرة المضيئة الليد', defaultQty: Number((totalFloorAreaSum * 0.8).toFixed(1)) });
+    list.push({ key: `skirting`, label: ' الوزرة المضيئة الليد', defaultQty: Number((totalFloorAreaSum * 0.8).toFixed(1)) });
 
     return list;
   }, [crmData?.finishing?.areas?.values, project]);
@@ -517,7 +517,7 @@ export default function Flooring() {
       };
       const updatedLabels = {
         ...prev.customLabels,
-        [uniqueKey]: 'بند بلاط وأرضيات مخصص جديد'
+        [uniqueKey]: 'بند أرضيات مخصص جديد'
       };
       return {
         items: updatedItems,
@@ -557,23 +557,24 @@ export default function Flooring() {
     if (state.customLabels[key]) return state.customLabels[key];
     
     const defaultLabels: Record<string, string> = {
-      reception: 'بلاط أرضيات الريسبشن والصالون',
-      rooms: 'بلاط أرضيات غرف النوم والمعيشة',
-      kitchen_floor: 'بلاط أرضيات المطبخ الرئيسي',
-      bathroom_floor: 'بلاط أرضيات الحمام الرئيسي',
-      kitchen_walls: 'سيراميك جدران وحوائط المطبخ',
-      bathroom_walls: 'سيراميك جدران وحوائط الحمام',
-      skirting: 'بلاط الوزرة المضيئة الليد'
+      reception: ' أرضيات الريسبشن',
+      rooms: '  أرضيات غرف النوم ',
+      kitchen_floor: ' أرضيات المطبخ الرئيسي',
+      bathroom_floor: ' أرضيات الحمام الرئيسي',
+      kitchen_walls: 'حوائط المطبخ',
+      bathroom_walls: 'حوائط الحمام',
+      skirting: ' الوزرة المضيئة الليد'
     };
     
-    if (key.startsWith('floor_rec_')) return `أرضية الريسبشن - قطعة ${key.split('_')[2] || '١'}`;
+    if (key.startsWith('floor_rec_')) return `أرضية الريسبشن - قطعة ${key.split('_')[2] || '1'}`;
     if (key.startsWith('floor_room_')) return `أرضية غرفة النوم - ${key.split('_')[2] === '1' ? 'الماستر' : 'أطفال ' + (Number(key.split('_')[2]) - 1)}`;
     if (key.startsWith('floor_kit_')) return `أرضية المطبخ الفرعي ${key.split('_')[2]}`;
     if (key.startsWith('wall_kit_')) return `جدران وحوائط المطبخ الفرعي ${key.split('_')[2]}`;
     if (key.startsWith('floor_bath_')) return `أرضية الحمام الفرعي ${key.split('_')[2]}`;
     if (key.startsWith('wall_bath_')) return `جدران وحوائط الحمام الفرعي ${key.split('_')[2]}`;
-    if (key.startsWith('floor_balc_')) return `أرضية البلكونة الفرعية ${key.split('_')[2]}`;
-    if (key.startsWith('floor_living_')) return `أرضية المعيشة (ليفنج) - قطعة ${key.split('_')[2]}`;
+    if (key.startsWith('floor_balc_')) return `أرضية البلكونة الرئيسية - ${key.split('_')[2]}`;
+    if (key.startsWith('floor_balc_')) return `أرضية البلكونة الفرعية - ${key.split('_')[2]}`;
+    if (key.startsWith('floor_living_')) return `أرضية (ليفنج) -  ${key.split('_')[2]}`;
     if (key === 'floor_corridor_main') return 'أرضية الطرقة الرئيسية';
     if (key === 'floor_corridor_sub') return 'أرضية الطرقة الفرعية';
     if (key === 'floor_garden') return 'أرضية الحديقة / الجاردن';
@@ -640,75 +641,64 @@ export default function Flooring() {
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[400px] bg-[#020B1C]">
       <RefreshCw className="w-12 h-12 text-[#D4AF37] animate-spin mb-4" />
-      <p className="text-[#F0E6D2]">جاري مزامنة عينات الأرضيات ومطابقة أمتار الغرف والمساحات...</p>
+      <p className="text-[#F0E6D2]">جاري مزامنة بند الأرضيات ومطابقة أمتار الغرف والمساحات...</p>
     </div>
   );
 
   return (
-    <div className="space-y-8 select-none text-right" dir="rtl">
+    <div className="space-y-8 select-none text-right font-alexandria" dir="rtl">
       
-      {/* كارت التفعيل الرئيسي (On / Off) ذو الطابع الفاخر والماوس اليد المضيء */}
-      <div 
-        onClick={handleToggleState}
-        className={`p-6 rounded-[2.5rem] border transition-all duration-500 flex flex-col sm:flex-row items-center justify-between gap-6 shadow-2xl cursor-pointer select-none ${
-          state.enabled 
-            ? 'bg-[#07132a] border-[#D4AF37] shadow-[0_0_30px_rgba(212,175,55,0.15)] hover:shadow-[0_0_40px_rgba(212,175,55,0.25)]' 
-            : 'bg-[#07132a]/40 border-[#1f2d4d] hover:border-gray-600'
-        }`}
-      >
-        <div className="flex items-center gap-4">
-          <div className={`p-5 rounded-2xl transition-all duration-500 flex-shrink-0 ${state.enabled ? 'bg-[#D4AF37] text-black shadow-[0_0_30px_rgba(212,175,55,0.4)]' : 'bg-[#020B1C] text-gray-600'}`}>
-            <Palette className="w-10 h-10" />
-          </div>
-          <div className="text-right">
-            <h2 className="text-xl md:text-2xl font-bold text-[#F0E6D2]">الحقائب التقديرية للأرضيات والسيراميك والرخام</h2>
-            <p className="text-sm text-gray-400 mt-1 uppercase font-bold tracking-widest leading-none">FLOORING, TILES & MARBLE SYSTEM</p>
-          </div>
-        </div>
-        <div
-          className={`px-10 py-3 rounded-2xl border-2 font-black text-base transition-all duration-300 flex items-center gap-3 flex-shrink-0 ${
-            state.enabled 
-              ? 'bg-[#D4AF37]/10 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.1)]' 
-              : 'bg-[#020B1C] border-[#D4AF37]/60 text-[#D4AF37]'
-          }`}
-        >
-          {state.enabled ? <CheckCircle2 className="w-6 h-6 text-[#D4AF37]" /> : <Lock className="w-5 h-5 text-gray-500" />}
-          {state.enabled ? 'القسم مفعل' : 'القسم مقفل'}
-        </div>
-      </div>
+      {/* ورقة أنماط الخط الملكي الموحد والتمرير */}
+      <style jsx global>{`
+        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap');
+        
+        .font-alexandria {
+          font-family: 'Alexandria', Arial, sans-serif !important;
+          letter-spacing: normal !important;
+        }
+      `}</style>
+
+      {/* كارت التفعيل الموحد (On / Off) ذو الطابع الفاخر والماوس اليد المضيء الموحد للشركة */}
+      <TabActivationBanner 
+        title="الحقائب التقديرية للأرضيات والسيراميك والرخام"
+        subtitle="FLOORING, TILES & MARBLE SYSTEM"
+        icon={Palette}
+        enabled={state.enabled}
+        onToggle={handleToggleState}
+      />
 
       {/* حظر التفاعل وتعتيم الشاشة عند الإغلاق التام للبند */}
       <div className={`space-y-8 transition-opacity duration-300 ${state.enabled ? 'opacity-100' : 'opacity-25 pointer-events-none filter grayscale'}`}>
         
         {/* جدول حصر خامات الأرضيات والوزرة التفاعلي */}
-        <div className="bg-[#07132a] border border-[#1f2d4d] p-6 rounded-2xl space-y-4 shadow-xl">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#1f2d4d] pb-4">
+        <div className="bg-[#07132a] border border-[#D4AF37] p-6 rounded-2xl space-y-4 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#D4AF37] pb-4">
             <div className="flex items-center gap-2 text-[#D4AF37]">
               <Layers className="w-6 h-6" />
-              <h4 className="text-xl font-bold text-[#F0E6D2]">جدول حصر خامات الأرضيات والوزرة التفاعلي (BOQ الخامات والمفاضلة الحركية):</h4>
+              <h4 className="text-md font-bold text-[#D4AF37]">   حصر عدد امتار الأرضيات والحوائط والوزرة  :</h4>
             </div>
             <button
               type="button"
               disabled={!state.enabled}
               onClick={handleAddCustomRow}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 text-sm font-bold transition-all cursor-pointer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 text-[#D4AF37] border border-[#D4AF37]/30 text-sm transition-all cursor-pointer font-alexandria"
             >
               <PlusCircle className="w-5 h-5" />
-              <span>إضافة بند بلاط مخصص جديد</span>
+              <span>إضافة بند</span>
             </button>
           </div>
 
           <div className="overflow-x-auto">
             <table className="w-full text-right border-collapse min-w-[900px]">
               <thead>
-                <tr className="border-b border-[#1f2d4d] text-[#94a3b8] text-sm font-bold pb-2">
-                  <th className="py-3 text-right">نوع الفضاء</th>
-                  <th className="py-3 text-right">الشركة الموردة</th>
-                  <th className="py-3 text-right">المنتج الفعلي بالمخزن (تعديل تفاعلي)</th>
-                  <th className="py-3 text-center">الكمية المطلوبة (م٢ أو م.ط)</th>
-                  <th className="py-3 text-center">سعر المتر</th>
-                  <th className="py-3 text-left">إجمالي التكلفة</th>
-                  <th className="py-3 text-center">حذف البند</th>
+                <tr className="border-b border-[#D4AF37] text-[#D4AF37] text-base  select-none">
+                  <th className="py-3 font-medium  text-right ">نوع الفراغ</th>
+                  <th className="py-3 text-right  font-medium">الشركة الموردة</th>
+                  <th className="py-3 text-center font-medium">المنتج </th>
+                  <th className="py-3 text-center  font-medium">الكمية المطلوبة</th>
+                  <th className="py-3 text-center font-medium">سعر المتر</th>
+                  <th className="py-3 text-center font-medium"> الاجمالى</th>
+                  <th className="py-3 text-center font-medium">حذف</th>
                 </tr>
               </thead>
               <tbody>
@@ -718,12 +708,12 @@ export default function Flooring() {
 
                   return (
                     <tr key={key} className="border-b border-[#1f2d4d]/60 hover:bg-[#020B1C]/40 transition-colors duration-200">
-                      <td className="py-4 text-[#F0E6D2] font-semibold text-base">{getLabelForKey(key)}</td>
+                      <td className="py-4 text-white font-semibold text-xs md:text-sm">{getLabelForKey(key)}</td>
                       <td className="py-4">
                         <select
                           value={current.company}
                           onChange={(e) => handleRowPropertyChange(key, 'company', e.target.value)}
-                          className="bg-[#020B1C] border border-[#1f2d4d] p-2.5 rounded-lg text-white font-bold outline-none cursor-pointer focus:border-[#D4AF37] text-sm"
+                          className="bg-[#020B1C] border border-[#1f2d4d] p-2.5 rounded-lg text-white font-bold outline-none cursor-pointer focus:border-[#D4AF37] text-xs"
                         >
                           <option value="">-- اختر الشركة --</option>
                           {availableCompanies.map(c => <option key={c} value={c}>{c}</option>)}
@@ -734,36 +724,36 @@ export default function Flooring() {
                           disabled={!current.company}
                           value={current.product_id}
                           onChange={(e) => handleRowPropertyChange(key, 'product_id', e.target.value)}
-                          className="bg-[#020B1C] border border-[#1f2d4d] p-2.5 rounded-lg text-white font-bold outline-none cursor-pointer focus:border-[#D4AF37] text-sm disabled:opacity-40 min-w-[200px]"
+                          className="bg-[#020B1C] border border-[#1f2d4d] p-2.5 w-[140px] rounded-lg text-white font-bold outline-none cursor-pointer focus:border-[#D4AF37] text-xs disabled:opacity-40 min-w-[50px]"
                         >
-                          <option value="">-- اختر البلاط لـ {current.company || 'الشركة'} --</option>
+                          <option value="">-- اختر النوع لـ {current.company || 'الشركة'} --</option>
                           {rowProducts.map(p => (
                             <option key={p.id} value={p.id}>{p.product_name}</option>
                           ))}
                         </select>
                       </td>
                       <td className="py-4">
-                        {/* عداد الكمية التفاعلي الفاخر المذهب مع أزرار النقصان الحمراء */}
-                        <div className="flex items-center justify-center gap-3">
+                        {/* عداد الكمية التفاعلي الفاخر المذهب مع أزرار النقصان الحمراء h-11 */}
+                        <div className="flex items-center justify-center gap-3 bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-36 mx-auto">
                           <button
                             type="button"
                             onClick={() => handleQtyChange(key, current.qty + 1)}
-                            className="w-8 h-8 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold cursor-pointer transition-all"
+                            className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold cursor-pointer transition-all font-sans"
                           >
                             <Plus className="w-4 h-4" />
                           </button>
-                          <span className="text-lg font-bold text-[#D4AF37] font-mono min-w-[40px] text-center">{current.qty}</span>
+                          <span className="text-sm font-bold text-[#D4AF37] font-mono min-w-[40px] text-center">{current.qty}</span>
                           <button
                             type="button"
                             onClick={() => handleQtyChange(key, current.qty - 1)}
-                            className="w-8 h-8 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center font-bold cursor-pointer transition-all"
+                            className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold cursor-pointer transition-all font-sans"
                           >
                             <Minus className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
-                      <td className="py-4 text-center font-bold text-[#94a3b8] font-mono">{current.price > 0 ? `${current.price} ج.م` : '--'}</td>
-                      <td className="py-4 text-center font-black text-[#D4AF37] font-mono text-base">{(current.qty * current.price).toLocaleString()} ج.م</td>
+                      <td className="py-4 text-center font-bold text-[#94a3b8] font-mono text-xs">{current.price > 0 ? `${current.price} ج.م` : '--'}</td>
+                      <td className="py-4 text-center font-black text-[#D4AF37] font-mono text-xs md:text-sm">{(current.qty * current.price).toLocaleString()} ج.م</td>
                       <td className="py-4 text-center">
                         <button
                           type="button"
@@ -782,11 +772,11 @@ export default function Flooring() {
         </div>
 
         {/* كارت حصر وتخصيص الوزرة المعلق ليد بالعدادات الفاخرة */}
-        <div className="bg-[#07132a] border border-[#1f2d4d] p-6 rounded-2xl space-y-6 shadow-xl">
-          <div className="flex flex-col sm:flex-row justify-between items-start md:items-center gap-4 border-b border-[#1f2d4d] pb-4">
+        <div className="bg-[#07132a] border border-[#D4AF37] p-6 rounded-2xl space-y-6 shadow-xl font-alexandria">
+          <div className="flex flex-col sm:flex-row justify-between items-start md:items-center gap-4 border-b border-[#D4AF37] pb-4">
             <div className="flex items-center gap-3">
-              <span className="text-xl text-[#D4AF37]">📐</span>
-              <h3 className="text-lg font-bold text-[#F0E6D2]">كارت تحديد نوع وتصميم وحصر الوزر:</h3>
+              <Ruler className="w-5 h-5 text-[#D4AF37] shrink-0" />
+              <h3 className="text-lg font-bold text-[#D4AF37]"> تحديد نوع وحصر الوزر:</h3>
             </div>
             
             <div className="flex flex-wrap items-center gap-4 bg-[#020B1C] border border-[#1f2d4d] p-3 rounded-xl w-full md:w-auto select-none">
@@ -795,7 +785,7 @@ export default function Flooring() {
                 <button
                   type="button"
                   onClick={() => handleQtyChange('skirting', (state.items.skirting?.qty || 0) + 1)}
-                  className="w-7 h-7 rounded bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold cursor-pointer"
+                  className="w-7 h-7 rounded bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold cursor-pointer font-sans"
                 >+</button>
                 <span className="text-sm font-bold text-[#D4AF37] font-mono min-w-[30px] text-center">
                   {state.items.skirting?.qty || 0}
@@ -803,7 +793,7 @@ export default function Flooring() {
                 <button
                   type="button"
                   onClick={() => handleQtyChange('skirting', (state.items.skirting?.qty || 0) - 1)}
-                  className="w-7 h-7 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center font-bold cursor-pointer"
+                  className="w-7 h-7 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold cursor-pointer font-sans"
                 >-</button>
                 <span className="text-xs text-gray-400">م.ط</span>
               </div>
@@ -815,7 +805,7 @@ export default function Flooring() {
                 <button
                   type="button"
                   onClick={() => handleNestedFieldChange('labor', 'skirting_rate', state.labor.skirting_rate + 5)}
-                  className="w-7 h-7 rounded bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold cursor-pointer"
+                  className="w-7 h-7 rounded bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold cursor-pointer font-sans"
                 >+</button>
                 <span className="text-sm font-bold text-[#D4AF37] font-mono min-w-[30px] text-center">
                   {state.labor.skirting_rate}
@@ -823,7 +813,7 @@ export default function Flooring() {
                 <button
                   type="button"
                   onClick={() => handleNestedFieldChange('labor', 'skirting_rate', state.labor.skirting_rate - 5)}
-                  className="w-7 h-7 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center font-bold cursor-pointer"
+                  className="w-7 h-7 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold cursor-pointer font-sans"
                 >-</button>
                 <span className="text-xs text-gray-400">ج.م/م</span>
               </div>
@@ -847,47 +837,47 @@ export default function Flooring() {
                     }
                   }));
                 }}
-                className={`p-5 rounded-xl border cursor-pointer transition-all select-none ${
+                className={`p-5 rounded-xl border cursor-pointer transition-all select-none duration-300 ${
                   state.skirting_type === sk.type 
                     ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_15px_rgba(212,175,55,0.08)]' 
                     : 'border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/30'
                 }`}
               >
-                <h4 className="text-base font-bold text-[#F0E6D2]">{sk.label}</h4>
-                <p className="text-xs text-[#94a3b8] mt-2 leading-relaxed">{sk.desc}</p>
+                <h4 className="text-base font-bold text-[#D4AF37]">{sk.label}</h4>
+                <p className="text-xs text-white mt-2 leading-relaxed">{sk.desc}</p>
               </div>
             ))}
           </div>
         </div>
 
         {/* المون الإنشائية بالعدادات الفاخرة */}
-        <div className="bg-[#07132a] border border-[#1f2d4d] p-6 rounded-2xl space-y-4 shadow-xl">
-          <div className="flex items-center gap-2 border-b border-[#1f2d4d] pb-2 text-[#D4AF37]">
-            <HardHat className="w-5 h-5" />
-            <h4 className="text-lg font-bold text-[#F0E6D2]">مون وتأسيس أعمال البلاط والأرضيات بالوحدة:</h4>
+        <div className="bg-[#07132a] border border-[#D4AF37] p-6 rounded-2xl space-y-4 shadow-xl">
+          <div className="flex items-center gap-2 border-b border-[#D4AF37] pb-2 text-[#D4AF37]">
+            <HardHat className="w-5 h-5 shrink-0" />
+            <h4 className="text-lg font-bold text-[#D4AF37]">مون تأسيس أعمال الأرضيات بالوحدة:</h4>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 select-none">
             
             {/* الأسمنت */}
-            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all">
+            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all duration-300">
               <div className="text-right">
-                <span className="text-sm font-semibold text-[#F0E6D2] block">شيكارة أسمنت ورمل التثبيت</span>
-                <p className="text-xs text-gray-500 mt-1">مون التثبيت والتمليط الأساسية للبلاط</p>
+                <span className="text-sm font-semibold text-[#D4AF37] block">شيكارة أسمنت ورمل </span>
+                <p className="text-xs text-white mt-1">مون الاسمنت والرمل للسيراميك</p>
               </div>
-              <div className="flex items-center gap-3 select-none">
+              <div className="flex items-center gap-3 h-11 bg-[#020B1C] border border-[#1f2d4d] px-2 rounded-xl select-none w-36 justify-between" dir="ltr">
                 <button 
                   type="button" 
                   onClick={() => handleStructuralFieldChange('cement_bags', (state.cement_bags || 0) + 1)}
-                  className="w-8 h-8 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none"
+                  className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
                 >
                   +
                 </button>
-                <span className="text-xl font-black text-[#D4AF37] font-mono min-w-[30px] text-center">{state.cement_bags}</span>
+                <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[30px] text-center">{state.cement_bags}</span>
                 <button 
                   type="button" 
                   onClick={() => handleStructuralFieldChange('cement_bags', Math.max(0, (state.cement_bags || 0) - 1))}
-                  className="w-8 h-8 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none"
+                  className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
                 >
                   -
                 </button>
@@ -895,24 +885,24 @@ export default function Flooring() {
             </div>
 
             {/* الرمل */}
-            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all">
+            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all duration-300">
               <div className="text-right">
-                <span className="text-sm font-semibold text-[#F0E6D2] block">رمل التأسيس الفاخر (م٣)</span>
-                <p className="text-xs text-gray-500 mt-1">رمل التسوية الموزع أسفل البلاط بالوحدة</p>
+                <span className="text-sm font-semibold text-[#D4AF37] block">رمل التأسيس (م٣)</span>
+                <p className="text-xs text-white mt-1">رمل التسوية الموزع أسفل السيراميك بالوحدة</p>
               </div>
-              <div className="flex items-center gap-3 select-none">
+              <div className="flex items-center gap-3 h-11 bg-[#020B1C] border border-[#1f2d4d] px-2 rounded-xl select-none w-36 justify-between animate-fade-in" dir="ltr">
                 <button 
                   type="button" 
                   onClick={() => handleStructuralFieldChange('sand_m3', Number(((state.sand_m3 || 0) + 0.50).toFixed(2)))}
-                  className="w-8 h-8 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none"
+                  className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
                 >
                   +
                 </button>
-                <span className="text-xl font-black text-[#D4AF37] font-mono min-w-[50px] text-center">{state.sand_m3?.toFixed(2)}</span>
+                <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[50px] text-center">{state.sand_m3?.toFixed(2)}</span>
                 <button 
                   type="button" 
                   onClick={() => handleStructuralFieldChange('sand_m3', Math.max(0, Number(((state.sand_m3 || 0) - 0.50).toFixed(2))))}
-                  className="w-8 h-8 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none"
+                  className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
                 >
                   -
                 </button>
@@ -922,17 +912,17 @@ export default function Flooring() {
           </div>
         </div>
 
-        {/* كارت كماليات ومستلزمات التشطيب الاستهلاكية المدمج به العدادات الفاخرة لمادة السقية والكماليات المحررة */}
-        <div className="bg-[#07132a] border border-[#1f2d4d] p-6 rounded-2xl space-y-4 shadow-xl">
-          <div className="flex items-center gap-3 border-b border-[#1f2d4d] pb-4">
-            <Wrench className="w-6 h-6 text-[#D4AF37]" />
-            <h3 className="text-lg font-bold text-[#F0E6D2]">كارت كماليات ومستلزمات التشطيب الاستهلاكية:</h3>
+        {/* كارت كماليات ومستلزمات التشطيب الاستهلاككية */}
+        <div className="bg-[#07132a] border border-[#D4AF37] p-6 rounded-2xl space-y-4 shadow-xl font-alexandria">
+          <div className="flex items-center gap-3 border-b border-[#D4AF37] pb-4">
+            <Wrench className="w-6 h-6 text-[#D4AF37] shrink-0" />
+            <h3 className="text-lg font-bold text-[#D4AF37]"> كماليات ومستلزمات التشطيب الاستهلاكية:</h3>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
-            {/* مادة ترويب وسقية فواصل الأرضيات مع العدادات الفاخرة المحدثة */}
+            {/* مادة ترويب وسقية فواصل الأرضيات */}
             <div className="lg:col-span-6 bg-[#020B1C] border border-[#1f2d4d] p-5 rounded-xl space-y-4">
-              <span className="text-sm text-[#94a3b8] block font-bold text-right">مادة ترويب وسقية فواصل الأرضيات:</span>
+              <span className="text-sm text-[#D4AF37] block font-bold text-right select-none">مادة سقية فواصل الأرضيات:</span>
               <select
                 value={state.grout_product_id || ''}
                 onChange={(e) => {
@@ -944,67 +934,65 @@ export default function Flooring() {
                 }}
                 className="bg-[#07132a] border border-[#1f2d4d] p-3 rounded-lg text-white font-bold outline-none cursor-pointer focus:border-[#D4AF37] w-full text-sm"
               >
-                <option value="">-- اختر مادة السقية (الترويبة) --</option>
+                <option value="">-- اختر مادة السقية  --</option>
                 {groutProducts.map(p => (
                   <option key={p.id} value={p.id}>{p.product_name}</option>
                 ))}
               </select>
 
               {/* عدادات فاخرة للكمية والسعر لتصميم مادة السقية */}
-              <div className="grid grid-cols-2 gap-4 pt-2">
+              <div className="grid grid-cols-2 gap-4 pt-2 select-none">
                 {/* عداد الكمية بالشكارة */}
-                <div className="bg-[#07132a] border border-[#1f2d4d] p-3 rounded-xl flex flex-col items-center justify-between gap-2 select-none">
-                  <span className="text-xs text-[#94a3b8]">الكمية (عبوة/شكارة)</span>
-                  <div className="flex items-center gap-2">
+                <div className="bg-[#07132a] border border-[#1f2d4d] p-2 rounded-xl flex flex-col items-center justify-between gap-2 h-11 select-none w-full">
+                  <div className="flex items-center justify-between w-full h-full px-1" dir="ltr">
                     <button
                       type="button"
                       onClick={() => handleGroutQtyChange(state.grout_qty + 1)}
-                      className="w-7 h-7 rounded bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold transition-all cursor-pointer"
+                      className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold transition-all cursor-pointer font-sans"
                     >+</button>
                     <span className="text-sm font-bold text-[#D4AF37] font-mono min-w-[24px] text-center">{state.grout_qty}</span>
                     <button
                       type="button"
                       onClick={() => handleGroutQtyChange(state.grout_qty - 1)}
-                      className="w-7 h-7 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold transition-all cursor-pointer"
+                      className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold transition-all cursor-pointer font-sans"
                     >-</button>
                   </div>
                 </div>
 
                 {/* عداد السعر الفردي التفاعلي للشكارة */}
-                <div className="bg-[#07132a] border border-[#1f2d4d] p-3 rounded-xl flex flex-col items-center justify-between gap-2 select-none">
-                  <span className="text-xs text-[#94a3b8]">السعر للوحدة (ج.م)</span>
-                  <div className="flex items-center gap-2">
+                <div className="bg-[#07132a] border border-[#1f2d4d] p-2 rounded-xl flex flex-col items-center justify-between gap-2 h-11 select-none w-full">
+                  <div className="flex items-center justify-between w-full h-full px-1" dir="ltr">
                     <button
                       type="button"
                       onClick={() => handleGroutPriceChange(state.grout_price + 5)}
-                      className="w-7 h-7 rounded bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold transition-all cursor-pointer"
+                      className="w-7 h-7 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold transition-all cursor-pointer font-sans"
                     >+</button>
                     <span className="text-sm font-bold text-white font-mono min-w-[36px] text-center">{state.grout_price}</span>
                     <button
                       type="button"
                       onClick={() => handleGroutPriceChange(state.grout_price - 5)}
-                      className="w-7 h-7 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold transition-all cursor-pointer"
+                      className="w-7 h-7 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold transition-all cursor-pointer font-sans"
                     >-</button>
                   </div>
                 </div>
               </div>
 
-              <div className="flex justify-between text-xs text-[#94a3b8] select-none pt-2 border-t border-[#1f2d4d]/60">
-                <span>الكمية المحجوزة: {state.grout_qty} عبوة</span>
-                <span>تكلفة السقية الإجمالية: <span className="text-[#D4AF37] font-black">{(Number(state.grout_qty || 0) * Number(state.grout_price || 0)).toLocaleString()} ج.م</span></span>
+              <div className="flex justify-between text-xs text-white select-none pt-2 border-t border-[#1f2d4d]/60 font-alexandria font-bold">
+                <span>الكمية المطلوبة: {state.grout_qty} شكارة</span>
+                <span>اجمالى التكلفة: <span className="text-[#D4AF37] font-black">{(Number(state.grout_qty || 0) * Number(state.grout_price || 0)).toLocaleString()} ج.م</span></span>
               </div>
             </div>
 
-            {/* كارت كماليات وتجهيزات الموقع المشمولة - معدّل ليدعم عدادات ضبط الأسعار حركياً */}
+            {/* كارت كماليات وتجهيزات الموقع المشمولة */}
             <div className="lg:col-span-6 bg-[#020B1C] border border-[#1f2d4d] p-5 rounded-xl space-y-3">
-              <span className="text-sm text-[#94a3b8] block font-bold text-right">كماليات وتجهيزات الموقع المشمولة:</span>
+              <span className="text-sm text-[#D4AF37] block font-bold text-right select-none">كماليات وتجهيزات الموقع المشمولة:</span>
               <div className="space-y-3">
                 {[
                   { key: 'clips_wedges', label: 'كليبسات وصلايب تسوية', defaultPrice: 150 },
                   { key: 'pigments', label: 'ملونات أكسيد تلوين الترويبة', defaultPrice: 80 },
                   { key: 'steel_wool', label: 'سلك مواعين وصنفرة تسليم جلي', defaultPrice: 50 },
                   { key: 'broom', label: 'مقشة ومستلزمات كنس الموقع', defaultPrice: 60 },
-                  { key: 'mop', label: 'ممسحة تنظيف وتسليم البلاط', defaultPrice: 90 }
+                  { key: 'mop', label: ' تنظيف وتسليم الشقة', defaultPrice: 90 }
                 ].map((item) => {
                   const isChecked = state.accessories[item.key as keyof FlooringState['accessories']];
                   const currentPrice = state.accessoryPrices?.[item.key as keyof FlooringState['accessories']] ?? item.defaultPrice;
@@ -1013,33 +1001,33 @@ export default function Flooring() {
                     <div 
                       key={item.key}
                       onClick={() => handleToggleAccessory(item.key as any)}
-                      className={`flex items-center justify-between p-2 rounded transition-all duration-300 select-none ${
+                      className={`flex items-center justify-between p-2 rounded-xl transition-all duration-300 select-none cursor-pointer ${
                         isChecked ? 'bg-[#07132a]/60 border border-[#1f2d4d]' : 'opacity-50'
                       }`}
                     >
-                      <div className="flex items-center gap-2 cursor-pointer">
+                      <div className="flex items-center gap-2">
                         {isChecked ? (
-                          <CheckSquare className="w-5 h-5 text-[#D4AF37] flex-shrink-0" />
+                          <CheckSquare className="w-5 h-5 text-[#D4AF37] flex-shrink-0 animate-pulse" />
                         ) : (
                           <Square className="w-5 h-5 text-[#1f2d4d] flex-shrink-0" />
                         )}
                         <span className="text-xs text-[#F0E6D2] font-semibold">{item.label}</span>
                       </div>
 
-                      {/* عداد السعر الفاخر المصغر المدمج بالكماليات لتعديل السعر يدوياً */}
+                      {/* عداد السعر الفاخر المصغر المدمج بالكماليات لتعديل السعر يدوياً h-9 */}
                       <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-lg h-9 px-1.5 w-28 select-none" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
                           disabled={!isChecked}
                           onClick={() => handleAccessoryPriceChange(item.key as any, currentPrice + 10)}
-                          className="w-5 h-5 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold text-xs disabled:opacity-30 cursor-pointer"
+                          className="w-5 h-5 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold text-xs disabled:opacity-30 cursor-pointer font-sans"
                         >+</button>
                         <span className="text-xs font-mono font-bold text-[#D4AF37]">{currentPrice} <span className="text-[8px] text-gray-500 font-normal">ج</span></span>
                         <button
                           type="button"
                           disabled={!isChecked}
                           onClick={() => handleAccessoryPriceChange(item.key as any, currentPrice - 10)}
-                          className="w-5 h-5 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold text-xs disabled:opacity-30 cursor-pointer"
+                          className="w-5 h-5 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold text-xs disabled:opacity-30 cursor-pointer font-sans"
                         >-</button>
                       </div>
                     </div>
@@ -1051,62 +1039,62 @@ export default function Flooring() {
           </div>
         </div>
 
-        {/* كارت مصنعات العمالة الفنية والتركيب بالعدادات */}
-        <div className="bg-[#07132a] border border-[#1f2d4d] p-6 rounded-2xl space-y-4 shadow-xl">
-          <div className="flex items-center gap-3 border-b border-[#1f2d4d] pb-4">
-            <Wrench className="w-6 h-6 text-[#D4AF37]" />
-            <h3 className="text-lg font-bold text-[#F0E6D2]">كارت مصنعات العمالة الفنية والتركيب:</h3>
+        {/* كارت مصنعات العمالة الفنية والتركيب */}
+        <div className="bg-[#07132a] border border-[#D4AF37] p-6 rounded-2xl space-y-4 shadow-xl font-alexandria">
+          <div className="flex items-center gap-3 border-b border-[#D4AF37] pb-4">
+            <Wrench className="w-6 h-6 text-[#D4AF37] shrink-0" />
+            <h3 className="text-lg font-bold text-[#D4AF37]"> مصنعية التركيب للفنيين :</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 select-none">
             
             {/* مصنعية الأرضيات */}
-            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all select-none">
+            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all duration-300">
               <span className="text-sm font-semibold text-[#F0E6D2] block">سعر مصنعية تركيب الأرضيات (م٢):</span>
               <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-36">
-                <button type="button" onClick={() => handleNestedFieldChange('labor', 'floor_rate', state.labor.floor_rate + 5)} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                <button type="button" onClick={() => handleNestedFieldChange('labor', 'floor_rate', state.labor.floor_rate + 5)} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans">+</button>
                 <span className="text-base font-black text-white font-mono">{state.labor.floor_rate} <span className="text-[10px] text-gray-500 font-normal">ج.م</span></span>
-                <button type="button" onClick={() => handleNestedFieldChange('labor', 'floor_rate', Math.max(0, state.labor.floor_rate - 5))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                <button type="button" onClick={() => handleNestedFieldChange('labor', 'floor_rate', Math.max(0, state.labor.floor_rate - 5))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans">-</button>
               </div>
             </div>
 
-            {/* مصنعية الحوائط */}
-            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all select-none">
+            {/*  مصنعية الحوائط */}
+            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all duration-300">
               <span className="text-sm font-semibold text-[#F0E6D2] block">سعر مصنعية تركيب الحوائط والجدران (م٢):</span>
               <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-36">
-                <button type="button" onClick={() => handleNestedFieldChange('labor', 'wall_rate', state.labor.wall_rate + 5)} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                <button type="button" onClick={() => handleNestedFieldChange('labor', 'wall_rate', state.labor.wall_rate + 5)} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans">+</button>
                 <span className="text-base font-black text-white font-mono">{state.labor.wall_rate} <span className="text-[10px] text-gray-500 font-normal">ج.م</span></span>
-                <button type="button" onClick={() => handleNestedFieldChange('labor', 'wall_rate', Math.max(0, state.labor.wall_rate - 5))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                <button type="button" onClick={() => handleNestedFieldChange('labor', 'wall_rate', Math.max(0, state.labor.wall_rate - 5))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans">-</button>
               </div>
             </div>
 
           </div>
         </div>
 
-        {/* كارت اللوجستيات بالعدادات الفاخرة */}
-        <div className="bg-[#07132a] border border-[#1f2d4d] p-6 rounded-2xl space-y-4 shadow-xl">
-          <div className="flex items-center gap-3 border-b border-[#1f2d4d] pb-4 text-right">
-            <Truck className="w-6 h-6 text-[#D4AF37]" />
-            <h3 className="text-lg font-bold text-[#F0E6D2]">كارت اللوجستيات (النقل، التشوين، والنظافة):</h3>
+        {/* كارت اللوجستيات */}
+        <div className="bg-[#07132a] border border-[#D4AF37] p-6 rounded-2xl space-y-4 shadow-xl font-alexandria">
+          <div className="flex items-center gap-3 border-b border-[#D4AF37] pb-4">
+            <Truck className="w-6 h-6 text-[#D4AF37] shrink-0" />
+            <h3 className="text-lg font-bold text-[#D4AF37]">كارت اللوجستيات (النقل، التشوين، والنظافة):</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 select-none">
             
             {/* نقل وتشوين */}
-            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all select-none">
+            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all duration-300">
               <span className="text-sm font-semibold text-[#F0E6D2] block">نقل وتشوين السيراميك والمواد:</span>
               <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-40">
-                <button type="button" onClick={() => handleNestedFieldChange('logistics', 'transport', state.logistics.transport + 100)} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                <button type="button" onClick={() => handleNestedFieldChange('logistics', 'transport', state.logistics.transport + 100)} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans">+</button>
                 <span className="text-base font-black text-white font-mono">{(state.logistics.transport).toLocaleString()}</span>
-                <button type="button" onClick={() => handleNestedFieldChange('logistics', 'transport', Math.max(0, state.logistics.transport - 100))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                <button type="button" onClick={() => handleNestedFieldChange('logistics', 'transport', Math.max(0, state.logistics.transport - 100))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
               </div>
             </div>
 
             {/* نظافة الموقع */}
-            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all select-none">
-              <span className="text-sm font-semibold text-[#F0E6D2] block">نظافة الموقع وتشوين المخلفات:</span>
+            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all duration-300">
+              <span className="text-sm font-semibold text-[#F0E6D2] block">نظافة الموقع وتشوين الأنقاض والمخلفات:</span>
               <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-40">
-                <button type="button" onClick={() => handleNestedFieldChange('logistics', 'cleaning', state.logistics.cleaning + 50)} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">+</button>
+                <button type="button" onClick={() => handleNestedFieldChange('logistics', 'cleaning', state.logistics.cleaning + 50)} className="w-7 h-7 rounded-lg bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans">+</button>
                 <span className="text-base font-black text-white font-mono">{(state.logistics.cleaning).toLocaleString()}</span>
-                <button type="button" onClick={() => handleNestedFieldChange('logistics', 'cleaning', Math.max(0, state.logistics.cleaning - 50))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
+                <button type="button" onClick={() => handleNestedFieldChange('logistics', 'cleaning', Math.max(0, state.logistics.cleaning - 50))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
               </div>
             </div>
 
@@ -1114,43 +1102,43 @@ export default function Flooring() {
         </div>
 
         {/* صندوق الملاحظات */}
-        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-3">
+        <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-3 font-alexandria">
           <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#1f2d4d]/60 pb-2 text-right">
             <FileText className="w-5 h-5" />
-            <h4 className="text-base font-bold">ملاحظات وشروط استلام أعمال الأرضيات والسيراميك والرخام (بنود العقد الفنية):</h4>
+            <h4 className="text-base font-bold">ملاحظات وشروط استلام أعمال الأرضيات والسيراميك والرخام :</h4>
           </div>
           <textarea
             value={notesInput}
             onChange={(e) => setNotesInput(e.target.value)}
             onBlur={() => updateStateAndSave(prev => ({ notes: notesInput }))}
             placeholder="اكتب هنا شروط تصفية أمتار الحوائط والأسقف، نسبة هالك بلاط السيراميك والبورسلين..."
-            className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-lg text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none text-base leading-relaxed text-right"
+            className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-lg text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none text-base leading-relaxed text-right font-semibold"
           />
-          <div className="flex justify-between items-center text-xs text-gray-500 px-1">
+          <div className="flex justify-between items-center text-xs text-gray-500 px-1 select-none">
             <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
-            <span>حالة الاتصال: متصل وسحابي</span>
+            <span>حالة الاتصال: متصل </span>
           </div>
         </div>
 
-        {/* كارت الملخص المالي النهائي للبند المقتبس تماماً من كارت الكهرباء الفاخر */}
-        <div className="p-6 rounded-2xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_25px_rgba(212,175,55,0.06)] flex flex-col sm:flex-row items-center justify-between gap-6 relative overflow-hidden">
+        {/* 🌟 تم إعادة تصميم كارت الملخص المالي والتقدير المالي الإجمالي لبند البلاط والأرضيات بالكامل ليطابق كلياً نمط التكييف المعتمد */}
+        <div className="p-5 rounded-xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_20px_rgba(212,175,55,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+          <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D4AF37]" />
           
-          {/* تصميم مذهب جانبي يعكس الطراز الملكي الفخم لشركة جولد ديكوريشن */}
-          <div className="absolute right-0 top-0 bottom-0 w-2 bg-[#D4AF37]" />
-
-          <div className="space-y-1 text-center sm:text-right pr-2">
-            <h4 className="text-xl font-bold text-[#D4AF37]">الملخص المالي التقديري لبند البلاط والأرضيات والتكسيات:</h4>
-            <p className="text-sm text-gray-400">البيانات الإجمالية واللوجستيات والمون المحصورة يتم ترحيلها حركياً لحسابات المقايسة الكلية للعميل</p>
+          <div className="space-y-1 text-center sm:text-right pr-1 select-none">
+            <h4 className="text-lg font-bold text-[#D4AF37]">الملخص المالي التقديري لبند البلاط والأرضيات والتكسيات:</h4>
+            <p className="text-xs text-[#F0E6D2]/60 font-normal leading-relaxed max-w-2xl text-right">
+              البيانات الإجمالية واللوجستيات والمون المحصورة يتم ترحيلها حركياً لحسابات المقايسة الكلية للعميل المقدرة بقيمة ({financialSummary.netGrandTotal.toLocaleString('en-US')} ج.م).
+            </p>
           </div>
 
-          <div className="flex items-center gap-4 bg-[#07132a] px-8 py-5 rounded-xl border border-[#1f2d4d]">
-            <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
-              <DollarSign className="w-8 h-8 animate-pulse" />
+          <div className="flex items-center gap-3 bg-[#07132a] px-6 py-4 rounded-lg border border-[#1f2d4d]">
+            <div className="p-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
+              <DollarSign className="w-6 h-6" />
             </div>
             <div className="text-right">
-              <span className="text-xs text-gray-500 block font-semibold text-right">إجمالي التكلفة التقديرية للأرضيات:</span>
-              <span className="text-3xl font-black text-[#F0E6D2] font-mono">
-                {financialSummary.netGrandTotal.toLocaleString('en-US')} <span className="text-sm font-normal">ج.م</span>
+              <span className="text-[10px] text-white block font-semibold text-right">إجمالي تكلفة بند الأرضيات:</span>
+              <span className="text-2xl font-black text-[#D4AF37] font-mono">
+                {financialSummary.netGrandTotal.toLocaleString('en-US')} <span className="text-xs font-normal">ج.م</span>
               </span>
             </div>
           </div>

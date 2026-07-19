@@ -306,7 +306,7 @@ export default function ACTab({ projectId }: ACTabProps) {
   if (loading) {
     return (
       <div className="p-12 text-center text-[#D4AF37] font-bold text-lg animate-pulse">
-        جاري جلب البنود والأسعار المعتمدة من شاشة الخامات سحابياً...
+        جاري جلب البنود والأسعار المعتمدة من شاشة البنود والخامات ...
       </div>
     );
   }
@@ -325,7 +325,7 @@ export default function ACTab({ projectId }: ACTabProps) {
 
       {/* 🌟 تم استدعاء المكون الموحد الفاخر والرشيق بسطر برمجي واحد ومطابقته لجميع التابات */}
       <TabActivationBanner 
-        title="منظومة أعمال تأسيس ومواسير التكييف"
+        title=" أعمال تأسيس ومواسير التكييف"
         subtitle="AC Installation ERP System"
         icon={Zap}
         enabled={state.enabled}
@@ -336,10 +336,10 @@ export default function ACTab({ projectId }: ACTabProps) {
         <div className="space-y-6 animate-fade-in">
 
           {/* 🌳 بوابة تحديد الغرف والمساحات المفتوحة المستوردة (Checklist Selector) لتخصيص نقاط التكييف بدقة */}
-          <div className="p-6 rounded-3xl bg-[#07132a] border border-[#D4AF37]/20 space-y-4">
-            <div className="flex items-center gap-2 border-b border-[#1f2d4d] pb-3 select-none">
+          <div className="p-6 rounded-3xl bg-[#07132a] border border-[#D4AF37] space-y-4">
+            <div className="flex items-center gap-2 border-b border-[#D4AF37] pb-3 select-none">
               <ClipboardList className="w-5 h-5 text-[#D4AF37]" />
-              <h4 className="text-sm font-black text-[#D4AF37]">بوابة تحديد الغرف والمساحات المشمولة بتأسيس التكييف (المساحات النشطة)</h4>
+              <h4 className="text-lg font-black text-[#D4AF37]"> تحديد الغرف والمساحات المطلوبة لتأسيس التكييف. </h4>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 select-none">
@@ -372,13 +372,13 @@ export default function ACTab({ projectId }: ACTabProps) {
           </div>
 
           {/* لوحة تحرير أسعار ومصنعيات التأسيس - بتصميم فاخر وعدادات مذهبة حصرية */}
-          <div className="p-6 rounded-3xl bg-[#07132a] border border-[#1f2d4d] space-y-6">
-            <div className="border-b border-[#1f2d4d] pb-4 flex items-center gap-2">
+          <div className="p-6 rounded-3xl bg-[#07132a] border border-[#D4AF37] space-y-6">
+            <div className="border-b border-[#D4AF37] pb-4 flex items-center gap-2">
               <div className="p-2 rounded-xl bg-[#D4AF37]/10 text-[#D4AF37]">
                 <Settings2 className="w-6 h-6" />
               </div>
               <div className="text-right">
-                <h4 className="text-lg font-black text-[#D4AF37]">لوحة تحرير وموازنة أسعار ومصنعيات تأسيس النحاس</h4>
+                <h4 className="text-lg font-black text-[#D4AF37]">   أسعار ومصنعيات تأسيس التكييف.</h4>
                 <p className="text-xs text-gray-400 mt-0.5">
                   الأسعار القياسية المعتمدة بمكتبة التوصيفات الفنية للتمديد
                 </p>
@@ -391,13 +391,13 @@ export default function ACTab({ projectId }: ACTabProps) {
                 return (
                   <div 
                     key={spec.uuid || spec.code || `ac-rate-ctrl-${idx}`}
-                    className="p-5 rounded-2xl border border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/40 hover:shadow-[0_0_20px_rgba(212,175,55,0.05)] transition-all duration-300 flex flex-col justify-between gap-4"
+                    className="p-5 rounded-2xl border border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.05)] transition-all duration-300 flex flex-col justify-between gap-4"
                   >
                     <div className="flex justify-between items-start gap-3">
                       <div className="text-right">
-                        <span className="text-sm font-bold text-[#F0E6D2] block">{spec.spec_name}</span>
+                        <span className="text-sm font-bold text-[#D4AF37] block">{spec.spec_name}</span>
                         <p className="text-[11px] text-gray-500 mt-2 leading-relaxed line-clamp-2">
-                          {spec.description || 'توصيف فني معتمد بمكتبة الخامات السحابية للمشروع.'}
+                          {spec.description || 'توصيف فني معتمد بمكتبة الخامات  للمشروع.'}
                         </p>
                       </div>
                       <div className="p-2.5 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] flex-shrink-0">
@@ -406,7 +406,7 @@ export default function ACTab({ projectId }: ACTabProps) {
                     </div>
                     
                     <div className="flex items-center justify-between border-t border-[#1f2d4d]/60 pt-3">
-                      <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">سعر المتر المعتمد</span>
+                      <span className="text-[10px] text-white font-bold uppercase tracking-wider">سعر المتر المعتمد</span>
                       
                       {/* عداد مالي مذهب للتحكم الفوري بالأسعار مع الإنقاص الأحمر التحذيري */}
                       <div className="flex items-center gap-3 select-none">
@@ -440,7 +440,7 @@ export default function ACTab({ projectId }: ACTabProps) {
           <div className="space-y-3">
             <div className="flex items-center gap-1.5 p-1 border-r-4 border-[#D4AF37] mr-2">
               <span className="text-base">💎</span>
-              <h4 className="text-base font-black text-[#F0E6D2]">تعديل أمتار النحاس وتخصيص الباقات للمساحات المفعلة:</h4>
+              <h4 className="text-base font-black text-[#F0E6D2]">تعديل وتخصيص ألامتار لمساحات الوحدة:</h4>
             </div>
 
             <div className="space-y-3">
@@ -505,7 +505,7 @@ export default function ACTab({ projectId }: ACTabProps) {
                         {isExpanded && (
                           <div className="pt-3 border-t border-[#1f2d4d]/60 space-y-3 animate-fade-in">
                             <div className="space-y-1 text-right">
-                              <span className="text-[10px] text-gray-500 font-semibold block">اختر نوع وتوصيف مواسير النحاس:</span>
+                              <span className="text-[10px] text-gray-500 font-semibold block">اختر نوع وتوصيف التأسيس :</span>
                               <div className="flex flex-wrap gap-1.5">
                                 {dbSpecs.map((spec, specIdx) => {
                                   const optionRate = state.rates[spec.code] ?? Number(spec.base_rate || 0);
@@ -549,21 +549,21 @@ export default function ACTab({ projectId }: ACTabProps) {
                 </div>
               ) : (
                 <div className="p-12 text-center text-[#F0E6D2]/45 text-xs font-semibold border-2 border-dashed border-[#1f2d4d] rounded-xl bg-[#020B1C]/40 select-none">
-                  ⚠️ يرجى تفعيل واختيار الغرف المطلوب تمديد تكييفات لها من بوابة التحديد بالأعلى أولاً.
+                  ⚠️ يرجى تفعيل واختيار الغرف المطلوب تمديد تكييفات لها من التحديد بالأعلى أولاً.
                 </div>
               )}
             </div>
           </div>
 
           {/* حزمة الكماليات وخدمات التأسيس التكميلية */}
-          <div className="p-6 rounded-2xl bg-[#07132a] border border-[#1f2d4d] space-y-4">
-            <div className="border-b border-[#1f2d4d] pb-3 flex items-center gap-2">
+          <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-4">
+            <div className="border-b border-[#D4AF37] pb-3 flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
                 <Star className="w-5 h-5" />
               </div>
               <div className="text-right">
-                <h4 className="text-lg font-bold text-[#D4AF37]">حزمة الخدمات التكميلية وكماليات تأسيس التكييف المزدوجة</h4>
-                <p className="text-xs text-gray-400 mt-0.5">الكماليات والإكسسوارات تحتسب تراكمياً ومفككة حسب نوعية البند لـ {totalACPoints} نقاط نشطة</p>
+                <h4 className="text-lg font-bold text-[#D4AF37]"> الخدمات التكميلية وكماليات تأسيس التكييف </h4>
+                <p className="text-xs text-gray-400 mt-0.5">الكماليات والإكسسوارات تحتسب تراكمياً حسب نوعية البند لـ {totalACPoints} نقاط نشطة</p>
               </div>
             </div>
 
@@ -742,7 +742,7 @@ export default function ACTab({ projectId }: ACTabProps) {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="text-right">
-                    <span className="text-sm font-bold text-[#F0E6D2] block">أعمال الشق والترميم للمسارات</span>
+                    <span className="text-sm font-bold text-[#F0E6D2] block">أعمال الترميم للمسارات</span>
                     <span className="text-[11px] text-[#D4AF37] block mt-0.5 font-semibold">
                       إجمالي الفئة: {((chiselMat + chiselLab) * totalACPoints).toLocaleString('en-US')} ج.م
                     </span>
@@ -813,10 +813,10 @@ export default function ACTab({ projectId }: ACTabProps) {
           </div>
 
           {/* صندوق الملاحظات النصية المدمج */}
-          <div className="p-5 rounded-xl bg-[#07132a] border border-[#1f2d4d] space-y-2">
-            <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#1f2d4d] pb-1.5">
+          <div className="p-5 rounded-xl bg-[#07132a] border border-[#D4AF37] space-y-2">
+            <div className="flex items-center gap-2 text-[#D4AF37] border-b border-[#D4AF37] pb-1.5">
               <FileText className="w-4 h-4" />
-              <h4 className="text-sm font-bold">اتفاقات وبنود مخصصة لأعمال وتمديدات التكييفات (ملاحظات العقد):</h4>
+              <h4 className="text-lg font-bold text-[#D4AF37]">اتفاقات وبنود مخصصة لأعمال وتمديدات التكييفات:</h4>
             </div>
             <textarea
               value={notesInput}
@@ -829,16 +829,16 @@ export default function ACTab({ projectId }: ACTabProps) {
             />
             <div className="flex justify-between items-center text-[10px] text-gray-500 px-1">
               <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
-              <span>حالة الاتصال: متصل وسحابي</span>
+              <span>حالة الاتصال: متصل </span>
             </div>
           </div>
 
           {/* كارت الملخص المالي النهائي المدمج والفخم */}
-          <div className="p-5 rounded-xl bg-[#020B1C] border border-[#D4AF37]/30 shadow-[0_0_20px_rgba(212,175,55,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
+          <div className="p-5 rounded-xl bg-[#020B1C] border border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.05)] flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
             <div className="absolute right-0 top-0 bottom-0 w-1.5 bg-[#D4AF37]" />
             <div className="space-y-1 text-center sm:text-right pr-1">
               <h4 className="text-lg font-bold text-[#D4AF37]">الملخص المالي المعتمد لبند تمديد نحاس وتأسيس التكييفات:</h4>
-              <p className="text-xs text-gray-400 font-normal leading-relaxed max-w-2xl">
+              <p className="text-xs text-white font-normal leading-relaxed max-w-2xl">
                 عدد نقاط التأسيس المفعّلة ({totalACPoints} نقاط).
                 tتشتمل على تكلفة التأسيس الأساسي محسوبة على أساس عدد أمتار كل غرفة × سعر المتر المعتمد ({totalACBaseCost.toLocaleString('en-US')} ج.م)
                 بالإضافة إلى إجمالي تكلفة الكماليات والخدمات المساعدة ({totalAccessoriesCost.toLocaleString('en-US')} ج.م) مفككة إلى خامات ومصنعيات.
@@ -849,8 +849,8 @@ export default function ACTab({ projectId }: ACTabProps) {
                 <DollarSign className="w-6 h-6" />
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-gray-500 block font-semibold">إجمالي التأسيس والكماليات:</span>
-                <span className="text-2xl font-black text-[#F0E6D2] font-mono">
+                <span className="text-[10px] text-white block ">إجمالي التأسيس والكماليات:</span>
+                <span className="text-2xl font-black text-[#D4AF37] font-mono">
                   {totalACEstimate.toLocaleString('en-US')} <span className="text-xs font-normal">ج.م</span>
                 </span>
               </div>

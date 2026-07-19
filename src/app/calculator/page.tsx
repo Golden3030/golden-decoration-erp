@@ -24,8 +24,8 @@ import {
   ChevronLeft
 } from "lucide-react";
 
-// هوك عد تصاعدي سلس للأرقام لتأثير تفاعلي فاخر
-function useCountUp(targetValue: number, durationMs: number = 550) {
+// تم تسريع وتيرة العداد التصاعدي ليكون خاطفاً وتفاعلياً بمعدل 300ms لتوفير سرعة استجابة هائلة
+function useCountUp(targetValue: number, durationMs: number = 300) {
   const [displayValue, setDisplayValue] = useState(targetValue);
   const fromValueRef = useRef(targetValue);
   const rafRef = useRef<number | null>(null);
@@ -193,7 +193,7 @@ export default function PublicCampaignCalculator() {
       setSubmittedSuccess(true);
     } catch (err) { 
       console.error(err);
-      alert("حدث خطأ تقني أثناء تخزين البيانات السحابية، يرجى التحقق من اتصالك بالإنترنت."); 
+      alert("حدث خطأ تقني أثناء تخزين البيانات ، يرجى التحقق من اتصالك بالإنترنت."); 
     }
     setLoading(false);
   };
@@ -206,12 +206,10 @@ export default function PublicCampaignCalculator() {
       {/* الهالة الضوئية الذهبية الدافئة المتنفسة بالخلفية السوداء المطلقة */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-[#D4AF37]/8 blur-[120px] pointer-events-none animate-ambient-breathe z-0" />
 
-      {/* ورقة أنماط الدستور الجمالي الموحد */}
+      {/* ورقة أنماط الدستور الجمالي الموحد - تم حذف سطر الـ @import المبطئ تماماً وتعيين خط تاوما الاحتياطي السلس */}
       <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap');
-        
         .font-alexandria {
-          font-family: 'Alexandria', sans-serif !important;
+          font-family: var(--font-alexandria), 'Tahoma', sans-serif !important;
           letter-spacing: normal !important;
         }
 
@@ -346,15 +344,12 @@ export default function PublicCampaignCalculator() {
       <div className="w-full max-w-[430px] z-10 relative">
         
         {/* الإطارات الزخرفية المذهبة الجانبية - ملتصقة ومحاذية للكارت تماماً لمنع الانفصال بصرياً */}
-        {/* الإطار الذهبي الأيسر - بملء الشاشة تزامناً مع حافة الكارت */}
         <div 
-          className="hidden xl:block fixed right-[calc(50vw+205px)] top-0 h-screen w-[420px] bg-contain bg-right bg-no-repeat select-none pointer-events-none opacity-45 z-0"
+          className="hidden xl:block absolute right-[102%] top-1/2 -translate-y-1/2 h-[550px] w-[220px] bg-contain bg-right bg-no-repeat select-none pointer-events-none opacity-45 z-0"
           style={{ backgroundImage: "url('/right-chevron.png')" }}
         />
-
-        {/* الإطار الذهبي الأيمن - بملء الشاشة تزامناً مع حافة الكارت */}
         <div 
-          className="hidden xl:block fixed left-[calc(50vw+205px)] top-0 h-screen w-[520px] bg-contain bg-left bg-no-repeat select-none pointer-events-none opacity-45 z-0"
+          className="hidden xl:block absolute left-[102%] top-1/2 -translate-y-1/2 h-[550px] w-[220px] bg-contain bg-left bg-no-repeat select-none pointer-events-none opacity-45 z-0"
           style={{ backgroundImage: "url('/left-chevron.png')" }}
         />
         
@@ -389,7 +384,7 @@ export default function PublicCampaignCalculator() {
                   احسب تكلفة تشطيب شقتك
                 </h1>
                 {/* تم تعديل الحجم إلى 3.5xl مع تحرير ارتفاع السطر وإضافة حشوة سفلية لضمان ظهور الذيول كاملة */}
-                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-black text-3xl md:text-3.5xl block font-alexandria leading-normal pb-2">
+                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-black text-4xl md:text-4xl block font-alexandria leading-none">
                   من موبايلك
                 </span>
               </div>
@@ -421,7 +416,7 @@ export default function PublicCampaignCalculator() {
 
           {!success ? (
             !showLeadForm ? (
-              <div className="space-y-4">
+              <div className="space-y-4 font-alexandria">
                 
                 {/* كارت عرض الأسعار المذهب مع دائرة المساحة الذهبية الكاملة الاستدارة */}
                 <div className="relative rounded-2xl p-4.5 glass-price-card">
@@ -455,7 +450,7 @@ export default function PublicCampaignCalculator() {
 
                   {/* الوشاح الدائري المذهب الدقيق جداً أعلى يسار الصندوق بدلاً من المربع المائل */}
                   <div className="absolute -top-4 -left-3.5 flex flex-col items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] shadow-[0_4px_12px_rgba(212,175,55,0.4)] border-2 border-[#D4AF37] select-none z-20">
-                    <span className="text-[#020B1C] text-sm font-black leading-none">{area}</span>
+                    <span className="text-[#020B1C] text-sm font-black leading-none font-mono">{area}</span>
                     <span className="text-[#020B1C] text-[8px] font-bold leading-none mt-0.5">م²</span>
                   </div>
 
@@ -474,7 +469,7 @@ export default function PublicCampaignCalculator() {
                       <Minus size={12} strokeWidth={3} />
                     </button>
                     
-                    <span className="text-[#D4AF37] font-black text-sm font-alexandria bg-[#000000] px-3.5 py-0.5 rounded-lg border border-[#D4AF37]/20">
+                    <span className="text-[#D4AF37] font-black text-sm font-alexandria bg-[#000000] px-3.5 py-0.5 rounded-lg border border-[#D4AF37]/20 font-mono">
                       {area} m²
                     </span>
                     
@@ -556,16 +551,16 @@ export default function PublicCampaignCalculator() {
                   onClick={() => setShowLeadForm(true)}
                   className="cta-shimmer relative overflow-hidden w-full h-12 bg-gradient-to-r from-black via-[#0d0904] to-black border-2 border-[#D4AF37] text-[#F0E6D2] rounded-full font-black text-xs shadow-[0_4px_18px_rgba(212,175,55,0.2)] flex items-center justify-center gap-2.5 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(212,175,55,0.55)] hover:border-[#F0E6D2] active:scale-[1.01] transition-all duration-300 cursor-pointer font-alexandria"
                 >
-                  <span className="text-[#F0E6D2] tracking-wider">احصل على مقايسة الحسابات الرسمية الآن</span>
+                  <span className="text-[#F0E6D2] tracking-wider">احصل على مقايسة تفصيلية رسمية الآن</span>
                   <ChevronLeft size={16} className="text-[#D4AF37] shrink-0" />
                 </button>
 
               </div>
             ) : (
               /* استمارة تسليم البيانات الراقية */
-              <form onSubmit={handleSubmitRequest} className="space-y-3.5">
+              <form onSubmit={handleSubmitRequest} className="space-y-3.5 font-alexandria">
                 <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-2.5">
-                  <h3 className="text-[#F0E6D2] font-black text-xs select-none font-alexandria">إصدار وحفظ المقايسة</h3>
+                  <h3 className="text-[#F0E6D2] font-black text-xs select-none font-alexandria">طلب مقايسة تفصيلية</h3>
                   <button 
                     type="button" 
                     onClick={() => setShowLeadForm(false)} 
@@ -577,7 +572,7 @@ export default function PublicCampaignCalculator() {
                 
                 <input
                   type="text" 
-                  placeholder="اسم العميل بالكامل"
+                  placeholder="اسم العميل الثلاثى"
                   value={name} 
                   onChange={(e) => setName(e.target.value)}
                   className="w-full h-11 rounded-xl bg-[#000000]/80 border border-[#D4AF37]/30 text-white px-3.5 text-xs font-semibold outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/35 transition-all placeholder:text-[#F0E6D2]/30 font-alexandria"
@@ -657,7 +652,7 @@ export default function PublicCampaignCalculator() {
                     disabled={loading} 
                     className="cta-shimmer relative overflow-hidden flex-[2.5] h-11 bg-gradient-to-r from-black via-[#0d0904] to-black border-2 border-[#D4AF37] text-[#F0E6D2] rounded-full font-black text-[11px] shadow-lg cursor-pointer hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all duration-300"
                   >
-                    {loading ? "جاري الحفظ سحابياً..." : "تأكيد وإرسال المقايسة"}
+                    {loading ? "جاري حفظ بياناتك..." : "تأكيد وإرسال بياناتك"}
                   </button>
                 </div>
               </form>
@@ -667,11 +662,11 @@ export default function PublicCampaignCalculator() {
             <div className="text-center py-6 space-y-4 select-none animate-in zoom-in duration-500 font-alexandria">
               <CheckCircle className="text-emerald-400 mx-auto drop-shadow-[0_0_12px_rgba(52,211,153,0.4)]" size={54} strokeWidth={1.5} />
               <h2 className="text-[#F0E6D2] text-lg font-black tracking-wide">طلبك قيد الدراسة الفنية</h2>
-              <p className="text-gray-300 text-[10px] leading-relaxed px-4">
-                نشكر ثقتكم في Golden Decoration. تم تسجيل تفاصيل مساحتك وباقة خاماتك المحددة سحابياً بدقة، وسيتم تسليم المقايسة المعتمدة للأسعار الفورية عبر الواتساب في أقرب وقت.
+              <p className="text-gray-300 text-[10px] leading-relaxed font-semibold px-4">
+                نشكر ثقتكم في Golden Decoration. تم تسجيل تفاصيل طلبك بنجاح، وسيتم ارسال مقايستك المعتمدة فورا عبر الواتساب في أقرب وقت.
               </p>
               
-              <div className="pt-2 select-none">
+              <div className="pt-2 select-none font-alexandria">
                 <a 
                   href={`https://wa.me/201065282534?text=أهلاً%20Golden%20Decoration%20لقد%20أتممت%20حساب%20ميزانية%20وحدتي%20بمساحة%20${area}%20متر%20مربع%20باقة%20${finishingLevel === "standard" ? "لوكس" : finishingLevel === "luxury" ? "سوبر%20لوكس" : "ألترا%20لوكس"}`}
                   target="_blank" 
@@ -685,7 +680,7 @@ export default function PublicCampaignCalculator() {
           )}
 
           {/* الهيكل العمودي للأوسمة السفلية بخلفية سوداء بالكامل وتحديد مذهب نحيف */}
-          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#D4AF37]/30">
+          <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#D4AF37]/30 select-none">
             {[
               { icon: HardHat, label: "إشراف هندسي", sub: "متكامل" },
               { icon: Building2, label: "+350", sub: "مشروع منفذ" },
@@ -709,7 +704,7 @@ export default function PublicCampaignCalculator() {
           className="flex flex-col items-center justify-center gap-1.5 mt-4 text-center group cursor-pointer font-alexandria"
         >
           <div className="flex items-center gap-2 text-white group-hover:text-[#D4AF37] transition-all duration-300">
-            <span className="text-[10px] font-semibold tracking-wide">للتواصل المباشر مع الإدارة العامة اضغط هنا</span>
+            <span className="text-[10px] font-semibold tracking-wide">للتواصل المباشر مع المهندس المختص اضغط هنا</span>
             <svg 
               className="w-4 h-4 fill-current text-[#25D366] drop-shadow-[0_0_8px_rgba(37,211,102,0.45)] shrink-0 transition-transform group-hover:scale-110 duration-300" 
               viewBox="0 0 24 24" 

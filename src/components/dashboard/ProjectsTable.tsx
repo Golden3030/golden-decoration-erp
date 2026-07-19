@@ -139,7 +139,7 @@ export default function ProjectsTable() {
           {loading ? (
             <div className="p-16 text-center text-[#F0E6D2]/50 text-xs font-bold flex items-center justify-center gap-3">
               <span className="w-2 h-2 bg-[#D4AF37] rounded-full animate-bounce" />
-              جاري حصر المشاريع الحية وحساب معدلات الإنجاز الفعلي...
+              جاري حصر المشاريع وحساب معدلات الإنجاز الفعلي...
             </div>
           ) : projectsList.length > 0 ? (
             <table className="w-full text-right text-xs md:text-sm">
