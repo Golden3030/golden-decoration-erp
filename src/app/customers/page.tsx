@@ -121,7 +121,7 @@ export default function CustomersPage() {
   }
 
   const isManager = ["admin", "owner", "manager", "sales_manager"].includes(userRole);
-  const isOperationalStaff = ["admin", "owner", "manager", "sales_manager", "sales", "procurement", "accounts", "engineer"].includes(userRole);
+  const isOperationalStaff = ["admin", "owner", "manager", "sales_manager", "sales", "procurement", "accountant", "engineer"].includes(userRole);
 
   // 1. دالة تسجيل عميل جديد
   async function handleInsertCustomer() {

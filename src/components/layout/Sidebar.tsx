@@ -104,7 +104,7 @@ export default function Sidebar() {
       const allowed = ["الرئيسية", "CRM", "المشاريع", "أرشيف العقود", "المساعد الذكي", "التواصل الداخلي", "الملاحظات والمهام", "الإعدادات"];
       return allowed.includes(item.name);
     }
-    if (userRole === "accounts") {
+    if (userRole === "accountant") {
       const allowed = ["الرئيسية", "التقارير والتحليلات", "العملاء", "أرشيف العقود", "المقايسات", "المالية والحسابات", "الرواتب والمسيرات", "المساعد الذكي", "التواصل الداخلي", "الملاحظات والمهام", "الإعدادات"];
       return allowed.includes(item.name);
     }
@@ -276,7 +276,7 @@ export default function Sidebar() {
           {/* جملة جميع الحقوق محفوظة باللون البني البرونزي الفاخر كمتطلب ثابت */}
           <div className="text-center pt-1">
             <span className="text-[9px] font-medium text-[#A17A4C] block tracking-wide">
-              جميع الحقوق محفوظة © ٢٠٢٦ جولد ديكور
+              جميع الحقوق محفوظة © ٢٠٢٦ جولدن ديكور
             </span>
           </div>
         </div>

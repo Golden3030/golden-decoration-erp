@@ -628,12 +628,7 @@ export default function ProjectsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
-      
-      {/* هيدر الهيكل لمنع وميض وتأخر تحميل الخط البصري FOUT على شاشة المشاريع */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden" dir="rtl">
 
       <Sidebar />
       
