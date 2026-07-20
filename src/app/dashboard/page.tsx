@@ -42,24 +42,39 @@ interface DashboardStatsState {
   costs: number;
 }
 
-// 📅 مكون التقويم التفاعلي المطور لدعم المواعيد المتعددة والمزامنة الحية لعام 2026
+// 📅 مكون التقويم التفاعلي المطور لدعم المواعيد المتعددة والمزامنة الحية - ديناميكي بالكامل لأي شهر وسنة
+const ARABIC_MONTH_NAMES = [
+  "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
+  "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
+];
+
 const MiniCalendar = () => {
-  const today = 18; // اليوم الحالي الافتراضي للشركة (الأربعاء 8 يوليو 2026)
-  const [selectedDay, setSelectedDay] = useState<number>(10); // اليوم العاشر المحدد
+  // ✅ إصلاح: كان الشهر/السنة/اليوم الحالي كلهم ثابتين يدوياً على يوليو 2026
+  // فكان التقويم هيتعطل تماماً (صفر مواعيد، تاريخ غلط) بمجرد ما يعدي الشهر ده
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonth = now.getMonth(); // 0-11
+  const todayDate = now.getDate();
+
+  const [selectedDay, setSelectedDay] = useState<number>(todayDate);
   const [events, setEvents] = useState<Record<number, string[]>>({}); 
   const [loadingEvents, setLoadingEvents] = useState(true);
 
-  // جلب المواعيد النشطة لشهر يوليو 2026 حيوياً من قاعدة البيانات
+  // جلب المواعيد النشطة للشهر الحالي حيوياً من قاعدة البيانات
   useEffect(() => {
     async function fetchLiveCalendarEvents() {
       try {
         setLoadingEvents(true);
+
+        const monthStart = new Date(currentYear, currentMonth, 1, 0, 0, 0);
+        const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+
         const { data, error } = await supabase
           .from("appointments")
           .select("title, start_time")
           .eq("status", "scheduled")
-          .gte("start_time", "2026-07-01T00:00:00.000Z")
-          .lte("start_time", "2026-07-31T23:59:59.999Z");
+          .gte("start_time", monthStart.toISOString())
+          .lte("start_time", monthEnd.toISOString());
 
         if (error) throw error;
 
@@ -83,10 +98,12 @@ const MiniCalendar = () => {
     }
 
     fetchLiveCalendarEvents();
-  }, []);
+  }, [currentYear, currentMonth]);
 
-  const daysInMonth = 31;
-  const startOffset = 3; // يوليو 2026 يبدأ يوم الأربعاء (أوفست 3 أيام فارغة)
+  // ✅ حساب عدد أيام الشهر الحالي فعلياً (بدل الرقم الثابت 31)
+  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  // ✅ حساب يوم بداية الشهر الفعلي في الأسبوع (0 = أحد) بدل الأوفست الثابت
+  const startOffset = new Date(currentYear, currentMonth, 1).getDay();
 
   const daysArray = [];
   for (let i = 0; i < startOffset; i++) {
@@ -101,7 +118,7 @@ const MiniCalendar = () => {
       {/* تحويل لون ترويسة العنوان للون البني البرونزي المعتمد `#A17A4C` */}
       <h3 className="text-[#D4AF37] font-black text-xs md:text-sm border-b border-[#D4AF37] pb-2 select-none flex items-center justify-between">
         <span>📅 جدول المواعيد والمعاينات</span>
-        <span className="text-[10px] bg-[#020B1C] px-2.5 py-1 rounded-md text-gray-400 font-mono font-bold">يوليو 2026</span>
+        <span className="text-[10px] bg-[#020B1C] px-2.5 py-1 rounded-md text-gray-400 font-mono font-bold">{ARABIC_MONTH_NAMES[currentMonth]} {currentYear}</span>
       </h3>
 
       {/* أسماء الأيام */}
@@ -124,7 +141,7 @@ const MiniCalendar = () => {
 
           const hasEvent = !!events[day] && events[day].length > 0;
           const isSelected = selectedDay === day;
-          const isCurrentToday = today === day;
+          const isCurrentToday = todayDate === day;
 
           return (
             <button
@@ -150,7 +167,7 @@ const MiniCalendar = () => {
 
       <div className="bg-[#020B1C]/80 border border-[#D4AF37]/20 rounded-2xl p-4 text-right animate-fade-in space-y-2.5">
         <p className="text-[#D4AF37] text-xs font-black select-none">
-          📍 تفاصيل يوم {selectedDay} يوليو:
+          📍 تفاصيل يوم {selectedDay} {ARABIC_MONTH_NAMES[currentMonth]}:
         </p>
         
         {loadingEvents ? (
@@ -237,8 +254,8 @@ export default function DashboardPage() {
     }
   }
 
-  const isFinancialStaff = ["admin", "owner", "manager", "accounts"].includes(userRole);
-  const isOperationalStaff = ["admin", "owner", "manager", "sales_manager", "sales", "procurement", "accounts", "engineer"].includes(userRole);
+  const isFinancialStaff = ["admin", "owner", "manager", "accountant"].includes(userRole);
+  const isOperationalStaff = ["admin", "owner", "manager", "sales_manager", "sales", "procurement", "accountant", "engineer"].includes(userRole);
   const isSalesStaff = ["admin", "owner", "manager", "sales_manager", "sales"].includes(userRole);
   const isEngineeringStaff = ["admin", "owner", "manager", "engineer", "procurement"].includes(userRole);
 
@@ -256,15 +273,8 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-[#020B1C] relative overflow-hidden" dir="rtl">
       
-      {/* 🛠️ جدار الحماية البصري الموحد لتوحيد شريط التمرير الفاخر 8px بأسهم التحكم وفرض خط Alexandria القياسي */}
+      {/* 🛠️ جدار الحماية البصري الموحد لتوحيد شريط التمرير الفاخر 8px بأسهم التحكم */}
       <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;700;900&display=swap');
-
-        *:not(code, pre, .font-mono, [class*="font-mono"]) {
-          font-family: 'Alexandria', Arial, sans-serif !important;
-          letter-spacing: normal !important;
-        }
-
         ::-webkit-scrollbar { width: 4px !important; height: 4px !important; }
         ::-webkit-scrollbar-track { background: #020B1C !important; }
         ::-webkit-scrollbar-thumb { background: #D4AF37 !important; border-radius: 9999px !important; }

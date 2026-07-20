@@ -122,6 +122,9 @@ export default function AdminClientPreview() {
     }
   };
 
+  // ⚠️ تنويه: الدومين هنا ثابت يدوياً (golden-decoration.vercel.app). لو الدومين الفعلي
+  // للموقع المنشور مختلف (دومين مخصص مثلاً)، الرابط ده هيبقى غلط لأي عميل يتبعت له.
+  // يفضل ربطه بمتغير بيئة (NEXT_PUBLIC_SITE_URL) بدل ما يفضل مكتوب يدوياً هنا.
   const publicClientLink = `https://golden-decoration.vercel.app/public-estimate?code=${estimateNumber}`; 
 
   const handleCopyLink = () => {
@@ -168,15 +171,8 @@ export default function AdminClientPreview() {
   return (
     <div className="min-h-screen bg-[#020B1C] p-4 md:p-8 text-right text-white select-none animate-fade-in" dir="rtl">
       
-      {/* 🛠️ جدار الحماية البصري المعتمد لتوحيد شريط التمرير الفاخر 8px بأسهم التحكم وفرض خط Alexandria القياسي */}
+      {/* 🛠️ جدار الحماية البصري المعتمد لتوحيد شريط التمرير الفاخر 8px بأسهم التحكم */}
       <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;700;900&display=swap');
-
-        *:not(code, pre, .font-mono, [class*="font-mono"]) {
-          font-family: 'Alexandria', Arial, sans-serif !important;
-          letter-spacing: normal !important;
-        }
-
         ::-webkit-scrollbar { width: 5px !important; height: 5px !important; }
         ::-webkit-scrollbar-track { background: #020B1C !important; }
         ::-webkit-scrollbar-thumb { background: #D4AF37 !important; border-radius: 9999px !important; }

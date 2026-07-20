@@ -7,7 +7,8 @@ import { CRMProvider } from "@/components/CRM/context/CRMContext";
 const alexandria = Alexandria({
   subsets: ["arabic"],
   weight: ["300", "400", "500", "600", "700", "800", "900"],
-  display: "swap", 
+  display: "block", // ✅ إصلاح: "swap" كان بيعرض Arial فوراً ثم يستبدله بـ Alexandria (وميض ظاهر عند التحميل)
+                     // "block" بيستنى الخط الأصلي بدون عرض أي بديل، وبما إنه محمّل ذاتياً هيكون التأخير غير ملحوظ
   variable: "--font-alexandria",
 });
 

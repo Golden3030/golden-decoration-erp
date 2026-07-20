@@ -1,11 +1,10 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useCRM } from "@/components/CRM/context/CRMContext";
 import { supabase } from "@/lib/supabaseClient";
 import EstimateHeader from "./EstimateHeader";
 import EstimateTable from "./EstimateTable";
-// 🌟 تم تصحيح مسار الاستيراد هنا بإضافة الشرطة المائلة لحل خطأ المترجم نهائياً
 import EstimateTotals from "./EstimateTotals";
 import { categoryNames } from "./EstimateTable";
 import { 
@@ -14,6 +13,34 @@ import {
   Sparkles, 
   Layers
 } from "lucide-react";
+
+interface VentilationProps {
+  projectId: string;
+}
+
+// واجهة تعريف منتجات التهوية والشفاطات من سوبابيز
+interface VentProductItem {
+  id: string;
+  code: string;
+  product_name: string;
+  category: string;
+  company: string;
+  price: number;
+  unit: string;
+  subcategory?: string;
+}
+
+// واجهة البند الفردي لجدول الحصر التفصيلي
+interface VentLineItem {
+  key: string;
+  label: string;
+  qty: number;
+  unit: string;
+  price: number;
+  product_id: string;  
+  company: string;
+  isCustom?: boolean;
+}
 
 // محرك التفريد الهندسي والمالي التلقائي الشامل لكافة مدخلات وأمتار التبويبات الـ 14 بالمقايسة
 export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: any[]) {
@@ -460,7 +487,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: skirtingQty,
         unitPrice: 0,
         laborCost: skirtingQty * skirtingLaborRate,
-        description: "مصنتعيات قص وتركيب الوزر ونحت الجدران لتأسيس الممر لضمان الاستواء الهندسي المستوي."
+        description: "مصنعات قص وتركيب الوزر ونحت الجدران لتأسيس الممر لضمان الاستواء الهندسي المستوي."
       });
     }
 
@@ -471,7 +498,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "gen-flooring-transport",
         category: "flooring",
-        name: "تكاليف نقل وتشوين السيراميك والمواد بالدور يدوياً لسلامة البلاط",
+        name: "تكاليف نقل وتشوين وتنزيل السيراميك والمواد بالدور الميداني الفني",
         unit: "مقطوعية",
         quantity: 1,
         unitPrice: transportCost,
@@ -1004,6 +1031,9 @@ export default function InitialEstimate() {
   const [dbSpecs, setDbSpecs] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // 🌟 استدعاء مرجع الحفظ الذاتي المانع للتعارض
+  const isSavingRef = useRef(false);
+
   useEffect(() => {
     const fetchLibraries = async () => {
       try {
@@ -1035,10 +1065,90 @@ export default function InitialEstimate() {
     );
   }, [detailedBOQ]);
 
+  // 🌟 دالة الحفظ التلقائي الاحتياطية الاستشفائية المباشرة بسوبابيز لحل خطأ useCRM العضوي نهائياً بالخلفية
+  const localAutoSaveToDB = async (items: any[], total: number, status: string, percentage: number) => {
+    const project = crmData.project || {};
+    if (!project.id || String(project.id).startsWith("new") || isSavingRef.current) return;
+    isSavingRef.current = true;
+    try {
+      // 1. مراجعة واستدعاء ترويسة المقايسة المبدئية الحالية
+      const { data: existingHeader } = await supabase
+        .from("estimate_headers")
+        .select("id")
+        .eq("project_id", project.id)
+        .eq("status", status)
+        .maybeSingle();
+
+      let headerId = existingHeader?.id;
+
+      const matTotal = items.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0);
+      const labTotal = items.reduce((sum, item) => sum + Number(item.laborCost || 0), 0);
+
+      const payloadHeader = {
+        project_id: project.id,
+        estimate_number: project.estimateNumber || `EST-${Math.floor(1000 + Math.random() * 9000)}`,
+        status: status,
+        materials_total: matTotal,
+        labor_total: labTotal,
+        grand_total: total,
+        engineering_percentage: percentage
+      };
+
+      if (headerId) {
+        await supabase
+          .from("estimate_headers")
+          .update(payloadHeader)
+          .eq("id", headerId);
+      } else {
+        const { data: newHeader, error: hErr } = await supabase
+          .from("estimate_headers")
+          .insert([payloadHeader])
+          .select("id")
+          .single();
+        if (hErr) throw hErr;
+        headerId = newHeader.id;
+      }
+
+      if (headerId) {
+        // 2. تحديث وتطهير وحقن البنود الـ BOQ التفصيلية حياً سحابياً
+        await supabase
+          .from("estimate_items")
+          .delete()
+          .eq("estimate_id", headerId);
+
+        const itemsPayload = items.map((item, idx) => ({
+          estimate_id: headerId,
+          category: item.category,
+          name: item.name,
+          unit: item.unit || "قطعة",
+          quantity: Number(item.quantity || 0),
+          unit_price: Number(item.unitPrice || 0),
+          labor_cost: Number(item.laborCost || 0),
+          description: item.description || ""
+        }));
+
+        const { error: iErr } = await supabase
+          .from("estimate_items")
+          .insert(itemsPayload);
+        if (iErr) throw iErr;
+      }
+    } catch (err) {
+      console.error("Local AutoSave Fallback Error:", err);
+    } finally {
+      isSavingRef.current = false;
+    }
+  };
+
   useEffect(() => {
     if (detailedBOQ.length > 0 && calculatedTotal > 0 && !loading && !isHydrating) {
       const percentage = crmData.estimate?.engineeringPercentage ?? 15;
-      autoSaveEstimateToDB(detailedBOQ, calculatedTotal, "مبدئية", percentage);
+      
+      // 🌟 تفعيل بروتوكول صمام الأمان لمنع تجميد الشاشة حيوياً وتوجيه الحفظ
+      if (typeof autoSaveEstimateToDB === 'function') {
+        autoSaveEstimateToDB(detailedBOQ, calculatedTotal, "مبدئية", percentage);
+      } else {
+        localAutoSaveToDB(detailedBOQ, calculatedTotal, "مبدئية", percentage);
+      }
     }
   }, [detailedBOQ, calculatedTotal, loading, isHydrating, autoSaveEstimateToDB, crmData.estimate?.engineeringPercentage]);
 
@@ -1073,7 +1183,7 @@ export default function InitialEstimate() {
         <div className="space-y-8 animate-fade-in">
           <EstimateHeader />
           <EstimateTable items={detailedBOQ} isEditable={false} />
-          {/* 🌟 تم التعديل هنا: استدعاء نظيف للمجاميع متوافق مع الحسابات الموحدة للـ Context */}
+          {/* استدعاء المجاميع المتوافق مع الحسابات الموحدة للـ Context */}
           <EstimateTotals />
         </div>
       )}
@@ -1154,12 +1264,12 @@ export function PrintReportLayout({
 
   const hasCategory = (cat: string) => printItems.some(item => item.category === cat);
 
-  // 🌟 صمام الأمان: إعلان الحقول البديلة دفاعياً لمنع أخطاء التجميع
+  // صمام الأمان: إعلان الحقول البديلة دفاعياً لمنع أخطاء التجميع
   const activeFinishingLevel = project.finishingLevel || project.finishing_level || "سوبر لوكس المعتمد";
   const activeUnitAddress = project.unitAddress || project.unit_address || project.location || "الكرامة";
   const activeCustomerCode = customer.customerCode || customer.customer_code || "CUST-XXXX";
 
-  // 🌟 مديول رحلة التنفيذ الـ 17 مرحلة مع دمج التواريخ وحساب وجود البند
+  // مديول رحلة التنفيذ الـ 17 مرحلة مع دمج التواريخ وحساب وجود البند
   const executionJourney = [
     { name: "اعتماد المقايسة", days: "1 يوم", active: true },
     { name: "المعاينة الهندسية", days: "3 أيام", active: true },
@@ -1183,14 +1293,12 @@ export function PrintReportLayout({
   return (
     <div dir="rtl" className="bg-white text-[#020B1C] w-full min-h-screen p-10 text-xs relative select-none font-sans print:p-0 print:text-black">
       
-      {/* 🌟 1. رأس الصفحة (اللوجو يمين، العنوان موسط بكثافة، الاسم التجاري يسار) */}
+      {/* رأس الصفحة */}
       <div className="flex items-center justify-between border-b-4 border-[#D4AF37] pb-4 mb-5">
-        {/* اليمين: الشعار */}
         <div className="w-[30%] text-right select-none">
           <img src="/logo.png" alt="Golden Decoration Logo" className="h-16 object-contain" />
         </div>
         
-        {/* المنتصف: عنوان المقايسة موسط بالكامل بكثافة خط فخمة */}
         <div className="w-[40%] text-center">
           <h2 className="text-xl md:text-2xl font-black text-[#0B1B38] tracking-wide">
             {estimateType}
@@ -1198,14 +1306,13 @@ export function PrintReportLayout({
           <p className="text-[10px] text-gray-500 font-bold mt-1">تاريخ الإصدار: {formattedDate}</p>
         </div>
 
-        {/* اليسار: الاسم بالإنجليزية المعتمد */}
         <div className="w-[30%] text-left select-none" style={{ direction: "ltr" }}>
           <h1 className="text-lg font-black tracking-wider text-[#0B1B38] leading-none">GOLDEN DECORATION</h1>
           <p className="text-[9px] text-[#C9A45D] font-bold uppercase tracking-widest mt-1">Art In Every Space</p>
         </div>
       </div>
 
-      {/* 🌟 2. كرت وجدول البيانات الأساسية للعميل متناظر بالكامل (Metadata Grid) */}
+      {/* كرت وجدول البيانات الأساسية للعميل متناظر بالكامل */}
       <div className="grid grid-cols-4 gap-3 bg-gray-50/70 border border-gray-200 rounded-2xl p-4 mb-4 text-[10px] font-bold">
         <div>
           <span className="text-gray-400 block font-bold">رقم المقايسة:</span>
@@ -1237,7 +1344,7 @@ export function PrintReportLayout({
         </div>
       </div>
 
-      {/* 🌟 ميزانية العميل التقديرية الإرشادية - تظهر في نسخة الطباعة فقط كـ دليل تعاقدي مالي مسجل في المقايسة المعتمدة */}
+      {/* ميزانية العميل التقديرية الإرشادية - تظهر في نسخة الطباعة فقط كـ دليل تعاقدي مالي مسجل في المقايسة المعتمدة */}
       {project.estimatedMin && project.estimatedMax && (
         <div className="p-3 rounded-xl bg-gray-50 border border-gray-200 mb-6 flex justify-between items-center text-[10px] font-bold select-none">
           <span className="text-gray-500">🎯 ميزانية العميل التقديرية الإرشادية المعتمدة بالعقد المبدئي:</span>
@@ -1245,14 +1352,14 @@ export function PrintReportLayout({
         </div>
       )}
 
-      {/* 🌟 شعار وهوية العميل (Corporate Slogan Banner) */}
+      {/* شعار وهوية العميل */}
       <div className="text-center py-2 my-3 border-y-2 border-[#C9A45D]/25 bg-gradient-to-r from-transparent via-gray-50 to-transparent">
         <p className="text-[#C9A45D] font-black text-xs">
           الشقة بالكامل - Golden Decoration Excellence
         </p>
       </div>
 
-      {/* 🌟 3. QUOTATION TABLE (رأس جدول أرستقراطي مذهب وموفر للأحبار تماماً على الـ A4 بدلاً من الخلفيات الكحلية الداكنة) */}
+      {/* جدول عرض السعر الفاخر */}
       <div className="border border-gray-200 rounded-2xl overflow-hidden mb-8 shadow-sm">
         {loadingPrint ? (
           <p className="text-center text-gray-500 py-12">جاري مزامنة وسحب بنود عرض السعر الفاخر من السيرفر...</p>
@@ -1301,7 +1408,7 @@ export function PrintReportLayout({
         )}
       </div>
 
-      {/* 🌟 4. كارت وحاوية الأرصدة والمجاميع */}
+      {/* كارت وحاوية الأرصدة والمجاميع */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 text-xs font-bold items-stretch">
         
         <div className="p-3 bg-gray-50/80 border border-gray-200 rounded-xl text-center flex flex-col justify-center shadow-sm">
@@ -1327,7 +1434,7 @@ export function PrintReportLayout({
 
       </div>
 
-      {/* 🌟 5. رحلة التنفيذ الإنشائية المتناظرة والأيام المقدرة للبنود النشطة */}
+      {/* رحلة التنفيذ الإنشائية المتناظرة والأيام المقدرة للبنود النشطة */}
       <div className="border border-gray-200 rounded-2xl p-5 bg-gradient-to-br from-white to-gray-50/60 mb-6 relative overflow-hidden">
         <h3 className="text-xs font-black text-[#0B1B38] border-b border-gray-200 pb-2 mb-3 flex items-center gap-1.5">
           <Layers size={14} className="text-[#C9A45D]" />

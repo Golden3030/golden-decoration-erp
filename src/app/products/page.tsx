@@ -37,7 +37,8 @@ const categoryKeys: { [key: string]: string } = {
   "سباكة وتغذية": "plumbing",
   "كهرباء وإضاءة": "electricity",
   "أسقف معلقة": "ceiling",
-  "أعمال التهوية والشفاطات": "ventilation"
+  "أعمال التهوية والشفاطات": "ventilation",
+  "أعمال التكييف والتمديدات": "ac"
 };
 
 const subcategoryKeys: { [key: string]: string } = {
@@ -86,7 +87,12 @@ const subcategoryKeys: { [key: string]: string } = {
   "كور": "core_drilling",
   "إيجار مولد فتح الكور": "generator",
   "تركيب الشفاطات": "installation",
-  "مادة السقية": "grouting" 
+  "مادة السقية": "grouting",
+  "مواسير نحاس": "copper_pipes",
+  "عزل أرموفليكس": "armaflex_insulation",
+  "مواسير صرف تكييف": "ac_drain_pipes",
+  "حوامل تثبيت تكييف": "ac_brackets",
+  "كابل تغذية تكييف": "ac_power_cable"
 };
 
 const specCategoryLabels: { [key: string]: string } = {
@@ -153,6 +159,7 @@ export default function ItemsMaterialsPage() {
     if (pCategory === "دهانات") setPSubcategory("سيلر");
     else if (pCategory === "سباكة وتغذية") setPSubcategory("عزل مائي");
     else if (pCategory === "أعمال التهوية والشفاطات") setPSubcategory("بلاور"); 
+    else if (pCategory === "أعمال التكييف والتمديدات") setPSubcategory("مواسير نحاس");
     else if (pCategory === "كهرباء وإضاءة") setPSubcategory("علب ماجيك");
     else if (pCategory === "أرضيات") setPSubcategory("أرضيات ريسبشن");
     else if (pCategory === "أعمال المحارة" || pCategory === "أعمال محارة") setPSubcategory("أسمنت");
@@ -529,54 +536,66 @@ export default function ItemsMaterialsPage() {
   }
 
   return (
-    // 🌟 حل المشكلة: إرجاع وسم التوجيه dir="rtl" إلى الـ main الرئيسي لضمان ثبات السايدبار الأيمن بالكامل وتكامل الشاشة كلياً
-    <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden" dir="rtl">
+    <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
+      
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
       <Sidebar />
     
-      <section className="w-full lg:pr-56 m-0 min-h-screen flex flex-col">
+      <section className="flex-1 flex flex-col lg:pr-56 m-0 min-h-screen">
         <Header />
+        
         <div className="p-4 md:p-8 space-y-8 text-right font-sans">
           
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center border-b border-[#1f2d4d] pb-6 gap-4 select-none">
             <div>
-              <div className="flex items-center gap-2 text-[#D4AF37] mb-1">
-                <Sparkles className="w-5 h-5 animate-pulse" />
-                <span className="text-xs md:text-sm uppercase tracking-wider font-bold">بوابة الإدارة المركزية للأسعار</span>
+              <div className="flex items-center gap-2 text-[#D4AF37] mb-1 select-none text-[10px] font-bold">
+                <Sparkles className="w-3.5 h-3.5 animate-pulse" />
+                <span className="uppercase tracking-wider">بوابة الإدارة المركزية للأسعار</span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-black text-[#D4AF37] drop-shadow-sm">إدارة البنود والخامات</h1>
-              <p className="text-slate-300 text-sm md:text-base mt-2 max-w-2xl leading-relaxed font-bold">
+              <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2.5">
+                <span>إدارة البنود والخامات</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-ping" />
+              </h1>
+              <p className="text-white text-xs mt-2">
                 تنسيق وهيكلة مكتبة المنتجات المالية وتأصيل مكتبة التوصيفات الإنشائية وبنود الاستلام للمقايسات.
               </p>
             </div>
 
-            <div className="bg-[#07132a] border-2 border-[#1f2d4d] p-1.5 rounded-full flex gap-2 select-none w-full lg:w-auto shadow-inner">
+            <div className="bg-[#07132a] border border-[#1f2d4d] p-1 rounded-xl flex gap-1.5 select-none w-full lg:w-auto shadow-inner">
               <button
-                onClick={() => {
+                type="button" 
+                onClick={(e) => {
+                  e.preventDefault();
                   setActiveTab("products");
                   clearForm();
                 }}
-                className={`flex-1 lg:flex-none px-6 py-3 rounded-full font-black text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
+                className={`px-4 py-2 rounded-lg text-xs transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTab === "products" 
-                    ? "royal-gradient-btn text-black shadow-lg" 
-                    : "text-slate-400 hover:text-white hover:bg-[#122242]/40"
+                    ? "bg-[#D4AF37] text-[#020B1C] shadow-[0_0_12px_rgba(212,175,55,0.3)] font-black border border-[#D4AF37]" 
+                    : "text-slate-400 hover:text-[#D4AF37] hover:bg-[#122242]/40 font-bold"
                 }`}
               >
-                <Layers className="w-4 h-4" />
-                📦 مكتبة المنتجات والخامات
+                <Layers className="w-3.5 h-3.5" />
+                <span>📦 المنتجات والخامات</span>
               </button>
               <button
-                onClick={() => {
+                type="button" 
+                onClick={(e) => {
+                  e.preventDefault();
                   setActiveTab("specs");
                   clearForm();
                 }}
-                className={`flex-1 lg:flex-none px-6 py-3 rounded-full font-black text-sm transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
+                className={`px-4 py-2 rounded-lg text-xs transition-all duration-300 flex items-center justify-center gap-1.5 cursor-pointer ${
                   activeTab === "specs" 
-                    ? "royal-gradient-btn text-black shadow-lg" 
-                    : "text-slate-400 hover:text-white hover:bg-[#122242]/40"
+                    ? "bg-[#D4AF37] text-[#020B1C] shadow-[0_0_12px_rgba(212,175,55,0.3)] font-black border border-[#D4AF37]" 
+                    : "text-slate-400 hover:text-[#D4AF37] hover:bg-[#122242]/40 font-bold"
                 }`}
               >
-                <FileText className="w-4 h-4" />
-                📄 مكتبة المواصفات والتوصيف
+                <FileText className="w-3.5 h-3.5" />
+                <span>📄 التوصيفات والمواصفات</span>
               </button>
             </div>
           </div>
@@ -584,158 +603,23 @@ export default function ItemsMaterialsPage() {
           {activeTab === "products" ? (
             <div className="space-y-8 animate-fade-in">
               
-              <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] overflow-hidden shadow-2xl">
-                
-                <div className="p-5 border-b border-[#1f2d4d] bg-[#0b1b3d]/60 flex flex-col lg:flex-row justify-between items-center gap-4">
-                  <div>
-                    <h3 className="text-[#D4AF37] font-extrabold text-base md:text-lg flex items-center gap-2 select-none">
-                      <span>📦</span> قائمة البنود والخامات المسجلة بالمنظومة ({filteredProducts.length})
-                    </h3>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto select-none">
-                    <div className="relative w-full sm:w-72">
-                      <input
-                        type="text"
-                        placeholder="ابحث باسم المنتج، كود، مصنع..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-11 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-[#F0E6D2] pr-11 pl-4 text-xs md:text-sm font-bold outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all cursor-pointer placeholder-slate-500"
-                      />
-                      <Search className="absolute right-4 top-3.5 text-[#D4AF37] w-4 h-4" />
-                    </div>
-
-                    <div className="relative group w-full sm:w-auto">
-                      <button
-                        onClick={handleExportProductsToExcel}
-                        className="w-full sm:w-auto text-[#020B1C] font-black py-3 px-6 rounded-full text-xs md:text-sm cursor-pointer flex items-center justify-center gap-2 bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] hover:shadow-[0_4px_15px_rgba(212,175,55,0.2)] active:scale-95 transition-all"
-                      >
-                        <Download className="w-4 h-4" />
-                        <span>تصدير لإكسيل</span>
-                      </button>
-                      <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                        <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
-                          📥 تحميل وتصدير الجدول بالكامل كشيت Excel CSV فوري لجهازك
-                          <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="p-4 md:p-0">
-                  {loading ? (
-                    <div className="p-16 text-center text-[#D4AF37] animate-pulse text-base font-bold">جاري تحميل المنتجات المالية...</div>
-                  ) : filteredProducts.length > 0 ? (
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
-                        {filteredProducts.map((p) => {
-                          const matchedSub = Object.keys(subcategoryKeys).find(k => subcategoryKeys[k] === p.subcategory) || p.subcategory;
-                          return (
-                            <div
-                              key={p.id}
-                              onClick={() => selectProductRow(p)}
-                              className={`bg-[#020B1C] border rounded-2xl p-5 space-y-4 cursor-pointer transition-all duration-300 ${
-                                selectedProduct?.id === p.id 
-                                  ? "border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.15)] bg-[#0b1b3d]/40" 
-                                  : "border-[#1f2d4d] hover:border-[#D4AF37]/30"
-                              }`}
-                            >
-                              <div className="flex justify-between items-center">
-                                <span className="text-xs font-mono text-[#D4AF37] bg-[#D4AF37]/10 px-2.5 py-1 rounded-md font-bold">
-                                  {p.code}
-                                </span>
-                                <span className="text-xs text-slate-400">
-                                  {p.company || "-"}
-                                </span>
-                              </div>
-                              <h4 className="text-base md:text-lg font-black text-slate-100 line-clamp-2 leading-relaxed">{p.product_name}</h4>
-                              <div className="flex justify-between items-center text-sm text-slate-200 border-t border-[#1f2d4d]/60 pt-3">
-                                <div>
-                                  <span className="text-slate-500">الفئة: </span>
-                                  <span className="text-[#D4AF37] font-bold">{matchedSub}</span>
-                                </div>
-                                <div className="text-left">
-                                  <span className="text-emerald-400 font-mono font-black text-base md:text-lg block">{Number(p.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ج.م</span>
-                                  <span className="text-xs text-slate-500 block">لكل {p.unit}</span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-
-                      <div className="hidden md:block overflow-x-auto max-h-[320px] overflow-y-auto">
-                        <table className="w-full text-right text-base text-white">
-                          <thead className="bg-[#0b1d3d] text-[#D4AF37] sticky top-0 z-10 select-none">
-                            <tr>
-                              <th className="p-4 border-b border-[#1f2d4d] text-base font-black">الكود</th>
-                              <th className="p-4 border-b border-[#1f2d4d] text-base font-black">التصنيف</th>
-                              <th className="p-4 border-b border-[#1f2d4d] font-black text-[#D4AF37]">الصنف الفرعي</th>
-                              <th className="p-4 border-b border-[#1f2d4d] text-base font-black">المصنع / الشركة</th>
-                              <th className="p-4 border-b border-[#1f2d4d] text-base font-black">اسم المنتج الخادم</th>
-                              <th className="p-4 border-b border-[#1f2d4d] text-base font-black">وحدة الحساب</th>
-                              <th className="p-4 border-b border-[#1f2d4d] text-left text-base font-black">سعر الوحدة الافتراضي</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-[#1f2d4d]/60">
-                            {filteredProducts.map((p) => {
-                              const matchedSub = Object.keys(subcategoryKeys).find(k => subcategoryKeys[k] === p.subcategory) || p.subcategory;
-                              return (
-                                <tr
-                                  key={p.id}
-                                  onClick={() => selectProductRow(p)}
-                                  className={`hover:bg-[#020B1C]/50 cursor-pointer transition-all duration-200 ${
-                                    selectedProduct?.id === p.id ? "bg-[#0b1b3d]/60 border-r-4 border-r-[#D4AF37] text-white font-medium pl-3" : ""
-                                  }`}
-                                >
-                                  <td className="p-4 font-mono text-[#D4AF37] font-black">
-                                    <span className="bg-[#D4AF37]/10 px-3 py-1.5 rounded-md border border-[#D4AF37]/20">
-                                      {p.code}
-                                    </span>
-                                  </td>
-                                  <td className="p-4 text-slate-200 font-bold">{p.category}</td>
-                                  <td className="p-4 text-[#D4AF37] font-black">{matchedSub}</td>
-                                  <td className="p-4 text-slate-300 font-bold">{p.company || "-"}</td>
-                                  <td className="p-4 font-black text-slate-100 text-lg">{p.product_name}</td>
-                                  <td className="p-4 text-slate-200 font-bold">{p.unit}</td>
-                                  <td className="p-4 text-left font-mono text-emerald-400 font-black text-lg">
-                                    <span className="bg-emerald-950/20 border border-emerald-500/20 px-4 py-2 rounded-xl">
-                                      {Number(p.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ج.م
-                                    </span>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="p-16 text-center text-slate-500 text-base font-bold select-none">
-                      لا توجد خامات مسجلة تطابق شروط البحث لهذا القسم المالي المختار.
-                    </div>
-                  )}
-                </div>
-
-              </div>
-
-              <div className="bg-[#07132a] border-2 border-[#1f2d4d] rounded-[2rem] p-6 md:p-8 space-y-6 shadow-xl relative overflow-hidden">
+              {/* كارت إضافة وتعديل المنتج */}
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-5 md:p-6 space-y-5 shadow-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
                 
-                <h3 className="text-[#D4AF37] font-black text-xl md:text-2xl flex items-center gap-2 border-b border-[#1f2d4d] pb-3.5 select-none">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] inline-block animate-ping" />
+                <h3 className="text-[#D4AF37] text-ms md:text-ms border-b border-[#D4AF37] pb-3 select-none flex items-center gap-2">
+                  <span className="text-[#D4AF37] text-ms md:text-ms flex items-center gap-1.5 select-none" />
                   {selectedProduct ? "📝 تعديل وتحرير بيانات الخامة المعتمدة" : "➕ إضافة منتج / خامة مالية جديدة"}
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-sm md:text-base font-bold">
+                <div className="flex flex-row items-end justify-start gap-4 text-[11px] md:text-xs w-full overflow-x-outo">
                   
                   <div>
-                    <label className="block text-[#D4AF37] mb-2.5 font-bold flex items-center gap-1.5 select-none">التصنيف الإنشائي *</label>
+                    <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">التصنيف الإنشائي *</label>
                     <select
                       value={pCategory}
                       onChange={(e) => setPCategory(e.target.value)}
-                      className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-3 text-base font-bold outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all cursor-pointer"
+                      className="w-45 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-2 font-semibold outline-none focus:border-[#D4AF37] cursor-pointer text-[11px]"
                     >
                       <option>دهانات</option>
                       <option>أعمال المحارة</option>
@@ -743,15 +627,16 @@ export default function ItemsMaterialsPage() {
                       <option>سباكة وتغذية</option>
                       <option>كهرباء وإضاءة</option>
                       <option>أعمال التهوية والشفاطات</option>
+                      <option>أعمال التكييف والتمديدات</option>
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-[#D4AF37] mb-2.5 font-bold flex items-center gap-1.5 select-none">الصنف الفرعي للبند *</label>
+                    <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">الصنف الفرعي للبند *</label>
                     <select
                       value={pSubcategory}
                       onChange={(e) => setPSubcategory(e.target.value)}
-                      className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] text-base font-black px-3 outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all cursor-pointer"
+                      className="w-40 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-black px-2 outline-none focus:border-[#D4AF37] cursor-pointer text-[11px]"
                     >
                       {pCategory === "دهانات" && (
                         <>
@@ -821,58 +706,69 @@ export default function ItemsMaterialsPage() {
                           <option>تركيب الشفاطات</option>
                         </>
                       )}
+                      {pCategory === "أعمال التكييف والتمديدات" && (
+                        <>
+                          <option>مواسير نحاس</option>
+                          <option>عزل أرموفليكس</option>
+                          <option>مواسير صرف تكييف</option>
+                          <option>حوامل تثبيت تكييف</option>
+                          <option>كابل تغذية تكييف</option>
+                        </>
+                      )}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-[#D4AF37] mb-2.5 font-bold flex items-center gap-1.5 select-none">الشركة المصنعة</label>
+                    <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">الشركة المصنعة</label>
                     <input
                       type="text"
                       placeholder="مثال: لافارج / السويدي"
                       value={pCompany || ""}
                       onChange={(e) => setPCompany(e.target.value)}
-                      className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-4 text-base font-bold outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all placeholder-slate-600"
+                      className="w-35 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none focus:border-[#D4AF37] font-semibold text-[11px] placeholder-slate-600"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[#D4AF37] mb-2.5 font-bold flex items-center gap-1.5 select-none">اسم المنتج الخادم *</label>
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">اسم المنتج الخادم *</label>
                     <input
                       type="text"
                       placeholder="مثال: شكارة أسمنت لافارج"
                       value={pName || ""}
                       onChange={(e) => setPName(e.target.value)}
-                      className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-4 text-base font-bold outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all placeholder-slate-600"
+                      className="w-40 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none focus:border-[#D4AF37] font-semibold text-[11px] placeholder-slate-600"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-[#D4AF37] mb-2.5 font-bold flex items-center gap-1.5 select-none">الوحدة الإدارية *</label>
-                    <select
-                      value={pUnit}
-                      onChange={(e) => setPUnit(e.target.value)}
-                      className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-3 text-base font-bold outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all cursor-pointer"
-                    >
-                      <option>بستلة</option>
-                      <option>م²</option>
-                      <option>م³</option>
-                      <option>طن</option>
-                      <option>لفة</option>
-                      <option>قطعة</option>
-                      <option>متر طولى</option>
-                      <option>شکارة</option>
-                    </select>
-                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">الوحدة الإدارية *</label>
+                      <select
+                        value={pUnit}
+                        onChange={(e) => setPUnit(e.target.value)}
+                        className="w-full h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-3 outline-none focus:border-[#D4AF37] cursor-pointer text-[11px] font-semibold"
+                      >
+                        <option>بستلة</option>
+                        <option>م²</option>
+                        <option>م³</option>
+                        <option>طن</option>
+                        <option>لفة</option>
+                        <option>قطعة</option>
+                        <option>متر طولى</option>
+                        <option>شكارة</option>
+                      </select>
+                    </div>
 
-                  <div>
-                    <label className="block text-[#D4AF37] mb-2.5 font-bold flex items-center gap-1.5 select-none">سعر الوحدة الافتراضي *</label>
-                    <input
-                      type="number"
-                      placeholder="0.00"
-                      value={pPrice || ""}
-                      onChange={(e) => setPPrice(e.target.value !== "" ? Number(e.target.value) : "")}
-                      className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-emerald-400 text-base font-black px-4 outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all font-mono text-left text-base"
-                    />
+                    <div>
+                      <label className="block text-[#D4AF37] px-0.5 mb-1.5 text-[13px] select-none">سعر الوحدة الافتراضي *</label>
+                      <input
+                        type="number"
+                        placeholder="0.00"
+                        value={pPrice || ""}
+                        onChange={(e) => setPPrice(e.target.value !== "" ? Number(e.target.value) : "")}
+                        className="w-35 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-emerald-400 font-bold px-4 outline-none focus:border-[#D4AF37] font-mono text-left text-[11px]"
+                      />
+                    </div>
                   </div>
 
                 </div>
@@ -881,16 +777,17 @@ export default function ItemsMaterialsPage() {
                   
                   <div className="relative group">
                     <button
-                      onClick={clearForm}
-                      className="bg-transparent border-2 border-[#D4AF37]/80 text-[#D4AF37] px-6 py-3.5 rounded-full font-black text-sm cursor-pointer hover:bg-gradient-to-r hover:from-[#D4AF37] hover:to-[#F1E5C6] hover:text-[#020B1C] transition-all duration-300 flex items-center justify-center gap-2"
+                      type="button" 
+                      onClick={(e) => { e.preventDefault(); clearForm(); }}
+                      className="px-4 h-9 rounded-lg bg-gradient-to-b from-[#0c1e3d]/40 to-[#040e20]/40 text-[#D4AF37] border border-[#D4AF37]/30 shadow-md hover:border-[#D4AF37] transition-all duration-300 cursor-pointer text-sm flex flex-row items-center justify-center gap-2 whitespace-nowrap"
                     >
-                      <RefreshCw className="w-4 h-4" />
+                      <RefreshCw className="w-4 h-4 shrink-0" />
                       <span>تهيئة الحقول</span>
                     </button>
-                    <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                      <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
-                        🔄 تفريغ حقول النموذج وتحضير استمارة الإضافة كـ (جديد)
-                        <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
+                    <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center cursor-pointer pointer-events-none z-50 animate-fade-in whitespace-nowrap">
+                      <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] py-2 px-4 rounded-xl shadow-2xl relative cursor-pointer">
+                        🔄 تفريغ حقول النموذج وتحضير الإضافة كـ (جديد)
+                        <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] cursor-pointer border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
                       </div>
                     </div>
                   </div>
@@ -899,26 +796,29 @@ export default function ItemsMaterialsPage() {
                     <>
                       <div className="relative group">
                         <button
-                          onClick={handleUpdateProduct}
+                          type="button" 
+                          onClick={(e) => { e.preventDefault(); handleUpdateProduct(); }}
                           disabled={saving}
-                          className="royal-gradient-btn text-black px-8 py-3.5 rounded-full font-black text-sm flex items-center justify-center gap-2"
+                          className="px-6 py-2.5 rounded-lg bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] cursor-pointer hover:scale-[1.01] active:scale-95 transition-all duration-300 text-sm flex items-center justify-center gap-1.5 select-none relative overflow-hidden cursor-pointer"
                         >
                           <Edit3 className="w-4 h-4" />
                           <span>{saving ? "جاري الحفظ..." : "حفظ التعديلات"}</span>
+                          <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)] cursor-pointer" />
                         </button>
-                        <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                          <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
-                            💾 حفظ وحفظ التعديلات الطارئة على سعر أو توصيف الخامة الحالية بالسيرفر
-                            <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
+                        <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center cursor-pointer pointer-events-none z-50 animate-fade-in whitespace-nowrap">
+                          <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] py-2 px-4 rounded-xl cursor-pointer shadow-2xl relative">
+                            💾 حفظ التعديلات الطارئة على سعر أو توصيف الخامة الحالية بالسيرفر
+                            <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1 cursor-pointer" />
                           </div>
                         </div>
                       </div>
 
                       <div className="relative group">
                         <button
-                          onClick={handleDeleteProduct}
+                          type="button" 
+                          onClick={(e) => { e.preventDefault(); handleDeleteProduct(); }}
                           disabled={saving}
-                          className="bg-red-950/40 border border-red-500/30 hover:bg-red-600 hover:text-white text-red-400 px-8 py-3.5 rounded-full font-black text-sm cursor-pointer transition-all duration-300 flex items-center justify-center gap-2"
+                          className="bg-red-950/40 border border-red-500/30 hover:bg-red-600 hover:text-white text-red-400 px-6 py-2.5 rounded-lg font-black text-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition"
                         >
                           <Trash2 className="w-4 h-4" />
                           <span>حذف الخامة</span>
@@ -934,17 +834,19 @@ export default function ItemsMaterialsPage() {
                   ) : (
                     <div className="relative group">
                       <button
-                        onClick={handleAddProduct}
+                        type="button" 
+                        onClick={(e) => { e.preventDefault(); handleAddProduct(); }}
                         disabled={saving}
-                        className="royal-gradient-btn text-black px-8 py-3.5 rounded-full font-black text-sm flex items-center justify-center gap-2"
+                        className="px-6 py-2.5 rounded-lg bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 font-black text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden cursor-pointer"
                       >
                         <CheckCircle className="w-4 h-4" />
                         <span>{saving ? "جاري الإدراج..." : "إدراج المنتج بالمكتبة"}</span>
+                        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)] cursor-pointer" />
                       </button>
-                      <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                        <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
+                      <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap cursor-pointer">
+                        <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] py-2 px-4 rounded-xl shadow-2xl relative cursor-pointer">
                           💾 إضافة وإدراج كارت الخامة الجديدة في قاعدة أسعار المشتريات السحابية للشركة
-                          <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
+                          <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1 cursor-pointer" />
                         </div>
                       </div>
                     </div>
@@ -952,14 +854,326 @@ export default function ItemsMaterialsPage() {
                 </div>
               </div>
 
+              <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] overflow-hidden shadow-2xl">
+                
+                <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex flex-col lg:flex-row justify-between items-center gap-4">
+                  <div>
+                    <h3 className="text-[#D4AF37] text-ms md:text-ms select-none flex items-center gap-3">
+                      <span>📦</span> قائمة البنود والخامات المسجلة بالمنظومة ({filteredProducts.length})
+                    </h3>
+                  </div>
+                  
+                  <div className="flex items-center gap-3 w-full lg:w-auto select-none">
+                    <div className="relative w-full sm:w-72">
+                      <input
+                        type="text"
+                        placeholder="ابحث باسم المنتج، كود، مصنع..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full h-9 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-[#F0E6D2] pr-9 pl-3 text-[11px] md:text-xs font-bold outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all cursor-pointer placeholder-slate-500"
+                      />
+                      <Search className="absolute right-4 top-3.5 text-[#D4AF37] w-4 h-4" />
+                    </div>
+
+                    <div className="relative group shrink-0">
+                      <button
+                        type="button" 
+                        onClick={(e) => { e.preventDefault(); handleExportProductsToExcel(); }}
+                        className="w-9 h-9 rounded-lg bg-black/60 border border-[#D4AF37]/50 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] flex items-center justify-center cursor-pointer transition-all duration-300 hover:translate-y-[-2px] shadow-[0_0_12px_rgba(212,175,55,0.15)] hover:shadow-[0_0_20px_rgba(212,175,55,0.45)] shrink-0"
+                        title="تصدير مكتبة الخامات والمواد إلى شيت إكسيل"
+                      >
+                        <Download className="w-4.5 h-4.5" />
+                      </button>
+                      <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
+                        <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
+                          📥 تحميل وتصدير الجدول بالكامل كشيت Excel CSV فوري لجهازك
+                          <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 md:p-0">
+                  {loading ? (
+                    <div className="p-16 text-center text-[#D4AF37] animate-pulse text-base font-bold">جاري تحميل المنتجات المالية...</div>
+                  ) : filteredProducts.length > 0 ? (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
+                        {filteredProducts.map((p) => {
+                          const matchedSub = Object.keys(subcategoryKeys).find(k => subcategoryKeys[k] === p.subcategory) || p.subcategory;
+                          return (
+                            <div
+                              key={p.id}
+                              onClick={() => selectProductRow(p)}
+                              className={`bg-[#020B1C] border rounded-2xl p-4 space-y-3 cursor-pointer transition-all duration-300 ${
+                                selectedProduct?.id === p.id 
+                                  ? "border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.15)] bg-[#0b1b3d]/40" 
+                                  : "border-[#1f2d4d] hover:border-[#D4AF37]/30"
+                              }`}
+                            >
+                              <div className="flex justify-between items-center">
+                                <span className="text-xs font-mono text-[#D4AF37] bg-[#D4AF37]/10 px-2.5 py-1 rounded-md font-bold">
+                                  {p.code}
+                                </span>
+                                <span className="text-xs text-slate-400">
+                                  {p.company || "-"}
+                                </span>
+                              </div>
+                              <h4 className="text-sm md:text-base font-black text-slate-100 line-clamp-2 leading-relaxed">{p.product_name}</h4>
+                              <div className="flex justify-between items-center text-sm text-slate-200 border-t border-[#1f2d4d]/60 pt-3">
+                                <div>
+                                  <span className="text-slate-500">الفئة: </span>
+                                  <span className="text-[#D4AF37] font-bold">{matchedSub}</span>
+                                </div>
+                                <div className="text-left">
+                                  <span className="text-emerald-400 font-mono font-black text-sm md:text-base block">{Number(p.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ج.م</span>
+                                  <span className="text-xs text-slate-500 block">لكل {p.unit}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="hidden md:block overflow-x-auto max-h-[320px] overflow-y-auto">
+                        <table className="w-full text-right table-auto">
+                          <thead className="bg-[#0b1d3d] text-[#D4AF37] sticky top-0 z-10 select-none text-[13px] font-black">
+                            <tr>
+                              <th className="py-2 px-8 text-right border-b border-[#1f2d4d]">الكود</th>
+                              <th className="py-2 px-3 text-center border-b border-[#1f2d4d]">التصنيف</th>
+                              <th className="py-2 px-3 text-center border-b border-[#1f2d4d]">الصنف الفرعي</th>
+                              <th className="py-2 px-3 text-center border-b border-[#1f2d4d]">المصنع / الشركة</th>
+                              <th className="py-2 px-3 text-center border-b border-[#1f2d4d]">اسم المنتج </th>
+                              <th className="py-2 px-3 text-center border-b border-[#1f2d4d]">وحدة الحساب</th>
+                              <th className="py-2 px-3 text-center border-b border-[#1f2d4d]">سعر الوحدة </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-[#1f2d4d]/60 text-[11px] md:text-xs text-slate-100">
+                            {filteredProducts.map((p) => {
+                              const matchedSub = Object.keys(subcategoryKeys).find(k => subcategoryKeys[k] === p.subcategory) || p.subcategory;
+                              return (
+                                <tr
+                                  key={p.id}
+                                  onClick={() => selectProductRow(p)}
+                                  className={`hover:bg-[#020B1C]/50 cursor-pointer transition-all duration-200 ${
+                                    selectedProduct?.id === p.id ? "bg-[#0b1b3d]/60 border-r-4 border-r-[#D4AF37] text-white font-medium" : ""
+                                  }`}
+                                >
+                                  <td className="p-2.5 font-mono text-[#D4AF37]">
+                                    <span className="bg-[#D4AF37]/10 px-2 py-1 rounded-md border border-[#D4AF37]/20">
+                                      {p.code}
+                                    </span>
+                                  </td>
+                                  <td className="p-2.5 text-center text-slate-100 text-xs md:text-sm">{p.category}</td>
+                                  <td className="p-2.5 text-center text-[#D4AF37] text-xs md:text-sm">{matchedSub}</td>
+                                  <td className="p-2.5 text-center text-slate-100 text-xs md:text-sm">{p.company || "-"}</td>
+                                  <td className="p-2.5 text-center text-[#D4AF37] text-xs md:text-sm">{p.product_name}</td>
+                                  <td className="p-2.5 text-center text-slate-100 text-xs md:text-sm">{p.unit}</td>
+                                  <td className="p-2.5 text-center font-mono text-emerald-400 font-bold text-xs md:text-sm">
+                                    <span className="bg-emerald-950/20 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
+                                      {Number(p.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ج.م
+                                    </span>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="p-16 text-center text-slate-500 text-base font-bold select-none">
+                      لا توجد خامات مسجلة تطابق شروط البحث لهذا القسم المالي المختار.
+                    </div>
+                  )}
+                </div>
+
+              </div>
+
             </div>
+
           ) : (
             <div className="space-y-8 animate-fade-in">
               
-              <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] overflow-hidden shadow-2xl">
+              {/* كارت إضافة وتعديل المواصفة */}
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-5 md:p-6 space-y-5 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
                 
-                <div className="p-5 border-b border-[#1f2d4d] bg-[#0b1b3d]/60 flex flex-col sm:flex-row justify-between items-center gap-4">
-                  <h3 className="text-[#F0E6D2] font-extrabold text-base md:text-lg flex items-center gap-2 select-none">
+                <h3 className="text-[#D4AF37] text-md md:text-md border-b border-[#D4AF37] pb-3 select-none flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] inline-block animate-ping" />
+                  {selectedSpec ? "📝 تعديل وتحرير كارت المواصفة الفنية المفتوحة" : "➕ تسجيل بند وتوصيف فني جديد للمقايسات"}
+                </h3>
+
+                <div className="space-y-5 text-sm">
+                  <div className="flex flex-row items-end justify-start gap-3 text-[11px] md:text-xs w-full overflow-x-auto">
+                    
+                    <div>
+                      <label className="block text-[#D4AF37] px-1 mb-1.5 text-[13px] select-none">التصنيف الإنشائي للبند *</label>
+                      <select
+                        value={sCategory}
+                        onChange={(e) => setSCategory(e.target.value)}
+                        className="w-50 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-black px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-[11px] font-semibold"
+                      >
+                        <option value="plaster">🧱 أعمال المحارة </option>
+                        <option value="ceiling">📐 الأسقف المعلقة والجبس بورد</option>
+                        <option value="doors">🚪 أعمال الأبواب والنجارة</option>
+                        <option value="aluminum">⚙️ الشبابيك والألوميتال</option>
+                        <option value="ac">❄️ أعمال التكييف والتمديدات</option>
+                        <option value="ventilation">🌀 أعمال التهوية والشفاطات</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block px-2 text-[#D4AF37] mb-1.5 text-[13px] select-none">أيقونة الكارت الرمزية *</label>
+                      <select
+                        value={sIcon}
+                        onChange={(e) => setSIcon(e.target.value)}
+                        className="w-35 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-[11px] font-semibold"
+                      >
+                        <option>📐</option>
+                        <option>🧱</option>
+                        <option>🎯</option>
+                        <option>🚪</option>
+                        <option>❄️</option>
+                        <option>⚙️</option>
+                        <option>📄</option>
+                      </select>
+                    </div>
+
+                    <div className="col-span-1 md:col-span-2">
+                      <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">اسم المواصفة الرئيسي المعتمد *</label>
+                      <input
+                        type="text"
+                        placeholder="مثال: محارة بؤج وأوتار قياسية"
+                        value={sName || ""}
+                        onChange={(e) => setSName(e.target.value)}
+                        className="w-80 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-3 outline-none focus:border-[#D4AF37] font-semibold text-[11px] placeholder-slate-600"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">سعر المتر الافتراضي للمصنعية *</label>
+                      <input
+                        type="number"
+                        placeholder="مثال: 80"
+                        value={sBaseRate || ""}
+                        onChange={(e) => setSBaseRate(e.target.value !== "" ? Number(e.target.value) : "")}
+                        className="w-50 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-emerald-400 font-bold px-3 outline-none focus:border-[#D4AF37] font-mono text-left text-[11px]"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[#D4AF37] px-1 mb-1.5 text-[13px] select-none">التوصيف الفني الإنشائي التفصيلي (للعميل) *</label>
+                    <textarea
+                      rows={4}
+                      placeholder="اكتب التوصيف الفني الكامل للبند، شامل جودة الخامات والتأسيس بدقة..."
+                      value={sDesc || ""}
+                      onChange={(e) => setSDesc(e.target.value)}
+                      className="w-full bg-[#020B1C] border border-[#D4AF37] text-slate-100 p-3 rounded-xl outline-none focus:border-[#D4AF37] leading-relaxed placeholder-slate-500 text-[11px] font-semibold resize-none"
+                    />
+                  </div>
+
+                  <div className="bg-[#020B1C] p-4 rounded-2xl border border-dashed border-[#D4AF37] space-y-3 select-none">
+                    <label className="text-[#D4AF37] text-md md:text-md border-b border-[#D4AF37] pb-3 select-none flex items-center gap-2">
+                      <span>📋</span> بنود وخطوات استلام المواصفة الفنية (كل بند في سطر مستقل) *
+                    </label>
+                    <textarea
+                      rows={5}
+                      placeholder="اكتب هنا خطوات استلام البند بالموقع لتوليد التكت التفاعلي بتبويبات الـ CRM...&#10;الخطوة الأولى: غسيل وتنظيف الحوائط كلياً.&#10;الخطوة الثانية: تثبيت سلك الشبك الفاصل..."
+                      value={sStepsText}
+                      onChange={(e) => setSStepsText(e.target.value)}
+                      className="w-full bg-[#07132a] border border-[#D4AF37]/20 text-slate-100 p-3 rounded-xl outline-none focus:border-[#D4AF37] font-sans text-[11px] md:text-xs leading-relaxed placeholder-slate-600 font-semibold resize-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap justify-end gap-4 pt-5 border-t border-[#1f2d4d]/60 select-none">
+                  
+                  <div className="relative group">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); clearForm(); }}
+                      className="px-4 h-9 rounded-lg bg-gradient-to-b from-[#0c1e3d]/40 to-[#040e20]/40 text-[#D4AF37] border border-[#D4AF37]/30 shadow-md hover:border-[#D4AF37] transition-all duration-300 cursor-pointer text-ms flex flex-row items-center justify-center gap-2 whitespace-nowrap"
+                    >
+                      <RefreshCw className="w-4 h-4 shrink-0" />
+                      <span>تهيئة الحقول</span>
+                    </button>
+                    <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
+                      <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] py-2 px-4 rounded-xl shadow-2xl relative">
+                        🔄 تفريغ حقول النموذج وتحضير استمارة الإضافة كـ (جديد)
+                        <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedSpec ? (
+                    <>
+                      <div className="relative group">
+                        <button
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); handleUpdateSpec(); }}
+                          disabled={saving}
+                          className="px-6 py-2.5 rounded-lg bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer text-sm flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                          <span>{saving ? "جاري الحفظ..." : "حفظ التعديلات الفنية"}</span>
+                          <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                        </button>
+                        <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
+                          <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] py-2 px-4 rounded-xl shadow-2xl relative">
+                            💾 تحديث وحفظ التعديلات الطارئة على التوصيف الفني القياسي للبند بالسيرفر
+                            <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="relative group">
+                        <button
+                          type="button" 
+                          onClick={(e) => { e.preventDefault(); handleDeleteSpec(); }}
+                          disabled={saving}
+                          className="bg-red-950/40 border border-red-500/30 hover:bg-red-600 hover:text-white text-red-400 px-6 py-2.5 rounded-lg cursor-pointer text-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>حذف المواصفة</span>
+                        </button>
+                        <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
+                          <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] py-2 px-4 rounded-xl shadow-2xl relative">
+                            🚨 إزالة وحذف المواصفة الحالية نهائياً من سجل تفريد البنود للشركة
+                            <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="relative group">
+                      <button
+                        type="button" 
+                        onClick={(e) => { e.preventDefault(); handleAddSpec(); }}
+                        disabled={saving}
+                        className="px-6 py-2.5 rounded-lg bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer text-md flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        <span>{saving ? "جاري التسجيل..." : "تسجيل التوصيف الفني"}</span>
+                        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)] cursor-pointer" />
+                      </button>
+                      <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap cursor-pointer">
+                        <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] py-2 px-4 rounded-xl shadow-2xl relative cursor-pointer">
+                          💾 إضافة وإدراج التوصيف الهندسي لبنود العقد والأكواد الفنية للاستلام بالسيرفر
+                          <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1 cursor-pointer" />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] overflow-hidden shadow-2xl">
+                
+                <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <h3 className="text-[#D4AF37] text-md md:text-md pb-3 select-none flex items-center gap-4">
                     <span>📐</span> مكتبة المواصفات الفنية المعتمدة ({filteredSpecs.length})
                   </h3>
                   
@@ -969,7 +1183,7 @@ export default function ItemsMaterialsPage() {
                       placeholder="ابحث باسم المواصفة، كود، توصيف..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full h-11 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-white pr-10 pl-4 text-sm font-bold outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all placeholder-slate-500"
+                      className="w-full h-9 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-white pr-9 pl-3 text-[11px] font-bold outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all placeholder-slate-500"
                     />
                     <Search className="absolute right-4 top-3.5 text-[#D4AF37] w-4 h-4" />
                   </div>
@@ -984,38 +1198,38 @@ export default function ItemsMaterialsPage() {
                         <div
                           key={s.id || idx}
                           onClick={() => selectSpecCard(s)}
-                          className={`border rounded-2xl p-6 space-y-4 cursor-pointer transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
+                          className={`border rounded-2xl p-4 space-y-3 cursor-pointer transition-all duration-300 relative overflow-hidden flex flex-col justify-between ${
                             selectedSpec?.id === s.id 
                               ? "bg-[#0b1b3d]/50 border-r-4 border-r-[#D4AF37] border-[#D4AF37] shadow-[0_0_25px_rgba(212,175,55,0.15)] scale-[1.01]" 
-                              : "bg-[#020B1C] border-[#1f2d4d] hover:border-[#D4AF37]/30"
+                              : "bg-[#020B1C] border border-dashed border-[#D4AF37] space-y-3 select-none hover:border-[#D4AF37]/30"
                           }`}
                         >
                           <div className="space-y-3">
-                            <div className="flex justify-between items-start gap-2 border-b border-[#1f2d4d]/60 pb-3 select-none">
+                            <div className="flex justify-between items-start gap-2 border-b border-[#D4AF37] pb-3 select-none">
                               <div>
                                 <span className="text-2xl ml-2">{s.icon || "📐"}</span>
-                                <h4 className="text-[#D4AF37] font-black text-lg inline-block">{s.spec_name}</h4>
+                                <h4 className="text-[#D4AF37] text-md md:text-md inline-block">{s.spec_name}</h4>
                               </div>
-                              <span className="text-xs text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37]/20 px-3 py-1 rounded-full font-bold">
+                              <span className="text-[11px] text-[#D4AF37] bg-[#D4AF37]/10 border border-[#D4AF37] px-2.5 py-0.5 rounded-full">
                                 {specCategoryLabels[s.category] || s.category}
                               </span>
                             </div>
                             
-                            <p className="text-slate-200 text-sm md:text-base leading-relaxed whitespace-pre-wrap line-clamp-4 font-bold">
+                            <p className="text-slate-200 text-[11px] md:text-sm leading-relaxed whitespace-pre-wrap line-clamp-4">
                               {s.description}
                             </p>
                           </div>
                           
                           <div className="space-y-4 pt-4 border-t border-[#1f2d4d]/40">
-                            <div className="flex justify-between items-center text-sm text-slate-300 py-1.5 bg-[#07132a]/40 p-3 rounded-xl border border-[#1f2d4d]/30 select-none">
+                            <div className="flex justify-between items-center text-xs text-slate-300 py-1 bg-[#07132a]/40 p-2.5 rounded-xl border border-[#1f2d4d]/30 select-none">
                               <span>سعر متر المصنعية المعتمد:</span>
-                              <span className="text-emerald-400 font-extrabold font-mono text-base md:text-lg bg-emerald-950/35 px-3 py-1 rounded">
+                              <span className="text-emerald-400 font-extrabold font-mono text-[11px] md:text-xs bg-emerald-950/35 px-2.5 py-0.5 rounded">
                                 {s.base_rate || 0} ج.م / م²
                               </span>
                             </div>
 
                             {s.steps && s.steps.length > 0 && (
-                              <div className="bg-[#020B1C]/80 border border-amber-500/10 rounded-xl p-4 space-y-2 text-xs md:text-sm font-bold">
+                              <div className="bg-[#020B1C]/80 border border-amber-500/10 rounded-xl p-3 space-y-2 text-[11px] md:text-xs font-bold">
                                 <p className="text-amber-500 font-bold flex items-center gap-1.5">
                                   <span>📋</span> خطوات الاستلام الفنية ({s.steps.length}):
                                 </p>
@@ -1024,7 +1238,7 @@ export default function ItemsMaterialsPage() {
                                     <li key={sIdx} className="truncate">{step}</li>
                                   ))}
                                   {s.steps.length > 2 && (
-                                    <li className="list-none text-xs text-[#D4AF37] font-bold mt-1.5">
+                                    <li className="list-none text-[11px] text-[#D4AF37] font-bold mt-1.5">
                                       + {s.steps.length - 2} خطوات فنية أخرى للرقابة الإنشائية
                                     </li>
                                   )}
@@ -1032,7 +1246,7 @@ export default function ItemsMaterialsPage() {
                               </div>
                             )}
 
-                            <span className="text-xs text-[#D4AF37] underline block select-none text-left font-black">
+                            <span className="text-[11px] text-[#D4AF37] underline block select-none text-left font-black">
                               انقر لمعاينة أو تعديل التوصيف الفني ✏️
                             </span>
                           </div>
@@ -1047,177 +1261,11 @@ export default function ItemsMaterialsPage() {
                 </div>
               </div>
 
-              <div className="bg-[#07132a] border-2 border-[#1f2d4d] rounded-[2rem] p-6 md:p-8 space-y-6 shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
-                
-                <h3 className="text-[#D4AF37] font-black text-xl md:text-2xl flex items-center gap-2 border-b border-[#1f2d4d] pb-3.5 select-none">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] inline-block animate-ping" />
-                  {selectedSpec ? "📝 تعديل وتحرير كارت المواصفة الفنية المفتوحة" : "➕ تسجيل بند وتوصيف فني جديد للمقايسات"}
-                </h3>
-
-                <div className="space-y-6 text-base">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
-                    
-                    <div>
-                      <label className="block text-[#D4AF37] mb-2.5 font-bold flex items-center gap-1.5 select-none">التصنيف الإنشائي للبند *</label>
-                      <select
-                        value={sCategory}
-                        onChange={(e) => setSCategory(e.target.value)}
-                        className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] font-black px-3 outline-none cursor-pointer focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all text-base"
-                      >
-                        <option value="plaster">🧱 أعمال المحارة </option>
-                        <option value="ceiling">📐 الأسقف المعلقة والجبس بورد</option>
-                        <option value="doors">🚪 أعمال الأبواب والنجارة</option>
-                        <option value="aluminum">⚙️ الشبابيك والألوميتال</option>
-                        <option value="ac">❄️ أعمال التكييف والتمديدات</option>
-                        <option value="ventilation">🌀 أعمال التهوية والشفاطات</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[#D4AF37] mb-2.5 font-bold flex items-center gap-1.5 select-none">أيقونة الكارت الرمزية *</label>
-                      <select
-                        value={sIcon}
-                        onChange={(e) => setSIcon(e.target.value)}
-                        className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-3 outline-none cursor-pointer focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all text-base"
-                      >
-                        <option>📐</option>
-                        <option>🧱</option>
-                        <option>🎯</option>
-                        <option>🚪</option>
-                        <option>❄️</option>
-                        <option>⚙️</option>
-                        <option>📄</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[#D4AF37] mb-2.5 font-bold flex items-center gap-1.5 select-none">اسم المواصفة الرئيسي المعتمد *</label>
-                      <input
-                        type="text"
-                        placeholder="مثال: محارة بؤج وأوتار قياسية"
-                        value={sName || ""}
-                        onChange={(e) => setSName(e.target.value)}
-                        className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-4 text-base font-bold outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all placeholder-slate-600"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[#D4AF37] mb-2.5 font-bold flex items-center gap-1.5 select-none">سعر المتر الافتراضي للمصنعية *</label>
-                      <input
-                        type="number"
-                        placeholder="مثال: 80"
-                        value={sBaseRate || ""}
-                        onChange={(e) => setSBaseRate(e.target.value !== "" ? Number(e.target.value) : "")}
-                        className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-emerald-400 font-black px-4 outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all font-mono text-left text-base"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-[#D4AF37] mb-2.5 font-bold flex items-center gap-1.5 select-none">التوصيف الفني الإنشائي التفصيلي (للعميل) *</label>
-                    <textarea
-                      rows={4}
-                      placeholder="اكتب التوصيف الفني الكامل للبند، شامل جودة الخامات والتأسيس بدقة..."
-                      value={sDesc || ""}
-                      onChange={(e) => setSDesc(e.target.value)}
-                      className="w-full bg-[#020B1C] border border-[#1f2d4d] text-slate-100 p-4 rounded-xl outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all leading-relaxed placeholder-slate-500 text-base font-medium resize-none"
-                    />
-                  </div>
-
-                  <div className="bg-[#020B1C] p-5 rounded-2xl border border-dashed border-[#D4AF37]/30 space-y-3 select-none">
-                    <label className="block text-[#D4AF37] font-black text-sm md:text-base flex items-center gap-1.5 select-none">
-                      <span>📋</span> بنود وخطوات استلام المواصفة الفنية (كل بند في سطر مستقل) *
-                    </label>
-                    <textarea
-                      rows={5}
-                      placeholder="اكتب هنا خطوات استلام البند بالموقع لتوليد التكت التفاعلي بتبويبات الـ CRM...&#10;الخطوة الأولى: غسيل وتنظيف الحوائط كلياً.&#10;الخطوة الثانية: تثبيت سلك الشبك الفاصل..."
-                      value={sStepsText}
-                      onChange={(e) => setSStepsText(e.target.value)}
-                      className="w-full bg-[#07132a] border border-[#1f2d4d] text-slate-100 p-4 rounded-xl outline-none focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all font-sans text-sm md:text-base leading-relaxed placeholder-slate-600 font-medium resize-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap justify-end gap-4 pt-5 border-t border-[#1f2d4d]/60 select-none">
-                  
-                  <div className="relative group">
-                    <button
-                      onClick={clearForm}
-                      className="bg-transparent border-2 border-[#D4AF37]/80 text-[#D4AF37] px-6 py-3.5 rounded-full font-black text-sm cursor-pointer hover:bg-gradient-to-r hover:from-[#D4AF37] hover:to-[#F1E5C6] hover:text-[#020B1C] transition-all duration-300 flex items-center justify-center gap-2"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                      <span>تهيئة لجديد</span>
-                    </button>
-                    <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                      <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
-                        🔄 تفريغ حقول النموذج وتحضير استمارة الإضافة كـ (جديد)
-                        <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
-                      </div>
-                    </div>
-                  </div>
-
-                  {selectedSpec ? (
-                    <>
-                      <div className="relative group">
-                        <button
-                          onClick={handleUpdateSpec}
-                          disabled={saving}
-                          className="royal-gradient-btn text-black px-8 py-3.5 rounded-full font-black text-sm flex items-center justify-center gap-2"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                          <span>{saving ? "جاري الحفظ..." : "حفظ التعديلات الفنية"}</span>
-                        </button>
-                        <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                          <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
-                            💾 تحديث وحفظ التعديلات الطارئة على التوصيف الفني القياسي للبند بالسيرفر
-                            <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="relative group">
-                        <button
-                          onClick={handleDeleteSpec}
-                          disabled={saving}
-                          className="bg-red-950/40 border border-red-500/30 hover:bg-red-600 hover:text-white text-red-400 px-8 py-3.5 rounded-full font-black text-sm cursor-pointer transition-all duration-300 flex items-center justify-center gap-2"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                          <span>حذف المواصفة</span>
-                        </button>
-                        <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                          <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
-                            🚨 إزالة وحذف المواصفة الحالية نهائياً من سجل تفريد البنود للشركة
-                            <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="relative group">
-                      <button
-                        onClick={handleAddSpec}
-                        disabled={saving}
-                        className="royal-gradient-btn text-black px-8 py-3.5 rounded-full font-black text-sm flex items-center justify-center gap-2"
-                      >
-                        <CheckCircle className="w-4 h-4" />
-                        <span>{saving ? "جاري التسجيل..." : "تسجيل التوصيف الفني"}</span>
-                      </button>
-                      <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                        <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
-                          💾 إضافة وإدراج التوصيف الهندسي لبنود العقد والأكواد الفنية للاستلام بالسيرفر
-                          <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
             </div>
           )}
 
         </div>
+
       </section>
     </main>
   );

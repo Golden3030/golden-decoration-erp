@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
-import Sidebar from "@/components/layout/Sidebar";
-import Header from "@/components/layout/Header";
+import { useEffect, useState, useMemo } from 'react';
+import { useRouter } from "next/navigation"; 
+import Sidebar from "@/components/layout/Sidebar"; 
+import Header from "@/components/layout/Header"; 
+import { useCRM } from "@/components/CRM/context/CRMContext";
 import { supabase } from "@/lib/supabaseClient";
 import { isOnline, addToOfflineQueue } from "@/lib/offline-sync";
 import { 
@@ -29,7 +30,10 @@ import {
   Receipt,
   DollarSign,
   Trash2,
-  FileSignature
+  FileSignature,
+  Printer,
+  ChevronDown,
+  Loader2 
 } from "lucide-react";
 
 interface Customer {
@@ -78,18 +82,18 @@ interface Project {
 }
 
 const STAGES_METADATA = [
-  { id: 1, name: "أعمال الحفر والردم والخرسانات" },
-  { id: 2, name: "بناء الحوائط وأعمال الطوب" },
-  { id: 3, name: "تأسيس أعمال السباكة والصحي" },
-  { id: 4, name: "تأسيس أعمال الكهرباء والتمديد" },
-  { id: 5, name: "أعمال بياض المحارة والأسمنت" },
+  { id: 1, name: " التعديل المعمارى" },
+  { id: 2, name: "اعمال المبانى" },
+  { id: 3, name: "تأسيس أعمال السباكة" },
+  { id: 4, name: "تأسيس أعمال الكهرباء " },
+  { id: 5, name: "أعمال المحارة والمصيص" },
   { id: 6, name: "أعمال الجبس بورد والأسقف" },
-  { id: 7, name: "أعمال الأرضيات والسيراميك" },
+  { id: 7, name: "أعمال الأرضيات" },
   { id: 8, name: "تأسيس الدهانات والنقاشة" },
   { id: 9, name: "تركيب الأبواب والنجارة" },
   { id: 10, name: "تركيب الألوميتال والشبابيك" },
-  { id: 11, name: "التشطيبات النهائية للمخارج والأطقم" },
-  { id: 12, name: "أعمال النظافة والتسليم النهائي" }
+  { id: 11, name: "التشطيبات النهائية" },
+  { id: 12, name: " النظافة والتسليم النهائي" }
 ];
 
 export default function ProjectsPage() {
@@ -160,6 +164,83 @@ export default function ProjectsPage() {
     loadProjectsData();
   }, []);
 
+  // 🌟 محرك المزامنة الحيوية الذكية عند اختيار اسم العميل من المنسدلة لملء بياناته حياً من الحاسبة أو مشروعه المعتمد
+  useEffect(() => {
+    if (!pCustomerId) return;
+    
+    const handleCustomerChangeSync = async () => {
+      try {
+        const targetCustomer = customers.find(c => c.id === pCustomerId);
+        if (!targetCustomer) return;
+
+        // 1. الاستعلام السحابي إذا كان لديه مشروع نشط ومعتمد سابقاً
+        const { data: existingProj } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("customer_id", pCustomerId)
+          .maybeSingle();
+
+        if (existingProj) {
+          setPName(existingProj.project_name || "");
+          setPCode(existingProj.project_code || "");
+          setPLocation(existingProj.location || "");
+          setPUnitAddress(existingProj.unit_address || "");
+          setPUnitType(existingProj.unit_type || "شقة");
+          setPArea(existingProj.area || "");
+          setPFinishingLevel(existingProj.finishing_level || "متوسط (سوبر لوكس )");
+          setPProgress(existingProj.progress_percentage || 0);
+          setPUnitStatus(existingProj.unit_status || "معلق / قيد الانتظار");
+          setPDesignUrl(existingProj.design_embed_url || "");
+          setPContractValue(existingProj.contract_value !== null ? Number(existingProj.contract_value) : "");
+          setPStartDate(existingProj.start_date || "");
+          setPRooms(existingProj.rooms_count ?? 2);
+          setPBaths(existingProj.bathrooms_count ?? 1);
+          setPKitchens(existingProj.kitchens_count ?? 1);
+          setPBalconies(existingProj.balconies_count ?? 1);
+          setPReceptions(existingProj.receptions_count ?? 1);
+          setPLiving(existingProj.living_count ?? 1);
+          setPCorridors(existingProj.corridors_count || 0);
+          setPGardenExist(existingProj.garden_exist || false);
+          setPGardenArea(existingProj.garden_area || 0);
+          setPCAssignedEngineerId(existingProj.assigned_engineer_id || "");
+          return; // الخروج مبكراً لنجاح السحب
+        }
+
+        // 2. إذا لم يكن لديه مشروع، نقوم بسحب أمتاره الجوالة وحسابات الحاسبة من طلبات الإعلانات فورياً
+        if (targetCustomer.mobile) {
+          const { data: reqData } = await supabase
+            .from("customer_requests")
+            .select("area, region, finishing_level, estimatedMin")
+            .eq("phone", String(targetCustomer.mobile).trim())
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+          if (reqData && reqData.length > 0) {
+            const req = reqData[0];
+            setPName(`مشروع العميل ${targetCustomer.name}`);
+            setPLocation(req.region || "");
+            setPUnitAddress(req.region || "");
+            setPArea(Number(req.area || 0));
+            setPContractValue(Number(req.estimatedMin || 0));
+            
+            const level = String(req.finishing_level).trim();
+            if (level.includes("ألترا") || level.includes("فاخر")) {
+              setPFinishingLevel("فاخر (الترا لوكس)");
+            } else if (level.includes("سوبر")) {
+              setPFinishingLevel("متوسط (سوبر لوكس )");
+            } else {
+              setPFinishingLevel("اقتصادى (لوكس)");
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error syncing customer change details:", err);
+      }
+    };
+
+    handleCustomerChangeSync();
+  }, [pCustomerId, customers]);
+
   async function loadProjectsData() {
     setLoading(true);
     try {
@@ -206,7 +287,7 @@ export default function ProjectsPage() {
     }
   }
 
-  // حساب أوزان الأعمال ومطابقتها التراكمية (البروتوكول الثاني المطور)
+  // حساب أوزان الأعمال ومطابقتها التراكمية
   const normalizedStages = useMemo(() => {
     const activeStages = STAGES_METADATA.filter(s => !excludedStages.includes(s.id));
     const totalActiveWeight = activeStages.reduce((sum, s) => {
@@ -275,14 +356,14 @@ export default function ProjectsPage() {
     setPProgress(proj.progress_percentage || 0);
     setPUnitStatus(proj.unit_status || "معلق / قيد الانتظار");
     setPDesignUrl(proj.design_embed_url || "");
-    setPContractValue(proj.contract_value ? Number(proj.contract_value) : "");
+    setPContractValue(proj.contract_value !== null && proj.contract_value !== undefined ? Number(proj.contract_value) : "");
     
-    setPRooms(proj.rooms_count || 2);
-    setPBaths(proj.bathrooms_count || 1);
-    setPKitchens(proj.kitchens_count || 1);
-    setPBalconies(proj.balconies_count || 1);
-    setPReceptions(proj.receptions_count || 1);
-    setPLiving(proj.living_count || 1);
+    setPRooms(proj.rooms_count ?? 2);
+    setPBaths(proj.bathrooms_count ?? 1);
+    setPKitchens(proj.kitchens_count ?? 1);
+    setPBalconies(proj.balconies_count ?? 1);
+    setPReceptions(proj.receptions_count ?? 1);
+    setPLiving(proj.living_count ?? 1);
     
     setPCorridors(proj.corridors_count || 0);
     setPGardenExist(proj.garden_exist || false);
@@ -305,12 +386,12 @@ export default function ProjectsPage() {
       setExcludedStages([]);
     }
 
-    // شحن وجلب الأقساط المرتبطة بالمشروع حياً
     loadProjectInstallments(proj.id);
   }
 
   // إضافة دفعة مجدولة جديدة لقاعدة البيانات
-  async function handleAddInstallment() {
+  async function handleAddInstallment(e: React.MouseEvent) {
+    e.preventDefault(); // منع إعادة التحميل
     if (!selectedProject) return;
     if (!instMilestoneName || !instAmount) {
       alert("الرجاء ملء اسم الدفعة ومبلغ الاستحقاق لتسجيل القسط المجدول.");
@@ -335,7 +416,6 @@ export default function ProjectsPage() {
       alert("✅ تم إضافة وجدولة القسط المالي الجديد للمشروع بنجاح!");
       loadProjectInstallments(selectedProject.id);
 
-      // تصفية الحقول
       setInstMilestoneName("قسط إنشائي جاري بالموقع");
       setInstPercentage(15);
       setInstDueDate("");
@@ -368,7 +448,7 @@ export default function ProjectsPage() {
   }
 
   const isManager = ["admin", "owner", "manager", "sales_manager"].includes(userRole);
-  const canEditFullDetails = ["admin", "owner", "manager", "accounts"].includes(userRole);
+  const canEditFullDetails = ["admin", "owner", "manager", "accountant"].includes(userRole); 
   const canEditMilestones = ["admin", "owner", "manager", "engineer"].includes(userRole);
   const canEditTechnical = ["admin", "owner", "manager", "engineer", "procurement"].includes(userRole);
   const canChangeCustomer = ["admin", "owner", "manager"].includes(userRole);
@@ -387,19 +467,20 @@ export default function ProjectsPage() {
     return usersList.filter(u => String(u.role).toLowerCase() === "engineer");
   }, [usersList]);
 
+  // معالجة وحل ثغرة تعطل تجميد اسم السيلز المكتوب عبر ربط الاقتران بـ pCustomerId بدلاً من المعرّف القديم
   const currentSalesRepName = useMemo(() => {
-    if (!selectedProject) return "غير محدد";
-    const custId = selectedProject.customer_id;
+    const custId = pCustomerId; 
+    if (!custId) return "غير محدد";
     const targetCust = customers.find(c => c.id === custId);
     if (!targetCust || !targetCust.assigned_to) return "غير مسند لـ سيلز";
     const matchedRep = usersList.find(u => u.id === targetCust.assigned_to);
     return matchedRep ? matchedRep.name : "غير مسند لـ سيلز";
-  }, [selectedProject, customers, usersList]);
+  }, [pCustomerId, customers, usersList]); 
 
-  // ⌛ عداد ساعة رملية متوهجة تفاعلي للزمن المتبقي
+  // عداد ساعة رملية متوهجة تفاعلي للزمن المتبقي
   const remainingTimeBadge = useMemo(() => {
     if (!pFinalDate) return null;
-    const today = new Date("2026-07-09"); 
+    const today = new Date();
     const delivery = new Date(pFinalDate);
     const diffDays = Math.ceil((delivery.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 
@@ -407,14 +488,14 @@ export default function ProjectsPage() {
       return (
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-black text-xs shadow-lg shadow-emerald-500/5 animate-pulse">
           <Hourglass size={14} className="animate-spin text-emerald-400" />
-          <span>الوقت مستقر: متبقي {diffDays} يوم للتسليم النهائي</span>
+          <span>الوقت مستقر: متبقي {diffDays} يوم للتسليم</span>
         </div>
       );
     } else if (diffDays > 0) {
       return (
         <div className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#C9A45D]/10 border border-[#C9A45D]/30 text-[#C9A45D] font-black text-xs shadow-lg shadow-[#D4AF37]/5 animate-pulse">
           <Hourglass size={14} className="text-[#C9A45D]" />
-          <span>اقتراب الموعد: متبقي {diffDays} يوم فقط للتسليم</span>
+          <span>اقتراب الموعد: متبقي {diffDays} يوم فقط</span>
         </div>
       );
     } else {
@@ -427,7 +508,8 @@ export default function ProjectsPage() {
     }
   }, [pFinalDate]);
 
-  async function handleUpdateProject() {
+  async function handleUpdateProject(e: React.MouseEvent) {
+    e.preventDefault(); // منع إعادة التحميل
     if (!selectedProject) return;
     if (!pStartDate) {
       alert("⚠️ شروط تعاقدية إلزامية:\n\nيجب إدخال تاريخ بدء العمل الفعلي بالموقع لتسييل المخطط الزمني.");
@@ -503,6 +585,7 @@ export default function ProjectsPage() {
 
   const toggleExcludeStage = (e: React.MouseEvent, id: number) => {
     e.stopPropagation();
+    e.preventDefault(); // منع إعادة التحميل
     if (!canEditMilestones) {
       alert("🛑 محاولة مرفوضة: استبعاد بنود العقد من صلاحية المهندس المشرف أو الإدارة فقط.");
       return;
@@ -532,7 +615,11 @@ export default function ProjectsPage() {
           <p className="text-gray-300 text-sm leading-relaxed">
             عذراً عميلنا الكريم؛ هذه لوحة التحكم الداخلية والرقابية للمشاريع والمواقع الخاصة بمهندسي وموظفي شركة Golden Decoration.
           </p>
-          <button onClick={() => router.push("/")} className="mt-6 w-full bg-gradient-to-r from-[#D4AF37] to-[#F0E6D2] text-[#020B1C] font-black py-3 rounded-xl shadow-2xl">
+          <button 
+            type="button"
+            onClick={() => router.push("/")} 
+            className="mt-6 w-full bg-gradient-to-r from-[#D4AF37] to-[#F0E6D2] text-[#020B1C] font-black py-3 rounded-xl shadow-2xl cursor-pointer"
+          >
             العودة للرئيسية
           </button>
         </div>
@@ -541,11 +628,16 @@ export default function ProjectsPage() {
   }
 
   return (
-    // 🌟 حل المشكلة: إرجاع وسم التوجيه dir="rtl" إلى الـ main الرئيسي لضمان ثبات السايدبار الأيمن بالكامل وتكامل الشاشة كلياً
-    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden" dir="rtl">
+    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
+      
+      {/* هيدر الهيكل لمنع وميض وتأخر تحميل الخط البصري FOUT على شاشة المشاريع */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
       <Sidebar />
       
-      {/* 🛠️ جدار الحماية البصري الموحد لتثبيت تباين خط Alexandria المعتمد ولون الشاشات القاتم الكحلي */}
+      {/* 🛠️ جدار الحماية البصري الموحد وتعديل شريط التمرير المذهب للجريل والتفاصيل */}
       <style dangerouslySetInnerHTML={{ __html: `
         ::-webkit-scrollbar { width: 6px !important; height: 6px !important; }
         ::-webkit-scrollbar-track { background: #020B1C !important; }
@@ -559,52 +651,58 @@ export default function ProjectsPage() {
         }
         input[type="number"] { -moz-appearance: textfield !important; }
 
-        ::-webkit-scrollbar-horizontal,
-        .overflow-x-auto::-webkit-scrollbar { display: none !important; height: 0px !important; }
-        .overflow-x-auto { scrollbar-width: none !important; -ms-overflow-style: none !important; overflow-x: auto !important; }
+        .overflow-x-auto::-webkit-scrollbar {
+          display: block !important;
+          height: 6px !important;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+          background: #D4AF37 !important;
+          border-radius: 9999px !important;
+        }
 
         th, td, h1, h2, h3, h4, h5, h6, span, p, button, label, input, select, textarea {
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+          font-family: 'Alexandria', Arial, sans-serif !important;
+          letter-spacing: normal !important;
         }
 
         thead th, th {
-          font-size: 0.95rem !important;
+          font-size: 0.8rem !important;
           font-weight: 900 !important;
           color: #D4AF37 !important;
           text-align: right !important;
           border-bottom: 2px solid #1f2d4d !important;
-          background-color: #0b1d3d !important;
-          padding: 14px 16px !important;
+          background-color: #050914 !important;
+          padding: 12px 14px !important;
         }
 
         tbody td, td {
-          font-size: 0.85rem !important;
-          font-weight: 600 !important;
+          font-size: 0.75rem !important;
+          font-weight: 700 !important;
           color: #F0E6D2 !important;
           text-align: right !important;
-          border-bottom: 1px solid rgba(31, 45, 77, 0.4) !important;
-          padding: 14px 16px !important;
+          border-bottom: 1px solid rgba(212, 175, 55, 0.15) !important;
+          padding: 12px 14px !important;
         }
       `}} />
 
-      <section className="w-full lg:pr-56 min-h-screen flex flex-col">
+      <section className="flex-1 flex flex-col lg:pr-56 m-0">
         <Header />
         
-        <div className="p-4 md:p-8 space-y-6 text-right select-none font-sans">
+        <div className="p-4 md:p-8 space-y-6 text-right select-none">
           
           <div>
-            <h1 className="text-3xl md:text-4xl font-black text-[#D4AF37] flex items-center gap-2">
+            <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2.5">
               <span>إدارة ومتابعة مشاريع المواقع الإنشائية</span>
-              <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-ping" />
             </h1>
-            <p className="text-slate-400 text-xs mt-2 font-bold">مراقبة تواريخ التسليم التلقائية، حصر الغرف، وتحديث مرحلة التنفيذ الجارية ونسب الإنجاز التلقائية.</p>
+            <p className="text-white text-xs mt-2">مراقبة تواريخ التسليم التلقائية، حصر الغرف، وتحديث مرحلة التنفيذ الجارية ونسب الإنجاز التلقائية.</p>
           </div>
 
-          {/* جدول المشاريع */}
-          <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col w-full">
+          {/* 1. جدول المشاريع العلوي */}
+          <div className="bg-[#07132a] border border-[#D4AF37]/50 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col w-full">
             <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
             <div className="p-4 border-b border-[#243556] bg-[#0b1b3d]/60 flex flex-col sm:flex-row justify-between items-center gap-4 select-none">
-              <h3 className="text-[#D4AF37] font-black text-sm md:text-base">قائمة مشاريع التشطيب والعمل الجاري بالموقع ({filteredProjects.length})</h3>
+              <h3 className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5">قائمة مشاريع التشطيب والعمل الجاري بالموقع ({filteredProjects.length})</h3>
               
               <div className="relative w-full sm:w-72">
                 <input
@@ -618,19 +716,20 @@ export default function ProjectsPage() {
               </div>
             </div>
 
-            <div className="overflow-x-auto max-h-[220px] overflow-y-auto">
+            {/* إتاحة شريط التمرير المذهب بالجريل */}
+            <div className="overflow-x-auto max-h-[220px]">
               {loading ? (
-                <div className="p-12 text-center text-[#D4AF37] font-bold text-base animate-pulse">جاري سحب المشاريع من قاعدة البيانات...</div>
+                <div className="p-12 text-center text-[#D4AF37] text-base animate-pulse">جاري سحب المشاريع من قاعدة البيانات...</div>
               ) : filteredProjects.length > 0 ? (
-                <table className="w-full text-right table-auto">
+                <table className="w-full text-right table-auto min-w-[850px]">
                   <thead>
                     <tr className="whitespace-nowrap select-none">
-                      <th>كود الموقع</th>
+                      <th>كود المشروع</th>
                       <th>اسم المشروع</th>
                       <th>اسم العميل</th>
                       <th className="font-mono">المساحة م²</th>
                       <th>مستوى التشطيب</th>
-                      <th className="text-center">مكونات الشقة</th>
+                      <th className="text-center">مكونات الوحدة</th>
                       <th className="text-center">الحالة الإدارية</th>
                     </tr>
                   </thead>
@@ -644,8 +743,8 @@ export default function ProjectsPage() {
                         }`}
                       >
                         <td className="font-mono text-[#D4AF37] font-black text-xs md:text-sm">{p.project_code}</td>
-                        <td className="font-black text-slate-100">{p.project_name}</td>
-                        <td className="text-gray-200 font-bold">{p.customers?.name || "غير مححدد"}</td>
+                        <td className="font-black text-[#B48C34]">{p.project_name}</td>
+                        <td className="text-gray-200 font-bold">{p.customers?.name || "غير محدد"}</td>
                         <td className="font-mono text-white">{p.area} م²</td>
                         <td className="text-gray-200">{p.finishing_level}</td>
                         <td className="text-center text-xs text-gray-300">
@@ -666,401 +765,267 @@ export default function ProjectsPage() {
             </div>
           </div>
 
-          {/* نموذج التفاصيل والجدولة الفنية والمالية المشتركة */}
+          {/* مخرجات وهيكلة تفاصيل المشروع المختار */}
           {selectedProject && (
-            <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] p-6 space-y-6 animate-fade-in shadow-2xl relative w-full text-base">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+            <div className="space-y-6">
               
-              <h3 className="text-[#D4AF37] text-xl md:text-2xl font-black border-b border-[#243556] pb-3 flex items-center gap-2 select-none">
-                <Sparkles className="w-5 h-5 text-[#D4AF37] animate-pulse" />
-                <span>تفاصيل وبيانات موقع العمل المحدد والبنود الحالية</span>
-              </h3>
-
-              {/* عداد وتقدم الأعمال الإمبراطوري المحدث بالكامل */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 bg-[#020B1C]/50 p-6 rounded-3xl border border-[#1f2d4d] items-center">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch w-full text-xs md:text-sm">
                 
-                {/* النسبة المئوية الدائرية */}
-                <div className="flex flex-col items-center justify-center text-center space-y-2">
-                  <div className="relative w-32 h-32 flex items-center justify-center">
-                    <svg className="w-full h-full transform -rotate-90">
-                      <circle cx="64" cy="64" r="50" stroke="#1f2d4d" strokeWidth="8" fill="transparent" />
-                      <circle cx="64" cy="64" r="50" stroke="#D4AF37" strokeWidth="8" fill="transparent" 
-                        strokeDasharray={2 * Math.PI * 50}
-                        strokeDashoffset={2 * Math.PI * 50 - (pProgress / 100) * 2 * Math.PI * 50}
-                        strokeLinecap="round" className="transition-all duration-500 ease-out"
-                        style={{ filter: "drop-shadow(0 0 4px rgba(212, 175, 55, 0.4))" }}
-                      />
-                    </svg>
-                    <div className="absolute flex flex-col items-center">
-                      <span className="text-2xl font-black font-mono text-[#F0E6D2]">{pProgress}%</span>
-                      <span className="text-[10px] text-[#D4AF37] font-black uppercase">إنجاز الموقع</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="col-span-1 lg:col-span-2 text-right space-y-2.5">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 flex-wrap">
-                    <div>
-                      <span className="text-xs text-[#D4AF37] block font-black">المرحلة الإنشائية الجارية حالياً بالموقع (البند الحالي):</span>
-                      <span className="text-xl font-black text-[#F0E6D2] block mt-1">{currentExecutionStageLabel}</span>
-                    </div>
-                    {remainingTimeBadge}
-                  </div>
-                  <p className="text-gray-400 text-xs font-bold leading-normal">
-                    يتم احتساب أيام البنود النشطة الـ 12 تلقائياً وتمديد أو ضغط التواريخ بمجرد تفعيل/استبعاد البند وتحديد أيام التنفيذ الفعلية بالأسفل.
-                  </p>
-                </div>
-              </div>
-
-              {/* مدخلات البيانات الأساسية للشقة والموقع */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 font-semibold">
-                
-                <div>
-                  <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">كود المشروع *</label>
-                  <input type="text" value={pCode} disabled className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-gray-500 px-4 outline-none text-center font-mono font-bold text-sm" />
-                </div>
-
-                <div>
-                  <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">اسم المشروع *</label>
-                  <input type="text" value={pName} disabled={!canEditFullDetails} onChange={(e) => setPName(e.target.value)} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-4 text-sm outline-none font-bold focus:border-[#D4AF37]" />
-                </div>
-
-                <div>
-                  <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">عنوان المشروع بالتفصيل *</label>
-                  <input type="text" placeholder="الشارع، رقم العمارة، اسم الكمبوند بالتفصيل..." value={pUnitAddress} disabled={!canEditFullDetails} onChange={(e) => setPUnitAddress(e.target.value)} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-4 outline-none text-sm font-bold focus:border-[#D4AF37]" />
-                </div>
-
-                <div>
-                  <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">المنطقة الجغرافية / المدينة</label>
-                  <input type="text" placeholder="التجمع الخامس، الشيخ زايد، هليوبوليس..." value={pLocation} disabled={!canEditFullDetails} onChange={(e) => setPLocation(e.target.value)} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-4 outline-none text-sm font-bold focus:border-[#D4AF37]" />
-                </div>
-
-                <div>
-                  <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">اسم العميل المتعاقد *</label>
-                  <select value={pCustomerId} disabled={!canChangeCustomer} onChange={(e) => setPCustomerId(e.target.value)} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] px-4 font-black outline-none cursor-pointer focus:border-[#D4AF37]">
-                    <option value="">-- اختر العميل --</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">المهندس المشرف المشغل *</label>
-                    <select value={pAssignedEngineerId} disabled={!canEditTechnical} onChange={(e) => setPCAssignedEngineerId(e.target.value)} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] px-4 font-black outline-none cursor-pointer focus:border-[#D4AF37]">
-                      <option value="">-- إسناد لمهندس المشروعات --</option>
-                      {engineersList.map(eng => (
-                        <option key={eng.id} value={eng.id}>👷 {eng.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">مسؤول المبيعات المتابع (Sales)</label>
-                    <div className="w-full h-12 rounded-xl bg-[#020B1C]/50 border border-[#243556] text-gray-300 px-4 flex items-center font-bold text-xs">
-                      <User className="w-4 h-4 text-[#D4AF37] ml-2 shrink-0" />
-                      <span>{currentSalesRepName}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4 col-span-1 md:col-span-2">
-                  <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">تاريخ بدء العمل الفعلي *</label>
-                    <input type="date" required value={pStartDate} disabled={!canEditTechnical} onChange={(e) => setPStartDate(e.target.value)} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-[#F0E6D2] px-4 outline-none font-mono font-bold text-sm focus:border-[#D4AF37]" />
-                  </div>
-                  <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">تاريخ التسليم المبدئي (تلقائي)</label>
-                    <input type="date" disabled value={pProvisionalDate} className="w-full h-12 rounded-xl bg-[#020B1C]/40 border border-[#243556] text-amber-400 px-4 outline-none font-mono font-bold text-sm text-center animate-pulse" />
-                  </div>
-                  <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">تاريخ التسليم النهائي (المعتمد)</label>
-                    <input type="date" disabled value={pFinalDate} className="w-full h-12 rounded-xl bg-[#020B1C]/40 border border-[#243556] text-emerald-400 px-4 outline-none font-mono font-bold text-sm text-center animate-pulse" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">نوع الوحدة الإنشائية *</label>
-                    <select value={pUnitType} disabled={!canEditFullDetails} onChange={(e) => setPUnitType(e.target.value)} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none cursor-pointer font-bold focus:border-[#D4AF37]">
-                      <option>شقة</option>
-                      <option>فيلا</option>
-                      <option>دوبلكس</option>
-                      <option>محل تجاري</option>
-                      <option>مكتب إداري</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">المساحة الإجمالية (م²) *</label>
-                    <input type="number" value={pArea} disabled={!canEditFullDetails} onChange={(e) => setPArea(e.target.value !== "" ? Number(e.target.value) : "")} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-4 outline-none font-mono font-bold focus:border-[#D4AF37]" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">مستوى التشطيب المطلوب *</label>
-                    <select value={pFinishingLevel} disabled={!canEditFullDetails} onChange={(e) => setPFinishingLevel(e.target.value)} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] px-4 font-black outline-none cursor-pointer focus:border-[#D4AF37]">
-                      <option>اقتصادى (لوكس)</option>
-                      <option>متوسط (سوبر لوكس )</option>
-                      <option>فاخر (الترا لوكس)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">الحالة الإدارية للموقع *</label>
-                    <select value={pUnitStatus} disabled={!canEditFullDetails} onChange={(e) => setPUnitStatus(e.target.value)} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] font-bold px-3 text-sm outline-none cursor-pointer focus:border-[#D4AF37]">
-                      <option value="معلق / قيد الانتظار">معلق / قيد الانتظار</option>
-                      <option value="In_progress">نشط / جاري العمل بالموقع</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">نسبة الإنجاز الفعلي بالموقع (%)</label>
-                    <input type="number" min="0" max="100" value={pProgress} disabled={!canEditMilestones} onChange={(e) => setPProgress(Number(e.target.value))} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-4 outline-none font-mono font-bold focus:border-[#D4AF37] disabled:opacity-50" />
-                  </div>
-                  <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5 text-xs md:text-sm">رابط مجسم الـ 3D التفاعلي للمشروع</label>
-                    <input type="url" placeholder="https://sketchfab.com/models/..." value={pDesignUrl} disabled={!canEditTechnical} onChange={(e) => setPDesignUrl(e.target.value)} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-4 outline-none font-mono font-bold focus:border-[#D4AF37] disabled:opacity-50" />
-                  </div>
-                </div>
-
-                <div className="col-span-1 md:col-span-2">
-                  <label className="block text-[#D4AF37] mb-1.5 font-black text-xs md:text-sm">إجمالي القيمة المالية للعقد (ج.م)</label>
-                  <input type="number" placeholder="قيمة العقد الكلية" value={pContractValue} disabled={!canEditFullDetails} onChange={(e) => setPContractValue(e.target.value !== "" ? Number(e.target.value) : "")} className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-4 outline-none font-mono font-bold focus:border-[#D4AF37] disabled:opacity-50" />
-                </div>
-
-                {/* مديول الأوزان واعتماد وتعديل أيام البنود الـ 12 */}
-                <div className="col-span-1 md:col-span-2 bg-[#020B1C] p-6 rounded-2xl border border-dashed border-[#D4AF37]/50 space-y-4">
-                  <p className="text-[#D4AF37] font-black text-base flex items-center gap-2 select-none">
-                    <Cpu className="w-5 h-5 text-[#D4AF37] animate-pulse" />
-                    <span>تحديث واعتماد المراحل الإنشائية وأيام التنفيذ:</span>
-                  </p>
+                {/* العمود الأول (يمين): كارت حقول مدخلات مواصفات الوحدة والمشروع المالي والتواريخ */}
+                <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 shadow-2xl relative flex flex-col justify-between space-y-4">
                   
-                  <p className="text-gray-400 text-xs leading-relaxed font-bold">
-                    حدد أيام التنفيذ الفعلية تحت كل بند، أو انقر على رمز العين <span className="text-[#D4AF37]">استبعاد البند</span> لحذفه حركياً وتصفير أيامه وتعديل ميعاد التسليم المبدئي حياً:
-                  </p>
+                  <div className="space-y-4">
+                    <h3 className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5 border-b border-[#D4AF37] pb-3 flex items-center gap-2 select-none">
+                      <Home className="w-5 h-5" />
+                      <span>المواصفات والمدخلات الفنية للمشروع</span>
+                    </h3>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {normalizedStages.map((stage) => {
-                      const isCompleted = pProgress >= stage.cumulative && !stage.isExcluded;
-                      const isExcluded = !!stage.isExcluded;
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">كود المشروع *</label>
+                        <input type="text" value={pCode} disabled className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-gray-500 px-3 outline-none text-center font-mono font-bold text-xs" />
+                      </div>
 
-                      return (
-                        <div
-                          key={stage.id}
-                          onClick={() => {
-                            if (!isExcluded) toggleStageStatus(stage.cumulative);
-                          }}
-                          className={`p-3.5 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between group ${
-                            isExcluded
-                              ? "border-rose-950/40 bg-rose-950/5 opacity-50 line-through decoration-rose-500/50"
-                              : isCompleted
-                              ? "border-[#D4AF37] bg-gradient-to-br from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_12px_rgba(212,175,55,0.15)]"
-                              : "border-[#1f2d4d] bg-[#020B1C]/50 hover:border-[#D4AF37]/35"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between w-full">
-                            <div className="flex flex-col text-right">
-                              <span className={`text-xs font-black transition-colors duration-200 ${isExcluded ? "text-gray-500" : isCompleted ? "text-[#D4AF37]" : "text-white group-hover:text-[#F0E6D2]"}`}>
-                                {stage.name}
-                              </span>
-                              <span className="text-[9px] text-gray-400 mt-1 font-mono">
-                                الوزن المطور: {isExcluded ? "0" : `${Math.round(stage.adjustedWeight)}%`} (تراكمي {stage.cumulative}%)
-                              </span>
-                            </div>
+                      <div>
+                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">اسم المشروع *</label>
+                        <input type="text" value={pName} disabled={!canEditFullDetails} onChange={(e) => setPName(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-xs" />
+                      </div>
 
-                            <div className="flex items-center gap-1.5 select-none" onClick={e => e.stopPropagation()}>
-                              <button
-                                type="button"
-                                disabled={!canEditMilestones}
-                                onClick={(e) => toggleExcludeStage(e, stage.id)}
-                                className="p-1 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-gray-400 hover:text-rose-500 transition-colors disabled:opacity-40"
-                                title="استبعاد هذا البند"
-                              >
-                                {isExcluded ? <Eye className="w-3 h-3 text-rose-500" /> : <EyeOff className="w-3 h-3" />}
-                              </button>
+                      <div className="col-span-2">
+                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">عنوان المشروع بالتفصيل *</label>
+                        <input type="text" placeholder="الشارع، رقم العمارة، اسم الكمبوند بالتفصيل..." value={pUnitAddress} disabled={!canEditFullDetails} onChange={(e) => setPUnitAddress(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-xs" />
+                      </div>
 
-                              <div className={`w-4 h-4 rounded-md flex items-center justify-center border transition-all duration-300 ${
-                                isCompleted ? "bg-[#D4AF37] border-[#D4AF37] text-black" : "border-[#243556]"
-                              }`}>
-                                {isCompleted && <Check className="w-3 h-3 stroke-[4]" />}
-                              </div>
-                            </div>
+                      <div>
+                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">المنطقة الجغرافية / المدينة</label>
+                        <input type="text" placeholder="التجمع الخامس، الشيخ زايد، هليوبوليس..." value={pLocation} disabled={!canEditFullDetails} onChange={(e) => setPLocation(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-xs" />
+                      </div>
+
+                      <div>
+                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">اسم العميل المتعاقد *</label>
+                        <select value={pCustomerId} disabled={!canChangeCustomer} onChange={(e) => setPCustomerId(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-base">
+                          <option value="">-- اختر العميل --</option>
+                          {customers.map((c) => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 col-span-2">
+                        <div>
+                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">المهندس المشرف *</label>
+                          <select value={pAssignedEngineerId} disabled={!canEditTechnical} onChange={(e) => setPCAssignedEngineerId(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-sm">
+                            <option value="">-- إسناد لمهندس المشروعات --</option>
+                            {engineersList.map(eng => (
+                              <option key={eng.id} value={eng.id}>👷 {eng.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">مسؤول المبيعات (Sales)</label>
+                          <div className="w-full h-11 rounded-xl bg-[#020B1C]/50 border border-[#243556] text-gray-300 px-3 flex items-center text-xs">
+                            <User className="w-3.5 h-3.5 text-[#D4AF37] ml-1.5 shrink-0" />
+                            <span className="truncate">{currentSalesRepName}</span>
                           </div>
-
-                          {/* عداد مدة البند تحت كل مرحلة ليتوافق تماماً مع كبسولة التصميم الفاخرة الواردة بالصورة */}
-                          {!isExcluded && (
-                            <div className="mt-3 pt-2 border-t border-[#1f2d4d]/50 flex items-center justify-between gap-2" onClick={e => e.stopPropagation()}>
-                              <span className="text-[10px] text-slate-400 font-bold">المدة المتوقعة:</span>
-                              
-                              <div className="flex items-center gap-1 bg-[#020B1C] border border-[#1f2d4d] rounded-lg p-0.5 select-none h-8" dir="ltr">
-                                <button
-                                  type="button"
-                                  disabled={!canEditMilestones}
-                                  onClick={() => handleStageDurationChange(stage.id, stage.duration - 1)}
-                                  className="w-6 h-6 rounded bg-[#ff2a3a] hover:bg-red-700 active:scale-95 text-white font-black text-sm flex items-center justify-center cursor-pointer transition disabled:opacity-40 shadow-[0_0_4px_rgba(255,42,58,0.2)]"
-                                >
-                                  -
-                                </button>
-                                <span className="w-6 text-center text-[#D4AF37] font-mono font-black text-xs">
-                                  {stage.duration}
-                                </span>
-                                <button
-                                  type="button"
-                                  disabled={!canEditMilestones}
-                                  onClick={() => handleStageDurationChange(stage.id, stage.duration + 1)}
-                                  className="w-6 h-6 rounded border border-[#1f2d4d] bg-[#020B1C]/50 hover:border-[#D4AF37] hover:text-[#D4AF37] active:scale-95 text-white font-bold text-xs flex items-center justify-center cursor-pointer transition disabled:opacity-40"
-                                >
-                                  +
-                                </button>
-                                <span className="text-[8px] text-gray-500 font-bold px-1 select-none">يوم</span>
-                              </div>
-                            </div>
-                          )}
                         </div>
-                      );
-                    })}
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-3 col-span-2">
+                        <div>
+                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">تاريخ بدء العمل *</label>
+                          <input type="date" required value={pStartDate} disabled={!canEditTechnical} onChange={(e) => setPStartDate(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#F0E6D2] px-2 outline-none font-mono font-bold text-xs focus:border-[#D4AF37]" />
+                        </div>
+                        <div>
+                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">التسليم المبدئي (تلقائي)</label>
+                          <input type="date" disabled value={pProvisionalDate} className="w-full h-11 rounded-xl bg-[#020B1C]/40 border border-[#243556] text-amber-400 px-2 outline-none font-mono font-bold text-xs text-center animate-pulse" />
+                        </div>
+                        <div>
+                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">التسليم النهائي (المعتمد)</label>
+                          <input type="date" disabled value={pFinalDate} className="w-full h-11 rounded-xl bg-[#020B1C]/40 border border-[#243556] text-emerald-400 px-2 outline-none font-mono font-bold text-xs text-center animate-pulse" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 col-span-2">
+                        <div>
+                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">نوع الوحدة الإنشائية *</label>
+                          <select value={pUnitType} disabled={!canEditFullDetails} onChange={(e) => setPUnitType(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-xs">
+                            <option>شقة</option>
+                            <option>فيلا</option>
+                            <option>دوبلكس</option>
+                            <option>محل تجاري</option>
+                            <option>مكتب إداري</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">المساحة الإجمالية (م²) *</label>
+                          <input type="number" value={pArea} disabled={!canEditFullDetails} onChange={(e) => setPArea(e.target.value !== "" ? Number(e.target.value) : "")} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono focus:border-[#D4AF37] text-xs" />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 col-span-2">
+                        <div>
+                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">مستوى التشطيب المطلوب *</label>
+                          <select value={pFinishingLevel} disabled={!canEditFullDetails} onChange={(e) => setPFinishingLevel(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] px-3 font-black outline-none cursor-pointer focus:border-[#D4AF37] text-xs">
+                            <option>اقتصادى (لوكس)</option>
+                            <option>متوسط (سوبر لوكس )</option>
+                            <option>فاخر (الترا لوكس)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">الحالة الإدارية للموقع *</label>
+                          <select value={pUnitStatus} disabled={!canEditFullDetails} onChange={(e) => setPUnitStatus(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] font-bold px-3 text-xs outline-none cursor-pointer focus:border-[#D4AF37]">
+                            <option value="معلق / قيد الانتظار">معلق / قيد الانتظار</option>
+                            <option value="In_progress">نشط / جاري العمل بالموقع</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 col-span-2">
+                        <div>
+                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">نسبة الإنجاز الفعلي بالموقع (%)</label>
+                          <input type="number" min="0" max="100" value={pProgress} disabled={!canEditMilestones} onChange={(e) => setPProgress(Number(e.target.value))} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono font-bold focus:border-[#D4AF37] disabled:opacity-50 text-xs" />
+                        </div>
+                        <div>
+                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">رابط مجسم الـ 3D التفاعلي للمشروع</label>
+                          <input type="url" placeholder="https://sketchfab.com/models/..." value={pDesignUrl} disabled={!canEditTechnical} onChange={(e) => setPDesignUrl(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono focus:border-[#D4AF37] disabled:opacity-50 text-xs" />
+                        </div>
+                      </div>
+
+                      <div className="col-span-2">
+                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">إجمالي القيمة المالية للعقد (ج.م)</label>
+                        <input type="number" placeholder="قيمة العقد الكلية" value={pContractValue} disabled={!canEditFullDetails} onChange={(e) => setPContractValue(e.target.value !== "" ? Number(e.target.value) : "")} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono font-bold focus:border-[#D4AF37] disabled:opacity-50 text-xs" />
+                      </div>
+                    </div>
                   </div>
+
+                  {/* زر حفظ المشروع الفاخر والمحصن تماماً */}
+                  <div className="pt-4 border-t border-[#D4AF37]/20 flex justify-end select-none">
+                    <button
+                      type="button" 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleUpdateProject(e); }} // 👈 تم تفعيل الحصانة البرمجية للاعراض المباشر
+                      disabled={saving}
+                      className="px-6 py-3 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-sm flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
+                    >
+                      {saving ? <Loader2 className="animate-spin w-3.5 h-3.5" /> : "💾 حفظ التعديلات الإدارية للمشروع"}
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                    </button>
+                  </div>
+
                 </div>
 
-                {/* 📐 تفاصيل ومكونات الشقة الميدانية مضافاً إليها الطرقات والحديقة تفاعلياً */}
-                <div className="col-span-1 md:col-span-2 bg-[#020B1C] p-6 rounded-3xl border border-dashed border-[#D4AF37]/50 space-y-6">
-                  <p className="text-[#D4AF37] font-black text-base border-b border-[#243556] pb-3 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-[#D4AF37] animate-pulse" />
-                    📐 تفاصيل وتوزيع مكونات الشقة الميدانية لحاسبة الكميات:
-                  </p>
+                {/* العمود الثاني (يسار): تجميع ودمج "عداد النسبة المئوية" و "حصر الغرف الفاخر h-11" و "الأقساط والدفعات" */}
+                <div className="flex flex-col justify-between space-y-6">
                   
-                  {/* العدادات الميدانية المعاد تصميمها بالكامل لتصبح مدمجة وغاية في الرشاقة والاتساق البصري h-11 مع ماوس يد للأزرار */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 text-right select-none">
-                    
-                    {/* 1. عدد الغرف */}
-                    <div className="bg-[#07132a] border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
-                      <span className="text-[#F0E6D2] font-bold text-xs">عدد الغرف:</span>
-                      <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPRooms(prev => Math.max(0, prev - 1))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
-                        <span className="w-6 text-center text-[#D4AF37] font-mono font-black text-xs">{pRooms}</span>
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPRooms(prev => prev + 1)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
-                        <span className="text-[8px] text-gray-500 font-bold px-1 select-none">غ</span>
-                      </div>
-                    </div>
-
-                    {/* 2. قطع ريسبشن */}
-                    <div className="bg-[#07132a] border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
-                      <span className="text-[#F0E6D2] font-bold text-xs">قطع ريسبشن:</span>
-                      <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPReceptions(prev => Math.max(0, prev - 1))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
-                        <span className="w-6 text-center text-[#D4AF37] font-mono font-black text-xs">{pReceptions}</span>
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPReceptions(prev => prev + 1)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
-                        <span className="text-[8px] text-gray-500 font-bold px-1 select-none">ر</span>
-                      </div>
-                    </div>
-
-                    {/* 3. عدد الحمامات */}
-                    <div className="bg-[#07132a] border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
-                      <span className="text-[#F0E6D2] font-bold text-xs">الحمامات:</span>
-                      <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPBaths(prev => Math.max(0, prev - 1))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
-                        <span className="w-6 text-center text-[#D4AF37] font-mono font-black text-xs">{pBaths}</span>
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPBaths(prev => prev + 1)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
-                        <span className="text-[8px] text-gray-500 font-bold px-1 select-none">ح</span>
-                      </div>
-                    </div>
-
-                    {/* 4. عدد المطابخ */}
-                    <div className="bg-[#07132a] border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
-                      <span className="text-[#F0E6D2] font-bold text-xs">عدد المطابخ:</span>
-                      <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPKitchens(prev => Math.max(0, prev - 1))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
-                        <span className="w-6 text-center text-[#D4AF37] font-mono font-black text-xs">{pKitchens}</span>
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPKitchens(prev => prev + 1)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
-                        <span className="text-[8px] text-gray-500 font-bold px-1 select-none">م</span>
-                      </div>
-                    </div>
-
-                    {/* 5. عدد البلكونات */}
-                    <div className="bg-[#07132a] border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
-                      <span className="text-[#F0E6D2] font-bold text-xs">البلكونات:</span>
-                      <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPBalconies(prev => Math.max(0, prev - 1))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
-                        <span className="w-6 text-center text-[#D4AF37] font-mono font-black text-xs">{pBalconies}</span>
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPBalconies(prev => prev + 1)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
-                        <span className="text-[8px] text-gray-500 font-bold px-1 select-none">ب</span>
-                      </div>
-                    </div>
-
-                    {/* 6. قطع ليفينج */}
-                    <div className="bg-[#07132a] border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
-                      <span className="text-[#F0E6D2] font-bold text-xs">قطع Living:</span>
-                      <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPLiving(prev => Math.max(0, prev - 1))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
-                        <span className="w-6 text-center text-[#D4AF37] font-mono font-black text-xs">{pLiving}</span>
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPLiving(prev => prev + 1)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
-                        <span className="text-[8px] text-gray-500 font-bold px-1 select-none">L</span>
-                      </div>
-                    </div>
-
-                    {/* 7. طرقات وممرات */}
-                    <div className="bg-[#07132a] border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
-                      <span className="text-[#F0E6D2] font-bold text-xs">طرقات وممرات:</span>
-                      <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPCorridors(prev => Math.max(0, prev - 1))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
-                        <span className="w-6 text-center text-[#D4AF37] font-mono font-black text-xs">{pCorridors}</span>
-                        <button type="button" disabled={!canEditFullDetails} onClick={() => setPCorridors(prev => prev + 1)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
-                        <span className="text-[8px] text-gray-500 font-bold px-1 select-none">ط</span>
-                      </div>
-                    </div>
-
-                    {/* 8. حديقة خاصة لاندسكيب */}
-                    <div className="bg-[#07132a] border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[#F0E6D2] font-bold text-xs">حديقة خاصة؟</span>
-                        <input 
-                          type="checkbox"
-                          checked={pGardenExist}
-                          disabled={!canEditFullDetails}
-                          onChange={(e) => setPGardenExist(e.target.checked)}
-                          className="w-4 h-4 cursor-pointer accent-[#D4AF37] shrink-0"
+                  {/* كابينة الإنجاز والساعة الرملية */}
+                  <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-5 flex flex-col items-center justify-center text-center space-y-3 relative overflow-hidden">
+                    <div className="relative w-28 h-28 flex items-center justify-center select-none">
+                      <svg className="w-full h-full transform -rotate-90">
+                        <circle cx="56" cy="56" r="44" stroke="#1f2d4d" strokeWidth="6" fill="transparent" />
+                        <circle cx="56" cy="56" r="44" stroke="#D4AF37" strokeWidth="6" fill="transparent" 
+                          strokeDasharray={2 * Math.PI * 44}
+                          strokeDashoffset={2 * Math.PI * 44 - (pProgress / 100) * 2 * Math.PI * 44}
+                          strokeLinecap="round" className="transition-all duration-500 ease-out"
+                          style={{ filter: "drop-shadow(0 0 4px rgba(212, 175, 55, 0.4))" }}
                         />
+                      </svg>
+                      <div className="absolute flex flex-col items-center">
+                        <span className="text-xl font-black font-mono text-[#F0E6D2]">{pProgress}%</span>
+                        <span className="text-[9px] text-[#D4AF37] font-black uppercase">إنجاز الموقع</span>
                       </div>
-                      
-                      {pGardenExist && (
-                        <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
-                          <button
-                            type="button"
-                            disabled={!canEditFullDetails}
-                            onClick={() => setPGardenArea(prev => Math.max(0, prev - 1))}
-                            className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
-                          >
-                            <Minus size={12} className="stroke-[3]" />
-                          </button>
-                          <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[20px] text-center">{pGardenArea}</span>
-                          <button
-                            type="button"
-                            disabled={!canEditFullDetails}
-                            onClick={() => setPGardenArea(prev => prev + 1)}
-                            className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
-                          >
-                            <Plus size={12} className="stroke-[3]" />
-                          </button>
-                          <span className="text-[8px] text-gray-500 font-bold">م²</span>
-                        </div>
-                      )}
+                    </div>
+                    
+                    <div className="text-center">
+                      <span className="text-[9px] text-gray-200 block font-bold mb-1">المرحلة الجارية ميدانياً:</span>
+                      <span className="text-base font-black text-[#D4AF37] block leading-none">{currentExecutionStageLabel}</span>
                     </div>
 
+                    <div className="w-full flex justify-center pt-1">{remainingTimeBadge}</div>
                   </div>
+
+                  {/* كارت حصر الغرف الفاخر h-11 */}
+                  <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-5 space-y-4 shadow-xl">
+                    <p className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5 border-b border-[#D4AF37]">
+                      <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                      <span>حصر وتوزيع أعداد الغرف والمكونات الميدانية للوحدة:</span>
+                    </p>
+
+                    <div className="grid grid-cols-2 gap-2 text-right select-none">
+                      
+                      {/* الغرف */}
+                      <div className="bg-[#020B1C]/50 border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
+                        <span className="text-[#F0E6D2] font-bold text-[11px]">عدد الغرف:</span>
+                        <div className="flex items-center gap-1 bg-[#020B1C] border border-[#1f2d4d] rounded-lg px-1.5 h-8" dir="ltr">
+                          <button type="button" disabled={!canEditFullDetails} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPRooms(prev => Math.max(0, prev - 1)); }} className="w-5 h-5 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
+                          <span className="w-5 text-center text-[#D4AF37] font-mono font-black text-xs">{pRooms}</span>
+                          <button type="button" disabled={!canEditFullDetails} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPRooms(prev => prev + 1); }} className="w-5 h-5 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
+                        </div>
+                      </div>
+
+                      {/* ريسبشن */}
+                      <div className="bg-[#020B1C]/50 border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
+                        <span className="text-[#F0E6D2] font-bold text-[11px]">الريسبشن:</span>
+                        <div className="flex items-center gap-1 bg-[#020B1C] border border-[#1f2d4d] rounded-lg px-1.5 h-8" dir="ltr">
+                          <button type="button" disabled={!canEditFullDetails} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPReceptions(prev => Math.max(0, prev - 1)); }} className="w-5 h-5 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
+                          <span className="w-5 text-center text-[#D4AF37] font-mono font-black text-xs">{pReceptions}</span>
+                          <button type="button" disabled={!canEditFullDetails} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPReceptions(prev => prev + 1); }} className="w-5 h-5 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
+                        </div>
+                      </div>
+
+                      {/* حمامات */}
+                      <div className="bg-[#020B1C]/50 border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
+                        <span className="text-[#F0E6D2] font-bold text-[11px]">الحمامات:</span>
+                        <div className="flex items-center gap-1 bg-[#020B1C] border border-[#1f2d4d] rounded-lg px-1.5 h-8" dir="ltr">
+                          <button type="button" disabled={!canEditFullDetails} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPBaths(prev => Math.max(0, prev - 1)); }} className="w-5 h-5 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
+                          <span className="w-5 text-center text-[#D4AF37] font-mono font-black text-xs">{pBaths}</span>
+                          <button type="button" disabled={!canEditFullDetails} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPBaths(prev => prev + 1); }} className="w-5 h-5 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
+                        </div>
+                      </div>
+
+                      {/* مطابخ */}
+                      <div className="bg-[#020B1C]/50 border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
+                        <span className="text-[#F0E6D2] font-bold text-[11px]">المطابخ:</span>
+                        <div className="flex items-center gap-1 bg-[#020B1C] border border-[#1f2d4d] rounded-lg px-1.5 h-8" dir="ltr">
+                          <button type="button" disabled={!canEditFullDetails} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPKitchens(prev => Math.max(0, prev - 1)); }} className="w-5 h-5 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
+                          <span className="w-5 text-center text-[#D4AF37] font-mono font-black text-xs">{pKitchens}</span>
+                          <button type="button" disabled={!canEditFullDetails} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPKitchens(prev => prev + 1); }} className="w-5 h-5 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
+                        </div>
+                      </div>
+
+                      {/* بلكونات */}
+                      <div className="bg-[#020B1C]/50 border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
+                        <span className="text-[#F0E6D2] font-bold text-[11px]">البلكونات:</span>
+                        <div className="flex items-center gap-1 bg-[#020B1C] border border-[#1f2d4d] rounded-lg px-1.5 h-8" dir="ltr">
+                          <button type="button" disabled={!canEditFullDetails} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPBalconies(prev => Math.max(0, prev - 1)); }} className="w-5 h-5 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
+                          <span className="w-5 text-center text-[#D4AF37] font-mono font-black text-xs">{pBalconies}</span>
+                          <button type="button" disabled={!canEditFullDetails} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPBalconies(prev => prev + 1); }} className="w-5 h-5 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
+                        </div>
+                      </div>
+
+                      {/* ليفنج */}
+                      <div className="bg-[#020B1C]/50 border border-[#1f2d4d]/60 rounded-xl p-2.5 flex items-center justify-between h-11 hover:border-[#D4AF37]/20 transition-all select-none">
+                        <span className="text-[#F0E6D2] font-bold text-[11px]">Living:</span>
+                        <div className="flex items-center gap-1 bg-[#020B1C] border border-[#1f2d4d] rounded-lg px-1.5 h-8" dir="ltr">
+                          <button type="button" disabled={!canEditFullDetails} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPLiving(prev => Math.max(0, prev - 1)); }} className="w-5 h-5 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 select-none">-</button>
+                          <span className="w-5 text-center text-[#D4AF37] font-mono font-black text-xs">{pLiving}</span>
+                          <button type="button" disabled={!canEditFullDetails} onClick={(e) => { e.preventDefault(); e.stopPropagation(); setPLiving(prev => prev + 1); }} className="w-5 h-5 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90">+</button>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
                 </div>
 
               </div>
 
-              {/* مديول موازنة وجدولة الأقساط والدفعات المالية المخططة للعميل (Project Payments Plan Card) */}
-              <div className="col-span-1 md:col-span-2 bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] p-6 space-y-6 shadow-2xl relative overflow-hidden">
+              {/* خطة وجدولة الأقساط والدفعات المالية */}
+              <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 space-y-4 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
                 
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#243556] pb-3 select-none">
-                  <h3 className="text-[#D4AF37] font-black text-base md:text-lg flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-[#D4AF37] pb-3 select-none">
+                  <h3 className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5">
                     <Receipt className="w-5 h-5" />
-                    <span>خطة وجدولة الدفعات والأقساط المالية المتعاقد عليها (المقاصة التلقائية)</span>
+                    <span>خطة وجدولة الدفعات والأقساط المالية المتعاقد عليها </span>
                   </h3>
                   <span className="text-[10px] bg-[#020B1C] border border-[#1f2d4d] text-emerald-400 px-3 py-1 rounded-full font-bold">
                     إجمالي العقد: {Number(pContractValue || 0).toLocaleString()} ج.م
@@ -1069,48 +1034,47 @@ export default function ProjectsPage() {
 
                 {/* كشف الدفعات المجدولة حالياً */}
                 <div className="overflow-x-auto w-full">
-                  <table className="w-full text-right text-xs">
+                  <table className="w-full text-center text-xs">
                     <thead>
-                      <tr className="bg-[#0b1d3d] text-[#D4AF37] font-black select-none">
-                        <th className="p-3">اسم قسط الدفعة</th>
-                        <th className="p-3">المرحلة الإنشائية المرتبطة بها</th>
+                      <tr className="bg-[#0b1d3d] text-[#D4AF37] select-none">
+                        <th className="p-3">اسم الدفعة</th>
+                        <th className="p-3">المرحلة الإنشائية</th>
                         <th className="p-3">النسبة من العقد %</th>
                         <th className="p-3">القيمة المستحقة (ج.م)</th>
-                        <th className="p-3">تاريخ استحقاقها المخطط</th>
+                        <th className="p-3 text-center">تاريخ استحقاقها</th>
                         <th className="p-3 text-center">حالة السداد</th>
                         <th className="p-3 text-center">الإجراء</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#1f2d4d]/60">
                       {projectInstallments.map((inst) => {
-                        const matchedStageName = STAGES_METADATA.find(s => s.id === inst.linked_stage_id)?.name || "تأسيس / عام للشركة";
+                        const matchedStageName = STAGES_METADATA.find(s => s.id === inst.linked_stage_id)?.name || "تأسيس / عام ";
                         
-                        // احتساب حالة الاستحقاق التلقائي (Overdue) بناءً على تقدم بند الموقع الفعلي
                         const linkedStage = normalizedStages.find(s => s.id === inst.linked_stage_id);
                         const isOverdue = linkedStage && pProgress >= linkedStage.cumulative && inst.status === "pending";
                         
                         return (
-                          <tr key={inst.id} className="hover:bg-[#020B1C]/50 transition-all text-white font-bold">
-                            <td className="p-3 font-black text-slate-100">{inst.milestone_name}</td>
+                          <tr key={inst.id} className="hover:bg-[#020B1C]/50 transition-all text-white">
+                            <td className="p-3 text-slate-100">{inst.milestone_name}</td>
                             <td className="p-3 text-[#D4AF37] font-medium">{matchedStageName}</td>
                             <td className="p-3 font-mono text-[#D4AF37]">{inst.percentage}%</td>
-                            <td className="p-3 font-mono text-emerald-400 font-black">{Number(inst.amount).toLocaleString()} ج.م</td>
+                            <td className="p-3 font-mono text-emerald-400">{Number(inst.amount).toLocaleString()} ج.م</td>
                             <td className="p-3 font-mono text-slate-400 text-xs">{inst.due_date || "معلق بتقدم التنفيذ"}</td>
                             <td className="p-3 text-center">
                               {inst.status === "paid" ? (
-                                <span className="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-black">تم السداد والمقاصة ✓</span>
+                                <span className="px-2.5 py-1 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px]">تم السداد والمقاصة ✓</span>
                               ) : isOverdue ? (
-                                <span className="px-2.5 py-1 rounded bg-red-500/10 text-rose-400 border border-red-500/20 text-[10px] font-black animate-pulse">مستحقة للدفع فوراً 🚨</span>
+                                <span className="px-2.5 py-1 rounded bg-red-500/10 text-rose-400 border border-red-500/20 text-[10px] animate-pulse">مستحقة للدفع فوراً 🚨</span>
                               ) : (
-                                <span className="px-2.5 py-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[10px] font-black">انتظار تقدم الموقع</span>
+                                <span className="px-2.5 py-1 rounded bg-amber-500/10 text-center text-amber-400 border border-amber-500/20 text-[10px]">انتظار تقدم الموقع</span>
                               )}
                             </td>
                             <td className="p-3 text-center" onClick={e => e.stopPropagation()}>
                               <button 
                                 type="button"
                                 disabled={inst.status === "paid"}
-                                onClick={() => handleDeleteInstallment(inst.id)}
-                                className="p-1.5 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-gray-500 hover:text-rose-500 transition-all disabled:opacity-40"
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDeleteInstallment(inst.id); }} // 👈 حظر السلوك الافتراضي للمتصفح لمنع الريفريش نهائياً
+                                className="p-1.5 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-gray-500 hover:text-rose-500 transition-all disabled:opacity-40 cursor-pointer"
                               >
                                 <Trash2 className="w-5 h-5" />
                               </button>
@@ -1131,12 +1095,12 @@ export default function ProjectsPage() {
 
                 {/* نموذج توليد وإضافة قسط جديد لـ المشروع المختار */}
                 {canEditFullDetails && (
-                  <div className="p-4 bg-[#020B1C]/50 border border-[#1f2d4d] rounded-2xl space-y-4">
-                    <span className="text-slate-300 text-xs font-black block">➕ أضف وجدول دفعة استحقاق جديدة لعقد العميل:</span>
+                  <div className="p-4 bg-[#020B1C]/50 border border-[#D4AF37] rounded-2xl space-y-4">
+                    <span className="text-[#D4AF37] text-xs md:text-base flex items-center gap-1.5 border-[#D4AF37] border-b border-[#D4AF37]">➕ أضف وجدول دفعة استحقاق جديدة لعقد العميل:</span>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                       <div>
-                        <label className="block text-slate-400 mb-1 font-bold">اسم مرحلة الدفعة *</label>
+                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">اسم مرحلة الدفعة *</label>
                         <input 
                           type="text"
                           value={instMilestoneName}
@@ -1146,7 +1110,7 @@ export default function ProjectsPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-slate-400 mb-1 font-bold">النسبة % من العقد *</label>
+                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">النسبة % من العقد *</label>
                         <input 
                           type="number"
                           value={instPercentage}
@@ -1157,7 +1121,7 @@ export default function ProjectsPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-[#c59b6d] mb-1 font-bold">القيمة المستحقة (تلقائي)</label>
+                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">القيمة المستحقة (تلقائي)</label>
                         <div className="w-full h-10 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] flex items-center px-3 font-mono font-black">
                           {instAmount.toLocaleString()} ج.م
                         </div>
@@ -1166,7 +1130,7 @@ export default function ProjectsPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div>
-                        <label className="block text-slate-400 mb-1 font-bold">تاريخ الاستحقاق المتوقع</label>
+                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">تاريخ الاستحقاق المتوقع</label>
                         <input 
                           type="date"
                           value={instDueDate}
@@ -1175,7 +1139,7 @@ export default function ProjectsPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-slate-400 mb-1 font-bold">ربط استحقاق الدفعة بانتهاء مرحلة *</label>
+                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">ربط استحقاق الدفعة بانتهاء مرحلة *</label>
                         <select
                           value={instLinkedStageId}
                           onChange={(e) => setInstLinkedStageId(e.target.value !== "" ? Number(e.target.value) : "")}
@@ -1191,12 +1155,13 @@ export default function ProjectsPage() {
 
                     <div className="flex justify-end pt-2">
                       <button
-                        type="button"
-                        onClick={handleAddInstallment}
+                        type="button" 
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleAddInstallment(e); }} // 👈 حظر السلوك الافتراضي للمتصفح لمنع الريفريش نهائياً
                         disabled={addingInst}
-                        className="bg-[#D4AF37] hover:bg-[#F0E6D2] text-[#020B1C] px-6 py-2 rounded-xl font-black text-xs cursor-pointer hover:scale-102 active:scale-98 transition disabled:opacity-50"
+                        className="px-6 py-2.5 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-sm flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
                       >
                         {addingInst ? "جاري جدولة القسط..." : "💾 جدولة وإضافة القسط لقائمة العميل"}
+                        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                       </button>
                     </div>
                   </div>
@@ -1204,17 +1169,114 @@ export default function ProjectsPage() {
 
               </div>
 
-              {/* أزرار الحفظ المجهزة بالـ Tooltips المذهبة */}
-              <div className="flex justify-end pt-5 border-t border-[#243556] gap-3">
+              {/* كارت خطة العمل والمراحل الإنشائية الـ 12 */}
+              <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 space-y-4 shadow-2xl relative w-full text-xs md:text-sm">
+                <p className="text-[#D4AF37] font-black text-sm md:text-base border-b border-[#D4AF37] pb-3 flex items-center gap-2 select-none">
+                  <Layers className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5" />
+                  <span>خطة العمل والمراحل الإنشائية والزمنية الـ 12 للموقع:</span>
+                </p>
+                
+                <p className="text-white text-xs leading-relaxed select-none">
+                  حدد أيام التنفيذ الفعلية تحت كل بند، أو انقر على رمز العين <span className="text-[#D4AF37]">استبعاد البند</span> لحذفه حركياً وتصفير أيامه وتعديل ميعاد التسليم المبدئي :
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {normalizedStages.map((stage) => {
+                    const isCompleted = pProgress >= stage.cumulative && !stage.isExcluded;
+                    const isExcluded = !!stage.isExcluded;
+
+                    return (
+                      <div
+                        key={stage.id}
+                        onClick={(e) => {
+                          e.preventDefault(); // 👈 حظر السلوك الافتراضي للمتصفح لمنع الريفريش نهائياً
+                          if (!isExcluded) toggleStageStatus(stage.cumulative);
+                        }}
+                        className={`p-3.5 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col justify-between group ${
+                          isExcluded
+                            ? "border-rose-950/40 bg-rose-950/5 opacity-50 line-through decoration-rose-500/50"
+                            : isCompleted
+                            ? "border-[#D4AF37] bg-gradient-to-br from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_12px_rgba(212,175,55,0.15)]"
+                            : "border-[#1f2d4d] bg-[#020B1C]/50 hover:border-[#D4AF37]/35"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between w-full">
+                          <div className="flex flex-col text-right">
+                            <span className={`text-xs font-bold transition-colors duration-200 ${isExcluded ? "text-gray-500" : isCompleted ? "text-[#D4AF37]" : "text-[#D4AF37] group-hover:text-[#F0E6D2]"}`}>
+                              {stage.name}
+                            </span>
+                            <span className="text-[9px] text-white mt-1 font-mono">
+                              نسبة الاعمال: {isExcluded ? "0" : `${Math.round(stage.adjustedWeight)}%`} (تراكمي {stage.cumulative}%)
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 select-none" onClick={e => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              disabled={!canEditMilestones}
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleExcludeStage(e, stage.id); }} // 👈 حظر السلوك الافتراضي للمتصفح لمنع الريفريش نهائياً
+                              className="p-1 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-gray-400 hover:text-rose-500 transition-colors disabled:opacity-40 cursor-pointer"
+                              title="استبعاد هذا البند"
+                            >
+                              {isExcluded ? <Eye className="w-3 h-3 text-rose-500" /> : <EyeOff className="w-3 h-3" />}
+                            </button>
+
+                            <div className={`w-4 h-4 rounded-md flex items-center justify-center border transition-all duration-300 ${
+                              isCompleted ? "bg-[#D4AF37] border-[#D4AF37] text-black" : "border-[#243556]"
+                            }`}>
+                              {isCompleted && <Check className="w-3 h-3 stroke-[4]" />}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* عداد مدة البند تحت كل مرحلة */}
+                        {!isExcluded && (
+                          <div className="mt-3 pt-2 border-t border-[#1f2d4d]/50 flex items-center justify-between gap-2" onClick={e => e.stopPropagation()}>
+                            <span className="text-[10px] text-slate-200">المدة المتوقعة:</span>
+                            
+                            <div className="flex items-center gap-1 bg-[#020B1C] border border-[#1f2d4d] rounded-lg p-0.5 select-none h-8" dir="ltr">
+                              <button
+                                type="button"
+                                disabled={!canEditMilestones}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleStageDurationChange(stage.id, stage.duration - 1); }} // 👈 حظر السلوك الافتراضي للمتصفح لمنع الريفريش نهائياً
+                                className="w-6 h-6 rounded bg-[#ff2a3a] hover:bg-red-700 active:scale-95 text-white font-black text-sm flex items-center justify-center cursor-pointer transition disabled:opacity-40 shadow-[0_0_4px_rgba(255,42,58,0.2)]"
+                              >
+                                -
+                              </button>
+                              <span className="w-6 text-center text-[#D4AF37] font-mono font-black text-xs">
+                                {stage.duration}
+                              </span>
+                              <button
+                                type="button"
+                                disabled={!canEditMilestones}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleStageDurationChange(stage.id, stage.duration + 1); }} // 👈 حظر السلوك الافتراضي للمتصفح لمنع الريفريش نهائياً
+                                className="w-6 h-6 rounded border border-[#1f2d4d] bg-[#020B1C]/50 hover:border-[#D4AF37] hover:text-[#D4AF37] active:scale-95 text-white font-bold text-xs flex items-center justify-center cursor-pointer transition disabled:opacity-40"
+                              >
+                                +
+                              </button>
+                              <span className="text-[8px] text-gray-500 font-bold px-1 select-none">يوم</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* كارت الحفظ والمزامنة الإجمالي والختامي لصفحة المشاريع بالشكل الفاخر */}
+              <div className="flex justify-end pt-5 border-t border-[#243556] gap-3 select-none">
                 <div className="relative group">
                   <button
-                    type="button"
-                    onClick={handleUpdateProject}
+                    type="button" 
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleUpdateProject(e); }} // 👈 حظر السلوك الافتراضي للمتصفح لمنع الريفريش نهائياً
                     disabled={saving}
-                    className="bg-gradient-to-r from-[#C9A45D] via-[#F0E6D2] to-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] text-[#020B1C] px-8 py-3.5 rounded-full font-black text-sm flex items-center justify-center gap-2 cursor-pointer transition-all duration-300 disabled:opacity-50 select-none hover:scale-103 active:scale-97"
+                    className="px-8 py-3.5 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-sm flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
                   >
-                    <span>{saving ? "جاري حفظ وتأسيس المشروع..." : "حفظ التعديلات وموقع العمل الميداني"}</span>
-                    <FolderCheck className="w-5 h-5 text-[#020B1C]" />
+                    {saving ? <Loader2 className="animate-spin w-4 h-4" /> : <FolderCheck className="w-4 h-4" />}
+                    <span>{saving ? "جاري حفظ وتأسيس المشروع..." : "حفظ التعديلات وجدولة الأعمال "}</span>
+                    {/* عاكس الإضاءة النيوني المتوهج بقاع الزر */}
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                   </button>
 
                   <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">

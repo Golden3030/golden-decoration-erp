@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -12,7 +13,7 @@ import FinishingTabs from "@/components/CRM/FinishingTabs";
 import { useCRM, DEFAULT_FINISHING_SCHEMA } from "@/components/CRM/context/CRMContext";
 import { supabase } from "@/lib/supabaseClient";
 import { isOnline, addToOfflineQueue } from "@/lib/offline-sync";
-import { Plus, Minus, UserPlus, Search } from "lucide-react";
+import { Plus, Minus, UserPlus, Search, Check } from "lucide-react";
 
 interface CustomerLog {
   id: string;
@@ -71,12 +72,83 @@ export default function CRMPage() {
 
   const [selectedCustomerProjects, setSelectedCustomerProjects] = useState<any[]>([]);
 
+  // مصفوفة وتنسيق خطوات سير العمل الخماسي للشركة
+  const workflowStages = [
+    { key: "pending_specs", label: "تجهيز المواصفات", icon: "📐" },
+    { key: "needs_estimate", label: "طلب التسعير", icon: "⏳" },
+    { key: "initial_ready", label: "المقايسة المبدئية", icon: "📄" },
+    { key: "amendments_requested", label: "تعديلات مطلوبة", icon: "🛠️" },
+    { key: "final", label: "التعاقد النهائي", icon: "👑" }
+  ];
+
+  const getCurrentStageIndex = (currentStage: string) => {
+    const s = String(currentStage || "").trim().toLowerCase();
+    if (s === "needs_estimate") return 1;
+    if (s === "initial_ready") return 2;
+    if (s === "amendments_requested") return 3;
+    if (s === "final") return 4;
+    return 0; // pending_specs
+  };
+
+  // حالة تخزين واستدعاء تقدير حاسبة الإعلانات الخارجية
+  const [calculatorEstimate, setCalculatorEstimate] = useState<{min: number, max: number} | null>(null);
+
   const isManager = ["admin", "owner", "manager", "sales_manager"].includes(userRole.toLowerCase());
 
   useEffect(() => {
     document.title = "Golden Decoration ERP - الـ CRM وسجل بيانات العملاء والمتابعات";
     loadAllCRMData();
   }, []);
+
+  // 🌟 استعلام أوتوماتيكي ذكي لمنع الانهيارات واستخراج أحدث طلب مسجل للحاسبة لهذا الهاتف تلقائياً
+  useEffect(() => {
+    if (!crmData.customer?.mobile) {
+      setCalculatorEstimate(null);
+      return;
+    }
+    const checkCalculatorEstimate = async () => {
+      try {
+        const cleanPhone = String(crmData.customer.mobile).trim();
+        const { data } = await supabase
+          .from("customer_requests")
+          .select("estimatedMin, estimatedMax")
+          .eq("phone", cleanPhone)
+          .order("created_at", { ascending: false }) // جلب أحدث ليد لمنع انهيار مبيعاتي عند تكرار التجريب
+          .limit(1);
+        
+        if (data && data.length > 0) {
+          setCalculatorEstimate({
+            min: Number(data[0].estimatedMin || 0),
+            max: Number(data[0].estimatedMax || 0)
+          });
+        } else {
+          setCalculatorEstimate(null);
+        }
+      } catch (err) {
+        console.error("Error fetching calculator estimate:", err);
+      }
+    };
+    checkCalculatorEstimate();
+  }, [crmData.customer?.mobile]);
+
+  // دالة معالجة وتنسيق التاريخ والوقت التاريخي للمتابعة بشكل لائق
+  const formatTimelineDate = (dateStr: string) => {
+    if (!dateStr) return "تاريخ غير محدد";
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toLocaleDateString("ar-EG", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true
+      });
+    } catch (e) {
+      return dateStr;
+    }
+  };
 
   async function loadAllCRMData() {
     setLoading(true);
@@ -200,9 +272,13 @@ export default function CRMPage() {
 
       let customerStatus = "";
       if (newStage === "needs_estimate") {
-        customerStatus = "قيد انتظار المقايسة";
+        customerStatus = "قيد انتظار التسعير";
       } else if (newStage === "initial_ready") {
-        customerStatus = "تم اصدار المقايسة المبدئية";
+        customerStatus = "تم إصدار المقايسة";
+      } else if (newStage === "amendments_requested") {
+        customerStatus = "متابعة مستمرة";
+      } else if (newStage === "final") {
+        customerStatus = "تم التعاقد";
       }
 
       if (customerStatus && crmData.customer?.customerCode) {
@@ -218,6 +294,9 @@ export default function CRMPage() {
             .update({ status: customerStatus })
             .eq("id", custData.id);
           if (custError) throw custError;
+
+          // مزامنة القائمة الحية للمبيعات حياً لعدم ضياع التعديلات
+          setCustomersList(prev => prev.map(c => c.id === custData.id ? { ...c, status: customerStatus } : c));
         }
       }
 
@@ -241,6 +320,9 @@ export default function CRMPage() {
         project: { ...prev.project, workflow_stage: newStage }
       }));
 
+      // تحديث قائمة المشاريع المحلية فورياً
+      setProjectsList(prev => prev.map(p => p.id === projectId ? { ...p, workflow_stage: newStage } : p));
+
       await loadAllCRMData();
     } catch (err: any) {
       console.error("خطأ في تحديث مرحلة سير العمل والعميل الموحد:", err);
@@ -250,6 +332,7 @@ export default function CRMPage() {
     }
   }
 
+  // حفظ بيانات المشروع ومزامنة المتصفح سحابياً باللحظة دون سقوط البيانات
   async function handleSaveProject() {
     if (!crmData.customer?.customerCode) {
       alert("يرجى تحديد واختيار عميل من الجدول بالأعلى أولاً لتأسيس المشروع له.");
@@ -288,7 +371,8 @@ export default function CRMPage() {
         living_count: Number(crmData.project?.livingCount || 1),
         corridors_count: Number(crmData.project?.corridorsCount || 0),
         garden_exist: !!crmData.project?.gardenExist,
-        garden_area: Number(crmData.project?.gardenArea || 0)
+        garden_area: Number(crmData.project?.gardenArea || 0),
+        contract_value: Number(crmData.project?.contractValue || 0) 
       };
 
       if (isOnline()) {
@@ -300,10 +384,25 @@ export default function CRMPage() {
             .update(payload)
             .eq("id", crmData.project.id);
           error = updateErr;
+
+          if (!error) {
+            // تحديث قائمة المشاريع المحلية فورياً
+            setProjectsList(prev => prev.map(p => p.id === crmData.project.id ? {
+              ...p,
+              project_name: payload.project_name,
+              unit_type: payload.unit_type,
+              area: payload.area,
+              finishing_level: payload.finishing_level,
+              unit_status: payload.unit_status,
+              unit_address: payload.unit_address,
+              estimate_date: payload.estimate_date,
+              contract_value: payload.contract_value 
+            } : p));
+          }
         } else {
           const projectPayload = {
             ...payload,
-            workflow_stage: null 
+            workflow_stage: "pending_specs" 
           };
           const { data: newProj, error: insertErr } = await supabase
             .from("projects")
@@ -323,7 +422,7 @@ export default function CRMPage() {
                 id: activeProjId,
                 projectCode: generatedProjCode,
                 estimateNumber: generatedEstNum,
-                workflow_stage: null 
+                workflow_stage: "pending_specs" 
               }
             }));
 
@@ -339,7 +438,7 @@ export default function CRMPage() {
         }
 
         if (error) throw error;
-        alert("✅ تم حفظ بيانات ومواصفات المشروع بقاعدة البيانات!");
+        alert("✅ تم حفظ وتأمين مواصفات وميزانية المشروع بنجاح!");
       } else {
         const offlinePayload = {
           ...payload,
@@ -404,6 +503,43 @@ export default function CRMPage() {
 
       const activeProject = customerProjectsList.length > 0 ? customerProjectsList[0] : null;
 
+      // 🌟 كتلة المعالجة الذاتية والمزامنة التلقائية لبيانات ليد الإعلانات (Self-Healing Data Sync)
+      let resolvedArea = activeProject ? Number(activeProject.area || 0) : 0;
+      let resolvedAddress = activeProject ? (activeProject.unit_address || "") : "";
+      let resolvedLocation = activeProject ? (activeProject.location || "") : "";
+      let resolvedFinishing = activeProject ? (activeProject.finishing_level || "اقتصادى (لوكس)") : "اقتصادى (لوكس)";
+      let resolvedContractValue = activeProject ? Number(activeProject.contract_value || 0) : 0;
+      let resolvedWorkflow = activeProject ? (activeProject.workflow_stage || "pending_specs") : "pending_specs";
+
+      // إذا كانت البيانات الميدانية بالمشروع صفرية أو فارغة، نقوم بسحبها حياً من طلبات الحاسبة السابقة
+      if (resolvedArea === 0 || !resolvedAddress) {
+        const { data: reqData } = await supabase
+          .from("customer_requests")
+          .select("area, region, finishing_level, estimatedMin")
+          .eq("phone", String(customer.mobile).trim())
+          .order("created_at", { ascending: false }) // استرجاع الأحدث دائماً
+          .limit(1);
+
+        if (reqData && reqData.length > 0) {
+          const req = reqData[0];
+          if (resolvedArea === 0) resolvedArea = Number(req.area || 0);
+          if (!resolvedAddress) resolvedAddress = req.region || "";
+          if (!resolvedLocation) resolvedLocation = req.region || "";
+          if (resolvedFinishing === "اقتصادى (لوكس)" && req.finishing_level) {
+            // توحيد مصطلحات التشطيب لتتناسب مع خيارات المنسدل بالـ ERP
+            const level = String(req.finishing_level).trim();
+            if (level.includes("ألترا") || level.includes("فاخر")) {
+              resolvedFinishing = "فاخر (الترا لوكس)";
+            } else if (level.includes("سوبر")) {
+              resolvedFinishing = "متوسط (سوبر لوكس )";
+            } else {
+              resolvedFinishing = "اقتصادى (لوكس)";
+            }
+          }
+          if (resolvedContractValue === 0) resolvedContractValue = Number(req.estimatedMin || 0);
+        }
+      }
+
       setCRMData((prev: any) => ({
         ...prev,
         customer: {
@@ -413,31 +549,56 @@ export default function CRMPage() {
           phone: customer.phone || "",
           address: customer.address || "",
           email: customer.email || "",
-          status: customer.status
+          status: customer.status,
+          created_at: customer.created_at
         },
         project: activeProject ? {
           id: activeProject.id,
           projectName: activeProject.project_name,
           projectCode: activeProject.project_code,
-          location: activeProject.location,
+          location: resolvedLocation,
           unitType: activeProject.unit_type,
           unitStatus: activeProject.unit_status,
-          unitAddress: activeProject.unit_address,
+          unitAddress: resolvedAddress,
           estimateDate: activeProject.estimate_date,
-          finishingLevel: activeProject.finishing_level,
-          area: activeProject.area,
+          finishingLevel: resolvedFinishing,
+          area: resolvedArea,
           planUrl: activeProject.plan_url,
-          workflow_stage: activeProject.workflow_stage || "",
+          workflow_stage: resolvedWorkflow,
           receptionsCount: Number(activeProject.receptions_count || 1),
           roomsCount: Number(activeProject.rooms_count || 2),
           bathroomsCount: Number(activeProject.bathrooms_count || 1),
           kitchensCount: Number(activeProject.kitchens_count || 1),
-          balconies_count: Number(activeProject.balconies_count || 1),
+          balconiesCount: Number(activeProject.balconies_count || 1),
           livingCount: Number(activeProject.living_count || 1),
           corridorsCount: Number(activeProject.corridors_count || 0),
           gardenExist: !!activeProject.garden_exist,
-          gardenArea: Number(activeProject.garden_area || 0)
-        } : null,
+          gardenArea: Number(activeProject.garden_area || 0),
+          contractValue: resolvedContractValue 
+        } : {
+          // تهيئة مشروع افتراضي فارغ ومزامنته حياً مع ليد الحاسبة
+          id: "new-" + Date.now(),
+          projectName: `مشروع العميل ${customer.name}`,
+          projectCode: "P-" + Math.floor(1000 + Math.random() * 9000),
+          location: resolvedLocation || "",
+          unitType: "شقة",
+          unitStatus: "بدون تشطيب (طوب احمر)",
+          unitAddress: resolvedAddress || "",
+          estimateDate: "",
+          finishingLevel: resolvedFinishing || "اقتصادى (لوكس)",
+          area: resolvedArea || 0,
+          workflow_stage: "pending_specs",
+          receptionsCount: 1,
+          roomsCount: 2,
+          bathroomsCount: 1,
+          kitchensCount: 1,
+          balconiesCount: 1,
+          livingCount: 1,
+          corridorsCount: 0,
+          gardenExist: false,
+          gardenArea: 0,
+          contractValue: resolvedContractValue || 0
+        },
         estimate: {
           number: "EST-0001",
           date: "",
@@ -453,8 +614,10 @@ export default function CRMPage() {
         finishing: JSON.parse(JSON.stringify(DEFAULT_FINISHING_SCHEMA))
       }));
 
-      if (activeProject) {
-        await loadProjectData(activeProject.id);
+      // سحب تفاصيل البنود والأسعار حيوياً من قاعدة البيانات بعد التزامن
+      const resolvedProjId = activeProject ? activeProject.id : null;
+      if (resolvedProjId) {
+        await loadProjectData(resolvedProjId);
       }
     } catch (err) {
       console.error("Error selecting customer from grid:", err);
@@ -481,16 +644,17 @@ export default function CRMPage() {
           finishingLevel: selectedProj.finishing_level,
           area: selectedProj.area,
           planUrl: selectedProj.plan_url,
-          workflow_stage: selectedProj.workflow_stage || "",
+          workflow_stage: selectedProj.workflow_stage || "pending_specs",
           receptionsCount: Number(selectedProj.receptions_count || 1),
           roomsCount: Number(selectedProj.rooms_count || 2),
           bathroomsCount: Number(selectedProj.bathrooms_count || 1),
           kitchensCount: Number(selectedProj.kitchens_count || 1),
-          balconies_count: Number(selectedProj.balconies_count || 1),
+          balconiesCount: Number(selectedProj.balconies_count || 1),
           livingCount: Number(selectedProj.living_count || 1),
           corridorsCount: Number(selectedProj.corridors_count || 0),
           gardenExist: !!selectedProj.garden_exist,
-          gardenArea: Number(selectedProj.garden_area || 0)
+          gardenArea: Number(selectedProj.garden_area || 0),
+          contractValue: Number(selectedProj.contract_value || 0) 
         },
         estimate: {
           number: "EST-0001",
@@ -649,13 +813,19 @@ export default function CRMPage() {
 
   const isProjectSelected = !!crmData.customer?.name;
 
+  // جلب رقم الخطوة النشطة لعرض البار الذهبي المتوهج
+  const currentActiveStageIndex = getCurrentStageIndex(crmData.project?.workflow_stage);
+
   return (
     <main className="min-h-screen bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       
-      {/* 🛠️ ورقة أنماط الخط الملكي الموحد والتمرير */}
-      <style dangerouslySetInnerHTML={{__html: `
-        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;700;900&display=swap');
+      {/* هيدر الهيكل لمنع وميض وتأخر تحميل الخط البصري FOUT */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
+      {/* ورقة أنماط الخط الملكي الموحد والتمرير */}
+      <style dangerouslySetInnerHTML={{__html: `
         *:not(code, pre, .font-mono, [class*="font-mono"]) {
           font-family: 'Alexandria', Arial, sans-serif !important;
           letter-spacing: normal !important;
@@ -694,7 +864,8 @@ export default function CRMPage() {
                     📂 أداة البحث الموحد للمشاريع والعملاء
                   </h3>
                   <button 
-                    onClick={() => setIsSearchOpen(false)}
+                    type="button" // 👈 حظر إعادة التحميل
+                    onClick={(e) => { e.preventDefault(); setIsSearchOpen(false); }}
                     className="text-gray-400 hover:text-rose-500 font-bold text-sm cursor-pointer transition"
                   >
                     ✕ إغلاق
@@ -713,7 +884,8 @@ export default function CRMPage() {
                     ➕ نموذج إضافة عميل جديد للـ CRM
                   </h3>
                   <button 
-                    onClick={() => setIsAddCustomerOpen(false)}
+                    type="button" // 👈 حظر إعادة التحميل
+                    onClick={(e) => { e.preventDefault(); setIsAddCustomerOpen(false); }}
                     className="text-gray-400 hover:text-rose-500 font-bold text-sm cursor-pointer transition"
                   >
                     ✕
@@ -815,9 +987,9 @@ export default function CRMPage() {
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-[#243556]">
-                  {/* صياغة الأزرار اللمسية المذهبة بالكامل */}
                   <button
-                    onClick={handleInsertNewCustomer}
+                    type="button" // 👈 حظر إعادة التحميل
+                    onClick={(e) => { e.preventDefault(); handleInsertNewCustomer(); }}
                     disabled={saving}
                     className="bg-black/60 hover:bg-[#D4AF37] border border-[#D4AF37] text-[#D4AF37] hover:text-[#020B1C] py-3.5 px-8 rounded-xl text-xs font-black shadow-[0_0_12px_rgba(212,175,55,0.25)] hover:shadow-[0_0_20px_rgba(212,175,55,0.55)] cursor-pointer transition-all duration-300 disabled:opacity-50"
                   >
@@ -889,13 +1061,11 @@ export default function CRMPage() {
 
               <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl overflow-hidden shadow-2xl transition duration-300">
                 <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d] flex justify-between items-center select-none">
-                  {/* تم تعديل لون عنوان الصندوق الرئيسي للذهب الإمبراطوري #D4AF37 */}
                   <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">
                     نتائج التصفية والفرز الجاري للعملاء والمبيعات ({filteredCustomers.length})
                   </h3>
 
                   <div className="flex items-center gap-3">
-                    {/* تعديل زر تسجيل العميل ليصبح أيقونة برونزية مذهبة مضيئة دائرية فقط */}
                     <button
                       type="button"
                       onClick={() => setIsAddCustomerOpen(true)}
@@ -905,7 +1075,6 @@ export default function CRMPage() {
                       <UserPlus size={16} strokeWidth={2.2} />
                     </button>
 
-                    {/* تعديل زر البحث والاستعلام ليصبح أيقونة مضيئة باللون الأخضر النيون المعتمد */}
                     <button
                       type="button"
                       onClick={() => setIsSearchOpen(true)}
@@ -920,7 +1089,6 @@ export default function CRMPage() {
                 <div className="overflow-x-auto max-h-56 overflow-y-auto pr-1">
                   {filteredCustomers.length > 0 ? (
                     <table className="w-full text-right table-auto min-w-[750px]">
-                      {/* تفتيت وحذف كلاس الـ font-black وصياغة الرؤوس بخط Alexandria المتوسط النعومة text-[11px] */}
                       <thead className="bg-[#0B1B38] text-[#D4AF37] font-bold border-b border-[#D4AF37] sticky top-0 z-10 select-none text-[13px]">
                         <tr className="whitespace-nowrap">
                           <th className="py-2.5 px-3.5 font-bold">كود العميل</th>
@@ -948,7 +1116,9 @@ export default function CRMPage() {
                                 {userRole === "engineer" ? "📞 [بيانات محجوبة]" : c.mobile}
                               </td>
                               <td className="py-2.5 px-3.5 text-[#D4AF37] font-bold">{c.address || "-"}</td>
-                              <td className="py-2.5 px-3.5 font-mono text-white">{c.created_at || "-"}</td>
+                              <td className="py-2.5 px-3.5 font-mono text-white">
+                                {c.created_at ? new Date(c.created_at).toLocaleDateString("ar-EG") : "-"}
+                              </td>
                               <td className="py-2.5 px-3.5 text-center">
                                 <span className={`px-2.5 py-0.5 rounded text-[10px] font-black ${
                                   c.status === "تم التعاقد" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 animate-pulse" : "bg-brown-500/200 text-green-400"
@@ -970,10 +1140,13 @@ export default function CRMPage() {
           {isProjectSelected && !loading ? (
             <div className="transition-all duration-300 space-y-6">
               
+              {/* تفعيل نمط التمدد المرن h-full للتعادل البصري ومنع أي حظر قص بـ overflow-hidden */}
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mt-8 items-stretch font-bold text-white text-right">
-                <div className="border border-[#1f2d4d] rounded-2xl overflow-hidden shadow-2xl">
+                <div className="flex flex-col h-full shadow-2xl">
+                  {/* معالجة الحفظ المباشر للمتصفح دون التسبب في تداخل كاش سوبابيز */}
                   <CustomerInfo 
                     userRole={userRole} 
+                    calculatorEstimate={calculatorEstimate}
                     handleSaveCustomer={async () => {
                       setSaving(true);
                       try {
@@ -1022,6 +1195,17 @@ export default function CRMPage() {
                           .eq("id", custData.id);
 
                         if (error) throw error;
+
+                        // تحديث فوري للقائمة المحلية لمنع الارتداد البصري بعد الـ Render
+                        setCustomersList(prev => prev.map(c => c.id === custData.id ? { 
+                          ...c, 
+                          name: crmData.customer.name,
+                          mobile: crmData.customer.mobile,
+                          phone: crmData.customer.phone,
+                          email: crmData.customer.email,
+                          address: crmData.customer.address,
+                          status: crmData.customer.status
+                        } : c));
                         
                         alert("✅ تم تحديث بيانات العميل وتفعيل بروتوكول التجميد التعاقدي بنجاح!");
                         await loadAllCRMData();
@@ -1038,7 +1222,7 @@ export default function CRMPage() {
                   />
                 </div>
                 
-                <div className="border border-[#1f2d4d] rounded-2xl overflow-hidden shadow-2xl">
+                <div className="flex flex-col h-full shadow-2xl">
                   <ProjectInfo 
                     customerProjects={selectedCustomerProjects}
                     handleSwitchActiveProject={handleSwitchActiveProject}
@@ -1049,8 +1233,9 @@ export default function CRMPage() {
                 </div>
               </div>
 
-              <div className="bg-[#07132a] border border-[#1f2d4d] rounded-2xl p-6 shadow-2xl space-y-5">
-                <p className="text-[#D4AF37] font-black flex items-center gap-2 text-xl border-b border-[#243556] pb-3 select-none">
+              {/* حاوية الحصر والمساحات الميدانية للغرف والريسبشن */}
+              <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl p-6 shadow-2xl space-y-5">
+                <p className="text-[#D4AF37] font-black flex items-center gap-2 text-xl border-b border-[#D4AF37] pb-3 select-none">
                   <svg className="w-6 h-6 stroke-current fill-none stroke-[2] animate-pulse" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <rect x="4" y="4" width="16" height="16" rx="2" />
                     <rect x="9" y="9" width="6" height="6" rx="1" />
@@ -1069,72 +1254,116 @@ export default function CRMPage() {
                   <RoomCounterWrapper label="الممرات والطرقات" value={crmData.project?.corridorsCount || 0} field="corridorsCount" />
                 </div>
 
-                <div className="border border-[#1f2d4d] rounded-2xl p-5 bg-[#0b1b3d]/40 shadow-xl space-y-4">
-                  <div className="flex items-center justify-between gap-4 select-none">
-                    <div className="text-right flex-1">
-                      <h4 className="text-[#D4AF37] text-sm font-black">مساحة الحديقة المفتوحة للوحدة (جاردن)</h4>
-                      <p className="text-gray-400 text-xs mt-1">تخصيص مسطحات اللاندسكيب للوحدات الأرضية أو الدوبلكس بالمقايسة المعتمدة :</p>
-                    </div>
-                    <div className="w-10 h-12 rounded-xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] flex items-center justify-center shrink-0">
-                      <svg className="w-5 h-5 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-                        <polyline points="9 22 9 12 15 12 15 22" />
-                      </svg>
+                {/* دمج "خط سير العمل المضيء" و "مساحة الجاردن المصغرة" على نفس السطر في سكة عرض أفقية متزنة */}
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch w-full">
+                  
+                  {/* كارت خط سير العمل المضيء الخماسي (العرض الأكبر lg:col-span-8) */}
+                  <div className="lg:col-span-8 bg-[#020B1C] p-5 rounded-2xl border border-[#D4AF37]/30 shadow-inner flex flex-col justify-between">
+                    <span className="text-[11px] text-[#D4AF37] font-black block text-right">مخطط وجدول خط سير وتدفق صفقات المبيعات حركياً:</span>
+                    
+                    <div className="flex items-center justify-between relative mt-4 px-2">
+                      {/* line connecting nodes */}
+                      <div className="absolute top-[18px] left-4 right-4 h-0.5 bg-[#1f2d4d] -z-0" />
+                      <div 
+                        className="absolute top-[18px] right-4 h-0.5 bg-[#D4AF37] -z-0 transition-all duration-500" 
+                        style={{ width: `${(currentActiveStageIndex / (workflowStages.length - 1)) * 100}%` }}
+                      />
+
+                      {workflowStages.map((stage, idx) => {
+                        const isCompleted = idx < currentActiveStageIndex;
+                        const isActive = idx === currentActiveStageIndex;
+                        return (
+                          <div key={stage.key} className="flex flex-col items-center z-10 relative">
+                            <div 
+                              className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-black transition-all duration-300 border-2 ${
+                                isActive 
+                                  ? "bg-[#07132a] border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.6)] scale-110" 
+                                  : isCompleted 
+                                    ? "bg-[#D4AF37] border-[#D4AF37] text-[#020B1C]" 
+                                    : "bg-[#020B1C] border-[#1f2d4d] text-gray-500"
+                              }`}
+                              title={stage.label}
+                            >
+                              {isCompleted ? <Check size={14} className="stroke-[3]" /> : <span>{stage.icon}</span>}
+                            </div>
+                            <span className={`text-[9px] mt-2 font-black tracking-tighter transition-colors ${isActive ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
+                              {stage.label}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-[#020B1C] border border-[#1f2d4d] flex items-center justify-between h-11 gap-4">
-                    <div className="flex items-center gap-3 bg-[#07132a] border border-[#1f2d4d] px-3 py-1 rounded-lg shadow-inner h-8 select-none" dir="ltr">
-                      <button
-                        type="button"
-                        disabled={isLocked}
-                        onClick={() => {
-                          const currentArea = Number(crmData.project?.gardenArea || 0);
-                          const calculated = Math.max(0, currentArea - 5);
-                          setCRMData((prev: any) => ({
-                            ...prev,
-                            project: { 
-                              ...(prev.project || {}), 
-                              gardenArea: calculated,
-                              gardenExist: calculated > 0
-                            }
-                          }));
-                        }}
-                        className="w-6 h-6 bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white rounded-full flex items-center justify-center font-bold text-sm cursor-pointer transition active:scale-90 disabled:opacity-40"
-                      >
-                        <Minus size={12} className="stroke-[3]" />
-                      </button>
-                      
-                      <span className="text-[#D4AF37] font-black font-mono text-sm min-w-[24px] text-center">
-                        {crmData.project?.gardenArea || 0}
-                      </span>
-                      
-                      <button
-                        type="button"
-                        disabled={isLocked}
-                        onClick={() => {
-                          const currentArea = Number(crmData.project?.gardenArea || 0);
-                          const calculated = currentArea + 5;
-                          setCRMData((prev: any) => ({
-                            ...prev,
-                            project: { 
-                              ...(prev.project || {}), 
-                              gardenArea: calculated,
-                              gardenExist: true
-                            }
-                          }));
-                        }}
-                        className="w-6 h-6 bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] rounded-full flex items-center justify-center font-bold text-sm cursor-pointer transition active:scale-90 disabled:opacity-40"
-                      >
-                        <Plus size={12} className="stroke-[3]" />
-                      </button>
+                  {/* كارت الحديقة / الجاردن المصغر (العرض الأصغر lg:col-span-4 لضغط المساحة المهدرة) */}
+                  <div className="lg:col-span-4 border border-[#1f2d4d] rounded-2xl p-5 bg-[#0b1b3d]/40 shadow-xl flex flex-col justify-between space-y-4">
+                    <div className="flex items-center justify-between gap-4 select-none">
+                      <div className="text-right flex-1">
+                        <h4 className="text-[#D4AF37] text-xs font-black">الحديقة المفتوحة للوحدة (جاردن)</h4>
+                        <p className="text-gray-400 text-[10px] mt-1">تخصيص مساحة اللاندسكيب للوحدة الأرضية:</p>
+                      </div>
+                      <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] flex items-center justify-center shrink-0">
+                        <svg className="w-4 h-4 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                          <polyline points="9 22 9 12 15 12 15 22" />
+                        </svg>
+                      </div>
                     </div>
-          <div className="flex items-center justify-center gap-6 w-full">
-                    <span className=" text-[#00FF00] text-center font-bold text-xs select-none">مساحة الجاردن المخططة بالبلان</span>
+
+                    <div className="p-2 rounded-xl bg-[#020B1C] border border-[#1f2d4d] flex items-center justify-between h-10 gap-3">
+                      <div className="flex items-center gap-2 bg-[#07132a] border border-[#1f2d4d] px-2 py-0.5 rounded-lg h-7 select-none" dir="ltr">
+                        <button
+                          type="button" 
+                          disabled={isLocked}
+                          onClick={() => {
+                            const currentArea = Number(crmData.project?.gardenArea || 0);
+                            const calculated = Math.max(0, currentArea - 5);
+                            setCRMData((prev: any) => ({
+                              ...prev,
+                              project: { 
+                                ...(prev.project || {}), 
+                                gardenArea: calculated,
+                                gardenExist: calculated > 0
+                              }
+                            }));
+                          }}
+                          className="w-5 h-5 bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 disabled:opacity-40"
+                        >
+                          <Minus size={10} className="stroke-[3]" />
+                        </button>
+                        
+                        <span className="text-[#D4AF37] font-black font-mono text-xs min-w-[18px] text-center">
+                          {crmData.project?.gardenArea || 0}
+                        </span>
+                        
+                        <button
+                          type="button" 
+                          disabled={isLocked}
+                          onClick={() => {
+                            const currentArea = Number(crmData.project?.gardenArea || 0);
+                            const calculated = currentArea + 5;
+                            setCRMData((prev: any) => ({
+                              ...prev,
+                              project: { 
+                                ...(prev.project || {}), 
+                                gardenArea: calculated,
+                                gardenExist: true
+                              }
+                            }));
+                          }}
+                          className="w-5 h-5 bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] rounded-full flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 disabled:opacity-40"
+                        >
+                          <Plus size={10} className="stroke-[3]" />
+                        </button>
+                      </div>
+                      <span className="text-[#00FF00] font-bold text-[10px] select-none text-left">المساحة م²</span>
+                    </div>
                   </div>
+
                 </div>
+
               </div>
- </div>
+
               {userRole !== "engineer" && (
                 <div className="bg-[#07132a] border border-[#d4af37] rounded-2xl p-6 space-y-4 shadow-2xl animate-fade-in">
                   <div className="flex justify-between items-center border-b border-[#d4af37] pb-3 select-none">
@@ -1142,7 +1371,8 @@ export default function CRMPage() {
                       <span>📞 سجل المحادثات والمتابعة للعميل</span>
                     </h3>
                     <button
-                      onClick={() => setIsFollowUpOpen(true)}
+                      type="button" // 👈 منع إعادة التحميل الافتراضية
+                      onClick={(e) => { e.preventDefault(); setIsFollowUpOpen(true); }}
                       className="text-[#D4AF37] hover:text-[#F0E6D2] active:scale-90 transition duration-150 cursor-pointer shrink-0 p-1 block"
                     >
                       <svg className="w-8 h-8 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -1161,7 +1391,8 @@ export default function CRMPage() {
                           <div key={log.id} className="bg-[#020B1C] border border-[#1f2d4d] p-4 rounded-xl space-y-2 relative transition hover:border-[#D4AF37]/30 shadow-inner">
                             <div className="flex justify-between items-center text-xs text-gray-500 border-b border-[#1f2d4d] pb-1">
                               <span className="font-bold text-[#D4AF37]">◀ {log.interaction_type}</span>
-                              <span className="font-mono">{new Date(log.created_at).toLocaleDateString("ar-EG")} {new Date(log.created_at).toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" })}</span>
+                              {/* دمج وعرض دالة التنسيق العربية الجديدة المانعة لتشتت الأرقام */}
+                              <span className="font-mono">{formatTimelineDate(log.created_at)}</span>
                             </div>
                             <p className="text-white text-sm leading-relaxed font-bold whitespace-pre-wrap">{log.feedback}</p>
                             {log.next_follow_up_date && (
@@ -1175,8 +1406,8 @@ export default function CRMPage() {
 
                         {customerLogs.length > visibleLogsCount && (
                           <button
-                            type="button"
-                            onClick={() => setVisibleLogsCount(prev => prev + 10)}
+                            type="button" 
+                            onClick={(e) => { e.preventDefault(); setVisibleLogsCount(prev => prev + 10); }}
                             className="w-full py-3 bg-[#020B1C] border border-[#243556] text-[#D4AF37] hover:border-[#D4AF37] hover:text-white font-extrabold text-xs rounded-xl transition cursor-pointer text-center"
                           >
                             🔽 عرض المزيد من المتابعات السابقة ({customerLogs.length - visibleLogsCount} متبقية)
@@ -1216,7 +1447,13 @@ export default function CRMPage() {
               <div className="bg-[#07132a] border border-[#D4AF37]/50 rounded-3xl p-6 w-full max-w-md shadow-2xl relative space-y-4 text-white">
                 <div className="flex justify-between items-center border-b border-[#243556] pb-3">
                   <h4 className="text-[#D4AF37] font-black text-lg">📞 تسجيل مكالمة ومتابعة جديدة للعميل</h4>
-                  <button onClick={() => setIsFollowUpOpen(false)} className="text-gray-400 hover:text-rose-500 font-bold text-sm cursor-pointer">✕</button>
+                  <button 
+                    type="button" 
+                    onClick={(e) => { e.preventDefault(); setIsFollowUpOpen(false); }} 
+                    className="text-gray-400 hover:text-rose-500 font-bold text-sm cursor-pointer"
+                  >
+                    ✕
+                  </button>
                 </div>
 
                 <div className="space-y-4 text-sm font-bold">
@@ -1256,22 +1493,22 @@ export default function CRMPage() {
 
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
                       <button
-                        type="button"
-                        onClick={() => setQuickFollowUpDate(1)}
+                        type="button" 
+                        onClick={(e) => { e.preventDefault(); setQuickFollowUpDate(1); }}
                         className="px-3 py-1.5 bg-[#020B1C] border border-[#243556] text-xs font-black text-[#D4AF37] hover:border-[#D4AF37] rounded-lg transition active:scale-95 cursor-pointer"
                       >
                         ⏳ غداً
                       </button>
                       <button
-                        type="button"
-                        onClick={() => setQuickFollowUpDate(3)}
+                        type="button" 
+                        onClick={(e) => { e.preventDefault(); setQuickFollowUpDate(3); }}
                         className="px-3 py-1.5 bg-[#020B1C] border border-[#243556] text-xs font-black text-[#D4AF37] hover:border-[#D4AF37] rounded-lg transition active:scale-95 cursor-pointer"
                       >
                         ⏳ بعد 3 أيام
                       </button>
                       <button
-                        type="button"
-                        onClick={() => setQuickFollowUpDate(7)}
+                        type="button" 
+                        onClick={(e) => { e.preventDefault(); setQuickFollowUpDate(7); }}
                         className="px-3 py-1.5 bg-[#020B1C] border border-[#243556] text-xs font-black text-[#D4AF37] hover:border-[#D4AF37] rounded-lg transition active:scale-95 cursor-pointer"
                       >
                         ⏳ بعد أسبوع
@@ -1281,10 +1518,9 @@ export default function CRMPage() {
                 </div>
 
                 <div className="pt-4 border-t border-[#243556]">
-                  {/* صياغة الأزرار اللمسية المذهبة بالكامل */}
                   <button
-                    type="button"
-                    onClick={handleSaveFollowUp}
+                    type="button" 
+                    onClick={(e) => { e.preventDefault(); handleSaveFollowUp(); }}
                     disabled={saving}
                     className="w-full bg-black/60 hover:bg-[#D4AF37] border-2 border-[#D4AF37] text-[#D4AF37] hover:text-[#020B1C] font-black py-4 rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(212,175,55,0.25)] hover:shadow-[0_0_25px_rgba(212,175,55,0.45)] hover:translate-y-[-2px] text-sm cursor-pointer disabled:opacity-50"
                   >
@@ -1309,7 +1545,6 @@ export default function CRMPage() {
         </label>
         
         <div className="flex items-center gap-2.5" dir="ltr">
-          {/* عدادات رشيقة مطابقة للمانيفستو بارتفاع h-11 وأزرار دائرية مذهبة ونبيذية */}
           <button
             type="button"
             disabled={isLocked}

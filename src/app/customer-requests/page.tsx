@@ -15,7 +15,8 @@ import {
   ArrowLeftRight,
   Lock,
   TrendingUp,
-  X
+  X,
+  Calendar
 } from "lucide-react";
 
 // قاموس الصلاحيات والأدوار المعتمد لهيكل الشركة
@@ -144,14 +145,15 @@ export default function CustomerRequestsPage() {
     }
   }
 
-  // دالة ترقية وتحويل الطلب البارد إلى عميل CRM رسمي متعاقد بضغط زر واحدة
+  // دالة ترقية وتحويل الطلب البارد إلى عميل مع التعديل السحابي وتاريخ بدء المشروع
   async function handleConvertToCRM() {
     if (!selectedRequest?.id) {
       alert("يرجى تحديد طلب العميل المراد تحويله من الجدول بالأعلى أولاً.");
       return;
     }
 
-    if (selectedRequest.status === "تم التحويل لعميل") {
+    const currentStatus = String(selectedRequest.status || "");
+    if (currentStatus === "تم التحويل لعميل" || currentStatus.startsWith("تم تحويل")) {
       alert("⚠️ هذا العميل تم تحويله وحفظة مسبقاً لجدول الـ CRM وهو نشط حالياً.");
       return;
     }
@@ -171,7 +173,7 @@ export default function CustomerRequestsPage() {
       if (custErr) throw custErr;
       const nextCustomerCode = generateNextCustomerCode(existingCustomers || []);
 
-      // 2. استدعاء العملية المحدثة في قاعدة البيانات
+      // 2. استدعاء العملية المحدثة في قاعدة البيانات بالـ 6 متغيرات الأصلية تلافياً لانهيار الـ Schema [1]
       const { error: rpcError } = await supabase.rpc("convert_request_to_customer", {
         p_request_id: selectedRequest.id,
         p_customer_code: nextCustomerCode,
@@ -183,15 +185,42 @@ export default function CustomerRequestsPage() {
 
       if (rpcError) throw rpcError;
 
-      // 3. إرسال إشعار فوري للنظام
+      // 🌟 جلب اسم السيلز المختار لصياغة الحالة الجديدة بالجريل
+      const salesRepName = salesStaff.find(s => s.id === selectedAssignee)?.name || "السيلز";
+      const customStatusText = `تم تحويل العميل لـ ${salesRepName}`;
+
+      // 🌟 تحديث حالة الطلب حيوياً بجدول طلبات الحاسبة لعرضها زمردية مذهلة
+      await supabase
+        .from("customer_requests")
+        .update({ status: customStatusText })
+        .eq("id", selectedRequest.id);
+
+      // 🌟 3. مديول الاستشفاء الذاتي السحابي: سحب معرّف العميل الجديد وتحديث تاريخ بدء المشروع تلقائياً
+      if (selectedRequest.execution_date) {
+        const { data: newCust } = await supabase
+          .from("customers")
+          .select("id")
+          .eq("customer_code", nextCustomerCode)
+          .single();
+
+        if (newCust) {
+          // تحديث تاريخ البدء المتوقع بجدول المشاريع حركياً بالخلفية
+          await supabase
+            .from("projects")
+            .update({ start_date: selectedRequest.execution_date })
+            .eq("customer_id", newCust.id);
+        }
+      }
+
+      // 4. إرسال إشعار فوري للنظام
       await supabase.from("notifications").insert({
         title: "ترقية عميل إعلانات إلى CRM",
-        message: `✅ تم بنجاح تحويل العميل المحتمل: ${selectedRequest.name} إلى عميل CRM رسمي برقم كود (${nextCustomerCode}).`,
+        message: `✅ تم بنجاح تحويل العميل المحتمل: ${selectedRequest.name} وإسناده لـ (${salesRepName}).`,
         type: "sales",
         link: "/customers"
       });
 
-      alert(`✅ تم بنجاح حفظ وتحويل العميل والبيانات المساحة والمنطقة في المشروع بنجاح!`);
+      alert(`✅ تم بنجاح ترقية ومزامنة بيانات العميل وتاريخ التنفيذ وإسناده لـ (${salesRepName})!`);
       clearSelection();
       await loadCustomerRequests();
 
@@ -238,7 +267,11 @@ export default function CustomerRequestsPage() {
           <p className="text-gray-300 text-xs leading-relaxed font-bold">
             عذراً؛ هذه الشاشة مقصورة حصرياً على مدير عام الشركة ومدير المبيعات المسؤول لمراقبة الحملة الإعلانية وتوزيع العملاء.
           </p>
-          <button onClick={() => router.push("/dashboard")} className="mt-6 w-full bg-gradient-to-r from-[#D4AF37] to-[#F0E6D2] text-[#020B1C] font-black py-3 rounded-xl shadow-2xl text-xs">
+          <button 
+            type="button"
+            onClick={() => router.push("/dashboard")} 
+            className="mt-6 w-full bg-gradient-to-r from-[#D4AF37] to-[#F0E6D2] text-[#020B1C] font-black py-3 rounded-xl shadow-2xl text-xs cursor-pointer"
+          >
             العودة للرئيسية
           </button>
         </div>
@@ -247,15 +280,18 @@ export default function CustomerRequestsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden" dir="rtl">
+    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       
+      {/* 🌟 هيدر الهيكل لمنع وميض وتأخر تحميل الخط البصري FOUT على مستوى المتصفح */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
       {/* هالة تلميحات الإضاءة الخلفية الدافئة تتدفق ببطء خلف الكروت */}
       <div className="absolute top-1/3 left-1/3 w-[600px] h-[600px] rounded-full bg-[#D4AF37]/5 blur-[140px] pointer-events-none z-0" />
 
-      {/* 🛠️ جدار الحماية البصري الموحد لتثبيت تباين خط Alexandria المعتمد ولون الشاشات القاتم الكحلي */}
+      {/* 🛠️ جدار الحماية البصري الموحد وتثبيت التمرير */}
       <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;700;900&display=swap');
-
         ::-webkit-scrollbar { width: 8px !important; height: 8px !important; }
         ::-webkit-scrollbar-track { background: #020B1C !important; }
         ::-webkit-scrollbar-thumb { background: #D4AF37 !important; border-radius: 9999px !important; }
@@ -322,12 +358,10 @@ export default function CustomerRequestsPage() {
           {/* الترويسة المحدثة بضم شارة عرض الصلاحية الديناميكية الفخمة */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              {/* تصغير مقاس العنوان الرئيسي للتوافق التام مع الدستور الجمالي */}
               <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2 select-none">
                 <span>طلبات المعاينة وحصر ليدات الحملة الإعلانية (Leads Queue)</span>
                 <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
               </h1>
-              {/* تعديل لون الشرح أسفل العنوان للأبيض الصافي لتعزيز التباين */}
               <p className="text-white text-xs mt-2">مراقبة وفحص طلبات المقايسات المبدئية الواردة من حاسبة السوشيال ميديا وترقيتها للـ CRM.</p>
             </div>
 
@@ -340,15 +374,14 @@ export default function CustomerRequestsPage() {
             )}
           </div>
 
-          {/* 1. جدول عرض طلبات الإعلانات الحالية بتصميم زجاجي رفيع شبه شفاف */}
+          {/* 1. جدول عرض طلبات الإعلانات الحالية */}
           <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl overflow-hidden shadow-2xl flex flex-col relative w-full">
             <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
             
             <div className="p-4 border-b border-[#D4AF37]/20 bg-[#0b1b3d]/60">
-              {/* تحويل عنوان الترويسة للون البني البرونزي المعتمد `#A17A4C` */}
               <h3 className="text-[#D4AF37] font-black text-xs md:text-sm flex items-center gap-2">
                 <ClipboardList size={18} />
-                <span>  العملاء الواردة من حاسبة الموقع ({requests.length})</span>
+                <span>العملاء الواردة من حاسبة الموقع ({requests.length})</span>
               </h3>
             </div>
             
@@ -367,6 +400,7 @@ export default function CustomerRequestsPage() {
                       <th>المساحة م²</th>
                       <th>مستوى التشطيب</th>
                       <th>المنطقة</th>
+                      <th>تاريخ التسجيل</th>
                       <th>النطاق السعري التقديري</th>
                       <th className="text-center">حالة الطلب</th>
                     </tr>
@@ -374,6 +408,7 @@ export default function CustomerRequestsPage() {
                   <tbody className="divide-y divide-[#D4AF37]/15">
                     {requests.map((r) => {
                       const costs = getEstimatedCosts(r);
+                      const isConverted = String(r.status || "").includes("تم تحويل") || r.status === "تم التحويل لعميل";
                       return (
                         <tr
                           key={r.id}
@@ -387,12 +422,14 @@ export default function CustomerRequestsPage() {
                           <td className="font-mono font-black text-[#D4AF37]">{r.area} م²</td>
                           <td className="text-slate-300 font-bold">{r.finishing_level}</td>
                           <td className="text-slate-300 font-bold">{r.region}</td>
+                          <td className="text-slate-300 font-bold">{r.execution_date || "غير محدد"}</td>
                           <td className="font-mono font-black text-[#D4AF37]">
                             من {formatNumber(costs.min)} إلى {formatNumber(costs.max)} ج.م
                           </td>
                           <td className="text-center">
+                            {/* شارة حالة الطلب: تظهر زمردية متوهجة عند ترقية العميل وتعيين السيلز */}
                             <span className={`px-2.5 py-1 rounded-full text-[10px] font-black ${
-                              r.status === "تم التحويل لعميل" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              isConverted ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 animate-pulse" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                             }`}>{r.status || "جديد"}</span>
                           </td>
                         </tr>
@@ -406,122 +443,138 @@ export default function CustomerRequestsPage() {
             </div>
           </div>
 
-          {/* 2. كرت مراجعة تفاصيل طلب العميل المختار والترقية بنقرة زر مذهبة وتولتيب مخصص */}
+          {/* 🌟 2. تفاصيل وبيانات طلب العميل المحتمل (تمت إعادة هندسته وتصميمه بالكامل ليطابق كروت الـ CRM) */}
           {selectedRequest && (
-            <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 space-y-6 animate-fade-in shadow-2xl relative overflow-hidden w-full text-xs md:text-sm">
+            <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 space-y-5 shadow-2xl relative overflow-hidden w-full">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
               
-              {/* تحويل عنوان الترويسة للون البني البرونزي المعتمد `#A17A4C` */}
-              <h3 className="text-[#D4AF37] font-black text-sm md:text-base border-b border-[#D4AF37] pb-3 flex items-center gap-2 select-none">
-                <Sparkles className="w-5 h-5 text-[#D4AF37] animate-pulse" />
-                <span>تفاصيل طلب مبيعات العميل: {selectedRequest.name}</span>
+              {/* ترويسة الكارت الفاخرة بالذهب الإمبراطوري #D4AF37 وأيقونة مذهبة */}
+              <h3 className="text-[#D4AF37] text-sm md:text-base font-black border-b border-[#D4AF37]/15 pb-3 flex items-center gap-2 select-none">
+                <Sparkles className="w-5 h-5 text-[#D4AF37] shrink-0 animate-pulse" />
+                <span>مراجعة وتخصيص تفاصيل طلب العميل المحتمل</span>
               </h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-white font-semibold">
-                
-                <div className="flex items-center gap-3 p-3 bg-[#020B1C]/50 rounded-xl border border-[#D4AF37]/15">
-                  <User className="text-[#D4AF37]" size={16} />
-                  <div>
-                    <span className="text-gray-400 block text-[10px] font-bold">الاسم بالكامل:</span>
-                    <span className="font-bold text-[#F0E6D2] text-xs">{selectedRequest.name}</span>
+
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                {/* الاسم بالكامل */}
+                <div className="col-span-2 md:col-span-1">
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">الاسم بالكامل (أوتوماتيكي)</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={selectedRequest.name || ""}
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none font-semibold text-xs opacity-80"
+                  />
+                </div>
+
+                {/* رقم الموبايل والواتساب */}
+                <div className="col-span-2 md:col-span-1">
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">رقم الموبايل والواتساب (أوتوماتيكي)</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={selectedRequest.phone || ""}
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none font-mono font-semibold text-xs opacity-80"
+                  />
+                </div>
+
+                {/* المنطقة الجغرافية للتوزيع */}
+                <div className="col-span-2 md:col-span-1">
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">المنطقة الجغرافية للتوزيع</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={selectedRequest.region || ""}
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none font-semibold text-xs opacity-80"
+                  />
+                </div>
+
+                {/* تاريخ التنفيذ المتوقع */}
+                <div className="col-span-2 md:col-span-1">
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">تاريخ التنفيذ المتوقع</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={selectedRequest.execution_date || "غير محدد"}
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none font-mono font-semibold text-xs opacity-80"
+                  />
+                </div>
+
+                {/* المساحة ومستوى التشطيب */}
+                <div className="col-span-2">
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">مساحة الشقة ومستوى التشطيب المختار بالحاسبة</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={`${selectedRequest.area || 0} م² — مستوى التشطيب: (${selectedRequest.finishing_level || "غير محدد"})`}
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none font-semibold text-xs opacity-80"
+                  />
+                </div>
+
+                {/* كارت زجاجي بلوري فخم يعرض النطاق السعري التقديري للعميل المختار */}
+                <div className="col-span-2">
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">التكلفة التقديرية التلقائية بالحملة الإعلانية</label>
+                  <div className="w-full h-11 rounded-xl bg-[#020B1C] border border-emerald-500/35 text-emerald-400 flex items-center justify-center font-mono font-black text-xs gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.15)] select-none">
+                    <span className="text-[10px] text-gray-500 font-bold">من:</span>
+                    <span>{getEstimatedCosts(selectedRequest).min.toLocaleString()}</span>
+                    <span className="text-gray-500 font-normal text-[10px]">إلى:</span>
+                    <span>{getEstimatedCosts(selectedRequest).max.toLocaleString()}</span>
+                    <span className="text-[10px] text-gray-500 font-bold mr-1">ج.م</span>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-[#020B1C]/50 rounded-xl border border-[#D4AF37]/15">
-                  <Phone className="text-[#D4AF37]" size={16} />
-                  <div>
-                    <span className="text-gray-400 block text-[10px] font-bold">رقم الموبايل والواتساب:</span>
-                    <span className="font-mono text-[#F0E6D2] text-xs">{selectedRequest.phone}</span>
-                  </div>
+                {/* المواصفات والطلبات الفنية الإضافية */}
+                <div className="col-span-2">
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">المواصفات والطلبات الإضافية المدخلة من العميل</label>
+                  <textarea
+                    disabled
+                    value={selectedRequest.notes || "لا توجد ملاحظات إضافية مسجلة من العميل."}
+                    className="w-full h-20 p-3.5 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white outline-none resize-none text-xs leading-relaxed font-semibold opacity-80"
+                  />
                 </div>
 
-                <div className="flex items-center gap-3 p-3 bg-[#020B1C]/50 rounded-xl border border-[#D4AF37]/15">
-                  <MapPin className="text-[#D4AF37]" size={16} />
-                  <div>
-                    <span className="text-gray-400 block text-[10px] font-bold">المنطقة الجغرافية للتوزيع:</span>
-                    <span className="font-bold text-[#F0E6D2] text-xs">{selectedRequest.region}</span>
+                {/* تعيين موظف المبيعات لترقية اليد */}
+                {!(String(selectedRequest.status || "").includes("تم تحويل") || selectedRequest.status === "تم التحويل لعميل") && (
+                  <div className="col-span-2 pt-2">
+                    <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">تعيين موظف المبيعات المسؤول عن هذا العميل قبل الترقية للـ CRM *</label>
+                    <select
+                      value={selectedAssignee}
+                      onChange={(e) => setSelectedAssignee(e.target.value)}
+                      className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/35 text-[#D4AF37] font-black px-3 outline-none cursor-pointer text-xs focus:border-[#D4AF37]"
+                    >
+                      <option value="">-- حدد موظف المبيعات للربط --</option>
+                      {salesStaff.map((s) => (
+                        <option key={s.id} value={s.id}>📈 {s.name}</option>
+                      ))}
+                    </select>
                   </div>
-                </div>
+                )}
 
-                <div className="flex items-center gap-3 p-3 bg-[#020B1C]/50 rounded-xl border border-[#D4AF37]/15">
-                  <Sparkles className="text-[#D4AF37]" size={16} />
-                  <div>
-                    <span className="text-gray-400 block text-[10px] font-bold">المساحة ومستوى التشطيب:</span>
-                    <span className="font-bold text-[#F0E6D2] text-xs">{selectedRequest.area} م² - ({selectedRequest.finishing_level})</span>
-                  </div>
-                </div>
-
-                {/* كارت زجاجي بلوري فخم يعرض النطاق السعري للعميل المختار بشكل بارز يطابق حاسبة العميل */}
-                <div className="col-span-1 md:col-span-2 p-4 glass-price-card rounded-2xl relative overflow-hidden flex flex-col justify-center">
-                  <div className="absolute top-0 right-0 w-1.5 h-full bg-[#D4AF37]" />
-                  <span className="text-emerald-400 block mb-2 text-xs font-black flex items-center gap-1.5 select-none">
-                    <TrendingUp size={14} className="shrink-0 animate-pulse" /> التكلفة المبدئية التي شاهدها العميل في الآلة الحاسبة:
-                  </span>
-                  <div className="flex gap-6 font-mono text-sm md:text-base font-black text-[#D4AF37] tracking-tight">
-                    <span>من: {formatNumber(getEstimatedCosts(selectedRequest).min)} ج.م</span>
-                    <span>إلى: {formatNumber(getEstimatedCosts(selectedRequest).max)} ج.م</span>
-                  </div>
-                </div>
-
-                <div className="col-span-1 md:col-span-2 p-4 bg-black/60 rounded-xl border border-[#D4AF37]/15">
-                  <span className="text-gray-400 block mb-1 text-[10px] font-bold">المواصفات والطلبات الفنية الإضافية المدخلة من العميل:</span>
-                  <p className="text-[#F0E6D2] text-xs leading-relaxed font-bold">{selectedRequest.notes || "لا توجد ملاحظات أو مواصفات خاصة مدخلة من العميل."}</p>
-                </div>
               </div>
 
-              {selectedRequest.status !== "تم التحويل لعميل" && (
-                <div className="p-4 bg-[#020B1C]/50 rounded-xl border border-[#D4AF37]/15">
-                  <label className="text-gray-400 block mb-2 text-[10px] font-bold">اختر موظف المبيعات المسؤول عن هذا العميل قبل الترقية المباشرة للـ CRM:</label>
-                  <select
-                    value={selectedAssignee}
-                    onChange={(e) => setSelectedAssignee(e.target.value)}
-                    className="w-full bg-[#020B1C] border border-[#D4AF37]/35 text-[#D4AF37] font-bold p-3 rounded-lg text-xs outline-none focus:border-[#D4AF37] cursor-pointer"
-                  >
-                    <option value="">-- حدد موظف المبيعات للربط --</option>
-                    {salesStaff.map((s) => (
-                      <option key={s.id} value={s.id}>📈 {s.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* أزرار الإجراءات للـ Lead مع فقاعات التولتيب التعريفية المذهبة */}
-              <div className="flex gap-4 pt-5 border-t border-[#D4AF37]/20 justify-end select-none">
+              {/* أزرار الإجراءات للـ Lead مصممة بالشكل الإمبراطوري الفاخر مع حظر إعادة تحميل الصفحة نهائياً */}
+              <div className="flex gap-4 pt-4 border-t border-[#D4AF37]/20 justify-end select-none">
                 
                 {/* 1. زر إلغاء التحديد */}
-                <div className="relative group">
-                  <button
-                    onClick={clearSelection}
-                    className="h-11 bg-transparent border border-gray-600 text-gray-300 px-6 rounded-xl font-bold hover:bg-gray-800 transition duration-150 cursor-pointer text-xs"
-                  >
-                    إلغاء التحديد
-                  </button>
-                  <div className="absolute bottom-full mb-2.5 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                    <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-1.5 px-3 rounded-xl shadow-2xl relative">
-                      ❌ تصفير الاختيار الحالي للعميل
-                      <div className="absolute top-full right-1/2 translate-x-1/2 w-1.5 h-1.5 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
-                    </div>
-                  </div>
-                </div>
+                <button
+                  type="button" // 👈 حظر إعادة التحميل الافتراضية بنسبة 100%
+                  onClick={(e) => { e.preventDefault(); clearSelection(); }}
+                  className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d]/40 to-[#040e20]/40 text-[#D4AF37] border border-[#D4AF37]/30 shadow-md hover:border-[#D4AF37] transition-all duration-300 font-bold cursor-pointer text-xs flex items-center justify-center gap-1.5"
+                >
+                  إلغاء التحديد
+                </button>
 
-                {/* 2. زر ترقية العميل حيوياً لجدول الـ CRM السحابي بضغطة زر وتولتيب مذهب */}
-                <div className="relative group">
-                  <button
-                    onClick={handleConvertToCRM}
-                    disabled={actionLoading || selectedRequest.status === "تم التحويل لعميل"}
-                    className="h-11 bg-gradient-to-r from-[#C9A45D] via-[#F0E6D2] to-[#D4AF37] hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] text-black px-8 rounded-xl font-black cursor-pointer disabled:opacity-50 text-xs flex items-center gap-2 hover:scale-[1.01] active:scale-[0.99] transition-all"
-                  >
-                    {actionLoading ? <Loader2 size={12} className="animate-spin" /> : <ArrowLeftRight size={14} />}
-                    {selectedRequest.status === "تم التحويل لعميل" ? "تم التحويل والترقية للـ CRM بنجاح" : "✅ تحويل وترقية لعميل CRM رسمي"}
-                  </button>
-                  
-                  <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                    <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
-                      ⚙️ معالجة وترقية العميل المحتمل تلقائياً من الإعلانات إلى سجلات الـ CRM
-                      <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
-                    </div>
-                  </div>
-                </div>
+                {/* 2. زر ترقية العميل حيوياً بالشكل الفاخر المعتمد */}
+                <button
+                  type="button" // 👈 حظر إعادة التحميل الافتراضية بنسبة 100%
+                  onClick={(e) => { e.preventDefault(); handleConvertToCRM(); }}
+                  disabled={actionLoading || String(selectedRequest.status || "").includes("تم تحويل") || selectedRequest.status === "تم التحويل لعميل"}
+                  className="px-8 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.02] active:scale-95 transition-all duration-300 font-black cursor-pointer text-xs flex items-center justify-center gap-2 select-none relative overflow-hidden disabled:opacity-50"
+                >
+                  {actionLoading ? <Loader2 size={12} className="animate-spin" /> : <ArrowLeftRight size={14} />}
+                  {String(selectedRequest.status || "").includes("تم تحويل") || selectedRequest.status === "تم التحويل لعميل" ? "تمت الترقية للـ CRM وتعيين السيلز بنجاح" : "✅ تحويل وترقية لعميل CRM رسمي"}
+                  {/* عاكس الإضاءة النيوني المتوهج بقاع الزر */}
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                </button>
 
               </div>
 
