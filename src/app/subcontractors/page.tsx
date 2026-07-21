@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useMemo } from 'react';
+import { useCRM } from "@/components/CRM/context/CRMContext";
+import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
-import { supabase } from "@/lib/supabaseClient";
-// 🌟 تم تأمين استيراد وظائف الأوفلاين لحل خطأ التجميع 2304 نهائياً
+// تأمين استيراد وظائف الأوفلاين لحل خطأ التجميع 2304 نهائياً
 import { isOnline, addToOfflineQueue } from "@/lib/offline-sync";
 import { 
   Download, 
@@ -25,7 +25,10 @@ import {
   CheckCircle2,
   Key,
   DollarSign,
-  PlusCircle
+  PlusCircle,
+  Hourglass,
+  Receipt,
+  Loader2
 } from "lucide-react";
 
 interface Customer {
@@ -334,9 +337,13 @@ export default function SubcontractorsPage() {
   }
 
   return (
-    // 🌟 تم فرض Alexandria كخط افتراضي وتوحيد المحاذاة والتعبئة البكسلية بالكامل
-    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden" dir="rtl">
+    <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden" dir="rtl">
       
+      {/* 🌟 هيدر الهيكل لمنع وميض وتأخر تحميل الخط البصري FOUT بسيرفرات الإنتاج */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
       <style dangerouslySetInnerHTML={{__html: `
         ::-webkit-scrollbar {
           width: 6px !important;
@@ -359,67 +366,61 @@ export default function SubcontractorsPage() {
         
         /* جدار أمان الخط الموحد Alexandria */
         *:not(code, pre, .font-mono, [class*="font-mono"]) {
-          font-family: var(--font-alexandria), system-ui, -apple-system, sans-serif !important;
+          font-family: 'Alexandria', Arial, sans-serif !important;
           letter-spacing: normal !important;
-        }
-
-        .royal-gradient-btn {
-          background: linear-gradient(90deg, #C9A45D 0%, #F0E6D2 50%, #D4AF37 100%) !important;
-          color: #020B1C !important;
-          font-weight: 900 !important;
-          border: 1px solid #D4AF37 !important;
-          box-shadow: 0 0 15px rgba(212, 175, 55, 0.2) !important;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        }
-        .royal-gradient-btn:hover {
-          transform: scale(1.02) !important;
-          box-shadow: 0 0 25px rgba(212, 175, 55, 0.45) !important;
-          cursor: pointer !important;
         }
       `}} />
 
       <Sidebar />
       
-      <section className="w-full lg:pr-56 m-0 min-h-screen flex flex-col">
+      {/* 🌟 تم تصفير تعليمة w-full لإنهاء ثغرة القص والتمدد خارج إطار الشاشة الأيسر */}
+      <section className="flex-1 flex flex-col lg:pr-56 m-0 min-h-screen">
         <Header />
+        
         <div className="p-4 md:p-8 space-y-6 text-right">
           
-          <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-[#D4AF37] tracking-wide">إدارة المقاولين والموردين المعتمدين</h1>
-            <p className="text-[#F0E6D2] text-sm md:text-base mt-2 font-bold">تسجيل مقاولي باطن، الموردين المعتمدين، جرد مستخلصاتهم المالية، وأرشيف المقاولين الاحتياطيين.</p>
+          {/* هيدر الصفحة متناسق بكسلياً مع شاشة الـ CRM والبنود والخامات */}
+          <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-5 select-none">
+            <div>
+              <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2.5">
+                <span>حسابات وإسناد مقاولي الباطن والموردين</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-ping" />
+              </h1>
+              <p className="text-white text-xs mt-2">مراقبة طواقم العمل النشطة، وجرد مستخلصاتهم المالية وأرشيف المقاولين.</p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 select-none">
-            <div className="p-5 rounded-2xl bg-[#07132a] border-2 border-[#D4AF37]/50 flex items-center justify-between shadow-lg">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 select-none text-xs md:text-sm font-bold">
+            <div className="p-5 rounded-3xl bg-[#07132a] border border-[#D4AF37]/35 flex items-center justify-between shadow-lg">
               <div className="space-y-1">
-                <span className="text-xs text-gray-400 font-bold block">إجمالي المقاولين والموردين بالأرشيف</span>
-                <span className="text-2xl font-black font-mono text-[#F0E6D2]">{subcontractors.length} مسجلين</span>
+                <span className="text-[10px] text-gray-500 font-bold block">إجمالي المقاولين والموردين بالأرشيف</span>
+                <span className="text-lg font-black font-mono text-[#F0E6D2]">{subcontractors.length} مسجلين</span>
               </div>
               <span className="text-2xl">👷</span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#07132a] border-2 border-[#D4AF37]/50 flex items-center justify-between shadow-lg">
+            <div className="p-5 rounded-3xl bg-[#07132a] border border-[#D4AF37]/35 flex items-center justify-between shadow-lg">
               <div className="space-y-1">
-                <span className="text-xs text-gray-400 font-bold block">طواقم العمل النشطة ميدانياً</span>
-                <span className="text-2xl font-black font-mono text-emerald-400">+{activeCrewsCount} جاريين</span>
+                <span className="text-[10px] text-gray-500 font-bold block">طواقم العمل النشطة ميدانياً</span>
+                <span className="text-lg font-black font-mono text-emerald-400">+{activeCrewsCount} جاريين</span>
               </div>
               <span className="text-2xl">🏗️</span>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#07132a] border-2 border-[#D4AF37]/50 flex items-center justify-between shadow-lg">
+            <div className="p-5 rounded-3xl bg-[#07132a] border border-[#D4AF37]/35 flex items-center justify-between shadow-lg">
               <div className="space-y-1">
-                <span className="text-xs text-gray-400 font-bold block">إجمالي المستحقات والذمم المعلقة</span>
-                <span className="text-2xl font-black font-mono text-[#D4AF37]">{totalOutstandingLiabilities.toLocaleString('en-US')} ج.م</span>
+                <span className="text-[10px] text-gray-500 font-bold block">إجمالي المستحقات والذمم المعلقة</span>
+                <span className="text-lg font-black font-mono text-[#D4AF37]">{totalOutstandingLiabilities.toLocaleString('en-US')} ج.م</span>
               </div>
               <span className="text-2xl">💸</span>
             </div>
           </div>
 
-          <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="p-4 border-b border-[#243556] bg-[#0b1b3d]/60 flex flex-col sm:flex-row justify-between items-center gap-4 select-none">
+          <div className="bg-[#07132a] border border-[#D4AF37]/20 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="p-4 border-b border-[#1f2d4d] bg-[#0b1b3d]/60 flex flex-col sm:flex-row justify-between items-center gap-4 select-none">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-[#D4AF37]" />
-                <h3 className="text-[#D4AF37] font-black text-base">سجل مقاولي الباطن والشركاء مع روابط Google Drive</h3>
+                <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">سجل مقاولي الباطن والشركاء مع روابط Google Drive</h3>
               </div>
 
               <div className="relative w-full sm:w-72">
@@ -436,23 +437,23 @@ export default function SubcontractorsPage() {
 
             <div className="overflow-x-auto max-h-[220px] overflow-y-auto">
               <table className="w-full text-right table-auto">
-                <thead className="bg-[#0b1d3d] text-[#D4AF37] font-black border-b border-[#1f2d4d] select-none">
+                <thead className="bg-[#0b1d3d] text-[#D4AF37] font-bold select-none text-[13px]">
                   <tr className="whitespace-nowrap">
-                    <th className="p-4">اسم المقاول / المورد</th>
-                    <th className="p-4">رقم الجوال</th>
-                    <th className="p-4">فئة ومجال الأعمال</th>
-                    <th className="p-4">الموقع الإنشائي المستهدف</th>
-                    <th className="p-4 font-mono">قيمة التعاقد</th>
-                    <th className="p-4 text-center">الوضعية الحالية</th>
+                    <th className="p-3">اسم المقاول / المورد</th>
+                    <th className="p-3">رقم الجوال</th>
+                    <th className="p-3">فئة ومجال الأعمال</th>
+                    <th className="p-3">الموقع الإنشائي المستهدف</th>
+                    <th className="p-3 font-mono">قيمة التعاقد</th>
+                    <th className="p-3 text-center">الوضعية الحالية</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#1f2d4d]/50 text-sm md:text-base font-bold">
+                <tbody className="divide-y divide-[#1f2d4d]/50 text-xs md:text-sm text-slate-100 font-semibold">
                   {filteredSubcontractors.map((s) => (
                     <tr
                       key={s.id}
                       onClick={() => selectRow(s)}
                       className={`border-t border-[#1f2d4d] hover:bg-[#0B1B38] text-white cursor-pointer transition whitespace-nowrap ${
-                        selectedSubcontractor?.id === s.id ? "bg-[#0b1d3d]/60 border-r-4 border-r-[#D4AF37]" : ""
+                        selectedSubcontractor?.id === s.id ? "bg-[#0b1b3d]/60 border-r-4 border-r-[#D4AF37]" : ""
                       }`}
                     >
                       <td className="p-4 font-black">{s.name}</td>
@@ -469,7 +470,7 @@ export default function SubcontractorsPage() {
                       </td>
                       <td className="p-4 font-mono font-bold text-[#D4AF37]">{(Number(s.contract_value) || 0).toLocaleString('en-US')} ج.م</td>
                       <td className="p-4 text-center">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-black ${
+                        <span className={`px-2.5 py-1 rounded-full text-[10px] font-black ${
                           s.status === "active" ? "bg-emerald-500/10 text-emerald-400" : s.status === "supplier" ? "bg-blue-500/10 text-blue-400" : "bg-gray-500/10 text-gray-400"
                         }`}>
                           {s.status === "active" && "نشط بالموقع"}
@@ -485,45 +486,45 @@ export default function SubcontractorsPage() {
             </div>
           </div>
 
-          <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] p-6 space-y-6 animate-fade-in shadow-2xl relative w-full text-base">
+          <div className="bg-[#07132a] border border-[#D4AF37]/20 rounded-[2rem] p-6 space-y-5 animate-fade-in shadow-2xl relative w-full text-xs">
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
             
-            <h3 className="text-[#D4AF37] text-xl font-black border-b border-[#243556] pb-3 flex items-center gap-2 select-none">
-              <Sparkles className="w-5 h-5 text-[#D4AF37] animate-pulse" />
+            <h3 className="text-[#D4AF37] text-sm md:text-base font-black border-b border-[#243556] pb-3 flex items-center gap-2 select-none">
+              <Sparkles className="w-5 h-5 text-[#D4AF37] shrink-0 animate-pulse" />
               <span>تفاصيل وبيانات مقاول الباطن / المورد المحدد</span>
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 font-semibold">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 font-semibold text-white">
               
               <div>
-                <label className="block text-[#D4AF37] text-sm mb-2 font-black">اسم المقاول / الورشة المعتمد *</label>
+                <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] select-none">اسم المقاول / الورشة المعتمد *</label>
                 <input
                   type="text"
                   placeholder="مثال: المعلم أحمد للنقاشة"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full h-12 text-sm rounded-xl bg-[#020B1C] border border-[#243556] text-white px-4 outline-none focus:border-[#D4AF37] font-bold placeholder-slate-600"
+                  className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none focus:border-[#D4AF37] font-semibold text-xs placeholder-slate-600"
                 />
               </div>
 
               <div>
-                <label className="block text-[#D4AF37] text-sm mb-2 font-black">رقم المحمول الرئيسي للتواصل</label>
+                <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] select-none">رقم المحمول الرئيسي للتواصل</label>
                 <input
                   type="text"
                   placeholder="010xxxxxxxx"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full h-12 text-sm rounded-xl bg-[#020B1C] border border-[#243556] text-white px-4 outline-none focus:border-[#D4AF37] font-mono font-bold placeholder-slate-600"
+                  className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none focus:border-[#D4AF37] font-mono font-semibold text-xs placeholder-slate-600"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 col-span-1 md:col-span-2">
                 <div>
-                  <label className="block text-[#D4AF37] text-sm mb-2 font-black">التخصص الفني المعماري *</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] select-none">التخصص الفني المعماري *</label>
                   <select
                     value={specialty}
                     onChange={(e) => setSpecialty(e.target.value)}
-                    className="w-full h-12 text-sm rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none cursor-pointer focus:border-[#D4AF37] font-bold"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] px-3 font-semibold outline-none focus:border-[#D4AF37] cursor-pointer text-xs"
                   >
                     {Object.entries(specialtyLabels).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
@@ -531,11 +532,11 @@ export default function SubcontractorsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-[#D4AF37] text-sm mb-2 font-black">إسناد وتكليف لموقع عمل</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] select-none">إسناد وتكليف لموقع عمل</label>
                   <select
                     value={projectId}
                     onChange={(e) => setProjectId(e.target.value)}
-                    className="w-full h-12 text-sm rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none cursor-pointer focus:border-[#D4AF37] font-bold"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-3 font-semibold outline-none focus:border-[#D4AF37] cursor-pointer text-xs"
                   >
                     <option value="">-- مورد عام / مقاول احتياطي (بدون مشروع حالياً) --</option>
                     {projects.map((p: any) => (
@@ -545,23 +546,23 @@ export default function SubcontractorsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 col-span-1 md:col-span-2">
                 <div>
-                  <label className="block text-[#D4AF37] text-sm mb-2 font-black">إجمالي قيمة اتفاق المقاولة (ج.م)</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] select-none">إجمالي قيمة اتفاق المقاولة (ج.م)</label>
                   <input
                     type="number"
                     placeholder="0.00"
                     value={contractValue}
                     onChange={(e) => setContractValue(e.target.value !== "" ? Number(e.target.value) : "")}
-                    className="w-full h-12 text-sm rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] px-4 outline-none focus:border-[#D4AF37] font-mono font-black placeholder-slate-600"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] px-4 outline-none focus:border-[#D4AF37] font-mono font-black text-xs"
                   />
                 </div>
                 <div>
-                  <label className="block text-[#D4AF37] text-sm mb-2 font-black">الوضعية والنشاط الجاري بالموقع *</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] select-none">الوضعية والنشاط الجاري بالموقع *</label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    className="w-full h-12 text-sm rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none cursor-pointer focus:border-[#D4AF37] font-bold"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-bold px-3 text-xs outline-none cursor-pointer focus:border-[#D4AF37]"
                   >
                     <option value="active">نشط بالموقع جاري التنفيذ</option>
                     <option value="completed">منتهي ومسلم البند</option>
@@ -573,7 +574,7 @@ export default function SubcontractorsPage() {
 
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 bg-[#020B1C] p-4 rounded-xl border border-dashed border-[#D4AF37]/30">
                 <div>
-                  <label className="block text-[#D4AF37] text-xs mb-2 font-black">📁 رابط العقد المعتمد بـ (Google Drive)</label>
+                  <label className="block text-[#D4AF37] text-[10px] mb-2 font-bold">📁 رابط العقد المعتمد بـ (Google Drive)</label>
                   <input
                     type="url"
                     placeholder="https://drive.google.com/file/d/..."
@@ -583,7 +584,7 @@ export default function SubcontractorsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[#D4AF37] text-xs mb-2 font-black">📁 رابط آخر مستخلص بـ (Google Drive)</label>
+                  <label className="block text-[#D4AF37] text-[10px] mb-2 font-bold">📁 رابط آخر مستخلص بـ (Google Drive)</label>
                   <input
                     type="url"
                     placeholder="https://drive.google.com/file/d/..."
@@ -596,7 +597,7 @@ export default function SubcontractorsPage() {
 
               <div className="grid grid-cols-2 gap-4 col-span-1 md:col-span-2 bg-[#020B1C] p-4 rounded-xl border border-[#1f2d4d]">
                 <div>
-                  <label className="block text-[#D4AF37] text-xs mb-2 font-bold">تاريخ بدء عمل المقاول بالبند</label>
+                  <label className="block text-[#D4AF37] text-[10px] mb-2 font-bold">تاريخ بدء عمل المقاول بالبند</label>
                   <input
                     type="date"
                     value={startDate}
@@ -605,7 +606,7 @@ export default function SubcontractorsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-[#D4AF37] text-xs mb-2 font-bold">تاريخ الانتهاء المتوقع للتسليم</label>
+                  <label className="block text-[#D4AF37] text-[10px] mb-2 font-bold">تاريخ الانتهاء المتوقع للتسليم</label>
                   <input
                     type="date"
                     value={endDate}
@@ -616,11 +617,11 @@ export default function SubcontractorsPage() {
               </div>
 
               <div className="col-span-1 md:col-span-2">
-                <label className="block text-[#D4AF37] text-sm mb-2 font-black">التقييم اللفظي المعتمد للجودة والالتزام الفني *</label>
+                <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] select-none">التقييم اللفظي المعتمد للجودة والالتزام الفني *</label>
                 <select
                   value={performanceRating}
                   onChange={(e) => setPerformanceRating(e.target.value)}
-                  className="w-full h-12 text-sm rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] px-3 outline-none focus:border-[#D4AF37] font-bold"
+                  className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-bold px-3 text-xs outline-none cursor-pointer focus:border-[#D4AF37]"
                 >
                   <option value="excellent">امتياز 🏆 (تسليم هندسي متكامل ومثالي)</option>
                   <option value="very_good">جيد جداً ⭐ (تسليم بجودة عالية مع التزام زمني ممتاز)</option>
@@ -632,15 +633,17 @@ export default function SubcontractorsPage() {
 
             </div>
 
+            {/* 🌟 أزرار التحكم ميتاليكية فاخرة مانعة للريفريش نهائياً بتأثير الوميض والنيون السفلي المذهب */}
             <div className="flex flex-wrap gap-4 pt-5 border-t border-[#243556] justify-end select-none">
               
               <div className="relative group">
                 <button
-                  type="button"
-                  onClick={clearForm}
-                  className="bg-transparent border border-gray-600 text-gray-300 px-6 py-3.5 rounded-xl font-black hover:bg-gray-800 cursor-pointer text-xs md:text-sm"
+                  type="button" // 👈 صمام أمان المتصفح لمنع التحديث
+                  onClick={(e) => { e.preventDefault(); clearForm(); }}
+                  className="px-5 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d]/40 to-[#040e20]/40 text-[#D4AF37] border border-[#D4AF37]/30 shadow-md hover:border-[#D4AF37] transition-all duration-300 font-bold text-xs flex flex-row items-center justify-center gap-2 whitespace-nowrap"
                 >
-                  🔄 تهيئة الحقول لجديد
+                  <RefreshCw className="w-4 h-4 shrink-0" />
+                  <span>تهيئة الحقول لجديد</span>
                 </button>
                 <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
                   <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
@@ -652,16 +655,14 @@ export default function SubcontractorsPage() {
 
               <div className="relative group">
                 <button
-                  type="button"
-                  onClick={handleInsert}
+                  type="button" // 👈 صمام أمان المتصفح لمنع التحديث
+                  onClick={(e) => { e.preventDefault(); handleInsert(); }}
                   disabled={actionLoading || !!selectedSubcontractor}
-                  className={`px-8 py-3.5 rounded-xl font-black cursor-pointer text-xs md:text-sm ${
-                    actionLoading || !!selectedSubcontractor
-                      ? "bg-gray-800 text-gray-500 border border-transparent cursor-not-allowed opacity-40"
-                      : "royal-gradient-btn text-black shadow-lg"
-                  }`}
+                  className="px-8 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 font-black text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-40"
                 >
-                  ➕ حفظ مقاول / مورد جديد
+                  {actionLoading ? <Loader2 className="animate-spin w-4 h-4" /> : <Plus className="w-4 h-4" />}
+                  <span>حفظ مقاول / مورد جديد</span>
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                 </button>
                 <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
                   <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
@@ -673,16 +674,14 @@ export default function SubcontractorsPage() {
 
               <div className="relative group">
                 <button
-                  type="button"
-                  onClick={handleUpdate}
+                  type="button" // 👈 صمام أمان المتصفح لمنع التحديث
+                  onClick={(e) => { e.preventDefault(); handleUpdate(); }}
                   disabled={actionLoading || !selectedSubcontractor}
-                  className={`px-8 py-3.5 rounded-xl font-black cursor-pointer text-xs md:text-sm ${
-                    actionLoading || !selectedSubcontractor
-                      ? "bg-gray-800 text-gray-500 border border-transparent cursor-not-allowed opacity-40"
-                      : "royal-gradient-btn text-black shadow-lg"
-                  }`}
+                  className="px-8 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 font-black text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-40"
                 >
-                  ✏️ حفظ التعديلات والتقييم
+                  {actionLoading ? <Loader2 className="animate-spin w-4 h-4" /> : <Edit3 className="w-4 h-4" />}
+                  <span>حفظ التعديلات والتقييم</span>
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                 </button>
                 <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
                   <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
@@ -694,12 +693,13 @@ export default function SubcontractorsPage() {
 
               <div className="relative group">
                 <button
-                  type="button"
-                  onClick={handleDelete}
+                  type="button" // 👈 صمام أمان المتصفح لمنع التحديث
+                  onClick={(e) => { e.preventDefault(); handleDelete(); }}
                   disabled={actionLoading || !selectedSubcontractor}
-                  className="bg-red-950/40 border border-red-500/30 hover:bg-red-600 hover:text-white text-red-400 px-8 py-3.5 rounded-xl font-black cursor-pointer disabled:opacity-50 text-xs md:text-sm"
+                  className="bg-red-950/40 border border-red-500/30 hover:bg-red-600 hover:text-white text-red-400 px-8 py-3.5 rounded-xl font-black cursor-pointer disabled:opacity-50 text-xs flex items-center gap-1.5 select-none relative overflow-hidden active:scale-95 duration-300"
                 >
-                  🗑️ حذف المقاول نهائياً
+                  <Trash2 className="w-4 h-4" />
+                  <span>حذف المقاول نهائياً</span>
                 </button>
                 <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
                   <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">

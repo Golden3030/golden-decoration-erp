@@ -2,19 +2,23 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Alexandria } from "next/font/google";
 import "./globals.css";
 import { CRMProvider } from "@/components/CRM/context/CRMContext";
+import Script from "next/script";
 
-// 1. تهيئة وتثبيت الخطوط ذكياً سحابياً لمنع الـ FOUT وتفعيل Alexandria للغة العربية
+// =============================================
+// تهيئة الخطوط (محسّنة للعربية والأداء)
+// =============================================
 const alexandria = Alexandria({
-  subsets: ["arabic"],
+  subsets: ["arabic", "latin"],           // دعم عربي + لاتيني
   weight: ["300", "400", "500", "600", "700", "800", "900"],
-  display: "block", // ✅ إصلاح: "swap" كان بيعرض Arial فوراً ثم يستبدله بـ Alexandria (وميض ظاهر عند التحميل)
-                     // "block" بيستنى الخط الأصلي بدون عرض أي بديل، وبما إنه محمّل ذاتياً هيكون التأخير غير ملحوظ
+  display: "swap",                        // أفضل أداء (مُفضل حالياً)
   variable: "--font-alexandria",
+  fallback: ["system-ui", "Tahoma", "sans-serif"], // احتياطي قوي
 });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -22,22 +26,26 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// 2. تعيين الميتاداتا السحابية وتثبيت الـ PWA واللوجو الملوكي للمنظومة وأجهزة آبل
+// =============================================
+// Metadata
+// =============================================
 export const metadata: Metadata = {
   title: "Golden Decoration ERP",
   description: "نظام إدارة الحسابات والمواقع الفاخر لشركات التشطيبات",
   manifest: "/manifest.json",
   icons: {
-    icon: "/logo.png", // أيقونة المتصفح الرسمية
-    apple: "/logo.png", // أيقونة التنزيل والتنصيب على أجهزة الآيفون والآيباد
-  }
+    icon: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export const viewport = {
   themeColor: "#020B1C",
 };
 
-// 3. المكون الموحد والوحيد لـ RootLayout مغلفاً بسياق الـ CRMProvider لضمان عمل الجداول
+// =============================================
+// Root Layout
+// =============================================
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -49,7 +57,23 @@ export default function RootLayout({
       dir="rtl" 
       className={`${alexandria.variable} ${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#020B1C] text-white">
+      <body className="min-h-full flex flex-col bg-[#020B1C] text-white font-sans">
+        
+        {/* Google Analytics - Google Tag Manager */}
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=G-MRPFMQV1RR"
+          strategy="afterInteractive"
+        />
+        
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-MRPFMQV1RR');
+          `}
+        </Script>
+
         <CRMProvider>
           {children}
         </CRMProvider>
