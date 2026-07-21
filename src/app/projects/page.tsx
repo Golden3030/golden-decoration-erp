@@ -159,6 +159,9 @@ export default function ProjectsPage() {
   const [instLinkedStageId, setInstLinkedStageId] = useState<number | "">("");
   const [addingInst, setAddingInst] = useState(false);
 
+  // حالة التحكم في الـ SubTabs الخاصة بكارت المدخلات والمواصفات الطويل
+  const [activeSubTab, setActiveSubTab] = useState<"general" | "schedule" | "technical">("general");
+
   useEffect(() => {
     document.title = "مشاريع ومواقع التشطيب | Golden Decoration";
     loadProjectsData();
@@ -510,7 +513,6 @@ export default function ProjectsPage() {
 
   async function handleUpdateProject(e: React.MouseEvent) {
     e.preventDefault(); // منع إعادة التحميل
-    if (!selectedProject) return;
     if (!pStartDate) {
       alert("⚠️ شروط تعاقدية إلزامية:\n\nيجب إدخال تاريخ بدء العمل الفعلي بالموقع لتسييل المخطط الزمني.");
       return;
@@ -552,12 +554,12 @@ export default function ProjectsPage() {
         const { error } = await supabase
           .from("projects")
           .update(payload)
-          .eq("id", selectedProject.id);
+          .eq("id", selectedProject!.id);
 
         if (error) throw error;
         alert("✅ تم تعديل وحفظ الجدول المخطط الزمني ومكونات الشقة بالموقع بنجاح!");
       } else {
-        addToOfflineQueue("projects", "UPDATE", { ...payload, id: selectedProject.id });
+        addToOfflineQueue("projects", "UPDATE", { ...payload, id: selectedProject!.id });
         alert("⚠️ تم حفظ التعديلات محلياً؛ وسيتم تحديث السحاب فور عودة الإنترنت.");
       }
       loadProjectsData();
@@ -694,9 +696,9 @@ export default function ProjectsPage() {
           </div>
 
           {/* 1. جدول المشاريع العلوي */}
-          <div className="bg-[#07132a] border border-[#D4AF37]/50 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col w-full">
+          <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] overflow-hidden shadow-2xl relative flex flex-col w-full">
             <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
-            <div className="p-4 border-b border-[#243556] bg-[#0b1b3d]/60 flex flex-col sm:flex-row justify-between items-center gap-4 select-none">
+            <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex flex-col sm:flex-row justify-between items-center gap-4 select-none">
               <h3 className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5">قائمة مشاريع التشطيب والعمل الجاري بالموقع ({filteredProjects.length})</h3>
               
               <div className="relative w-full sm:w-72">
@@ -770,127 +772,182 @@ export default function ProjectsPage() {
                 <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 shadow-2xl relative flex flex-col justify-between space-y-4">
                   
                   <div className="space-y-4">
-                    <h3 className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5 border-b border-[#D4AF37] pb-3 flex items-center gap-2 select-none">
-                      <Home className="w-5 h-5" />
-                      <span>المواصفات والمدخلات الفنية للمشروع</span>
+                    <h3 className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5 border-b border-[#D4AF37] pb-3 flex items-center justify-between select-none">
+                      <div className="flex items-center gap-2">
+                        <Home className="w-5 h-5" />
+                        <span>المواصفات والمدخلات الفنية للمشروع</span>
+                      </div>
                     </h3>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">كود المشروع *</label>
-                        <input type="text" value={pCode} disabled className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-gray-500 px-3 outline-none text-center font-mono font-bold text-xs" />
-                      </div>
+                    {/* أزرار التبويبات الداخلية الفاخرة للتحكم في الأقسام الثلاثة لضغط الكارت الطويل */}
+                    <div className="flex items-center gap-1 bg-[#020B1C] border border-[#243556] rounded-xl p-1 select-none text-[11px] w-full">
+                      <button 
+                        type="button"
+                        onClick={() => setActiveSubTab("general")}
+                        className={`flex-1 py-2 text-center rounded-lg transition-all duration-300 cursor-pointer ${
+                          activeSubTab === "general" 
+                            ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.3)] font-bold" 
+                            : "bg-[#07132a] border border-transparent text-[#F0E6D2] hover:border-[#D4AF37]/20"
+                        }`}
+                      >
+                        📁 الهوية والتعاقد
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setActiveSubTab("schedule")}
+                        className={`flex-1 py-2 text-center rounded-lg transition-all duration-300 cursor-pointer ${
+                          activeSubTab === "schedule" 
+                            ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.3)] font-bold" 
+                            : "bg-[#07132a] border border-transparent text-[#F0E6D2] hover:border-[#D4AF37]/20"
+                        }`}
+                      >
+                        👷 التخطيط والمسؤولين
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => setActiveSubTab("technical")}
+                        className={`flex-1 py-2 text-center rounded-lg transition-all duration-300 cursor-pointer ${
+                          activeSubTab === "technical" 
+                            ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.3)] font-bold" 
+                            : "bg-[#07132a] border border-transparent text-[#F0E6D2] hover:border-[#D4AF37]/20"
+                        }`}
+                      >
+                        📐 الخصائص الفنية
+                      </button>
+                    </div>
 
-                      <div>
-                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">اسم المشروع *</label>
-                        <input type="text" value={pName} disabled={!canEditFullDetails} onChange={(e) => setPName(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-xs" />
-                      </div>
+                    <div className="min-h-[350px]">
+                      {/* القسم الأول: الهوية والتعاقد */}
+                      {activeSubTab === "general" && (
+                        <div className="space-y-4 animate-in fade-in duration-200">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">كود المشروع *</label>
+                              <input type="text" value={pCode} disabled className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-gray-500 px-3 outline-none text-center font-mono font-bold text-xs" />
+                            </div>
 
-                      <div className="col-span-2">
-                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">عنوان المشروع بالتفصيل *</label>
-                        <input type="text" placeholder="الشارع، رقم العمارة، اسم الكمبوند بالتفصيل..." value={pUnitAddress} disabled={!canEditFullDetails} onChange={(e) => setPUnitAddress(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-xs" />
-                      </div>
+                            <div>
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">اسم المشروع *</label>
+                              <input type="text" value={pName} disabled={!canEditFullDetails} onChange={(e) => setPName(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-xs" />
+                            </div>
 
-                      <div>
-                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">المنطقة الجغرافية / المدينة</label>
-                        <input type="text" placeholder="التجمع الخامس، الشيخ زايد، هليوبوليس..." value={pLocation} disabled={!canEditFullDetails} onChange={(e) => setPLocation(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-xs" />
-                      </div>
+                            <div className="col-span-2">
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">عنوان المشروع بالتفصيل *</label>
+                              <input type="text" placeholder="الشارع، رقم العمارة، اسم الكمبوند بالتفصيل..." value={pUnitAddress} disabled={!canEditFullDetails} onChange={(e) => setPUnitAddress(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-xs" />
+                            </div>
 
-                      <div>
-                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">اسم العميل المتعاقد *</label>
-                        <select value={pCustomerId} disabled={!canChangeCustomer} onChange={(e) => setPCustomerId(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-base">
-                          <option value="">-- اختر العميل --</option>
-                          {customers.map((c) => (
-                            <option key={c.id} value={c.id}>{c.name}</option>
-                          ))}
-                        </select>
-                      </div>
+                            <div>
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">المنطقة الجغرافية / المدينة</label>
+                              <input type="text" placeholder="التجمع الخامس، الشيخ زايد، هليوبوليس..." value={pLocation} disabled={!canEditFullDetails} onChange={(e) => setPLocation(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-xs" />
+                            </div>
 
-                      <div className="grid grid-cols-2 gap-3 col-span-2">
-                        <div>
-                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">المهندس المشرف *</label>
-                          <select value={pAssignedEngineerId} disabled={!canEditTechnical} onChange={(e) => setPCAssignedEngineerId(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-sm">
-                            <option value="">-- إسناد لمهندس المشروعات --</option>
-                            {engineersList.map(eng => (
-                              <option key={eng.id} value={eng.id}>👷 {eng.name}</option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">مسؤول المبيعات (Sales)</label>
-                          <div className="w-full h-11 rounded-xl bg-[#020B1C]/50 border border-[#243556] text-gray-300 px-3 flex items-center text-xs">
-                            <User className="w-3.5 h-3.5 text-[#D4AF37] ml-1.5 shrink-0" />
-                            <span className="truncate">{currentSalesRepName}</span>
+                            <div>
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">اسم العميل المتعاقد *</label>
+                              <select value={pCustomerId} disabled={!canChangeCustomer} onChange={(e) => setPCustomerId(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-base">
+                                <option value="">-- اختر العميل --</option>
+                                {customers.map((c) => (
+                                  <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div className="col-span-2">
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">إجمالي القيمة المالية للعقد (ج.م)</label>
+                              <input type="number" placeholder="قيمة العقد الكلية" value={pContractValue} disabled={!canEditFullDetails} onChange={(e) => setPContractValue(e.target.value !== "" ? Number(e.target.value) : "")} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono font-bold focus:border-[#D4AF37] disabled:opacity-50 text-xs" />
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
 
-                      <div className="grid grid-cols-3 gap-3 col-span-2">
-                        <div>
-                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">تاريخ بدء العمل *</label>
-                          <input type="date" required value={pStartDate} disabled={!canEditTechnical} onChange={(e) => setPStartDate(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#F0E6D2] px-2 outline-none font-mono font-bold text-xs focus:border-[#D4AF37]" />
-                        </div>
-                        <div>
-                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">التسليم المبدئي (تلقائي)</label>
-                          <input type="date" disabled value={pProvisionalDate} className="w-full h-11 rounded-xl bg-[#020B1C]/40 border border-[#243556] text-amber-400 px-2 outline-none font-mono font-bold text-xs text-center animate-pulse" />
-                        </div>
-                        <div>
-                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">التسليم النهائي (المعتمد)</label>
-                          <input type="date" disabled value={pFinalDate} className="w-full h-11 rounded-xl bg-[#020B1C]/40 border border-[#243556] text-emerald-400 px-2 outline-none font-mono font-bold text-xs text-center animate-pulse" />
-                        </div>
-                      </div>
+                      {/* القسم الثاني: التخطيط والمسؤولين */}
+                      {activeSubTab === "schedule" && (
+                        <div className="space-y-4 animate-in fade-in duration-200">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">المهندس المشرف *</label>
+                              <select value={pAssignedEngineerId} disabled={!canEditTechnical} onChange={(e) => setPCAssignedEngineerId(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-sm">
+                                <option value="">-- إسناد لمهندس المشروعات --</option>
+                                {engineersList.map(eng => (
+                                  <option key={eng.id} value={eng.id}>👷 {eng.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">مسؤول المبيعات (Sales)</label>
+                              <div className="w-full h-11 rounded-xl bg-[#020B1C]/50 border border-[#243556] text-gray-300 px-3 flex items-center text-xs">
+                                <User className="w-3.5 h-3.5 text-[#D4AF37] ml-1.5 shrink-0" />
+                                <span className="truncate">{currentSalesRepName}</span>
+                              </div>
+                            </div>
 
-                      <div className="grid grid-cols-2 gap-3 col-span-2">
-                        <div>
-                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">نوع الوحدة الإنشائية *</label>
-                          <select value={pUnitType} disabled={!canEditFullDetails} onChange={(e) => setPUnitType(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-xs">
-                            <option>شقة</option>
-                            <option>فيلا</option>
-                            <option>دوبلكس</option>
-                            <option>محل تجاري</option>
-                            <option>مكتب إداري</option>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">المساحة الإجمالية (م²) *</label>
-                          <input type="number" value={pArea} disabled={!canEditFullDetails} onChange={(e) => setPArea(e.target.value !== "" ? Number(e.target.value) : "")} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono focus:border-[#D4AF37] text-xs" />
-                        </div>
-                      </div>
+                            <div className="col-span-2">
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">حالة الموقع الإدارية *</label>
+                              <select value={pUnitStatus} disabled={!canEditFullDetails} onChange={(e) => setPUnitStatus(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] font-bold px-3 text-xs outline-none cursor-pointer focus:border-[#D4AF37]">
+                                <option value="معلق / قيد الانتظار">معلق / قيد الانتظار</option>
+                                <option value="In_progress">نشط / جاري العمل بالموقع</option>
+                              </select>
+                            </div>
 
-                      <div className="grid grid-cols-2 gap-3 col-span-2">
-                        <div>
-                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">مستوى التشطيب المطلوب *</label>
-                          <select value={pFinishingLevel} disabled={!canEditFullDetails} onChange={(e) => setPFinishingLevel(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] px-3 font-black outline-none cursor-pointer focus:border-[#D4AF37] text-xs">
-                            <option>اقتصادى (لوكس)</option>
-                            <option>متوسط (سوبر لوكس )</option>
-                            <option>فاخر (الترا لوكس)</option>
-                          </select>
+                            <div className="grid grid-cols-3 gap-3 col-span-2">
+                              <div>
+                                <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">تاريخ بدء العمل *</label>
+                                <input type="date" required value={pStartDate} disabled={!canEditTechnical} onChange={(e) => setPStartDate(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#F0E6D2] px-2 outline-none font-mono font-bold text-xs focus:border-[#D4AF37]" />
+                              </div>
+                              <div>
+                                <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">التسليم المبدئي (تلقائي)</label>
+                                <input type="date" disabled value={pProvisionalDate} className="w-full h-11 rounded-xl bg-[#020B1C]/40 border border-[#243556] text-amber-400 px-2 outline-none font-mono font-bold text-xs text-center animate-pulse" />
+                              </div>
+                              <div>
+                                <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">التسليم النهائي (المعتمد)</label>
+                                <input type="date" disabled value={pFinalDate} className="w-full h-11 rounded-xl bg-[#020B1C]/40 border border-[#243556] text-emerald-400 px-2 outline-none font-mono font-bold text-xs text-center animate-pulse" />
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">الحالة الإدارية للموقع *</label>
-                          <select value={pUnitStatus} disabled={!canEditFullDetails} onChange={(e) => setPUnitStatus(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] font-bold px-3 text-xs outline-none cursor-pointer focus:border-[#D4AF37]">
-                            <option value="معلق / قيد الانتظار">معلق / قيد الانتظار</option>
-                            <option value="In_progress">نشط / جاري العمل بالموقع</option>
-                          </select>
-                        </div>
-                      </div>
+                      )}
 
-                      <div className="grid grid-cols-2 gap-3 col-span-2">
-                        <div>
-                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">نسبة الإنجاز الفعلي بالموقع (%)</label>
-                          <input type="number" min="0" max="100" value={pProgress} disabled={!canEditMilestones} onChange={(e) => setPProgress(Number(e.target.value))} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono font-bold focus:border-[#D4AF37] disabled:opacity-50 text-xs" />
-                        </div>
-                        <div>
-                          <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">رابط مجسم الـ 3D التفاعلي للمشروع</label>
-                          <input type="url" placeholder="https://sketchfab.com/models/..." value={pDesignUrl} disabled={!canEditTechnical} onChange={(e) => setPDesignUrl(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono focus:border-[#D4AF37] disabled:opacity-50 text-xs" />
-                        </div>
-                      </div>
+                      {/* القسم الثالث: الخصائص الفنية والمجسم */}
+                      {activeSubTab === "technical" && (
+                        <div className="space-y-4 animate-in fade-in duration-200">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">نوع الوحدة الإنشائية *</label>
+                              <select value={pUnitType} disabled={!canEditFullDetails} onChange={(e) => setPUnitType(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-xs">
+                                <option>شقة</option>
+                                <option>فيلا</option>
+                                <option>دوبلكس</option>
+                                <option>محل تجاري</option>
+                                <option>مكتب إداري</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">المساحة الإجمالية (م²) *</label>
+                              <input type="number" value={pArea} disabled={!canEditFullDetails} onChange={(e) => setPArea(e.target.value !== "" ? Number(e.target.value) : "")} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono focus:border-[#D4AF37] text-xs" />
+                            </div>
 
-                      <div className="col-span-2">
-                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">إجمالي القيمة المالية للعقد (ج.م)</label>
-                        <input type="number" placeholder="قيمة العقد الكلية" value={pContractValue} disabled={!canEditFullDetails} onChange={(e) => setPContractValue(e.target.value !== "" ? Number(e.target.value) : "")} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono font-bold focus:border-[#D4AF37] disabled:opacity-50 text-xs" />
-                      </div>
+                            <div className="col-span-2">
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">مستوى التشطيب المطلوب *</label>
+                              <select value={pFinishingLevel} disabled={!canEditFullDetails} onChange={(e) => setPFinishingLevel(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] px-3 font-black outline-none cursor-pointer focus:border-[#D4AF37] text-xs">
+                                <option>اقتصادى (لوكس)</option>
+                                <option>متوسط (سوبر لوكس )</option>
+                                <option>فاخر (الترا لوكس)</option>
+                              </select>
+                            </div>
+
+                            <div className="col-span-2">
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">رابط مجسم الـ 3D التفاعلي للمشروع</label>
+                              <input type="url" placeholder="https://sketchfab.com/models/..." value={pDesignUrl} disabled={!canEditTechnical} onChange={(e) => setPDesignUrl(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono focus:border-[#D4AF37] disabled:opacity-50 text-xs" />
+                            </div>
+
+                            <div className="col-span-2">
+                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">نسبة الإنجاز الفعلي بالموقع (%)</label>
+                              <input type="number" min="0" max="100" value={pProgress} disabled={!canEditMilestones} onChange={(e) => setPProgress(Number(e.target.value))} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono font-bold focus:border-[#D4AF37] disabled:opacity-50 text-xs" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
+
                   </div>
 
                   {/* زر حفظ المشروع الفاخر والمحصن تماماً */}

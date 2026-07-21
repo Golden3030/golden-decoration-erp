@@ -215,7 +215,7 @@ export default function PayrollPage() {
           <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-5 select-none">
             <div>
               <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2.5">
-                <span>مسيرات رواتب ومستحقات الموظفين والمهندسين</span>
+                <span> رواتب ومستحقات الموظفين والمهندسين</span>
                 <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-ping" />
               </h1>
               <p className="text-white text-xs mt-2">تتبع الحوافز، والرواتب الثابتة للمهندسين والإداريين، وتطبيق الخصومات والجزاءات المباشرة حركياً بالخزينة.</p>
