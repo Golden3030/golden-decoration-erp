@@ -94,7 +94,7 @@ export default function ProjectInfo({
     const projName = project.projectName || "الوحدة السكنية";
     const projCode = project.projectCode || "P-XXXX";
     const area = project.area || 0;
-    const finishing = project.finishingLevel || "اقتصادي (لوكس)";
+    const finishing = project.finishingLevel || "اقتصادى (لوكس)";
     const estimateTotal = crmData.estimate?.total || 0;
 
     const messageText = `السلام عليكم ورحمة الله وبركاته يا فندم، مع حضرتك قسم إدارة العلاقات والـ CRM بشركة *Golden Decoration* للتشطيبات الفاخرة واللوحات المعمارية.\n\n` +
@@ -165,11 +165,11 @@ export default function ProjectInfo({
   };
 
   return (
-    <div className="bg-[#07132a] border border-[#D4AF37]/25 rounded-2xl p-6 space-y-4 select-none text-right text-white font-alexandria h-full flex flex-col justify-between relative overflow-hidden" dir="rtl">
+    <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 space-y-4 select-none text-right text-white font-alexandria h-full flex flex-col justify-between relative overflow-hidden" dir="rtl">
       
       <div className="space-y-4">
         {/* ترويسة الكارت مدمج بها أيقونة تعديلات المقايسة البرونزية الفاخرة على اليسار */}
-        <h3 className="text-[#D4AF37] text-sm md:text-base font-black border-b border-[#D4AF37]/15 pb-3 flex items-center justify-between select-none">
+        <h3 className="text-[#D4AF37] text-sm md:text-base font-bold border-b border-[#D4AF37] pb-3 flex items-center justify-between select-none">
           <div className="flex items-center gap-2">
             <Home className="w-5 h-5 text-[#D4AF37] shrink-0" />
             <span>بيانات ومواصفات المشروع والوحدة الإنشائية</span>
@@ -180,7 +180,7 @@ export default function ProjectInfo({
             <button
               type="button" // 👈 حظر السلوك الافتراضي للمتصفح
               onClick={(e) => { e.preventDefault(); setIsAmendmentsOpen(true); }}
-              className="p-1.5 rounded-lg border border-[#B48C34]/40 bg-[#020B1C] text-[#B48C34] hover:bg-[#B48C34] hover:text-[#020B1C] transition duration-300 cursor-pointer shadow-md shrink-0 flex items-center justify-center gap-1.5 text-[10px] font-black"
+              className="p-1.5 rounded-xl border border-[#B48C34]/40 bg-[#020B1C] text-[#B48C34] hover:bg-[#B48C34] hover:text-[#020B1C] transition duration-300 cursor-pointer shadow-md shrink-0 flex items-center justify-center gap-1.5 text-[10px] font-black"
               title="تسجيل تعديلات العميل الفنية على المقايسة"
             >
               <FileEdit className="w-3.5 h-3.5" />
@@ -208,20 +208,20 @@ export default function ProjectInfo({
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4 text-xs">
+        <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
           
           <div>
-            <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">رقم المقايسة (تلقائي)</label>
+            <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">رقم المقايسة </label>
             <input
               type="text"
-              value={project.estimateNumber || "EST-سيولد تلقائياً"}
+              value={project.estimateNumber || "EST-XXXX"}
               disabled
               className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-gray-500 px-3 outline-none text-center font-mono font-bold text-xs"
             />
           </div>
 
           <div>
-            <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">اسم المشروع الحالي *</label>
+            <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">اسم المشروع الحالي *</label>
             <input
               type="text"
               disabled={isLocked}
@@ -233,18 +233,18 @@ export default function ProjectInfo({
           </div>
 
           <div>
-            <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">تاريخ إصدار المقايسة</label>
+            <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">تاريخ إصدار المقايسة</label>
             <input
               type="date"
               disabled={isLocked}
               value={project.estimateDate || ""}
               onChange={(e) => handleChange("estimateDate", e.target.value)}
-              className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] px-3 outline-none font-mono text-center text-xs font-bold disabled:opacity-40"
+              className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] px-3 outline-none font-mono text-center text-xs font-bold disabled:opacity-40 animate-transition"
             />
           </div>
 
           <div>
-            <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">نوع الوحدة *</label>
+            <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">نوع الوحدة *</label>
             <select
               disabled={isLocked}
               value={project.unitType || "شقة"}
@@ -260,7 +260,7 @@ export default function ProjectInfo({
           </div>
 
           <div className="col-span-2">
-            <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">موقع وعنوان الوحدة بالتفصيل *</label>
+            <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">موقع وعنوان الوحدة بالتفصيل *</label>
             <input
               type="text"
               disabled={isLocked}
@@ -272,7 +272,7 @@ export default function ProjectInfo({
           </div>
 
           <div>
-            <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">حالة استلام الوحدة</label>
+            <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">حالة استلام الوحدة</label>
             <select
               disabled={isLocked}
               value={project.unitStatus || "بدون تشطيب (طوب احمر)"}
@@ -287,19 +287,19 @@ export default function ProjectInfo({
 
           {/* معالجة حراسة وعرض قيمة المساحة الرقمية لمنع الارتداد الوهمي */}
           <div>
-            <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">المساحة الإجمالية (م²) *</label>
+            <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">المساحة الإجمالية (م²) *</label>
             <input
               type="number"
               disabled={isLocked}
               placeholder="اكتب المساحة الرقمية..."
               value={project.area === 0 ? "" : project.area || ""}
               onChange={(e) => handleChange("area", e.target.value !== "" ? Number(e.target.value) : "")}
-              className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-3 outline-none focus:border-[#D4AF37] font-mono text-right placeholder:text-gray-500 placeholder:text-xs text-xs font-semibold disabled:opacity-40"
+              className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-center text-white px-3 outline-none focus:border-[#D4AF37] font-mono placeholder:text-gray-500 placeholder:text-xs text-xs font-semibold disabled:opacity-40"
             />
           </div>
 
           <div className="col-span-2">
-            <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px]">مستوى التشطيب المطلوب</label>
+            <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">مستوى التشطيب المطلوب</label>
             <select
               disabled={isLocked}
               value={project.finishingLevel || "اقتصادى (لوكس)"}
@@ -311,6 +311,27 @@ export default function ProjectInfo({
               <option value="فاخر (الترا لوكس)">فاخر (الترا لوكس)</option>
             </select>
           </div>
+
+          {/* 🌟 تم التحديث هنا: إضافة مستشعر مالي محاسبي حي لفصل الآلاف فوق حقل إدخال إجمالي العقد لمنع كوارث الملايين والمقاصة */}
+          <div className="col-span-2">
+            <div className="flex justify-between items-center mb-1.5 px-1">
+              <label className="block text-[#D4AF37] font-bold px-2 text-[12px]">إجمالي القيمة المالية للعقد (ج.م) *</label>
+              {project.contractValue !== undefined && project.contractValue !== "" && project.contractValue !== 0 && (
+                <span className="text-emerald-400 font-mono font-bold text-xs text-center animate-pulse">
+                  {Number(project.contractValue).toLocaleString('en-US')} ج.م
+                </span>
+              )}
+            </div>
+            <input
+              type="number"
+              disabled={isLocked}
+              placeholder="قيمة العقد الكلية"
+              value={project.contractValue === 0 ? "" : project.contractValue || ""}
+              onChange={(e) => handleChange("contractValue", e.target.value !== "" ? Number(e.target.value) : "")}
+              className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-center text-white px-3 outline-none font-mono font-bold focus:border-[#D4AF37] disabled:opacity-50 text-xs"
+            />
+          </div>
+
         </div>
       </div>
 
@@ -330,23 +351,23 @@ export default function ProjectInfo({
         </div>
         
         <div className="flex gap-3 justify-end w-full">
-          {/* أ. زر إرسال المقايسة واتساب ذكي */}
+          {/* أ. زر إرسال المقايسة واتساب ذكي بتنسيق إمبراطوري رائع */}
           <button
-            type="button" // 👈 صمام أمان
+            type="button" 
             disabled={!isShareActive}
             onClick={(e) => handleSendWhatsApp(e)}
-            className="flex-1 h-10 rounded-lg bg-emerald-950/40 border border-emerald-500/50 hover:bg-emerald-500 hover:text-black text-emerald-400 text-xs font-black cursor-pointer transition flex items-center justify-center gap-1.5 disabled:opacity-40"
+            className="flex-1 h-10 rounded-xl bg-emerald-950/40 border border-emerald-500/50 hover:bg-emerald-500 hover:text-black text-emerald-400 text-xs font-black cursor-pointer transition flex items-center justify-center gap-1.5 disabled:opacity-40"
           >
             <Share2 className="w-4 h-4 animate-bounce" />
             <span>إرسال واتساب للعميل</span>
           </button>
 
-          {/* ب. زر طباعة / تصدير PDF */}
+          {/* ب. زر طباعة / تصدير PDF بتنسيق إمبراطوري رائع */}
           <button
-            type="button" // 👈 صمام أمان
+            type="button" 
             disabled={!isShareActive}
             onClick={(e) => handlePrintPDF(e)}
-            className="flex-1 h-10 rounded-lg bg-[#07132a] border border-[#D4AF37]/35 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-xs font-black cursor-pointer transition flex items-center justify-center gap-1.5 disabled:opacity-40"
+            className="flex-1 h-10 rounded-xl bg-[#07132a] border border-[#D4AF37]/35 text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-xs font-black cursor-pointer transition flex items-center justify-center gap-1.5 disabled:opacity-40"
           >
             <Printer className="w-4 h-4" />
             <span>تصدير وطباعة PDF</span>
@@ -371,10 +392,10 @@ export default function ProjectInfo({
           {project.id && !String(project.id).startsWith("new") && (
             <div className="flex items-center gap-2">
               
-              {/* أيقونة طلب تسعير (Send) */}
+              {/* أيقونة طلب تسعير (Send) بتنسيق رائع ومضيء */}
               {activeStageIndex === 0 && (
                 <button
-                  type="button" // 👈 حظر السلوك الافتراضي للمتصفح لمنع الريفريش
+                  type="button" 
                   onClick={(e) => { e.preventDefault(); advanceWorkflowStage(project.id, "needs_estimate", "engineer", `🚨 مطلوب معاينة وتسعير فني لموقع: ${project.projectName}`); }}
                   disabled={saving}
                   className="w-10 h-10 rounded-xl bg-black/60 border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] flex items-center justify-center cursor-pointer transition-all duration-300 shadow-[0_0_12px_rgba(212,175,55,0.15)] disabled:opacity-50"
@@ -384,10 +405,10 @@ export default function ProjectInfo({
                 </button>
               )}
 
-              {/* أيقونة إصدار المقايسة المبدئية (FileText) */}
+              {/* أيقونة إصدار المقايسة المبدئية (FileText) بتنسيق رائع ومضيء */}
               {activeStageIndex === 1 && (
                 <button
-                  type="button" // 👈 حظر السلوك الافتراضي للمتصفح لمنع الريفريش
+                  type="button" 
                   onClick={(e) => { e.preventDefault(); advanceWorkflowStage(project.id, "initial_ready", "sales", `✅ تم الانتهاء من حصر البنود وإصدار المقايسة المبدئية لموقع: ${project.projectName}`); }}
                   disabled={saving}
                   className="w-10 h-10 rounded-xl bg-black/60 border border-emerald-500 text-emerald-400 hover:bg-emerald-500 hover:text-black flex items-center justify-center cursor-pointer transition-all duration-300 shadow-[0_0_12px_rgba(16,185,129,0.15)] disabled:opacity-50"
@@ -397,10 +418,10 @@ export default function ProjectInfo({
                 </button>
               )}
 
-              {/* أيقونة إعادة إصدار وتعديل المقايسة (Sparkles) */}
+              {/* أيقونة إعادة إصدار وتعديل المقايسة (Sparkles) بتنسيق رائع ومضيء */}
               {activeStageIndex === 3 && (
                 <button
-                  type="button" // 👈 حظر السلوك الافتراضي للمتصفح لمنع الريفريش
+                  type="button" 
                   onClick={(e) => { e.preventDefault(); advanceWorkflowStage(project.id, "initial_ready", "sales", `✅ تم تحديث وتعديل المقايسة بناء على الطلب لموقع: ${project.projectName}`); }}
                   disabled={saving}
                   className="w-10 h-10 rounded-xl bg-black/60 border border-emerald-500 text-emerald-400 hover:bg-emerald-500 hover:text-black flex items-center justify-center cursor-pointer transition-all duration-300 shadow-[0_0_12px_rgba(16,185,129,0.15)] disabled:opacity-50"
@@ -412,15 +433,14 @@ export default function ProjectInfo({
             </div>
           )}
 
-          {/* 💾 زر الحفظ الإمبراطوري الثابت تماماً والمعروض دائماً */}
+          {/* 💾 زر الحفظ الإمبراطوري الثابت تماماً والمعروض دائماً بعواكس الإضاءة النيونية السفلى الحصرية */}
           <button
-            type="button" // 👈 حظر السلوك الافتراضي للمتصفح لمنع الريفريش
+            type="button" 
             onClick={(e) => { e.preventDefault(); handleSaveProject(); }}
             disabled={saving}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 font-black cursor-pointer text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 font-black cursor-pointer text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
           >
             {saving ? <Loader2 className="animate-spin w-3.5 h-3.5" /> : "💾 حفظ المشروع"}
-            {/* عاكس الإضاءة النيوني المتوهج بقاع الزر */}
             <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
           </button>
 
@@ -430,7 +450,7 @@ export default function ProjectInfo({
       {/* شاشة تسجيل التعديلات المنبثقة الفاخرة */}
       {isAmendmentsOpen && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4 select-none animate-fade-in text-right">
-          <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-[0_0_40px_rgba(212,175,55,0.25)] relative space-y-4">
+          <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 md:p-8 w-full max-w-lg shadow-[0_0_40px_rgba(212,175,55,0.25)] relative space-y-4">
             
             <div className="flex justify-between items-center border-b border-[#243556] pb-3 mb-4 select-none">
               <h3 className="text-[#D4AF37] font-black text-base md:text-lg flex items-center gap-2">
@@ -438,7 +458,7 @@ export default function ProjectInfo({
                 <span>تسجيل وتوثيق تعديلات العميل المطلوبة بالـ CRM</span>
               </h3>
               <button 
-                type="button" // 👈 حظر السلوك الافتراضي
+                type="button" 
                 onClick={(e) => { e.preventDefault(); setIsAmendmentsOpen(false); }}
                 className="text-gray-400 hover:text-rose-500 font-bold text-sm cursor-pointer transition"
               >
@@ -459,10 +479,10 @@ export default function ProjectInfo({
 
             <div className="flex justify-end gap-3 pt-4 border-t border-[#1f2d4d]/60">
               <button
-                type="button" // 👈 حظر السلوك الافتراضي
+                type="button" 
                 onClick={(e) => { e.preventDefault(); handleConfirmAmendments(e); }}
                 disabled={isSubmitting}
-                className="px-6 py-3 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 font-black cursor-pointer text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
+                className="px-6 py-3 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 font-black cursor-pointer text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
               >
                 {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : "🚀 إرسال طلب التعديل للمهندس"}
                 <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />

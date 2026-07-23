@@ -387,7 +387,7 @@ export default function ReportsDashboard() {
       
       {/* 🛠️ ورقة التنسيق الموحدة للتقارير - تأطير التأثير لحماية السايدبار والهيدر */}
       <style dangerouslySetInnerHTML={{__html: `
-        ::-webkit-scrollbar { width: 6px !important; height: 6px !important; }
+        ::-webkit-scrollbar { width: 4px !important; height: 6px !important; }
         ::-webkit-scrollbar-track { background: #020B1C !important; }
         ::-webkit-scrollbar-thumb { background: #D4AF37 !important; border-radius: 9999px !important; }
         ::-webkit-scrollbar-thumb:hover { background: #AA7C11 !important; }
@@ -401,7 +401,7 @@ export default function ReportsDashboard() {
           font-weight: 500 !important;
           color: #D4AF37 !important;
           text-align: right !important;
-          background-color: #000000 !important;
+          background-color: #020B1C !important;
           border-bottom: 2px solid rgba(212, 175, 55, 0.3) !important;
           padding: 14px 16px !important;
           letter-spacing: normal !important;

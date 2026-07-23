@@ -10,9 +10,13 @@ import Script from "next/script";
 const alexandria = Alexandria({
   subsets: ["arabic", "latin"],           // دعم عربي + لاتيني
   weight: ["300", "400", "500", "600", "700", "800", "900"],
-  display: "swap",                        // أفضل أداء (مُفضل حالياً)
+  // ✅ إصلاح متكرر: "swap" بيعرض الخط الاحتياطي (system-ui/Tahoma) فوراً كأول حاجة يشوفها المستخدم
+  // ثم يستبدله بـ Alexandria لما يخلص التحميل - وده بالظبط اللي بيظهر كـ"Arial قبل Alexandria"
+  // "block" بيخلي النص مخفي لجزء من الثانية بس (بدون عرض أي خط بديل) لحد ما Alexandria يجهز،
+  // وبما إنه محمّل ذاتياً من نفس السيرفر (مش من جوجل)، التأخير غير محسوس عملياً
+  display: "block",
   variable: "--font-alexandria",
-  fallback: ["system-ui", "Tahoma", "sans-serif"], // احتياطي قوي
+  fallback: ["system-ui", "Tahoma", "sans-serif"], // احتياطي قوي (يُستخدم فقط لو تجاوز التحميل ~3 ثواني)
 });
 
 const geistSans = Geist({

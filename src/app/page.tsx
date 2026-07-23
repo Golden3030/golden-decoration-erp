@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient"; // توحيد عميل الاتصال لمنع تكرار GoTrueClient
@@ -85,7 +85,7 @@ export default function LoginPage() {
 
       const userRole = String(userProfile.role || "").toLowerCase();
 
-      // 3. التوجيه الديناميكي المشترك والآمن للرتب
+      // 3. التوجهم الديناميكي المشترك والآمن للرتب
       if (userRole === "client") {
         router.push("/client"); // توجيه العميل فوراً لكابينة ملفه الـ 3D
       } else {
@@ -134,9 +134,39 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen w-full flex items-center justify-center bg-[#020B1C] px-4 relative overflow-hidden" dir="rtl">
       
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-[#D4AF37]/5 blur-[120px] pointer-events-none select-none" />
+      {/* 🛠️ جدار الأنماط والحركية الفاخرة للـ Breathing Glow والمصادقة والخطوط الموحدة */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;700;900&display=swap');
+        
+        *:not(code, pre, .font-mono, [class*="font-mono"]) {
+          font-family: 'Alexandria', Arial, sans-serif !important;
+          letter-spacing: normal !important;
+        }
 
-      <div className="w-full max-w-md bg-white/[0.01] backdrop-blur-xl border-2 border-[#D4AF37] rounded-3xl p-8 shadow-[0_20px_50px_rgba(212,175,55,0.15)] space-y-5 select-none relative z-10 transition-all duration-300 hover:shadow-[0_25px_60px_rgba(212,175,55,0.22)]">
+        /* 🌟 معادلة الحركة التنفسية للبريق مذهب الأطراف (Holographic luxury breath physics) */
+        @keyframes luxury-breath-card {
+          0%, 100% {
+            transform: scale(1);
+            border-color: rgba(212, 175, 55, 0.3);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 15px rgba(212, 175, 55, 0.12), inset 0 0 8px rgba(212, 175, 55, 0.04);
+          }
+          50% {
+            transform: scale(1.015);
+            border-color: rgba(212, 175, 55, 0.85);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.9), 0 0 45px rgba(212, 175, 55, 0.35), inset 0 0 18px rgba(212, 175, 55, 0.12);
+          }
+        }
+
+        .luxury-breath-card {
+          animation: luxury-breath-card 4.5s infinite ease-in-out;
+          transition: all 0.5s ease-in-out;
+        }
+      `}} />
+
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-[#D4AF37]/5 blur-[120px] pointer-events-none select-none z-0" />
+
+      {/* 🌟 حقن كلاس التفعيل النيوني التنفسي الفاخر بالكارت الحاضن للاعتمادات */}
+      <div className="w-full max-w-md bg-white/[0.01] backdrop-blur-xl border-2 border-[#D4AF37] rounded-3xl p-8 space-y-5 select-none relative z-10 luxury-breath-card">
         
         <div className="text-center">
           <Image

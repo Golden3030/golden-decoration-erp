@@ -3,6 +3,7 @@
 import React, { useState, useRef } from "react";
 import * as XLSX from "xlsx";
 import { supabase } from "@/lib/supabaseClient";
+import { Loader2, Sparkles, Check, RefreshCw, FolderCheck } from "lucide-react";
 
 interface ImportLeadsModalProps {
   isOpen: boolean;
@@ -206,7 +207,7 @@ export default function ImportLeadsModal({ isOpen, onClose, onImportSuccess }: I
 
         await supabase.from("notifications").insert({
           title: "استيراد وتوزيع مبيعات تلقائي",
-          message: `📊 تم استيراد عدد (${finalToInsert.length}) عملاء جدد وتوزيعهم بالتساوي والتحكم الدائري حياً على موظفي المبيعات الحاليين.`,
+          message: `📊 تم استيراد عدد (${finalToInsert.length}) عملاء جدد وتوزيعهم بالتساوي والتحكم الدائري على موظفي المبيعات الحاليين.`,
           type: "sales",
           link: "/customers"
         });
@@ -239,32 +240,35 @@ export default function ImportLeadsModal({ isOpen, onClose, onImportSuccess }: I
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" dir="rtl">
-      <div className="bg-[#07132a] border border-[#1f2d4d] rounded-2xl w-full max-w-xl overflow-hidden shadow-2xl transition-all">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/85 backdrop-blur-md" dir="rtl">
+      <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] w-full max-w-xl overflow-hidden shadow-2xl transition-all relative">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
         
-        <div className="border-b border-[#243556] p-5 flex justify-between items-center bg-[#0B1B38]">
-          <h3 className="text-[#F0E6D2] text-lg font-bold">
-            📥 استيراد وتوزيع عملاء المبيعات التلقائي (Excel)
+        <div className="border-b border-[#D4AF37]/15 p-5 flex justify-between items-center bg-[#050914]/90 select-none">
+          <h3 className="text-[#D4AF37] text-md md:text-base font-black flex items-center gap-1.5">
+            <Sparkles className="w-5 h-5 text-[#D4AF37] animate-pulse" />
+            <span>استيراد وتوزيع عملاء المبيعات التلقائي (Excel)</span>
           </h3>
           <button 
+            type="button"
             onClick={() => { resetModal(); onClose(); }}
-            className="text-gray-400 hover:text-white text-xl font-bold cursor-pointer"
+            className="w-8 h-8 rounded-lg bg-red-950/40 border border-red-500/30 hover:bg-red-600 transition flex items-center justify-center font-black cursor-pointer text-white shadow-md text-sm select-none"
           >
             ✕
           </button>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 font-semibold text-xs text-[#F0E6D2]">
           
           {step === 1 && (
             <div className="space-y-4 text-center">
               <div 
                 onClick={() => fileInputRef.current?.click()}
-                className="border-2 border-dashed border-[#243556] hover:border-[#D4AF37] rounded-xl p-10 cursor-pointer bg-[#020B1C]/50 transition duration-200"
+                className="border-2 border-dashed border-[#D4AF37]/30 hover:border-[#D4AF37] rounded-2xl p-10 cursor-pointer bg-[#020B1C] transition duration-300 shadow-inner flex flex-col items-center justify-center"
               >
-                <div className="text-4xl mb-3">📄</div>
-                <p className="text-white text-sm font-bold">اسحب ملف الإكسيل هنا أو اضغط للتصفح</p>
-                <p className="text-gray-500 text-xs mt-2">يدعم صيغ .xlsx و .xls و .csv الناتجة من منصات المبيعات</p>
+                <div className="text-4xl mb-3 animate-pulse">📥</div>
+                <p className="text-white text-sm font-black">اسحب ملف الإكسيل هنا أو اضغط للتصفح</p>
+                <p className="text-gray-500 text-[10px] mt-2">يدعم صيغ .xlsx و .xls و .csv الناتجة من منصات المبيعات والشركات</p>
                 <input 
                   type="file" 
                   ref={fileInputRef}
@@ -278,19 +282,19 @@ export default function ImportLeadsModal({ isOpen, onClose, onImportSuccess }: I
           )}
 
           {step === 2 && (
-            <div className="space-y-4">
-              <div className="bg-[#020B1C] p-3 rounded-lg border border-[#1f2d4d]">
-                <p className="text-[#D4AF37] text-xs font-bold mb-1">💡 نظام التوزيع الدائري والربط:</p>
-                <p className="text-gray-400 text-[11px]">سيقوم النظام تلقائياً بربط وتوزيع العملاء الجدد بالتساوي على كافة موظفي المبيعات النشطين المسجلين بقاعدة البيانات لضمان العدالة في المتابعة.</p>
+            <div className="space-y-4 text-right">
+              <div className="bg-[#020B1C]/80 p-4 rounded-xl border border-[#D4AF37]/20 shadow-inner">
+                <p className="text-[#D4AF37] text-xs font-bold mb-1">💡 نظام التوزيع الدائري والربط (Round-Robin):</p>
+                <p className="text-gray-400 text-[10px] leading-relaxed">سيقوم النظام تلقائياً بربط وتوزيع العملاء الجدد بالتساوي على كافة موظفي المبيعات النشطين المسجلين بقاعدة البيانات لضمان العدالة وتكافؤ فرص المتابعة.</p>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 font-semibold text-xs md:text-sm">
                 <div className="flex items-center justify-between gap-4">
-                  <label className="text-white text-xs font-bold w-1/3">اسم العميل (مطلوب):</label>
+                  <label className="text-white text-xs font-black w-1/3">اسم العميل (مطلوب):</label>
                   <select
                     value={mapping.name}
                     onChange={(e) => setMapping({ ...mapping, name: e.target.value })}
-                    className="flex-1 bg-[#020B1C] border border-[#243556] rounded-lg p-2 text-xs text-white"
+                    className="flex-1 h-11 bg-[#020B1C] border border-[#D4AF37]/20 rounded-xl px-3 text-xs text-[#D4AF37] font-bold outline-none cursor-pointer focus:border-[#D4AF37]"
                   >
                     <option value="">-- اختر العمود من الإكسيل --</option>
                     {headers.map((h: string) => <option key={h} value={h}>{h}</option>)}
@@ -298,11 +302,11 @@ export default function ImportLeadsModal({ isOpen, onClose, onImportSuccess }: I
                 </div>
 
                 <div className="flex items-center justify-between gap-4">
-                  <label className="text-white text-xs font-bold w-1/3">رقم الهاتف (مطلوب):</label>
+                  <label className="text-white text-xs font-black w-1/3">رقم الهاتف (مطلوب):</label>
                   <select
                     value={mapping.mobile}
                     onChange={(e) => setMapping({ ...mapping, mobile: e.target.value })}
-                    className="flex-1 bg-[#020B1C] border border-[#243556] rounded-lg p-2 text-xs text-white"
+                    className="flex-1 h-11 bg-[#020B1C] border border-[#D4AF37]/20 rounded-xl px-3 text-xs text-[#D4AF37] font-bold outline-none cursor-pointer focus:border-[#D4AF37]"
                   >
                     <option value="">-- اختر العمود من الإكسيل --</option>
                     {headers.map((h: string) => <option key={h} value={h}>{h}</option>)}
@@ -314,7 +318,7 @@ export default function ImportLeadsModal({ isOpen, onClose, onImportSuccess }: I
                   <select
                     value={mapping.email}
                     onChange={(e) => setMapping({ ...mapping, email: e.target.value })}
-                    className="flex-1 bg-[#020B1C] border border-[#243556] rounded-lg p-2 text-xs text-white"
+                    className="flex-1 h-11 bg-[#020B1C] border border-[#D4AF37]/20 rounded-xl px-3 text-xs text-[#D4AF37] font-bold outline-none cursor-pointer focus:border-[#D4AF37]"
                   >
                     <option value="">-- اختر العمود من الإكسيل --</option>
                     {headers.map((h: string) => <option key={h} value={h}>{h}</option>)}
@@ -326,7 +330,7 @@ export default function ImportLeadsModal({ isOpen, onClose, onImportSuccess }: I
                   <select
                     value={mapping.address}
                     onChange={(e) => setMapping({ ...mapping, address: e.target.value })}
-                    className="flex-1 bg-[#020B1C] border border-[#243556] rounded-lg p-2 text-xs text-white"
+                    className="flex-1 h-11 bg-[#020B1C] border border-[#D4AF37]/20 rounded-xl px-3 text-xs text-[#D4AF37] font-bold outline-none cursor-pointer focus:border-[#D4AF37]"
                   >
                     <option value="">-- اختر العمود من الإكسيل --</option>
                     {headers.map((h: string) => <option key={h} value={h}>{h}</option>)}
@@ -334,19 +338,23 @@ export default function ImportLeadsModal({ isOpen, onClose, onImportSuccess }: I
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-[#243556]">
+              <div className="flex justify-end gap-3 pt-4 border-t border-[#243556] select-none">
                 <button
+                  type="button"
                   onClick={resetModal}
-                  className="bg-transparent border border-red-500 text-red-500 px-4 py-2 rounded-lg text-xs font-bold hover:bg-red-500/10 cursor-pointer"
+                  className="px-6 h-11 rounded-xl bg-transparent border border-red-500/40 text-red-500 hover:bg-red-500/10 active:scale-95 transition-all text-xs font-black cursor-pointer"
                 >
                   إلغاء الملف المرفوع
                 </button>
+                {/* 🌟 زر الحفظ الإمبراطوري بالتصميم البصري المتوهج ذو الـ Bottom Glow */}
                 <button
-                  onClick={handleSaveImport}
+                  type="button"
+                  onClick={(e) => { e.preventDefault(); handleSaveImport(); }}
                   disabled={loading}
-                  className="bg-[#D4AF37] text-black px-6 py-2 rounded-lg text-xs font-bold hover:bg-[#F0E6D2] cursor-pointer disabled:opacity-50"
+                  className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
                 >
-                  {loading ? "جاري التوزيع والحفظ..." : "💾 حفظ وتوزيع "}
+                  {loading ? "جاري التوزيع والحفظ..." : "💾 حفظ وتوزيع الدفعة "}
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                 </button>
               </div>
             </div>
@@ -355,33 +363,34 @@ export default function ImportLeadsModal({ isOpen, onClose, onImportSuccess }: I
           {step === 3 && (
             <div className="space-y-6">
               <div className="text-center">
-                <div className="text-4xl mb-2">🎉</div>
-                <h4 className="text-white font-bold text-base">تم استيراد وتوزيع العملاء بنجاح!</h4>
-                <p className="text-gray-400 text-xs mt-1">توضح الأرقام التالية نتائج عملية التصفية والتوزيع الحصري على حسابات الموظفين:</p>
+                <div className="text-4xl mb-2 animate-bounce">🎉</div>
+                <h4 className="text-white font-black text-base">تم استيراد وتوزيع العملاء بنجاح!</h4>
+                <p className="text-gray-400 text-xs mt-1">توضح الأرقام التالية نتائج عملية التصفية والتوزيع الحصري على حسابات الموظفين بالتساوي:</p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#020B1C] border border-[#1f2d4d] rounded-xl p-4 text-center">
+                <div className="bg-[#020B1C] border border-[#D4AF37]/15 rounded-xl p-4 text-center shadow-inner">
                   <p className="text-gray-500 text-[10px] font-bold">إجمالي العملاء بالملف</p>
-                  <p className="text-white text-base font-bold mt-1 font-mono">{report.total}</p>
+                  <p className="text-white text-base font-black mt-1 font-mono">{report.total}</p>
                 </div>
-                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center shadow-inner">
                   <p className="text-emerald-500 text-[10px] font-bold">تم استيرادهم وتوزيعهم بالتساوي</p>
-                  <p className="text-emerald-400 text-base font-bold mt-1 font-mono">+{report.imported}</p>
+                  <p className="text-emerald-400 text-base font-black mt-1 font-mono">+{report.imported}</p>
                 </div>
-                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-center">
+                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 text-center shadow-inner">
                   <p className="text-amber-500 text-[10px] font-bold">مكررون (محجوبون تلقائياً)</p>
-                  <p className="text-amber-400 text-base font-bold mt-1 font-mono">{report.duplicates}</p>
+                  <p className="text-amber-400 text-base font-black mt-1 font-mono">{report.duplicates}</p>
                 </div>
-                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center">
+                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-center shadow-inner">
                   <p className="text-red-500 text-[10px] font-bold">صفوف تفتقر للاسم أو الهاتف</p>
-                  <p className="text-red-400 text-base font-bold mt-1 font-mono">{report.failed}</p>
+                  <p className="text-red-400 text-base font-black mt-1 font-mono">{report.failed}</p>
                 </div>
               </div>
 
               <button
+                type="button"
                 onClick={() => { resetModal(); onClose(); }}
-                className="w-full bg-[#D4AF37] text-black py-2.5 rounded-lg text-xs font-bold hover:bg-[#F0E6D2] cursor-pointer text-center block"
+                className="w-full bg-[#D4AF37] hover:bg-[#F0E6D2] text-[#020B1C] font-black py-2.5 rounded-xl transition cursor-pointer active:scale-95 text-xs text-center block shadow-lg hover:shadow-[0_0_12px_rgba(212,175,55,0.3)]"
               >
                 إنهاء وإغلاق النافذة
               </button>

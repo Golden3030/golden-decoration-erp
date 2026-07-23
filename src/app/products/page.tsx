@@ -538,10 +538,6 @@ export default function ItemsMaterialsPage() {
   return (
     <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-
       <Sidebar />
     
       <section className="flex-1 flex flex-col lg:pr-56 m-0 min-h-screen">
@@ -553,14 +549,14 @@ export default function ItemsMaterialsPage() {
             <div>
               <div className="flex items-center gap-2 text-[#D4AF37] mb-1 select-none text-[10px] font-bold">
                 <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-                <span className="uppercase tracking-wider">بوابة الإدارة المركزية للأسعار</span>
+                <span className="uppercase tracking-wider"> الإدارة المركزية للأسعار</span>
               </div>
               <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2.5">
                 <span>إدارة البنود والخامات</span>
                 <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-ping" />
               </h1>
               <p className="text-white text-xs mt-2">
-                تنسيق وهيكلة مكتبة المنتجات المالية وتأصيل مكتبة التوصيفات الإنشائية وبنود الاستلام للمقايسات.
+                تنسيق وهيكلة المنتجات المالية وتأصيل مكتبة التوصيفات الإنشائية وبنود الاستلام للمقايسات.
               </p>
             </div>
 
@@ -608,14 +604,14 @@ export default function ItemsMaterialsPage() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
                 
                 <h3 className="text-[#D4AF37] text-ms md:text-ms border-b border-[#D4AF37] pb-3 select-none flex items-center gap-2">
-                  <span className="text-[#D4AF37] text-ms md:text-ms flex items-center gap-1.5 select-none" />
+                  <span className="text-[#D4AF37] text-md md:text-md font-bold flex items-center gap-1.5 select-none" />
                   {selectedProduct ? "📝 تعديل وتحرير بيانات الخامة المعتمدة" : "➕ إضافة منتج / خامة مالية جديدة"}
                 </h3>
 
                 <div className="flex flex-row items-end justify-start gap-4 text-[11px] md:text-xs w-full overflow-x-outo">
                   
                   <div>
-                    <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">التصنيف الإنشائي *</label>
+                    <label className="block text-[#D4AF37] px-2 mb-1.5 font-bold text-[12px] select-none">التصنيف الإنشائي *</label>
                     <select
                       value={pCategory}
                       onChange={(e) => setPCategory(e.target.value)}
@@ -632,7 +628,7 @@ export default function ItemsMaterialsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">الصنف الفرعي للبند *</label>
+                    <label className="block text-[#D4AF37] px-2 mb-1.5 font-bold text-[12px] select-none">الصنف الفرعي للبند *</label>
                     <select
                       value={pSubcategory}
                       onChange={(e) => setPSubcategory(e.target.value)}
@@ -719,7 +715,7 @@ export default function ItemsMaterialsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">الشركة المصنعة</label>
+                    <label className="block text-[#D4AF37] px-2 mb-1.5 font-bold text-[12px] select-none">الشركة المصنعة</label>
                     <input
                       type="text"
                       placeholder="مثال: لافارج / السويدي"
@@ -730,7 +726,7 @@ export default function ItemsMaterialsPage() {
                   </div>
 
                   <div className="col-span-1 md:col-span-2">
-                    <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">اسم المنتج الخادم *</label>
+                    <label className="block text-[#D4AF37] px-2 mb-1.5 font-bold text-[12px] select-none">اسم المنتج الخادم *</label>
                     <input
                       type="text"
                       placeholder="مثال: شكارة أسمنت لافارج"
@@ -742,7 +738,7 @@ export default function ItemsMaterialsPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">الوحدة الإدارية *</label>
+                      <label className="block text-[#D4AF37] px-2 mb-1.5 font-bold text-[12px] select-none">الوحدة الإدارية *</label>
                       <select
                         value={pUnit}
                         onChange={(e) => setPUnit(e.target.value)}
@@ -760,7 +756,7 @@ export default function ItemsMaterialsPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[#D4AF37] px-0.5 mb-1.5 text-[13px] select-none">سعر الوحدة الافتراضي *</label>
+                      <label className="block text-[#D4AF37] px-0.5 mb-1.5 font-bold text-[12px] select-none">سعر الوحدة الافتراضي *</label>
                       <input
                         type="number"
                         placeholder="0.00"
@@ -837,7 +833,7 @@ export default function ItemsMaterialsPage() {
                         type="button" 
                         onClick={(e) => { e.preventDefault(); handleAddProduct(); }}
                         disabled={saving}
-                        className="px-6 py-2.5 rounded-lg bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 font-black text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden cursor-pointer"
+                        className="px-6 py-2.5 rounded-lg bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 font-bold text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden cursor-pointer"
                       >
                         <CheckCircle className="w-4 h-4" />
                         <span>{saving ? "جاري الإدراج..." : "إدراج المنتج بالمكتبة"}</span>
@@ -858,7 +854,7 @@ export default function ItemsMaterialsPage() {
                 
                 <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex flex-col lg:flex-row justify-between items-center gap-4">
                   <div>
-                    <h3 className="text-[#D4AF37] text-ms md:text-ms select-none flex items-center gap-3">
+                    <h3 className="text-[#D4AF37] text-md md:text-md font-bold flex items-center gap-1.5 select-none">
                       <span>📦</span> قائمة البنود والخامات المسجلة بالمنظومة ({filteredProducts.length})
                     </h3>
                   </div>
@@ -938,7 +934,7 @@ export default function ItemsMaterialsPage() {
 
                       <div className="hidden md:block overflow-x-auto max-h-[320px] overflow-y-auto">
                         <table className="w-full text-right table-auto">
-                          <thead className="bg-[#0b1d3d] text-[#D4AF37] sticky top-0 z-10 select-none text-[13px] font-black">
+                          <thead className="bg-[#0b1d3d] text-[#D4AF37] sticky top-1 z-10 select-none text-[13px] font-black">
                             <tr>
                               <th className="py-2 px-8 text-right border-b border-[#1f2d4d]">الكود</th>
                               <th className="py-2 px-3 text-center border-b border-[#1f2d4d]">التصنيف</th>
@@ -1001,7 +997,7 @@ export default function ItemsMaterialsPage() {
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
                 
                 <h3 className="text-[#D4AF37] text-md md:text-md border-b border-[#D4AF37] pb-3 select-none flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] inline-block animate-ping" />
+                  <span className="text-[#D4AF37] text-md md:text-md font-bold flex items-center gap-1.5 select-none" />
                   {selectedSpec ? "📝 تعديل وتحرير كارت المواصفة الفنية المفتوحة" : "➕ تسجيل بند وتوصيف فني جديد للمقايسات"}
                 </h3>
 
@@ -1009,7 +1005,7 @@ export default function ItemsMaterialsPage() {
                   <div className="flex flex-row items-end justify-start gap-3 text-[11px] md:text-xs w-full overflow-x-auto">
                     
                     <div>
-                      <label className="block text-[#D4AF37] px-1 mb-1.5 text-[13px] select-none">التصنيف الإنشائي للبند *</label>
+                      <label className="block text-[#D4AF37] px-2 mb-1.5 font-bold text-[12px] select-none">التصنيف الإنشائي للبند *</label>
                       <select
                         value={sCategory}
                         onChange={(e) => setSCategory(e.target.value)}
@@ -1025,7 +1021,7 @@ export default function ItemsMaterialsPage() {
                     </div>
 
                     <div>
-                      <label className="block px-2 text-[#D4AF37] mb-1.5 text-[13px] select-none">أيقونة الكارت الرمزية *</label>
+                      <label className="block px-2 text-[#D4AF37] mb-1.5 font-bold text-[12px] select-none">أيقونة البند الرمزية *</label>
                       <select
                         value={sIcon}
                         onChange={(e) => setSIcon(e.target.value)}
@@ -1042,7 +1038,7 @@ export default function ItemsMaterialsPage() {
                     </div>
 
                     <div className="col-span-1 md:col-span-2">
-                      <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">اسم المواصفة الرئيسي المعتمد *</label>
+                      <label className="block text-[#D4AF37] px-2 mb-1.5 font-bold text-[12px] select-none">اسم المواصفة الرئيسي المعتمد *</label>
                       <input
                         type="text"
                         placeholder="مثال: محارة بؤج وأوتار قياسية"
@@ -1053,19 +1049,19 @@ export default function ItemsMaterialsPage() {
                     </div>
 
                     <div>
-                      <label className="block text-[#D4AF37] px-2 mb-1.5 text-[13px] select-none">سعر المتر الافتراضي للمصنعية *</label>
+                      <label className="block text-[#D4AF37] px-2 mb-1.5 font-bold text-[12px] select-none">سعر المتر الافتراضي للمصنعية *</label>
                       <input
                         type="number"
                         placeholder="مثال: 80"
                         value={sBaseRate || ""}
                         onChange={(e) => setSBaseRate(e.target.value !== "" ? Number(e.target.value) : "")}
-                        className="w-50 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-emerald-400 font-bold px-3 outline-none focus:border-[#D4AF37] font-mono text-left text-[11px]"
+                        className="w-50 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-center text-emerald-400 font-bold px-3 outline-none focus:border-[#D4AF37] font-mono text-[11px]"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[#D4AF37] px-1 mb-1.5 text-[13px] select-none">التوصيف الفني الإنشائي التفصيلي (للعميل) *</label>
+                    <label className="block text-[#D4AF37] px-1 mb-1.5 px-2 font-bold text-[13px] select-none">التوصيف الفني الإنشائي التفصيلي (للعميل) *</label>
                     <textarea
                       rows={4}
                       placeholder="اكتب التوصيف الفني الكامل للبند، شامل جودة الخامات والتأسيس بدقة..."
@@ -1076,7 +1072,7 @@ export default function ItemsMaterialsPage() {
                   </div>
 
                   <div className="bg-[#020B1C] p-4 rounded-2xl border border-dashed border-[#D4AF37] space-y-3 select-none">
-                    <label className="text-[#D4AF37] text-md md:text-md border-b border-[#D4AF37] pb-3 select-none flex items-center gap-2">
+                    <label className="text-[#D4AF37] text-md md:text-md font-bold border-b border-[#D4AF37] pb-3 select-none flex items-center gap-2">
                       <span>📋</span> بنود وخطوات استلام المواصفة الفنية (كل بند في سطر مستقل) *
                     </label>
                     <textarea
@@ -1095,7 +1091,7 @@ export default function ItemsMaterialsPage() {
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); clearForm(); }}
-                      className="px-4 h-9 rounded-lg bg-gradient-to-b from-[#0c1e3d]/40 to-[#040e20]/40 text-[#D4AF37] border border-[#D4AF37]/30 shadow-md hover:border-[#D4AF37] transition-all duration-300 cursor-pointer text-ms flex flex-row items-center justify-center gap-2 whitespace-nowrap"
+                      className="px-4 py-2.5 rounded-lg bg-gradient-to-b from-[#0c1e3d]/40 to-[#040e20]/40 text-[#D4AF37] border border-[#D4AF37]/30 shadow-md hover:border-[#D4AF37] transition-all duration-300 cursor-pointer text-ms flex flex-row items-center justify-center gap-2 whitespace-nowrap"
                     >
                       <RefreshCw className="w-4 h-4 shrink-0" />
                       <span>تهيئة الحقول</span>
@@ -1115,7 +1111,7 @@ export default function ItemsMaterialsPage() {
                           type="button"
                           onClick={(e) => { e.preventDefault(); handleUpdateSpec(); }}
                           disabled={saving}
-                          className="px-6 py-2.5 rounded-lg bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer text-sm flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
+                          className="px-4 py-2.5 rounded-lg bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer text-sm flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
                         >
                           <Edit3 className="w-4 h-4" />
                           <span>{saving ? "جاري الحفظ..." : "حفظ التعديلات الفنية"}</span>
@@ -1172,8 +1168,8 @@ export default function ItemsMaterialsPage() {
 
               <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] overflow-hidden shadow-2xl">
                 
-                <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex flex-col sm:flex-row justify-between items-center gap-4">
-                  <h3 className="text-[#D4AF37] text-md md:text-md pb-3 select-none flex items-center gap-4">
+                <div className="p-4 border-b border-[#0b1b3d] bg-[#0b1b3d]/60 flex flex-col sm:flex-row justify-between items-center gap-4">
+                  <h3 className="text-[#D4AF37] text-md md:text-md font-bold border-b border-[#D4AF37] pb-3 select-none flex items-center gap-2">
                     <span>📐</span> مكتبة المواصفات الفنية المعتمدة ({filteredSpecs.length})
                   </h3>
                   

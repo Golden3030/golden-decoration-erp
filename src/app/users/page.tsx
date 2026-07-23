@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { supabase } from "@/lib/supabaseClient";
 import { isOnline, addToOfflineQueue } from "@/lib/offline-sync";
+// 🌟 تم الحل وتضمين استيراد أيقونة التحميل المفقودة Loader2 بالاستيراد الرئيسي هنا لتفادي انهيار المترجم كلياً
 import { 
   Plus, 
   Minus, 
@@ -17,7 +18,8 @@ import {
   Sparkles, 
   RefreshCw, 
   ShieldAlert,
-  Trash2
+  Trash2,
+  Loader2
 } from "lucide-react";
 
 interface UserProfile {
@@ -271,113 +273,144 @@ export default function UsersPermissionsPage() {
   }
 
   return (
-    // 🌟 حل المشكلة: إرجاع وسم التوجيه dir="rtl" إلى الـ main الرئيسي لضمان ثبات السايدبار الأيمن بالكامل وتكامل الشاشة كلياً
-    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden" dir="rtl">
+    // 🌟 حل المشكلة: إرجاع وسم التوجيه dir="rtl" وموازاة الـ flex إلى الـ main الرئيسي لضمان ثبات السايدبار الأيمن بالكامل وتكامل الشاشة كلياً
+    <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       <Sidebar />
       
+      {/* 🛠️ جدار الحماية البصري الموحد وتنسيق شريط التمرير مذهب الألوان بسمك 6px لمنع التداخل والقص كلياً للـ BOQ */}
       <style dangerouslySetInnerHTML={{ __html: `
-        ::-webkit-scrollbar {
-          width: 6px !important;
-          height: 6px !important;
+        /* تفعيل وإظهار شريط التمرير الأفقي والرأسي بكافة الجداول بألوان ذهبية فاخرة */
+        ::-webkit-scrollbar { 
+          width: 6px !important; 
+          height: 6px !important; 
+          display: block !important;
         }
-        ::-webkit-scrollbar-track {
-          background: #020B1C !important;
+        ::-webkit-scrollbar-track { 
+          background: #020B1C !important; 
         }
-        ::-webkit-scrollbar-thumb {
-          background: #D4AF37 !important;
-          border-radius: 9999px !important;
+        ::-webkit-scrollbar-thumb { 
+          background: #D4AF37 !important; 
+          border-radius: 9999px !important; 
         }
-        ::-webkit-scrollbar-thumb:hover {
-          background: #C9A45D !important;
+        ::-webkit-scrollbar-thumb:hover { 
+          background: #AA7C11 !important; 
         }
+
+        /* إلغاء أكواد الإخفاء لضمان انسيابية التمرير بالماوس والجوال */
+        .overflow-x-auto { 
+          -ms-overflow-style: auto !important; 
+          overflow-x: auto !important; 
+        }
+        
         .overflow-y-auto {
           scrollbar-width: thin !important;
           scrollbar-color: #D4AF37 #020B1C !important;
         }
-        .royal-gradient-btn {
-          background: linear-gradient(90deg, #C9A45D 0%, #F0E6D2 50%, #D4AF37 100%) !important;
-          color: #020B1C !important;
-          font-weight: 900 !important;
-          border: 1px solid #D4AF37 !important;
-          box-shadow: 0 0 15px rgba(212, 175, 55, 0.2) !important;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+        /* عزل تلوين وأوزان خلايا جدول صلاحيات الموظفين ومنع تسريب الـ CSS للسايدبار */
+        .premium-users-table thead th {
+          font-size: 0.75rem !important;
+          font-weight: 500 !important;
+          color: #D4AF37 !important;
+          text-align: right !important;
+          background-color: #020B1C !important;
+          border-bottom: 2px solid rgba(212, 175, 55, 0.3) !important;
+          padding: 14px 16px !important;
+          letter-spacing: normal !important;
         }
-        .royal-gradient-btn:hover {
-          transform: scale(1.02) !important;
-          box-shadow: 0 0 25px rgba(212, 175, 55, 0.45) !important;
-          cursor: pointer !important;
+
+        .premium-users-table tbody td {
+          font-size: 0.8rem !important;
+          font-weight: 400 !important;
+          text-align: right !important;
+          border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
+          padding: 14px 16px !important;
+          letter-spacing: normal !important;
+        }
+
+        .premium-users-table tbody tr:hover {
+          background-color: rgba(7, 19, 42, 0.8) !important;
         }
       `}} />
 
-      <section className="w-full lg:pr-56 m-0 min-h-screen flex flex-col">
+      <section className="flex-1 flex flex-col lg:pr-56 m-0 min-h-screen">
         <Header />
-        <div className="p-4 md:p-8 space-y-6 text-right font-sans">
+        <div className="p-4 md:p-8 space-y-6 text-right select-none animate-fade-in">
           
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#1f2d4d] pb-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#D4AF37]/20 pb-5">
             <div>
-              <h1 className="text-4xl font-extrabold text-[#D4AF37] tracking-wide">جدار صلاحيات الموظفين والعملاء</h1>
-              <p className="text-slate-300 text-sm mt-1.5 leading-relaxed font-bold">إسناد الأدوار القيادية وتفعيل الرقابة الأمنية وعزل الخزينة والعملاء بالتطابق مع جدار حماية الصلاحيات الموحد.</p>
+              <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2 select-none">
+                <span>جدار حماية وصلاحيات مستخدمي النظام</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
+              </h1>
+              <p className="text-white text-xs mt-2 font-semibold">إسناد الأدوار القيادية وتفعيل الرقابة الأمنية وعزل الخزينة والعملاء بالتطابق مع جدار حماية الصلاحيات الموحد.</p>
             </div>
 
+            {/* 🌟 ترقية شكل زر إنشاء الموظف للنسق الحركي الميتاليكي المذهب مع عاكس الإضاءة النيوني السفلي */}
             <button
-              onClick={() => setIsModalOpen(true)}
-              className="royal-gradient-btn text-black font-black px-6 py-3 rounded-full text-xs md:text-sm flex items-center gap-2 cursor-pointer flex-shrink-0"
+              type="button" 
+              onClick={(e) => { e.preventDefault(); setIsModalOpen(true); }}
+              className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer text-sm font-bold flex items-center justify-center gap-1.5 select-none relative overflow-hidden flex-shrink-0"
             >
-              <UserPlus className="w-4 h-4 stroke-[3]" />
-              <span>إضافة موظف جديد حيوياً</span>
+              <UserPlus className="w-4 h-4 stroke-[2.5]" />
+              <span>إضافة موظف جديد </span>
+              <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
             </button>
           </div>
 
           <div className="flex flex-col space-y-6">
             
-            <div className="bg-[#07132a] border-2 border-[#1f2d4d] rounded-2xl overflow-hidden shadow-2xl flex flex-col w-full">
-              <div className="p-4 border-b border-[#243556] bg-[#0b1b3d]/60 select-none">
-                <h3 className="text-[#D4AF37] font-black text-sm">سجل الموظفين والعملاء النشطين بالسيستم ({usersList.length})</h3>
+            {/* 1. جدول كشوف الموظفين المطور بالمقياس الإمبراطوري المتين بالمنصة */}
+            <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] overflow-hidden shadow-2xl flex flex-col relative w-full">
+              <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+              <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 select-none">
+                <h3 className="text-[#D4AF37] font-bold text-sm md:text-md">سجل الموظفين والعملاء المسجلين بالمنظومة ({usersList.length})</h3>
               </div>
               
+              {/* تفعيل التمرير مذهب الألوان وحماية الجدول من التقاطع بـ whitespace-nowrap و min-w-[850px] بالكامل */}
               <div className="overflow-x-auto w-full max-w-full">
-                <table className="w-full text-right text-xs md:text-sm text-[#F0E6D2] min-w-[800px] table-auto font-bold">
-                  <thead className="bg-[#0b1d3d] text-[#D4AF37] font-black border-b border-[#1f2d4d]">
+                <table className="w-full text-right table-auto min-w-[850px] premium-users-table">
+                  <thead>
                     <tr className="whitespace-nowrap select-none">
-                      <th className="p-4">اسم الموظف / العميل</th>
-                      <th className="p-4">البريد الإلكتروني</th>
-                      <th className="p-4 font-bold text-[#D4AF37]">الرتبة والوظيفة</th>
-                      <th className="p-4 text-center">رؤية التقارير</th>
-                      <th className="p-4 text-center">تعديل الأسعار</th>
-                      <th className="p-4 text-center text-rose-400">حذف السجلات</th>
+                      <th>اسم الموظف / العميل</th>
+                      <th>البريد الإلكتروني</th>
+                      <th className="font-bold text-[#D4AF37]">الرتبة والوظيفة</th>
+                      <th className="text-center">رؤية التقارير</th>
+                      <th className="text-center">تعديل الأسعار</th>
+                      <th className="text-center text-rose-400">حذف السجلات</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#1f2d4d]/60">
+                  <tbody>
                     {usersList.map((u) => (
                       <tr
                         key={u.id}
                         onClick={() => handleSelectUser(u)}
-                        className={`hover:bg-[#020B1C]/50 transition duration-150 cursor-pointer whitespace-nowrap ${
+                        className={`cursor-pointer whitespace-nowrap transition duration-200 ${
                           selectedUser?.id === u.id ? "bg-[#0b1b3d]/50 border-r-4 border-r-[#D4AF37]" : ""
                         }`}
                       >
-                        <td className="p-4 font-black text-slate-100 text-sm md:text-base">{u.name}</td>
-                        <td className="p-4 font-mono text-slate-400 text-xs md:text-sm">{u.email}</td>
+                        <td className="font-black text-slate-100">{u.name}</td>
+                        <td className="font-mono text-slate-400 text-xs">{u.email}</td>
                         <td className="p-4 text-[#D4AF37] font-bold">
                           {roleLabels[u.role] || u.role}
                         </td>
-                        <td className="p-4 text-center font-bold">
+                        <td className="text-center">
                           {u.permissions?.can_view_reports ? (
-                            <span className="text-emerald-400 bg-emerald-950/20 px-2.5 py-1 rounded border border-emerald-500/10 text-xs font-bold select-none">✅ نعم</span>
+                            <span className="text-emerald-400 bg-emerald-950/20 px-2.5 py-1 rounded-lg border border-emerald-500/20 text-xs font-bold select-none">✅ نعم</span>
                           ) : (
                             <span className="text-slate-500 text-xs font-bold select-none">❌ لا</span>
                           )}
                         </td>
-                        <td className="p-4 text-center font-bold">
+                        <td className="text-center">
                           {u.permissions?.can_edit_prices ? (
-                            <span className="text-emerald-400 bg-emerald-950/20 px-2.5 py-1 rounded border border-emerald-500/10 text-xs font-bold select-none">✅ نعم</span>
+                            <span className="text-emerald-400 bg-emerald-950/20 px-2.5 py-1 rounded-lg border border-emerald-500/20 text-xs font-bold select-none">✅ نعم</span>
                           ) : (
                             <span className="text-slate-500 text-xs font-bold select-none">❌ لا</span>
                           )}
                         </td>
-                        <td className="p-4 text-center font-bold text-rose-400">
+                        <td className="text-center text-rose-400">
                           {u.permissions?.can_delete_records ? (
-                            <span className="text-rose-400 bg-rose-950/20 px-2.5 py-1 rounded border border-rose-500/10 text-xs font-bold select-none">✅ نعم</span>
+                            <span className="text-rose-400 bg-rose-950/20 px-2.5 py-1 rounded-lg border border-rose-500/20 text-xs font-bold select-none">✅ نعم</span>
                           ) : (
                             <span className="text-slate-500 text-xs font-bold select-none">❌ لا</span>
                           )}
@@ -390,26 +423,26 @@ export default function UsersPermissionsPage() {
             </div>
 
             {selectedUser ? (
-              <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] p-6 md:p-8 space-y-6 shadow-2xl relative overflow-hidden w-full">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 md:p-8 space-y-6 shadow-2xl relative overflow-hidden w-full">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
                 
-                <div className="border-b border-[#1f2d4d] pb-3.5 select-none">
-                  <h3 className="text-[#D4AF37] font-black text-base flex items-center gap-1.5">
+                <div className="border-b border-[#D4AF37] pb-3.5 select-none">
+                  <h3 className="text-[#D4AF37] font-bold text-base flex items-center gap-1.5">
                     <Sparkles className="w-5 h-5 animate-pulse" />
                     تعديل مصفوفة أمان وصلاحيات الموظف: <span className="text-white font-black">{selectedUser.name}</span>
                   </h3>
-                  <p className="text-slate-400 text-xs mt-1 leading-relaxed">تحديد الدور وصلاحيات القراءة والكتابة الدقيقة حيوياً بالـ RLS بالأسفل</p>
+                  <p className="text-slate-400 text-xs mt-1 leading-relaxed">تحديد الدور وصلاحيات القراءة والكتابة الدقيقة بالـ RLS بالأسفل</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start text-xs font-semibold">
                   
-                  <div className="space-y-3 bg-[#020B1C]/40 p-4 rounded-2xl border border-[#1f2d4d]/60">
+                  <div className="space-y-3 bg-[#020B1C]/40 p-4 rounded-2xl border border-[#D4AF37]/15">
                     <span className="block text-xs text-[#D4AF37] font-bold">الرتبة والوظيفة التنظيمية:</span>
-                    <p className="text-[11px] text-gray-500 leading-relaxed mb-2">اختر الرتبة الإدارية لتحديد الصلاحيات الهيكلية للموظف بالسيستم:</p>
+                    <p className="text-[11px] text-gray-500 leading-relaxed mb-2 font-medium">اختر الرتبة الإدارية لتحديد الصلاحيات الهيكلية للموظف بالسيستم:</p>
                     <select
                       value={selectedRole}
                       onChange={(e) => setSelectedRole(e.target.value)}
-                      className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] font-black px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-xs md:text-sm"
+                      className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-black px-3 outline-none cursor-pointer focus:border-[#D4AF37]"
                     >
                       <option value="admin">مدير النظام 👑</option>
                       <option value="manager">مدير الحسابات والتشغيل 💵</option>
@@ -420,56 +453,60 @@ export default function UsersPermissionsPage() {
                     </select>
                   </div>
 
-                  <div className="space-y-3 bg-[#020B1C]/40 p-4 rounded-2xl border border-[#1f2d4d]/60">
+                  <div className="space-y-3 bg-[#020B1C]/40 p-4 rounded-2xl border border-[#D4AF37]/15">
                     <span className="block text-xs text-[#D4AF37] font-bold">جدار الأمان والتحكم الصلاحي:</span>
                     
-                    <label className="flex items-center justify-between p-2.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl cursor-pointer hover:border-[#D4AF37]/20 transition-all select-none">
+                    <label className="flex items-center justify-between p-2.5 bg-[#020B1C] border border-[#D4AF37]/15 rounded-xl cursor-pointer hover:border-[#D4AF37]/35 transition-all select-none">
                       <span className="font-bold text-xs text-slate-200">قراءة التقارير والتحليلات المالية</span>
                       <input
                         type="checkbox"
                         checked={canViewReports}
                         onChange={(e) => setCanViewReports(e.target.checked)}
-                        className="w-5 h-5 rounded border-[#1f2d4d] bg-[#020B1C] text-[#D4AF37] focus:ring-0 accent-[#D4AF37] cursor-pointer"
+                        className="w-5 h-5 rounded border-[#D4AF37]/20 bg-[#020B1C] text-[#D4AF37] focus:ring-0 accent-[#D4AF37] cursor-pointer"
                       />
                     </label>
 
-                    <label className="flex items-center justify-between p-2.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl cursor-pointer hover:border-[#D4AF37]/20 transition-all select-none">
+                    <label className="flex items-center justify-between p-2.5 bg-[#020B1C] border border-[#D4AF37]/15 rounded-xl cursor-pointer hover:border-[#D4AF37]/35 transition-all select-none">
                       <span className="font-bold text-xs text-slate-200">تعديل أسعار الخامات والمقايسات</span>
                       <input
                         type="checkbox"
                         checked={canEditPrices}
                         onChange={(e) => setCanEditPrices(e.target.checked)}
-                        className="w-5 h-5 rounded border-[#1f2d4d] bg-[#020B1C] text-[#D4AF37] focus:ring-0 accent-[#D4AF37] cursor-pointer"
+                        className="w-5 h-5 rounded border-[#D4AF37]/20 bg-[#020B1C] text-[#D4AF37] focus:ring-0 accent-[#D4AF37] cursor-pointer"
                       />
                     </label>
 
-                    <label className="flex items-center justify-between p-2.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl cursor-pointer hover:border-red-500/20 transition-all select-none">
+                    <label className="flex items-center justify-between p-2.5 bg-[#020B1C] border border-[#D4AF37]/15 rounded-xl cursor-pointer hover:border-red-500/20 transition-all select-none">
                       <span className="font-bold text-xs text-rose-400">حذف السجلات والعملاء والمنتجات</span>
                       <input
                         type="checkbox"
                         checked={canDeleteRecords}
                         onChange={(e) => setCanDeleteRecords(e.target.checked)}
-                        className="w-5 h-5 rounded border-[#1f2d4d] bg-[#020B1C] text-[#D4AF37] focus:ring-0 accent-[#D4AF37] cursor-pointer"
+                        className="w-5 h-5 rounded border-[#D4AF37]/20 bg-[#020B1C] text-[#D4AF37] focus:ring-0 accent-[#D4AF37] cursor-pointer"
                       />
                     </label>
                   </div>
 
-                  <div className="space-y-3 bg-[#020B1C]/40 p-4 rounded-2xl border border-[#1f2d4d]/60 flex flex-col justify-center h-full">
+                  <div className="space-y-3 bg-[#020B1C]/40 p-4 rounded-2xl border border-[#D4AF37]/15 flex flex-col justify-center h-full">
                     <span className="block text-xs text-[#D4AF37] font-bold mb-1 select-none">إجراءات الحفظ والإدارة:</span>
                     
+                    {/* 🌟 ترقية وتوحيد زرار حفظ مصفوفة الأمان للدستور البصري الحركي الموحد بـ عاكس الإضاءة السفلي */}
                     <button
-                      onClick={handleSavePermissions}
+                      type="button" 
+                      onClick={(e) => { e.preventDefault(); handleSavePermissions(); }}
                       disabled={saving}
-                      className="w-full h-12 royal-gradient-btn text-black font-black rounded-full text-xs md:text-sm flex items-center justify-center gap-2"
+                      className="w-full px-6 h-12 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-40 cursor-pointer"
                     >
-                      💾 حفظ مصفوفة الأمان والصلاحيات
+                      {saving ? <Loader2 className="animate-spin w-4 h-4 text-[#D4AF37]" /> : <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />}
+                      <span>حفظ مصفوفة الصلاحيات</span>
+                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                     </button>
 
                     <button
                       type="button"
                       onClick={handleDeleteUser}
                       disabled={saving}
-                      className="w-full h-11 bg-transparent border-2 border-red-500/30 text-rose-400 rounded-full font-black text-xs md:text-sm hover:bg-red-500 hover:text-[#020B1C] transition-all duration-300 cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full h-11 bg-transparent border-2 border-red-500/30 text-rose-400 rounded-xl font-black text-xs md:text-sm hover:bg-red-500 hover:text-[#020B1C] transition-all duration-300 cursor-pointer flex items-center justify-center gap-2"
                     >
                       <Trash2 className="w-4 h-4" />
                       حذف حساب الموظف نهائياً
@@ -479,7 +516,7 @@ export default function UsersPermissionsPage() {
                 </div>
               </div>
             ) : (
-              <div className="bg-[#07132a] border border-dashed border-[#D4AF37]/30 rounded-[1.5rem] p-6 text-center text-slate-400 text-sm font-bold select-none leading-relaxed shadow-lg">
+              <div className="bg-[#07132a] border border-dashed border-[#D4AF37]/30 rounded-[2rem] p-6 text-center text-slate-400 text-xs font-black select-none leading-relaxed shadow-lg">
                 📢 انقر على سطر أي موظف أو عميل في الجدول أعلاه لمعاينة مصفوفة الأمان الخاصة به وتعديل صلاحياته حيوياً هنا بالأسفل.
               </div>
             )}
@@ -490,16 +527,18 @@ export default function UsersPermissionsPage() {
       </section>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-          <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] w-full max-w-lg shadow-[0_0_50px_rgba(212,175,55,0.15)] overflow-hidden relative">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          {/* ترقية زوايا مودال الموظف الجديد للمقياس الإمبراطوري المتين بالمنصة */}
+          <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] w-full max-w-lg shadow-[0_0_50px_rgba(212,175,55,0.15)] overflow-hidden relative">
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
             
-            <div className="border-b border-[#1f2d4d] p-5 flex justify-between items-center bg-[#020B1C]/60 rounded-t-[2rem]">
-              <h3 className="text-lg font-black text-[#D4AF37] flex items-center gap-2 select-none">
+            <div className="border-b border-[#D4AF37]/15 p-5 flex justify-between items-center bg-[#020B1C]/60 rounded-t-[2rem]">
+              <h3 className="text-md font-black text-[#D4AF37] flex items-center gap-2 select-none">
                 <UserPlus className="w-5 h-5 stroke-[2.5]" />
                 إنشاء حساب موظف / فني جديد سحابياً
               </h3>
               <button 
+                type="button"
                 onClick={() => setIsModalOpen(false)}
                 className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center font-bold text-sm cursor-pointer"
               >
@@ -507,7 +546,7 @@ export default function UsersPermissionsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCreateUser} className="p-6 space-y-5 text-right font-bold" dir="rtl">
+            <form onSubmit={handleCreateUser} className="p-6 space-y-5 text-right font-bold text-xs" dir="rtl">
               
               <div>
                 <label className="block text-slate-300 text-xs font-bold mb-2">اسم الموظف بالكامل *</label>
@@ -517,7 +556,7 @@ export default function UsersPermissionsPage() {
                   placeholder="مثال: م. أحمد الجارحي"
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-4 outline-none text-sm font-semibold focus:border-[#D4AF37] placeholder-slate-600 transition-all"
+                  className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-4 outline-none text-xs font-semibold focus:border-[#D4AF37] placeholder-slate-600 transition-all"
                 />
               </div>
 
@@ -533,7 +572,7 @@ export default function UsersPermissionsPage() {
                     placeholder="name@golddecoration.com"
                     value={newEmail}
                     onChange={(e) => setNewEmail(e.target.value)}
-                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-4 outline-none text-sm font-semibold focus:border-[#D4AF37] placeholder-slate-600 transition-all font-mono"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-4 outline-none text-xs font-semibold focus:border-[#D4AF37] placeholder-slate-600 transition-all font-mono"
                   />
                 </div>
 
@@ -548,7 +587,7 @@ export default function UsersPermissionsPage() {
                     placeholder="010XXXXXXXX"
                     value={newMobile}
                     onChange={(e) => setNewMobile(e.target.value)}
-                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-4 outline-none text-sm font-semibold focus:border-[#D4AF37] placeholder-slate-600 transition-all font-mono"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-4 outline-none text-xs font-semibold focus:border-[#D4AF37] placeholder-slate-600 transition-all font-mono"
                   />
                 </div>
               </div>
@@ -563,7 +602,7 @@ export default function UsersPermissionsPage() {
                       placeholder="••••••••"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-4 outline-none text-sm font-semibold focus:border-[#D4AF37] placeholder-slate-600 transition-all font-mono"
+                      className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-4 outline-none text-xs font-semibold focus:border-[#D4AF37] placeholder-slate-600 transition-all font-mono"
                     />
                     
                     <label className="absolute left-3 top-3 flex items-center gap-1 cursor-pointer select-none">
@@ -571,7 +610,7 @@ export default function UsersPermissionsPage() {
                         type="checkbox"
                         checked={showPassword}
                         onChange={(e) => setShowPassword(e.target.checked)}
-                        className="w-3.5 h-3.5 rounded border-[#1f2d4d] bg-[#020B1C] text-[#D4AF37] focus:ring-0 accent-[#D4AF37] cursor-pointer"
+                        className="w-3.5 h-3.5 rounded border-[#D4AF37]/20 bg-[#020B1C] text-[#D4AF37] focus:ring-0 accent-[#D4AF37] cursor-pointer"
                       />
                       <span className="text-[10px] text-slate-400 font-bold select-none">عرض</span>
                     </label>
@@ -583,7 +622,7 @@ export default function UsersPermissionsPage() {
                   <select
                     value={newRole}
                     onChange={(e) => setNewRole(e.target.value)}
-                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] font-black px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-sm"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] font-black px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-xs"
                   >
                     <option value="admin">مدير النظام 👑</option>
                     <option value="manager">مدير الحسابات والتشغيل 💵</option>
@@ -606,14 +645,15 @@ export default function UsersPermissionsPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="w-1/3 h-11 bg-transparent border-2 border-[#1f2d4d] text-[#D4AF37] rounded-full font-black text-xs md:text-sm hover:bg-[#1f2d4d]/40 transition-all duration-300 cursor-pointer flex items-center justify-center"
+                  className="w-1/3 h-11 bg-transparent border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 px-6 rounded-xl font-black text-xs hover:text-[#020B1C] hover:bg-gradient-to-r hover:from-[#D4AF37] hover:to-[#C9A45D] transition-all duration-300 cursor-pointer flex items-center justify-center"
                 >
                   إلغاء
                 </button>
+                {/* 🌟 ترقية وتوحيد زرار تخليق الموظف السحابي للدستور البصري الحركي الموحد بـ عاكس الإضاءة السفلي */}
                 <button
                   type="submit"
                   disabled={savingNewUser}
-                  className="w-2/3 h-11 royal-gradient-btn text-black font-black rounded-full text-xs md:text-sm flex items-center justify-center gap-1.5"
+                  className="w-2/3 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-40 cursor-pointer"
                 >
                   {savingNewUser ? (
                     <>
@@ -623,6 +663,7 @@ export default function UsersPermissionsPage() {
                   ) : (
                     "💾 إنشاء حساب الموظف"
                   )}
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                 </button>
               </div>
 

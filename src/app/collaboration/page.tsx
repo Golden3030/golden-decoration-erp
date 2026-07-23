@@ -20,7 +20,7 @@ import {
   Trash2,
   Edit2,
   Eraser,
-  Image as ImageIcon
+  ImageIcon
 } from "lucide-react";
 
 interface StaffMessage {
@@ -342,97 +342,53 @@ export default function CollaborationPage() {
   const totalPrivateUnread = Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
 
   return (
-    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden">
+    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       <Sidebar />
       
-      {/* 🌟 شفرات شريط التمرير الملكية v2.8.0 الموحدة لكافة حركات الشات وفرض خط Alexandria القياسي */}
+      {/* 🛠️ ورقة التنسيق الموحدة للدفتر العام - محصورة لحماية السايدبار والهيدر */}
       <style dangerouslySetInnerHTML={{ __html: `
-        @import url('https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;700;900&display=swap');
+        ::-webkit-scrollbar { width: 4px !important; height: 6px !important; }
+        ::-webkit-scrollbar-track { background: #020B1C !important; }
+        ::-webkit-scrollbar-thumb { background: #D4AF37 !important; border-radius: 9999px !important; }
+        ::-webkit-scrollbar-thumb:hover { background: #AA7C11 !important; }
 
-        *:not(code, pre, .font-mono, [class*="font-mono"]) {
-          font-family: 'Alexandria', Arial, sans-serif !important;
-          letter-spacing: normal !important;
-        }
+        ::-webkit-scrollbar-horizontal,
+        .overflow-x-auto::-webkit-scrollbar { display: none !important; height: 0px !important; }
+        .overflow-x-auto { scrollbar-width: none !important; -ms-overflow-style: none !important; overflow-x: auto !important; }
 
-        ::-webkit-scrollbar {
-          width: 8px !important;
-          height: 8px !important;
-        }
-        ::-webkit-scrollbar-track {
-          background: #020B1C !important;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: #D4AF37 !important;
-          border-radius: 9999px !important;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: #C9A45D !important;
-        }
-
-        /* تلوين أزرار أسهم الصعود والهبوط يدوياً لشريط التمرير */
-        ::-webkit-scrollbar-button {
-          display: block !important;
-          background-color: #020B1C !important;
-          height: 10px !important;
-          width: 10px !important;
-        }
-        ::-webkit-scrollbar-button:vertical:decrement {
-          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23D4AF37'><polygon points='50,20 15,80 85,80'/></svg>") !important;
-          background-size: 6px !important;
-          background-repeat: no-repeat !important;
-          background-position: center !important;
-        }
-        ::-webkit-scrollbar-button:vertical:increment {
-          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23D4AF37'><polygon points='15,20 85,20 50,80'/></svg>") !important;
-          background-size: 6px !important;
-          background-repeat: no-repeat !important;
-          background-position: center !important;
-        }
-
-        .overflow-y-auto {
-          scrollbar-width: thin !important;
-          scrollbar-color: #D4AF37 #020B1C !important;
-        }
-        .royal-gradient-btn {
-          background: linear-gradient(90deg, #C9A45D 0%, #F0E6D2 50%, #D4AF37 100%) !important;
-          color: #020B1C !important;
-          font-weight: 900 !important;
-          border: 1px solid #D4AF37 !important;
-          box-shadow: 0 0 15px rgba(212, 175, 55, 0.2) !important;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        }
-        .royal-gradient-btn:hover {
-          transform: scale(1.02) !important;
-          box-shadow: 0 0 25px rgba(212, 175, 55, 0.45) !important;
-          cursor: pointer !important;
+        .overflow-y-auto { 
+          -ms-overflow-style: auto !important; 
+          overflow-y: auto !important; 
         }
       `}} />
 
       {/* تفعيل جدار الحماية وعزل الإزاحة الجانبية الميدانية */}
-      <section dir="rtl" className="w-full lg:pr-56 m-0 min-h-screen flex flex-col z-10 relative">
+      <section className="w-full lg:pr-56 m-0 min-h-screen flex flex-col z-10 relative">
         <Header />
         
         <div className="p-4 md:p-8 space-y-6 text-right flex-1 flex flex-col justify-between animate-fade-in">
           
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-[#D4AF37]/20 pb-5 select-none">
             <div>
-              {/* تصغير حجم العنوان الرئيسي للتوافق مع الدستور الجمالي الموحد */}
-              <h1 className="text-xl md:text-2xl font-extrabold text-[#D4AF37]">التعاون والتواصل الداخلي</h1>
-              {/* تعديل لون الشرح أسفل العنوان للأبيض الصافي لتعزيز التباين البصري */}
-              <p className="text-white text-xs mt-1.5 ">جروب عام مشترك للفريق للتقارير والوسائط، أو مراسلات سرية مباشرة لسلامة التنسيق.</p>
+              <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2">
+                <span>التعاون والتواصل الداخلي</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
+              </h1>
+              <p className="text-white text-xs mt-2">جروب عام مشترك للفريق للتقارير والوسائط، أو مراسلات سرية مباشرة لسلامة التنسيق.</p>
             </div>
 
             {/* الأزرار التناوبية للتبديل بتصميم الكبسولة المذهبة الميتاليكية الفخمة */}
-            <div className="bg-[#07132a] border border-[#D4AF37]/35 p-1.5 rounded-full flex gap-2">
+            <div className="bg-[#07132a] border border-[#D4AF37]/35 p-1.5 rounded-2xl flex gap-2">
               <button
+                type="button"
                 onClick={() => {
                   setChatType("group");
                   setSelectedUserId("");
                 }}
-                className={`px-6 py-2.5 rounded-full font-black text-xs md:text-sm transition-all duration-300 cursor-pointer flex items-center gap-2 relative ${
+                className={`px-6 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-all duration-300 cursor-pointer flex items-center gap-2 relative ${
                   chatType === "group" 
-                    ? "royal-gradient-btn text-black shadow-lg" 
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.35)] scale-[1.02]" 
+                    : "bg-transparent border border-transparent text-[#F0E6D2] hover:border-[#D4AF37]/20"
                 }`}
               >
                 <span>👥 مجموعة عمل الفريق</span>
@@ -444,11 +400,12 @@ export default function CollaborationPage() {
               </button>
               
               <button
+                type="button"
                 onClick={() => setChatType("private")}
-                className={`px-6 py-2.5 rounded-full font-black text-xs md:text-sm transition-all duration-300 cursor-pointer flex items-center gap-2 relative ${
+                className={`px-6 py-2.5 rounded-xl font-bold text-xs md:text-sm transition-all duration-300 cursor-pointer flex items-center gap-2 relative ${
                   chatType === "private" 
-                    ? "royal-gradient-btn text-black shadow-lg" 
-                    : "text-gray-400 hover:text-white"
+                    ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.35)] scale-[1.02]" 
+                    : "bg-transparent border border-transparent text-[#F0E6D2] hover:border-[#D4AF37]/20"
                 }`}
               >
                 <span>💬 رسالة خاصة</span>
@@ -463,15 +420,17 @@ export default function CollaborationPage() {
 
           {chatType === "group" ? (
             /* وضع مجموعة عمل الفريق مدمج بإطار شفاف رقيق وموحد */
-            <div className="bg-[#07132a] border border-[#D4AF37] rounded-3xl flex flex-col h-[600px] overflow-hidden shadow-2xl animate-fade-in">
-              <div className="p-4 bg-[#0b1b3d] border-b border-[#D4AF37] select-none flex justify-between items-center">
-                {/* تعديل ترويسة العنوان للون البني البرونزي المعتمد `#A17A4C` */}
-                <span className="text-[#D4AF37] font-black text-xs md:text-sm">📢 قناة الدردشة العامة لشركة جولدن ديكوريشن</span>
+            <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] flex flex-col h-[600px] overflow-hidden shadow-2xl animate-fade-in relative">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+              
+              <div className="p-4 bg-[#D4AF37]/20 border-b border-[#D4AF37] select-none flex justify-between items-center z-10">
+                <span className="text-[#D4AF37] font-bold text-xs md:text-sm">📢 قناة الدردشة العامة لشركة جولدن ديكوريشن</span>
                 
                 {/* تنظيف الجروب العام لمدير النظام فقط */}
                 <button
+                  type="button"
                   onClick={handleClearChat}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-red-500/20 text-rose-400 hover:bg-red-500 hover:text-[#020B1C] text-xs font-black transition-all duration-300 cursor-pointer"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-500/60 text-rose-400 hover:bg-red-500 hover:text-[#020B1C] text-xs font-bold transition-all duration-300 cursor-pointer"
                 >
                   <Eraser className="w-3.5 h-3.5" />
                   <span>تنظيف الجروب العام</span>
@@ -479,7 +438,7 @@ export default function CollaborationPage() {
               </div>
 
               {/* حاوية الشات */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-[#020B1C]/35 ai-chat-scroll">
+              <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-[#020B1C]/35 ai-chat-scroll z-10">
                 {messages.length > 0 ? (
                   messages.map((msg) => {
                     const isMe = msg.sender_id === currentUserId;
@@ -493,8 +452,9 @@ export default function CollaborationPage() {
                           
                           {isMe && (
                             <button
+                              type="button"
                               onClick={() => handleTriggerEdit(msg)}
-                              className="absolute left-2.5 top-2.5 opacity-80 hover:opacity-100 hover:scale-110 text-[#020B1C] bg-[#020B1C]/10 hover:bg-[#020B1C]/25 p-1.5 rounded-full transition-all z-10"
+                              className="absolute left-2.5 top-2.5 opacity-80 hover:opacity-100 hover:scale-110 text-[#020B1C] bg-[#020B1C]/10 hover:bg-[#020B1C]/25 p-1.5 rounded-full transition-all z-10 cursor-pointer"
                               title="تعديل الرسالة"
                             >
                               <Edit2 className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -503,7 +463,7 @@ export default function CollaborationPage() {
 
                           {/* 🏷️ ترقية خط أسماء الموظفين مع إبراز الأقسام */}
                           <span className={`text-[10px] font-black block border-b pb-0.5 mb-1 opacity-80 ${isMe ? "border-black/10 text-black" : "border-white/10 text-[#D4AF37]"}`}>
-                            👤 {isMe ? "أنت" : `${msg.sender?.name || "زميل بالفريق"} - ${msg.sender?.role ? (roleLabels[msg.sender.role] || msg.sender.role) : "عضو بالفريق"}`}
+                            👤 {isMe ? "أنت" : `${msg.sender?.name || "عضو بالفريق"} - ${msg.sender?.role ? (roleLabels[msg.sender.role] || msg.sender.role) : "عضو بالفريق"}`}
                           </span>
                           
                           <p className="text-xs md:text-sm font-bold leading-relaxed whitespace-pre-wrap">{msg.message}</p>
@@ -537,18 +497,29 @@ export default function CollaborationPage() {
               </div>
 
               {/* شريط الإرسال الذكي */}
-              <div className="p-4 border-t border-[#1f2d4d] bg-[#07132a] flex items-center gap-3 select-none">
+              <div className="p-4 border-t border-[#1f2d4d] bg-[#07132a] flex items-center gap-3 select-none z-10">
                 <input
                   type="text"
                   placeholder={editingMessageId ? "تعديل رسالتك المكتوبة حالياً..." : "اكتب رسالة جماعية للفريق..."}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                  className="flex-1 h-11 bg-[#020B1C] border border-[#243556] text-[#F0E6D2] p-3 rounded-lg text-xs outline-none focus:border-[#D4AF37] font-bold"
+                  className="flex-1 h-11 bg-[#020B1C] border border-[#243556] text-[#F0E6D2] p-3 rounded-xl text-xs outline-none focus:border-[#D4AF37] font-semibold"
                 />
-                
+                 {/* 🌟 تحديث وإعادة هيكلة زرار الإرسال للدستور البصري الحركي الموحد */}
+                <button
+                  type="button"
+                  onClick={handleSendMessage}
+                  disabled={sending}
+                  className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
+                >
+                  {sending ? "جاري الإرسال..." : editingMessageId ? "تعديل الرسالة ✏️" : "إرسال 🚀"}
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                </button>
+
                 {editingMessageId && (
                   <button 
+                    type="button"
                     onClick={() => { setEditingMessageId(null); setNewMessage(""); }}
                     className="text-xs text-rose-400 hover:underline px-2"
                   >
@@ -556,26 +527,22 @@ export default function CollaborationPage() {
                   </button>
                 )}
 
-                <label className="bg-[#1f2d4d] hover:bg-[#243556] text-[#D4AF37] px-4 py-3 h-11 flex items-center rounded-full text-xs md:text-sm cursor-pointer font-black transition whitespace-nowrap select-none">
-                  📁 {fileName ? "تغيير المرفق" : "إرفاق ملف"}
+                <label className="bg-[#1f2d4d] hover:bg-[#243556] text-[#D4AF37] px-4 py-3 h-11 flex items-center rounded-xl text-xs md:text-sm cursor-pointer font-black transition whitespace-nowrap select-none border border-[#D4AF37]/20">
+                  📁 {fileName ? "تغيير المرفق" : " "}
                   <input type="file" onChange={handleFileChange} className="hidden" />
                 </label>
-                <button
-                  onClick={handleSendMessage}
-                  disabled={sending}
-                  className="royal-gradient-btn text-black font-black px-6 h-11 rounded-full text-xs md:text-sm flex items-center justify-center gap-1.5"
-                >
-                  {sending ? "جاري الإرسال" : editingMessageId ? "تعديل الرسالة ✏️" : "إرسال 🚀"}
-                </button>
+
+               
               </div>
             </div>
           ) : (
             /* وضع الرسائل الخاصة مدمج بالإطارات الشفافة الرقيقة */
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[600px] animate-fade-in">
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-1 h-[600px] animate-fade-in relative">
+              
               {/* القائمة اليمنى للموظفين */}
-              <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl p-4 overflow-y-auto space-y-2 select-none ai-chat-scroll">
-                {/* تعديل لون ترويسة قائمة الموظفين للون البني البرونزي المعتمد `#A17A4C` */}
-                <h3 className="text-[#D4AF37] font-black text-xs md:text-sm border-b border-[#D4AF37] pb-2 mb-3">👥 أعضاء الفريق النشطين</h3>
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-4 overflow-y-auto space-y-2 select-none ai-chat-scroll shadow-2xl relative">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-xl pointer-events-none" />
+                <h3 className="text-[#D4AF37] font-bold text-xs md:text-sm border-b border-[#D4AF37] pb-2 mb-3">👥  موظفين الشركة</h3>
                 {loading ? (
                   <div className="text-center text-gray-500 text-xs py-10 animate-pulse">جاري جلب الموظفين...</div>
                 ) : (
@@ -609,23 +576,24 @@ export default function CollaborationPage() {
               </div>
 
               {/* صندوق عرض الرسائل الخاصة مدمج بالإطارات الشفافة */}
-              <div className="lg:col-span-3 bg-[#07132a] border border-[#D4AF37] rounded-3xl flex flex-col overflow-hidden shadow-2xl">
+              <div className="lg:col-span-3 bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] flex flex-col overflow-hidden shadow-2xl relative">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
                 {selectedUserId ? (
                   <>
-                    <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37] select-none flex justify-between items-center">
-                      {/* تعديل ترويسة الرسائل الخاصة للون البني البرونزي المعتمد `#A17A4C` */}
-                      <span className="text-[#D4AF37] font-black text-xs md:text-sm">💬 محادثة خاصة وسرية متبادلة</span>
+                    <div className="p-4 bg-[#D4AF37]/20 border-b border-[#D4AF37]/20 select-none flex justify-between items-center z-10">
+                      <span className="text-[#D4AF37] font-bold text-xs md:text-sm">💬 محادثة خاصة متبادلة</span>
                       
                       <button
+                        type="button"
                         onClick={handleClearChat}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-red-500/20 text-rose-400 hover:bg-red-500 hover:text-[#020B1C] text-xs font-black transition-all duration-300 cursor-pointer"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-red-500/60 text-rose-400 hover:bg-red-500 hover:text-[#020B1C] text-xs font-bold transition-all duration-300 cursor-pointer"
                       >
                         <Eraser className="w-3.5 h-3.5" />
                         <span>مسح المحادثة الخاصة</span>
                       </button>
                     </div>
 
-                    <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-[#020B1C]/35 ai-chat-scroll">
+                    <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-[#020B1C]/35 ai-chat-scroll z-10">
                       {messages.map((log) => {
                         const isMe = log.sender_id === currentUserId;
                         return (
@@ -638,8 +606,9 @@ export default function CollaborationPage() {
                               
                               {isMe && (
                                 <button
+                                  type="button"
                                   onClick={() => handleTriggerEdit(log)}
-                                  className="absolute left-2.5 top-2.5 opacity-80 hover:opacity-100 hover:scale-110 text-[#020B1C] bg-[#020B1C]/10 hover:bg-[#020B1C]/25 p-1.5 rounded-full transition-all z-10"
+                                  className="absolute left-0.5 top-0.5 opacity-80 hover:opacity-100 hover:scale-110 text-[#020B1C] bg-[#020B1C]/10 hover:bg-[#020B1C]/25 p-1.5 rounded-full transition-all z-10"
                                   title="تعديل الرسالة"
                                 >
                                   <Edit2 className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -674,16 +643,26 @@ export default function CollaborationPage() {
                     </div>
 
                     {/* شريط الإرسال الخاص */}
-                    <div className="p-4 border-t border-[#1f2d4d] bg-[#07132a] flex items-center gap-3">
+                    <div className="p-4 border-t border-[#1f2d4d] bg-[#07132a] flex items-center gap-3 z-10">
                       <input
                         type="text"
                         placeholder={editingMessageId ? "تعديل رسالتك المكتوبة حالياً..." : "اكتب رسالة خاصة للموظف..."}
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                        className="flex-1 h-11 bg-[#020B1C] border border-[#243556] text-[#F0E6D2] p-3 rounded-lg text-xs outline-none focus:border-[#D4AF37] font-bold"
+                        className="flex-1 h-11 bg-[#020B1C] border border-[#243556] text-[#F0E6D2] p-3 rounded-xl text-xs outline-none focus:border-[#D4AF37] font-semibold"
                       />
-                      
+                      {/* 🌟 تم هنا تصحيح الخطأ الإملائي بحقن دالة handleFileChange بدلاً من المفقودة لتفادي انهيار بناء المنظومة كلياً */}
+                      <button
+                        type="button"
+                        onClick={handleSendMessage}
+                        disabled={sending}
+                        className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
+                      >
+                        {sending ? "جاري الإرسال..." : editingMessageId ? "تعديل الرسالة ✏️" : "إرسال 🚀"}
+                        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                      </button>
+
                       {editingMessageId && (
                         <button 
                           type="button"
@@ -694,21 +673,16 @@ export default function CollaborationPage() {
                         </button>
                       )}
                       
-                      <label className="bg-[#1f2d4d] hover:bg-[#243556] text-[#F0E6D2] px-4 py-3 h-11 flex items-center rounded-full text-xs md:text-sm cursor-pointer font-black transition whitespace-nowrap select-none">
-                        📁 {fileName ? "تغيير المرفق" : "إرفاق ملف"}
+                      <label className="bg-[#1f2d4d] hover:bg-[#243556] text-[#F0E6D2] px-4 py-3 h-11 flex items-center rounded-xl text-xs md:text-sm cursor-pointer font-black transition whitespace-nowrap select-none border border-[#D4AF37]/20">
+                        📁 {fileName ? "تغيير المرفق" : " "}
                         <input type="file" onChange={handleFileChange} className="hidden" />
                       </label>
-                      <button
-                        onClick={handleSendMessage}
-                        disabled={sending}
-                        className="royal-gradient-btn text-black font-black px-6 h-11 rounded-full text-xs md:text-sm flex items-center justify-center gap-1.5"
-                      >
-                        {sending ? "جاري الإرسال" : editingMessageId ? "تعديل الرسالة ✏️" : "إرسال 🚀"}
-                      </button>
+
+                      
                     </div>
                   </>
                 ) : (
-                  <div className="flex-1 flex flex-col justify-center items-center text-gray-500 text-xs p-6 select-none font-bold text-center gap-2">
+                  <div className="flex-1 flex flex-col justify-center items-center text-gray-500 text-xs p-6 select-none font-bold text-center gap-2 z-10">
                     <span>💬 الرجاء تحديد أحد الزملاء من القائمة اليمنى للبدء في مراسلته وتداول المستندات الخاصة.</span>
                   </div>
                 )}
@@ -726,6 +700,7 @@ export default function CollaborationPage() {
           className="fixed inset-0 bg-black/95 backdrop-blur-md z-[100] flex items-center justify-center p-4 cursor-pointer animate-fade-in"
         >
           <button 
+            type="button"
             onClick={() => setLightboxImage(null)}
             className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/60 border border-slate-500 text-[#D4AF37] hover:text-red-400 hover:border-red-500/30 transition-all flex items-center justify-center font-bold text-lg cursor-pointer z-50"
           >

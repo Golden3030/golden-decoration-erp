@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { supabase } from "@/lib/supabaseClient";
 import { isOnline, addToOfflineQueue } from "@/lib/offline-sync";
-import { Plus, Minus, Calendar, Users, Clipboard, Info, CheckCircle2, Lock } from "lucide-react";
+import { Plus, Minus, Calendar, Users, Clipboard, Info, CheckCircle2, Lock, Loader2 } from "lucide-react";
 
 interface Appointment {
   id: string;
@@ -102,6 +102,7 @@ export default function AppointmentsPage() {
     } catch (err: any) {
       console.error("Error loading appointments:", err.message);
     } finally {
+      document.title = "جدول المواعيد واللقاءات | Golden Decoration";
       setLoading(false);
     }
   }
@@ -237,7 +238,7 @@ export default function AppointmentsPage() {
       const label = app.appointment_type === "site_visit" ? "معاينة سابقة 🏗️" : "اجتماع سابق 🤝";
       return {
         label,
-        classes: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+        classes: "bg-emerald-500/10 text-[#34d399] border border-emerald-500/20"
       };
     }
 
@@ -250,27 +251,35 @@ export default function AppointmentsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden">
+    <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       <Sidebar />
       
-      {/* 🌟 شفرات شريط التمرير الملكية v2.8.0 المحدثة لدعم أزرار التحكم والأسهم المخصصة يدوياً */}
+      {/* 🛠️ جدار الحماية البصري الموحد وتنسيق شريط التمرير المذهب ومنع التداخل نهائياً */}
       <style dangerouslySetInnerHTML={{ __html: `
-        ::-webkit-scrollbar {
-          width: 8px !important;
-          height: 8px !important;
+        /* تفعيل وإظهار شريط التمرير الأفقي والرأسي بكافة الجداول بألوان ذهبية فاخرة */
+        ::-webkit-scrollbar { 
+          width: 4px !important; 
+          height: 4px !important; 
+          display: block !important;
         }
-        ::-webkit-scrollbar-track {
-          background: #020B1C !important;
+        ::-webkit-scrollbar-track { 
+          background: #020B1C !important; 
         }
-        ::-webkit-scrollbar-thumb {
-          background: #D4AF37 !important;
-          border-radius: 9999px !important;
+        ::-webkit-scrollbar-thumb { 
+          background: #D4AF37 !important; 
+          border-radius: 9999px !important; 
         }
-        ::-webkit-scrollbar-thumb:hover {
-          background: #C9A45D !important;
+        ::-webkit-scrollbar-thumb:hover { 
+          background: #AA7C11 !important; 
         }
 
-        /* تلوين أزرار أسهم الصعود والهبوط يدوياً لضمان الفاعلية والتحكم بجداول المواعيد الممتدة */
+        /* إلغاء أكواد الإخفاء لضمان انسيابية التمرير بالماوس والجوال */
+        .overflow-x-auto { 
+          -ms-overflow-style: auto !important; 
+          overflow-x: auto !important; 
+        }
+
+        /* تلوين أزرار أسهم الصعود والهبوط يدوياً لشريط التمرير */
         ::-webkit-scrollbar-button {
           display: block !important;
           background-color: #020B1C !important;
@@ -290,66 +299,74 @@ export default function AppointmentsPage() {
           background-position: center !important;
         }
 
-        .overflow-y-auto {
-          scrollbar-width: thin !important;
-          scrollbar-color: #D4AF37 #020B1C !important;
+        /* عزل تلوين وأوزان خلايا جدول المواعيد ومنع تسريب الـ CSS للسايدبار وهيدر المنظومة */
+        .premium-appointments-table thead th {
+          font-size: 0.75rem !important;
+          font-weight: 500 !important;
+          color: #D4AF37 !important;
+          text-align: right !important;
+          background-color: #020B1C !important;
+          border-bottom: 2px solid rgba(212, 175, 55, 0.3) !important;
+          padding: 14px 16px !important;
+          letter-spacing: normal !important;
         }
-        
-        .royal-gradient-btn {
-          background: linear-gradient(90deg, #C9A45D 0%, #F0E6D2 50%, #D4AF37 100%) !important;
-          color: #020B1C !important;
-          font-weight: 900 !important;
-          border: 1px solid #D4AF37 !important;
-          box-shadow: 0 0 15px rgba(212, 175, 55, 0.2) !important;
-          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+        .premium-appointments-table tbody td {
+          font-size: 0.8rem !important;
+          font-weight: 400 !important;
+          text-align: right !important;
+          border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
+          padding: 14px 16px !important;
+          letter-spacing: normal !important;
         }
-        .royal-gradient-btn:hover {
-          transform: scale(1.02) !important;
-          box-shadow: 0 0 25px rgba(212, 175, 55, 0.45) !important;
-          cursor: pointer !important;
+
+        .premium-appointments-table tbody tr:hover {
+          background-color: rgba(7, 19, 42, 0.8) !important;
         }
       `}} />
 
       {/* تفعيل جدار حماية وعزل الإزاحة الجانبية الميدانية */}
-      <section dir="rtl" className="w-full lg:pr-56 m-0 min-h-screen flex flex-col">
+      <section className="flex-1 flex flex-col lg:pr-56 m-0 min-h-screen">
         <Header />
-        <div className="p-4 md:p-8 space-y-6 text-right animate-fade-in">
+        <div className="p-4 md:p-8 space-y-6 text-right select-none animate-fade-in">
           
           <div>
-            {/* 🌟 تقليص حجم العنوان لتفادي التداخل ليكون متوافقاً مع الدستور الجمالي الموحد */}
-            <h1 className="text-xl md:text-2xl font-black text-[#D4AF37]">إدارة الموظفين والعملاء</h1>
-            {/* 🌟 تعديل لون الشرح أسفل العنوان للأبيض الصافي لتعزيز التباين البصري */}
-            <p className="text-white text-xs md:text-sm mt-2">جدولة اللقاءات والمعاينات الميدانية ومنع التضارب وتنظيم أوقات الاجتماعات.</p>
+            <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2 select-none">
+              <span>إدارة وجدولة المواعيد واللقاءات</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
+            </h1>
+            <p className="text-white text-xs mt-2">جدولة اللقاءات والمعاينات الميدانية ومنع التضارب وتنظيم أوقات الاجتماعات.</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* بطاقة حجز الموعد الجديد - مع تعديل الإطار للخلفية شبه الشفافة الموحدة */}
-            <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl p-6 space-y-5 h-fit shadow-xl">
-              {/* 🌟 تحويل عنوان الترويسة للون البني البرونزي المعتمد `#A17A4C` */}
-              <h3 className="text-[#D4AF37] font-black text-xs md:text-sm border-b border-[#D4AF37] pb-3 flex items-center gap-2 select-none">
+            {/* كارت حجز الموعد الجديد المطور بالمقياس الإمبراطوري المتين بكسلياً */}
+            <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 space-y-5 h-fit shadow-xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+
+              <h3 className="text-[#D4AF37] font-bold text-xs md:text-sm border-b border-[#D4AF37] pb-3 flex items-center gap-2 select-none">
                 <span>➕</span> حجز موعد / معاينة جديدة
               </h3>
               
               <div className="space-y-4 text-xs md:text-sm font-semibold">
                 <div>
-                  <label className="block text-[#D4AF37] mb-1 font-bold text-[10px]">موضوع ومسمى الموعد *</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">موضوع ومسمى الموعد *</label>
                   <input
                     type="text"
                     placeholder="مثال: معاينة شقة حدائق الأهرام"
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-4 outline-none text-xs font-bold focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all placeholder-slate-600"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#F0E6D2] px-4 outline-none text-xs font-semibold focus:border-[#D4AF37] transition-all placeholder-slate-600"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[#D4AF37] mb-1 text-[10px]">نوع ومكان اللقاء *</label>
+                    <label className="block text-[#D4AF37] mb-1.5 px-2 text-[11px]">نوع ومكان اللقاء *</label>
                     <select
                       value={type}
                       onChange={(e) => setType(e.target.value)}
-                      className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#F0E6D2] px-3 outline-none cursor-pointer text-xs font-bold focus:border-[#D4AF37]"
+                      className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] px-3 outline-none cursor-pointer text-xs font-bold focus:border-[#D4AF37]"
                     >
                       <option value="site_visit">🏗️ معاينة موقع العمل (ساعتان)</option>
                       <option value="client_meeting">🤝 مقابلة عميل بالشركة (ساعة ونصف)</option>
@@ -358,11 +375,11 @@ export default function AppointmentsPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[#D4AF37] mb-1 text-[10px]">المضيف (المهندس) *</label>
+                    <label className="block text-[#D4AF37] mb-1.5 text-[11px]">المضيف (المهندس) *</label>
                     <select
                       value={hostId}
                       onChange={(e) => setHostId(e.target.value)}
-                      className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] font-black px-3 outline-none cursor-pointer text-xs focus:border-[#D4AF37]"
+                      className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-black px-3 outline-none cursor-pointer text-xs focus:border-[#D4AF37]"
                     >
                       <option value="">-- اختر الموظف --</option>
                       {hosts.map(h => (
@@ -373,11 +390,11 @@ export default function AppointmentsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] mb-1 font-bold text-[10px]">المشارك باللقاء (العميل - اختياري)</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">المشارك باللقاء (العميل - اختياري)</label>
                   <select
                     value={participantId}
                     onChange={(e) => setParticipantId(e.target.value)}
-                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-white px-3 outline-none text-xs font-bold cursor-pointer focus:border-[#D4AF37]"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-3 outline-none text-xs font-bold cursor-pointer focus:border-[#D4AF37]"
                   >
                     <option value="">-- عام (بدون عميل محدد) --</option>
                     {participants.map(p => (
@@ -387,12 +404,12 @@ export default function AppointmentsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] mb-1 text-[10px]">تاريخ ووقت بدء الموعد *</label>
+                  <label className="block text-[#D4AF37] mb-1.5 px-2 text-[12px]">تاريخ ووقت بدء الموعد *</label>
                   <input
                     type="datetime-local"
                     value={startTime}
                     onChange={(e) => setStartTime(e.target.value)}
-                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] font-black px-4 outline-none font-mono text-xs focus:border-[#D4AF37]"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-black px-4 outline-none font-mono text-xs focus:border-[#D4AF37] animate-transition"
                   />
                 </div>
 
@@ -403,65 +420,68 @@ export default function AppointmentsPage() {
                 )}
 
                 <div>
-                  <label className="block text-[#D4AF37] mb-1 font-bold text-[10px]">أجندة الاجتماع وتفاصيل إضافية</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">أجندة الاجتماع وتفاصيل إضافية</label>
                   <textarea
                     placeholder="ملاحظات وتفاصيل التشوين بالموقع..."
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="w-full h-20 bg-[#020B1C] border border-[#1f2d4d] text-slate-200 p-3 rounded-xl outline-none text-xs font-bold focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all placeholder-slate-600 resize-none"
+                    className="w-full h-20 bg-[#020B1C] border border-[#D4AF37]/20 text-slate-200 p-3 rounded-xl outline-none text-xs font-bold focus:border-[#D4AF37] focus:ring-1 focus:ring-[#D4AF37]/30 transition-all placeholder-slate-600 resize-none"
                   />
                 </div>
 
+                {/* 🌟 ترقية زر جدولة المواعيد للنسق المستطيل الفخم المعتمد لتوحيد حركات وأفعال المنصة كلياً */}
                 <button
-                  onClick={handleCreateAppointment}
+                  type="button" 
+                  onClick={(e) => { e.preventDefault(); handleCreateAppointment(); }}
                   disabled={saving || !!conflictWarning}
-                  className="w-full h-11 royal-gradient-btn text-[#020B1C] font-black rounded-full text-xs cursor-pointer transition-all duration-300 flex items-center justify-center gap-2"
+                  className="w-full px-6 py-3.5 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 text-xs font-bold flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-40 cursor-pointer"
                 >
-                  {saving ? "جاري حجز الموعد..." : "💾 جدولة وحفظ الموعد المعتمد"}
+                  {saving ? <Loader2 className="animate-spin w-4 h-4 text-[#D4AF37]" /> : <CheckCircle2 className="w-4 h-4 text-[#D4AF37]" />}
+                  <span>{saving ? "جاري حجز الموعد..." : "💾 جدولة وحفظ الموعد المعتمد"}</span>
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                 </button>
               </div>
             </div>
 
             {/* سجل المواعيد واللقاءات القائمة */}
             <div className="lg:col-span-2 space-y-4">
-              <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl overflow-hidden shadow-2xl">
-                <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 select-none">
-                  {/* 🌟 تحويل عنوان ترويسة سجل المواعيد للون البني البرونزي المعتمد `#A17A4C` */}
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] overflow-hidden shadow-2xl flex flex-col relative w-full">
+                <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#D4AF37] to-transparent opacity-40" />
+                <div className="p-4 border-b border-[#D4AF37]/20 bg-[#0b1b3d]/60 select-none">
                   <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">سجل المواعيد واللقاءات القائمة والمجدولة ({appointments.length})</h3>
                 </div>
                 
-                {/* تفعيل شريط التمرير الملكي بقنوات التنقل الذاتي والأسهم المحددة */}
+                {/* تفعيل التمرير مذهب الألوان وحماية الجدول من التقاطع بـ whitespace-nowrap و min-w-[850px] بالكامل */}
                 <div className="overflow-x-auto max-h-[550px] overflow-y-auto ai-chat-scroll">
                   {loading ? (
-                    <div className="p-12 text-center text-slate-400 text-xs animate-pulse font-bold">جاري جلب سجل المواعيد...</div>
+                    <div className="p-12 text-center text-[#D4AF37] animate-pulse text-xs font-bold">جاري جلب سجل المواعيد...</div>
                   ) : appointments.length > 0 ? (
-                    <table className="w-full text-right text-xs text-[#F0E6D2] min-w-[650px] font-semibold">
-                      <thead className="bg-[#0b1d3d] text-[#D4AF37] sticky top-0 z-10 text-xs font-black border-b border-[#1f2d4d]/60 select-none">
-                        <tr>
-                          <th className="p-4 whitespace-nowrap">تاريخ الموعد</th>
-                          <th className="p-4 whitespace-nowrap">التوقيت والمدة</th>
-                          <th className="p-4 whitespace-nowrap">اسم اللقاء</th>
-                          <th className="p-4 whitespace-nowrap">المستضيف بالشركة</th>
-                          <th className="p-4 whitespace-nowrap">العميل المشارك</th>
-                          <th className="p-4 text-center whitespace-nowrap">الوضعية والنشاط</th>
+                    <table className="w-full text-right table-auto min-w-[850px] premium-appointments-table">
+                      <thead>
+                        <tr className="whitespace-nowrap select-none">
+                          <th>تاريخ الموعد</th>
+                          <th>التوقيت والمدة</th>
+                          <th>اسم اللقاء</th>
+                          <th>المستضيف بالشركة</th>
+                          <th>العميل المشارك</th>
+                          <th className="text-center">الوضعية والنشاط</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#1f2d4d]/60">
+                      <tbody className="divide-y divide-[#1f2d4d]/60 text-xs md:text-sm text-slate-100 font-semibold">
                         {appointments.map((app) => {
-                          // استخراج بيانات الحالة من الميثود المحوسبة تلقائياً حياً
                           const dynamicStatus = getDynamicAppointmentStatus(app);
                           return (
-                            <tr key={app.id} className="hover:bg-[#020B1C]/50 transition duration-150 cursor-pointer whitespace-nowrap">
-                              <td className="p-4 font-mono text-[#D4AF37] font-black">{new Date(app.start_time).toLocaleDateString("ar-EG")}</td>
-                              <td className="p-4 font-mono text-slate-200 font-bold">
+                            <tr key={app.id} className="whitespace-nowrap">
+                              <td className="font-mono text-[#D4AF37] font-black">{new Date(app.start_time).toLocaleDateString("ar-EG")}</td>
+                              <td className="font-mono text-slate-200">
                                 {new Date(app.start_time).toLocaleTimeString("ar-EG", { hour: "numeric", minute: "2-digit" })}
                                 {" ⬅️ "}
                                 {new Date(app.end_time).toLocaleTimeString("ar-EG", { hour: "numeric", minute: "2-digit" })}
                               </td>
-                              <td className="p-4 font-black text-[#F0E6D2]">{app.title}</td>
-                              <td className="p-4 text-slate-300 font-bold">{app.users?.name || "موظف ممسوح"}</td>
-                              <td className="p-4 text-slate-300 font-bold">{app.customers?.name || "عام / بدون عميل"}</td>
-                              <td className="p-4 text-center">
+                              <td className="font-black text-[#F0E6D2]">{app.title}</td>
+                              <td className="text-slate-300 font-bold">{app.users?.name || "موظف ممسوح"}</td>
+                              <td className="text-slate-300 font-bold">{app.customers?.name || "عام / بدون عميل"}</td>
+                              <td className="text-center">
                                 <span className={`px-3 py-1 rounded-full text-[10px] font-black ${dynamicStatus.classes}`}>
                                   {dynamicStatus.label}
                                 </span>

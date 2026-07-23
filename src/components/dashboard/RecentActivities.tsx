@@ -97,7 +97,7 @@ export default function RecentActivities() {
         <div className="flex items-center gap-3 mb-6 justify-start border-b border-[#243556] pb-3 bg-[#0b1b3d] p-3 rounded-xl select-none">
           <History className="w-5 h-5 text-[#D4AF37] shrink-0 animate-pulse" />
           <h2 className="text-[#D4AF37] text-sm font-bold">
-            آخر الأنشطة والعمليات والقيود المالية
+            آخر الأنشطة والقيود المالية
           </h2>
         </div>
 

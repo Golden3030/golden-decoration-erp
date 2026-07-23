@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useCRM } from "@/components/CRM/context/CRMContext";
 import { supabase } from "@/lib/supabaseClient";
 import EstimateHeader from "./EstimateHeader";
@@ -42,7 +42,26 @@ interface VentLineItem {
   isCustom?: boolean;
 }
 
-// محرك التفريد الهندسي والمالي التلقائي الشامل لكافة مدخلات وأمتار التبويبات الـ 14 بالمقايسة
+// مصفوفة تعريب الفئات الهندسية المعتمدة محلياً
+const localCategoryNames: Record<string, string> = {
+  archMod: "تعديل معماري وتكسير",
+  masonry: "أعمال مباني وطوب",
+  plaster: "بياض محارة وترميم",
+  paint: "دهانات ونقاشة",
+  flooring: "أرضيات وتكسيات",
+  ceiling: "أسقف معلقة وجبس بورد",
+  doors: "أبواب ونجارة",
+  aluminum: "قطاعات ألوميتال",
+  electricity: "تأسيس وتشطيب كهرباء",
+  plumbing: "تأسيس وتشطيب سباكة",
+  ac: "تجهيزات تكييف وHVAC",
+  waterproofing: "عزل رطوبة وحرارة",
+  metalWorks: "أعمال كريتال ومعادن",
+  decorations: "ديكورات وجماليات",
+  ventilation: "تهوية وشفاطات"
+};
+
+// محرك التفريد الهندسي والمالي التلقائي الشامل لكافة مدخلات وأمتار التبويبات الـ 15 بالمقايسة
 export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: any[]) {
   const area = Number(crmData.project?.area || 0);
   const rooms = Number(crmData.project?.roomsCount || 0);
@@ -58,7 +77,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
   // 1. أعمال التعديل المعماري والتكسير
   const archMod = finishing.archMod || {};
   if (archMod.enabled) {
-    const demoQty = Number(archMod.demolitionQty || 0);
+    const demolitionQty = Number(archMod.demolitionQty || 0);
     const demoRates = archMod.rates || {};
     const demoLabLumpSum = Number(demoRates.demolitionLab || 0); 
     const demoMatLumpSum = Number(demoRates.demolitionMat || 0); 
@@ -72,7 +91,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: 1,
         unitPrice: 0, 
         laborCost: demoLabLumpSum, 
-        description: `أعمال تكسير وهدم الجدران القديمة بالموقع (حصر هندسي وصفي: ${demoQty} متر طولي).`
+        description: `أعمال تكسير وهدم الجدران القديمة بالموقع (حصر هندسي وصفي: ${demolitionQty} متر طولي).`
       });
     }
 
@@ -246,7 +265,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: Number(acc.qty),
           unitPrice: Number(acc.price),
           laborCost: 0,
-          description: "توريد مستلزمات وإكسسوارات تدعيم أعمال البياض للحوائط والأسقف الميدانية."
+          description: "توريد مستلزمات وإكسسوارات تدعيم أعمال المحارة للحوائط والأسقف الميدانية."
         });
       }
     });
@@ -261,7 +280,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: 1,
         unitPrice: 0,
         laborCost: logisticsTotal,
-        description: "أجور عمالة وتعتيق المون للأدوار العليا وشراء مياه إضافية لتنفيذ المحارة بالشقة."
+        description: "تكلفة نقل وتشوين اسمنت ورمل لبند المحارة بالوحدة."
       });
     }
   } else if (plaster.isRepairsEnabled) {
@@ -270,7 +289,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "plaster-rep-labor",
         category: "plaster",
-        name: "مصنعية مرمات محارة وتسكير فتحات الجدران والترميم",
+        name: "مصنعية مرمات محارة وترميم الحوائط ",
         unit: "مقطوعية",
         quantity: 1,
         unitPrice: 0,
@@ -347,7 +366,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: wallArea,
         unitPrice: 0,
         laborCost: wallArea * activeLaborRate,
-        description: "أجور عمالة فنية تشمل الصنفرة والتمليط والبطانة والدهان وجهين تشطيب ميزان ليزر."
+        description: " مصنعية الفنيين تشمل العزل والصنفرة والتلقيط والبطانة والدهان ."
       });
     }
 
@@ -370,13 +389,13 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
   const flooring = finishing.flooring || {};
   if (flooring.enabled && flooring.items) {
     const rowKeys = [
-      { key: 'reception', label: 'بلاط أرضيات الريسبشن والصالون' },
-      { key: 'rooms', label: 'بلاط أرضيات غرف النوم والمعيشة' },
-      { key: 'kitchen_floor', label: 'بلاط أرضيات المطبخ الرئيسي' },
-      { key: 'bathroom_floor', label: 'بلاط أرضيات الحمام الرئيسي' },
+      { key: 'reception', label: ' أرضيات الريسبشن ' },
+      { key: 'rooms', label: ' أرضيات غرف النوم والمعيشة' },
+      { key: 'kitchen_floor', label: ' أرضيات المطبخ الرئيسي' },
+      { key: 'bathroom_floor', label: ' أرضيات الحمام الرئيسي' },
       { key: 'kitchen_walls', label: 'سيراميك جدران وحوائط المطبخ' },
       { key: 'bathroom_walls', label: 'سيراميك جدران وحوائط الحمام' },
-      { key: 'skirting', label: 'بلاط الوزرة المضيئة الليد' }
+      { key: 'skirting', label: ' الوزرة المضيئة الليد' }
     ];
 
     rowKeys.forEach((row) => {
@@ -393,7 +412,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: current.qty,
           unitPrice: current.price || 0,
           laborCost: 0,
-          description: `توريد خامات البلاط والسيراميك والبورسلين المعتمدة لموقع العميل شامل الشحن والتوصيل.`
+          description: `توريد خامات السيراميك والبورسلين المعتمدة لموقع العميل شامل الشحن والتوصيل.`
         });
       }
     });
@@ -407,7 +426,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: flooring.cement_bags,
         unitPrice: 200, 
         laborCost: 0,
-        description: "أسمنت رمادي معتمد للمونة الأسمنتية لربط ولصق السيراميك بالأرضيات."
+        description: "أسمنت معتمد للمونة الأسمنتية لاعمال الأرضيات والحوائط."
       });
     }
 
@@ -415,12 +434,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "gen-flooring-sand",
         category: "flooring",
-        name: "رمل نقي ردم وتأسيس أسفل السيراميك والبورسلين",
+        name: "رمل لتأسيس أسفل السيراميك والبورسلين",
         unit: "م³",
         quantity: flooring.sand_m3,
         unitPrice: 250, 
         laborCost: 0,
-        description: "رمل ناعم مصفى للتسوية وتأسيس ردم السيراميك لمنع الهبوط مستقبلاً."
+        description: "رمل للتسوية وتأسيس ردم السيراميك لمنع الهبوط مستقبلاً."
       });
     }
 
@@ -434,7 +453,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: flooring.grout_qty,
         unitPrice: flooring.grout_price || 0,
         laborCost: 0,
-        description: "مادة ترويب فواصل بلاط الأرضيات والحوائط تمنع تسريبات المياه بالحمامات والمطابخ."
+        description: "مادة ترويب فواصل الأرضيات والحوائط تمنع تسريبات المياه بالحمامات والمطابخ."
       });
     }
 
@@ -456,12 +475,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "gen-flooring-labor-floor",
         category: "flooring",
-        name: "مصنعية وأجور تركيب بلاط الأرضيات والبورسلين ميزان ليزر",
+        name: "مصنعية تركيب الأرضيات السيراميك اوالبورسلين ",
         unit: "م²",
         quantity: floorArea,
         unitPrice: 0,
         laborCost: floorArea * floorLaborRate,
-        description: "مصنعية تركيب بلاط الأرضيات والسيراميك والبورسلين بالرباط المعتمد ميزان ليزر."
+        description: "مصنعية تركيب الأرضيات والسيراميك اوالبورسلين بالرباط المعتمد ."
       });
     }
 
@@ -469,12 +488,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "gen-flooring-labor-walls",
         category: "flooring",
-        name: "مصنعية وأجور تركيب سيراميك الحوائط والمطابخ ميزان ليزر",
+        name: "مصنعية تركيب سيراميك الحوائط والمطابخ ",
         unit: "م²",
         quantity: wallArea,
         unitPrice: 0,
         laborCost: wallArea * wallLaborRate,
-        description: "أجور عمالة فنية لتركيب سيراميك جدران المطابخ والحمامات ميزان ليزر."
+        description: " مصنعية فنيين لتركيب سيراميك حوائط المطابخ والحمامات ."
       });
     }
 
@@ -498,12 +517,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "gen-flooring-transport",
         category: "flooring",
-        name: "تكاليف نقل وتشوين وتنزيل السيراميك والمواد بالدور الميداني الفني",
+        name: "تكاليف نقل وتتشوين وتنزيل السيراميك والمواد بالدور  ",
         unit: "مقطوعية",
         quantity: 1,
         unitPrice: transportCost,
         laborCost: 0,
-        description: "أجور عمالة وتشوين وتعتيق السيراميك يدوياً للأدوار العليا لسلامة البلاط من الكسر."
+        description: "تكلفة نقل وتشوين السيراميك للأدوار العليا ."
       });
     }
 
@@ -511,12 +530,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "gen-flooring-cleaning",
         category: "flooring",
-        name: "أعمال النظافة والرفع وتشوين مخلفات البلاط بالموقع خارج الوحدة",
+        name: "أعمال النظافة والرفع وتشوين مخلفات السيراميك بالموقع خارج الوحدة",
         unit: "مقطوعية",
         quantity: 1,
         unitPrice: cleaningCost,
         laborCost: 0,
-        description: "أعمال كنس وتنظيف الموقع وتعبئة مخلفات البلاط والأسمنت ورفعها خارج الوحدة السكنية."
+        description: "أعمال تنظيف الموقع وتعبئة مخلفات السيراميك والأسمنت ورفعها خارج الوحدة السكنية."
       });
     }
   }
@@ -550,12 +569,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "gen-ceiling-mag-track",
         category: "ceiling",
-        name: "تأسيس مسار إضاءة مغناطيسي بالأسقف (Magnetic Track)",
+        name: "تأسيس مسار إضاءة بالأسقف (Magnetic Track)",
         unit: "م.ط",
         quantity: Number(ceiling.magneticTrack),
         unitPrice: MAGNETIC_TRACK_RATE,
         laborCost: 0,
-        description: "تأسيس وصاج المجرى لتركيب مسارات الإضاءة المغناطيسية الفاخرة بالأسقف."
+        description: "تأسيس صاج المجرى لتركيب مسارات الإضاءة بالأسقف."
       });
     }
 
@@ -568,7 +587,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: Number(ceiling.ledProfile),
         unitPrice: LED_PROFILE_RATE,
         laborCost: 0,
-        description: "شق وتثبيت شرائح الألمنيوم والناشر الأبيض ولصق الليد بروفايل بالأسقف السحابية."
+        description: "شق وتثبيت شرائح الألمنيوم والناشر الأبيض ولصق الليد بروفايل بالأسقف ."
       });
     }
 
@@ -594,7 +613,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: Number(ceiling.shadowGapLight),
         unitPrice: SHADOW_GAP_LIGHT_RATE,
         laborCost: 0,
-        description: "زاوية ظل عائمة مخصصة لإنارة ليد مخفية ممتدة مع أطراف جدران غرف المنزل بالكامل."
+        description: "زاوية ظل عائمة مخصصة لإنارة ليد مخفية ممتدة مع أطراف حوائط الوحدة بالكامل."
       });
     }
   }
@@ -688,7 +707,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: 1,
         unitPrice: rates.transportationPrice,
         laborCost: 0,
-        description: "أجور نقل الزجاج والقطاعات لموقع العميل يدوياً لمنع الكسر والخدوش الميدانية الفنية."
+        description: "تكلفة نقل الزجاج والقطاعات لموقع العميل     ."
       });
     }
   }
@@ -703,7 +722,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         generated.push({
           id: "gen-elec-backbox",
           category: "electricity",
-          name: "علب كهرباء ماجيك دائرية ومستطيلة للتأسيس المائي والجاف",
+          name: "علب كهرباء ماجيك للتأسيس ",
           unit: "علبة",
           quantity: Number(electricity.backboxCount),
           unitPrice: rates.backboxRate ?? 8,
@@ -716,12 +735,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         generated.push({
           id: "gen-elec-floor-conduit",
           category: "electricity",
-          name: "خراطيم أرضيات بلاستيك 16مم معتمدة علاء الدين لحفظ الأسلاك",
+          name: "خراطيم أرضيات بلاستيك 16مم معتمدة ",
           unit: "لفة",
           quantity: Number(electricity.floorConduitCount),
           unitPrice: rates.floorConduitRate ?? 180,
           laborCost: 0,
-          description: "خراطيم بلاستيكية معتمدة تمر تحت السيراميك لحفظ وتمديد الأسلاك."
+          description: "خراطيم ارضيات معتمدة تمر تحت السيراميك لحفظ وتمديد الأسلاك."
         });
       }
 
@@ -729,12 +748,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         generated.push({
           id: "gen-elec-wall-conduit",
           category: "electricity",
-          name: "خراطيم حوائط بلاستيك مصطفى محمود المعتمدة بالمنزل لحفظ وتأسيس التمديد",
+          name: "خراطيم الحوائط المعتمدة  لتأسيس التمديد",
           unit: "لفة",
           quantity: Number(electricity.wallConduitCount),
           unitPrice: rates.wallConduitRate ?? 220,
           laborCost: 0,
-          description: "خراطيم جدران مرنة معتمدة تمر بداخل الحوائط لحفظ مسار الأسلاك النحاسية."
+          description: "خراطيم حوائط  معتمدة تمر بداخل الحوائط لحفظ مسار الأسلاك ."
         });
       }
 
@@ -756,16 +775,16 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       }
 
       if (electricity.hasMainPanel && electricity.selectedMainPanelId) {
-        const prod = dbMaterials.find(p => p.id === electricity.selectedMainPanelId);
+        const prod = dbMaterials.find(m => m.id === electricity.selectedMainPanelId);
         generated.push({
           id: "gen-elec-main-panel",
           category: "electricity",
-          name: prod ? prod.product_name : "لوحة كهرباء رئيسية 12 خط بالعلبة الخارجية المؤمنة",
+          name: prod ? prod.product_name : "لوحة كهرباء رئيسية",
           unit: "علبة",
           quantity: 1,
           unitPrice: rates.mainPanelRate ?? 1800,
           laborCost: 0,
-          description: "لوحة توزيع كهرباء رئيسية معتمدة شنايدر لحماية الوحدة بالكامل وأمان المطبخ."
+          description: "لوحة توزيع كهرباء رئيسية معتمدة  لحماية الوحدة بالكامل وأمان المطبخ."
         });
       }
 
@@ -774,12 +793,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         generated.push({
           id: "gen-elec-low-panel",
           category: "electricity",
-          name: prod ? prod.product_name : "لوحة تيار خفيف وداتا ووايفاي بالمنزل المدمجة",
+          name: prod ? prod.product_name : "لوحة تيار خفيف وداتا ووايفاي بالوحدة ",
           unit: "علبة",
           quantity: 1,
           unitPrice: rates.lowCurrentPanelRate ?? 1200,
           laborCost: 0,
-          description: "لوحة مخصصة للراوتر ووايفاي والسنترال وشبكة الداتا بالمنزل لمنع التشوه البصري للكابلات."
+          description: "لوحة مخصصة للراوتر ووايفاي والسنترال وشبكة الداتا بالوحدة لمنع التشوه البصري للكابلات."
         });
       }
 
@@ -787,12 +806,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         generated.push({
           id: "gen-elec-breakers",
           category: "electricity",
-          name: "قواطع كهربائية ومفاتيح عمومية أوتوماتيك معتمدة شنايدر",
+          name: "قواطع كهربائية ومفاتيح عمومية أوتوماتيك معتمدة ",
           unit: "قاطع",
           quantity: Number(electricity.automaticBreakerCount),
           unitPrice: rates.automaticBreakerRate ?? 180,
           laborCost: 0,
-          description: "مفاتيح أوتوماتيك عمومية شنايدر لحماية أجهزة التكييف والإنارة والقوى."
+          description: "مفاتيح أوتوماتيك عمومية لحماية أجهزة التكييف والإنارة والقوى."
         });
       }
 
@@ -800,12 +819,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "gen-elec-rough-labor",
         category: "electricity",
-        name: "أعمال مصنعية تأسيس وتمرير وتمليط خراطيم ورمي كهرباء الشقة",
+        name: " مصنعية تأسيس كهرباء الوحدة",
         unit: "مقطوعية",
         quantity: 1,
         unitPrice: 0,
         laborCost: totalRoughInLabor,
-        description: "مصنعية تأسيس وتمليط خراطيم ورمي كهرباء الشقة ميزان ليزر."
+        description: "مصنعية تأسيس كهرباء الوحدة ."
       });
     }
 
@@ -831,7 +850,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: Number(electricity.switchCount),
           unitPrice: rateSwitch,
           laborCost: 0,
-          description: "لقم مفاتيح إنارة كلاسيك متميزة لتشغيل مخارج الإضاءة بلمس فخم ومتين."
+          description: "لقم مفاتيح إنارة كلاسيك متميزة لتشغيل مخارج الإضاءة   ."
         });
       }
 
@@ -844,7 +863,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: Number(electricity.plugCount),
           unitPrice: ratePlug,
           laborCost: 0,
-          description: "برايز ومآخذ كهربائية شواحن ومخارج أجهزة مخصصة للغرف والصالات."
+          description: "برايز ومآخذ كهربائية شواحن ومخارج أجهزة مخصصة للغرف والريسبشن."
         });
       }
 
@@ -857,7 +876,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: Number(electricity.plateCount),
           unitPrice: ratePlate,
           laborCost: 0,
-          description: "وشوش ديكورية خارجية باللون المعتمد لتغطية وتثبيت شاسيه الكهرباء."
+          description: "وشوش خارجية باللون المعتمد لتغطية وتثبيت شاسيه الكهرباء."
         });
       }
 
@@ -870,7 +889,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: Number(electricity.frameCount),
           unitPrice: rateFrame,
           laborCost: 0,
-          description: "شاسيهات داخلية لتثبيت الوشوش واللقم بداخل العلب الماجيك المدمجة الحجم."
+          description: "شاسيهات داخلية لتثبيت الوشوش واللقم بداخل الععلب الماجيك المدمجة الحجم."
         });
       }
 
@@ -891,12 +910,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "gen-elec-smart-flat",
         category: "electricity",
-        name: "باقة ترقية وتأسيس تحكم سمارت بالمنزل والأجهزة (Smart Home)",
-        unit: "باقة مقطوعية",
+        name: "  تأسيس تحكم سمارت بالوحدة والأجهزة (Smart Home)",
+        unit: " مقطوعية",
         quantity: 1,
         unitPrice: rates.smartHomeFlatRate ?? 15000,
         laborCost: 0,
-        description: "باقة تأسيس وتمديد كابلات التحكم بالإنارة والتكييف عن بعد بالمتصفح والهاتف."
+        description: " تأسيس وتمديد كابلات التحكم بالإنارة والتكييف عن بعد بالمتصفح والهاتف."
       });
     }
 
@@ -904,8 +923,8 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "gen-elec-sound-flat",
         category: "electricity",
-        name: "ترقية وتأسيس نظام ساوند سيستم داخلي ممتد (Sound System)",
-        unit: "باقة مقطوعية",
+        name: " تأسيس نظام ساوند سيستم داخلي ممتد (Sound System)",
+        unit: " مقطوعية",
         quantity: 1,
         unitPrice: rates.soundSystemFlatRate ?? 8500,
         laborCost: 0,
@@ -940,12 +959,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "pl-labor-main",
         category: "plumbing",
-        name: "إجمالي مصنعيات تأسيس وتركيب وترويب السباكة والصحي الميدانية الكاملة",
+        name: "إجمالي مصنعيات تأسيس وتركيب السباكة والصحي الميدانية الكاملة",
         unit: "مقطوعية",
         quantity: 1,
         unitPrice: 0,
         laborCost: Number(plumbing.laborLumpSum),
-        description: "أجور فنية شاملة تكسير المسارات، تمديد الشبكات، اختبار شهادة الضمان، وتركيب الأطقم الصحية والترويب."
+        description: " مصنعيات شاملة تمديد الشبكات، اختبار شهادة الضمان، وتركيب الأطقم الصحية والمواسير."
       });
     }
 
@@ -953,12 +972,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "pl-labor-ac",
         category: "plumbing",
-        name: `مصنعيات تأسيس نقاط صرف تكييف بالمنزل مدمجة (عدد: ${plumbing.acDrainCount})`,
+        name: `مصنعيات تأسيس نقاط صرف تكييف بالوحدة مدمجة (عدد: ${plumbing.acDrainCount})`,
         unit: "نقطة",
         quantity: Number(plumbing.acDrainCount),
         unitPrice: 0,
         laborCost: Number(plumbing.acDrainCount) * Number(plumbing.acDrainLaborRate || 0),
-        description: "تأسيس مسارات مواسير صرف التكييف المخفية وتوصيلها بأقرب نقطة صرف عمومية بمطابخ الشقة."
+        description: "تأسيس مسارات مواسير صرف التكييف المخفية وتوصيلها بأقرب نقطة صرف بالوحدة."
       });
     }
 
@@ -966,12 +985,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "pl-labor-terrace",
         category: "plumbing",
-        name: `مصنعيات تأسيس نقاط صرف تراسات وبلكونات بالمنزل والواجهة (عدد: ${plumbing.terraceDrainCount})`,
+        name: `مصنعيات تأسيس نقاط صرف تراسات وبلكونات بالوحدة (عدد: ${plumbing.terraceDrainCount})`,
         unit: "نقطة",
         quantity: Number(plumbing.terraceDrainCount),
         unitPrice: 0,
         laborCost: Number(plumbing.terraceDrainCount) * Number(plumbing.terraceDrainLaborRate || 0),
-        description: "تركيب وتأسيس بيبات صرف البلكونات الخارجية وربطها على صواعد الصرف الرئيسية للشقة."
+        description: "تركيب وتأسيس بيبات صرف البلكونات الخارجية وربطها على الصرف الرئيسية للوحدة."
       });
     }
 
@@ -979,12 +998,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "pl-labor-water-line",
         category: "plumbing",
-        name: "مصنعية تأسيس وتمرير خط مياه مستقل تماماً للمنزل (عداد خارجي)",
+        name: "مصنعية تأسيس وتمرير خط مياه مستقل تماماً للوحدة (عداد خارجي)",
         unit: "خط",
         quantity: 1,
         unitPrice: 0,
         laborCost: Number(plumbing.independentWaterLineRate),
-        description: "حفر وتمديد خط تغذية مياه منفصل من الصاعد الرئيسي للمبنى حتى مدخل الوحدة السكنية."
+        description: "تأسيس وتمديد خط تغذية مياه منفصل من الصاعد الرئيسي للمبنى حتى مدخل الوحدة السكنية."
       });
     }
 
@@ -1002,7 +1021,181 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
     }
   }
 
-  // 11. أعمال الديكورات والملحقات والجماليات
+  // 11. أعمال تجهيزات التكييف وأنظمة الـ HVAC (ac)
+  const ac = finishing.ac || {};
+  if (ac.enabled) {
+    const copperQty = Number(ac.copperQty || 0);
+    const copperPrice = Number(ac.copperPrice ?? 1500);
+    if (copperQty > 0) {
+      generated.push({
+        id: "gen-ac-copper",
+        category: "ac",
+        name: "توريد وتمديد مواسير نحاس جنوب أفريقي معتمد للتكييف",
+        unit: "م.ط",
+        quantity: copperQty,
+        unitPrice: copperPrice,
+        laborCost: 0,
+        description: "توريد وتمديد كابلات ومواسير النحاس الجنوب أفريقي الأصلي بالأقطار المناسبة شامل العزل والتركيب."
+      });
+    }
+
+    const drainQty = Number(ac.drainQty || 0);
+    const drainPrice = Number(ac.drainPrice ?? 300);
+    if (drainQty > 0) {
+      generated.push({
+        id: "gen-ac-drain",
+        category: "ac",
+        name: "تأسيس خطوط صرف التكييف المدفونة ومستلزماتها",
+        unit: "نقطة",
+        quantity: drainQty,
+        unitPrice: drainPrice,
+        laborCost: 0,
+        description: "تأسيس مواسير صرف التكييف البلاستيكية ذات الضغط العالي وربطها مع أقرب نقطة صرف عمومية."
+      });
+    }
+
+    const bracketQty = Number(ac.bracketQty || 0);
+    const bracketPrice = Number(ac.bracketPrice ?? 450);
+    if (bracketQty > 0) {
+      generated.push({
+        id: "gen-ac-bracket",
+        category: "ac",
+        name: "كوابيل وحوامل حديدية معالجة ضد الصدأ للوحدات الخارجية",
+        unit: "كابولي",
+        quantity: bracketQty,
+        unitPrice: bracketPrice,
+        laborCost: 0,
+        description: "توريد وتركيب كوابيل حديدية ثقيلة مجلفنة ومدهونة إلكتروستاتيك لحمل الوحدات الخارجية للتكييف."
+      });
+    }
+
+    const acLabor = Number(ac.laborLumpSum || 0);
+    if (acLabor > 0) {
+      generated.push({
+        id: "gen-ac-labor",
+        category: "ac",
+        name: "مصنعيات تأسيس وتمديد شبكات التكييف بالموقع",
+        unit: "مقطوعية",
+        quantity: 1,
+        unitPrice: 0,
+        laborCost: acLabor,
+        description: "مصنعيات دفن وتثبيت مواسير النحاس بداخل الحوائط وحفر المسارات واختبار الضغط الميداني للشبكة."
+      });
+    }
+  }
+
+  // 12. أعمال عزل الرطوبة والحرارة للحمامات والأسطح (waterproofing)
+  const waterproofing = finishing.waterproofing || {};
+  if (waterproofing.enabled) {
+    const bitumenQty = Number(waterproofing.bitumenQty || 0);
+    const bitumenPrice = Number(waterproofing.bitumenPrice ?? 1200);
+    if (bitumenQty > 0) {
+      generated.push({
+        id: "gen-wp-bitumen",
+        category: "waterproofing",
+        name: "توريد دهان عزل بيتومين مطاطي عازل للرطوبة على البارد",
+        unit: "بستلة",
+        quantity: bitumenQty,
+        unitPrice: bitumenPrice,
+        laborCost: 0,
+        description: "دهان بيتومين معتمد لعزل أرضيات الحمامات والمطابخ لحماية الهياكل الإنشائية من تسربات المياه."
+      });
+    }
+
+    const membraneQty = Number(waterproofing.membraneQty || 0);
+    const membranePrice = Number(waterproofing.membranePrice ?? 2500);
+    if (membraneQty > 0) {
+      generated.push({
+        id: "gen-wp-membrane",
+        category: "waterproofing",
+        name: "توريد لفائف ممبرين عزل مائي سمك 4 مم معتمد",
+        unit: "رول",
+        quantity: membraneQty,
+        unitPrice: membranePrice,
+        laborCost: 0,
+        description: "توريد لفائف عزل ممبرين مسلحة بالبوليستر لحماية أرضيات الحمامات والأسطح من تسريبات المياه تماماً."
+      });
+    }
+
+    const cementInsulationQty = Number(waterproofing.cementInsulationQty || 0);
+    const cementInsulationPrice = Number(waterproofing.cementInsulationPrice ?? 450);
+    if (cementInsulationQty > 0) {
+      generated.push({
+        id: "gen-wp-cement",
+        category: "waterproofing",
+        name: "توريد مواد عزل أسمنتي كيميائي مرن (سيكا / أديبوند)",
+        unit: "شكارة",
+        quantity: cementInsulationQty,
+        unitPrice: cementInsulationPrice,
+        laborCost: 0,
+        description: "عزل أسمنتي معالج ذو مرونة عالية ومقاومة فائقة لضغط المياه المباشر بالحمامات والمطابخ."
+      });
+    }
+
+    const wpLabor = Number(waterproofing.laborLumpSum || 0);
+    if (wpLabor > 0) {
+      generated.push({
+        id: "gen-wp-labor",
+        category: "waterproofing",
+        name: "مصنعية أعمال عزل رطوبة وحرارة واختبار الغمر بالماء",
+        unit: "مقطوعية",
+        quantity: 1,
+        unitPrice: 0,
+        laborCost: wpLabor,
+        description: "أعمال تنظيف السطح، وعمل رقبة زجاجة، وتركيب العزل المائي واختباره بالغمر بالماء لمدة 48 ساعة."
+      });
+    }
+  }
+
+  // 13. أعمال الكريتال والمعادن والدرابزينات (metalWorks)
+  const metalWorks = finishing.metalWorks || {};
+  if (metalWorks.enabled) {
+    const wroughtIronQty = Number(metalWorks.wroughtIronQty || 0);
+    const wroughtIronPrice = Number(metalWorks.wroughtIronPrice ?? 3500);
+    if (wroughtIronQty > 0) {
+      generated.push({
+        id: "gen-mw-wrought",
+        category: "metalWorks",
+        name: "تصنيع وتركيب درابزين حديد كريتال (سلالم وبلكونات)",
+        unit: "م.ط",
+        quantity: wroughtIronQty,
+        unitPrice: wroughtIronPrice,
+        laborCost: 0,
+        description: "حديد كريتال بتصاميم هندسية معتمدة شامل الحام والتهيئة والدهان التأسيسي ضد الصدأ والوجه النهائي."
+      });
+    }
+
+    const windowProtectionQty = Number(metalWorks.windowProtectionQty || 0);
+    const windowProtectionPrice = Number(metalWorks.windowProtectionPrice ?? 1200);
+    if (windowProtectionQty > 0) {
+      generated.push({
+        id: "gen-mw-window",
+        category: "metalWorks",
+        name: "شبكات حماية حديدية مصفحة للنوافذ والأبواب المعرضة للمناور",
+        unit: "م²",
+        quantity: windowProtectionQty,
+        unitPrice: windowProtectionPrice,
+        laborCost: 0,
+        description: "شبك حماية حديدي ثقيل للنوافذ المطلة على مناور أو الشوارع لزيادة الأمان والسلامة بالوحدة السكنية."
+      });
+    }
+
+    const mwLabor = Number(metalWorks.laborLumpSum || 0);
+    if (mwLabor > 0) {
+      generated.push({
+        id: "gen-mw-labor",
+        category: "metalWorks",
+        name: "مصنعيات تركيب وأعمال لحام ودهان المعادن بالموقع",
+        unit: "مقطوعية",
+        quantity: 1,
+        unitPrice: 0,
+        laborCost: mwLabor,
+        description: "مصنعيات تركيب الدرابزينات والحمايات الحديدية وصب القواعد وتعديل الفتحات ودهان الأوجه النهائية."
+      });
+    }
+  }
+
+  // 14. أعمال الديكورات والملحقات والجماليات
   const decorations = finishing.decorations || {};
   if (decorations.enabled && decorations.items) {
     decorations.items.forEach((item: any) => {
@@ -1016,6 +1209,25 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           unitPrice: item.price || 0,
           laborCost: 0,
           description: `توريد وتركيب الديكورات الفاخرة المحددة بموقع العميل: ${item.location || 'جاري التحديد'}.`
+        });
+      }
+    });
+  }
+
+  // 15. أعمال التهوية والشفاطات (Ventilation)
+  const ventilation = finishing.ventilation || {};
+  if (ventilation.enabled && ventilation.items) {
+    Object.entries(ventilation.items).forEach(([key, item]: [string, any]) => {
+      if (item.qty > 0) {
+        generated.push({
+          id: `gen-ventilation-${key}`,
+          category: "ventilation",
+          name: item.label,
+          unit: item.unit || "عدد",
+          quantity: item.qty,
+          unitPrice: item.price || 0,
+          laborCost: 0,
+          description: `توريد وتركيب خامات تهوية ومستلزمات شفاطات موردة لموقع العميل: براند (${item.company || "معتمد"}).`
         });
       }
     });
@@ -1168,7 +1380,7 @@ export default function InitialEstimate() {
             <Calculator className="w-6 h-6 animate-pulse" />
           </div>
           <div>
-            <h3 className="text-xl font-bold text-[#F0E6D2]">المقايسة المبدئية التفاعلية للعميل</h3>
+            <h3 className="text-lg font-bold text-[#D4AF37]">المقايسة المبدئية التفاعلية للعميل</h3>
             <p className="text-xs text-gray-400 mt-1">يتم التحديث والحفظ التلقائي في السيرفر مع كل تغيير في مواصفات التشطيب</p>
           </div>
         </div>
@@ -1203,7 +1415,12 @@ const getCategoryIconSvg = (category: string) => {
     doors: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`,
     aluminum: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5z"></path></svg>`,
     archMod: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a2 2 0 01-2 2h-1M4 11V5a2 2 0 012-2h4v8m-1 1v8m0 0H4a2 2 0 01-2-2v-4a2 2 0 012-2h4z"></path></svg>`,
-    decorations: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>`
+    decorations: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>`,
+    masonry: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2"></path></svg>`,
+    ac: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m9-9H3m12-4l-6 8m0-8l6 8"></path></svg>`,
+    waterproofing: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`,
+    metalWorks: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>`,
+    ventilation: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path></svg>`
   };
   return icons[category] || `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>`;
 };
@@ -1275,24 +1492,79 @@ export function PrintReportLayout({
     { name: "المعاينة الهندسية", days: "3 أيام", active: true },
     { name: "توقيع العقد النهائي", days: "1 يوم", active: true },
     { name: "تعديل معماري وتكسير", days: "3 أيام", active: hasCategory("archMod") },
-    { name: "تأسيس أعمال كهرباء", days: "5 أيام", active: hasCategory("electricity") },
-    { name: "تأسيس أعمال سباكة", days: "6 أيام", active: hasCategory("plumbing") },
+    { name: "أعمال مباني وطوب", days: "4 أيام", active: hasCategory("masonry") },
+    { name: "تأسيس أعمال كهرباء", days: "7 أيام", active: hasCategory("electricity") },
+    { name: "تأسيس أعمال سباكة", days: "7 أيام", active: hasCategory("plumbing") },
     { name: "تأسيس أعمال تكييف", days: "2 يوم", active: hasCategory("ac") },
     { name: "تأسيس شفاطات وتهوية", days: "2 يوم", active: hasCategory("ventilation") },
-    { name: "أعمال بياض محارة", days: "7 أيام", active: hasCategory("plaster") },
+    { name: "عزل رطوبة وحرارة", days: "3 أيام", active: hasCategory("waterproofing") },
+    { name: "أعمال بياض محارة", days: "10 أيام", active: hasCategory("plaster") },
     { name: "أعمال جبس بورد وأسقف", days: "5 أيام", active: hasCategory("ceiling") },
-    { name: "أعمال الأرضيات والسيراميك", days: "6 أيام", active: hasCategory("flooring") },
+    { name: "أعمال الأرضيات والسيراميك", days: "10 أيام", active: hasCategory("flooring") },
     { name: "أعمال نجارة وتركيب أبواب", days: "3 أيام", active: hasCategory("doors") },
-    { name: "أعمال ألوميتال وتركيب شبابيك", days: "4 أيام", active: hasCategory("aluminum") },
+    { name: "أعمال ألوميتال وتركيب شبابيك", days: "3 أيام", active: hasCategory("aluminum") },
+    { name: "أعمال كريتال ومعادن", days: "4 أيام", active: hasCategory("metalWorks") },
     { name: "أعمال ديكورات وتجاليد", days: "5 أيام", active: hasCategory("decorations") },
-    { name: "تشطيب نهائي كهرباء", days: "2 يوم", active: hasCategory("electricity") },
-    { name: "تشطيب نهائي سباكة", days: "2 يوم", active: hasCategory("plumbing") },
-    { name: "أعمال دهانات وتسليم", days: "5 أيام", active: hasCategory("paint") }
+    { name: "تشطيب نهائي كهرباء", days: "3 يوم", active: hasCategory("electricity") },
+    { name: "تشطيب نهائي سباكة", days: "3 يوم", active: hasCategory("plumbing") },
+    { name: "أعمال دهانات وتسليم", days: "10 أيام", active: hasCategory("paint") }
   ];
 
   return (
     <div dir="rtl" className="bg-white text-[#020B1C] w-full min-h-screen p-10 text-xs relative select-none font-sans print:p-0 print:text-black">
       
+      {/* 🛠️ جدار الحماية البصري الموحد وتنسيق شريط التمرير مذهب الألوان بسمك 6px لمنع التداخل والقص كلياً للـ BOQ المطبوعة */}
+      <style dangerouslySetInnerHTML={{ __html: `
+        /* تفعيل وإظهار شريط التمرير الأفقي والرأسي بكافة الجداول بألوان ذهبية فاخرة */
+        ::-webkit-scrollbar { 
+          width: 6px !important; 
+          height: 6px !important; 
+          display: block !important;
+        }
+        ::-webkit-scrollbar-track { 
+          background: #020B1C !important; 
+        }
+        ::-webkit-scrollbar-thumb { 
+          background: #D4AF37 !important; 
+          border-radius: 9999px !important; 
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+          background: #AA7C11 !important; 
+        }
+
+        /* إلغاء أكواد الإخفاء لضمان انسيابية التمرير بالماوس والجوال */
+        .overflow-x-auto { 
+          -ms-overflow-style: auto !important; 
+          overflow-x: auto !important; 
+        }
+
+        /* عزل تلوين وأوزان خلايا جدول تفريد بنود المقايسة ومنع تسريب الـ CSS للسايدبار */
+        .premium-public-estimate-table thead th {
+          font-size: 0.75rem !important;
+          font-weight: 500 !important;
+          color: #D4AF37 !important;
+          text-align: right !important;
+          background-color: #020B1C !important;
+          border-bottom: 2px solid rgba(212, 175, 55, 0.3) !important;
+          padding: 14px 16px !important;
+          letter-spacing: normal !important;
+        }
+
+        .premium-public-estimate-table tbody td {
+          font-size: 0.8rem !important;
+          font-weight: 400 !important;
+          color: #020B1C !important; /* الاحتفاظ بالخطوط الداكنة لنسخة الطباعة الـ A4 البيضاء */
+          text-align: right !important;
+          border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+          padding: 14px 16px !important;
+          letter-spacing: normal !important;
+        }
+
+        .premium-public-estimate-table tbody tr:hover {
+          background-color: rgba(0, 0, 0, 0.02) !important;
+        }
+      `}} />
+
       {/* رأس الصفحة */}
       <div className="flex items-center justify-between border-b-4 border-[#D4AF37] pb-4 mb-5">
         <div className="w-[30%] text-right select-none">
@@ -1324,11 +1596,11 @@ export function PrintReportLayout({
         </div>
         <div>
           <span className="text-gray-400 block font-bold">نوع الوحدة الإنشائية:</span>
-          <span className="text-slate-900 font-bold block mt-0.5">{project.unitType || project.unit_type || "شقة سكنية"}</span>
+          <span className="text-slate-900 font-bold mt-0.5">{project.unitType || project.unit_type || "شقة سكنية"}</span>
         </div>
         <div>
           <span className="text-gray-400 block font-bold">مسمى وموقع العمل:</span>
-          <span className="text-slate-[#0B1B38] font-bold block mt-0.5 truncate">{project.projectName || project.project_name || "الكرامة"}</span>
+          <span className="text-[#0B1B38] font-bold block mt-0.5 truncate">{project.projectName || project.project_name || "الكرامة"}</span>
         </div>
         <div className="pt-2 border-t border-gray-200 mt-2">
           <span className="text-gray-400 block font-bold">مساحة الوحدة الفعالة:</span>
@@ -1359,53 +1631,47 @@ export function PrintReportLayout({
         </p>
       </div>
 
-      {/* جدول عرض السعر الفاخر */}
-      <div className="border border-gray-200 rounded-2xl overflow-hidden mb-8 shadow-sm">
-        {loadingPrint ? (
-          <p className="text-center text-gray-500 py-12">جاري مزامنة وسحب بنود عرض السعر الفاخر من السيرفر...</p>
-        ) : printItems.length === 0 ? (
-          <p className="text-center text-gray-500 py-12">لم يتم تفعيل أي بند في مقايسة العميل حتى الآن.</p>
-        ) : (
-          <table className="w-full border-collapse text-[10px] text-right">
-            <thead>
-              <tr className="bg-gray-50/80 text-[#0B1B38] border-b-2 border-[#D4AF37] font-black">
-                <th className="p-3 text-center w-8">م</th>
-                <th className="p-3 w-36">البند ومجال الأعمال</th>
-                <th className="p-3">تفصيل ووصف التوريد والتركيب الفني المعتمد للمشروع</th>
-                <th className="p-3 text-center w-12">الكمية</th>
-                <th className="p-3 text-center w-12">الوحدة</th>
-                <th className="p-3 text-center w-18">خامات</th>
-                <th className="p-3 text-center w-18">مصنعيات</th>
-                <th className="p-3 text-center w-24">الإجمالي (ج.م)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {printItems.map((item, idx) => {
-                const qty = Number(item.quantity || 0);
-                const uPrice = Number(item.unit_price ?? item.unitPrice ?? 0);
-                const labor = Number(item.labor_cost ?? item.laborCost ?? 0);
-                const rowTotal = (qty * uPrice) + labor;
-                return (
-                  <tr key={item.id || idx} className="border-b border-gray-100 even:bg-gray-50/50 hover:bg-gray-50/80 transition">
-                    <td className="p-3 text-center font-mono text-gray-400 font-bold">{idx + 1}</td>
-                    <td className="p-3 font-black text-[#0B1B38] whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <span dangerouslySetInnerHTML={{ __html: getCategoryIconSvg(item.category) }} />
-                        <span>{categoryNames[item.category] || item.category || "—"}</span>
-                      </div>
-                    </td>
-                    <td className="p-3 text-gray-600 font-bold leading-relaxed">{item.description || item.name}</td>
-                    <td className="p-3 text-center font-mono font-black">{qty.toLocaleString('en-US')}</td>
-                    <td className="p-3 text-center">{item.unit || "م²"}</td>
-                    <td className="p-3 text-center font-mono text-gray-500">{(uPrice).toLocaleString('en-US')}</td>
-                    <td className="p-3 text-center font-mono text-gray-500">{(labor).toLocaleString('en-US')}</td>
-                    <td className="p-3 text-center font-mono font-black text-[#0B1B38]">{(rowTotal).toLocaleString('en-US')}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
+      {/* جدول عرض السعر الفاخر - تم تسييل حظر التداخل وتفعيل الـ Gilded Scrollbar للأجهزة المحمولة */}
+      <div className="border border-gray-200 rounded-2xl overflow-x-auto mb-8 shadow-sm">
+        <table className="w-full border-collapse text-[10px] text-right min-w-[850px] premium-public-estimate-table">
+          <thead>
+            <tr className="bg-[#0B1B38] text-white select-none whitespace-nowrap">
+              <th className="p-3.5 text-center w-8 font-black">م</th>
+              <th className="p-3.5 font-black w-36">البند ومجال الأعمال</th>
+              <th className="p-3.5 font-black">تفصيل ووصف التوريد والتركيب الفني المعتمد للمشروع</th>
+              <th className="p-3.5 text-center w-12 font-black">الكمية</th>
+              <th className="p-3.5 text-center w-12 font-black">الوحدة</th>
+              <th className="p-3.5 text-center w-18 font-black">خامات</th>
+              <th className="p-3.5 text-center w-18 font-black">مصنعيات</th>
+              <th className="p-3.5 text-center w-24 font-black">الإجمالي (ج.م)</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 text-[#0B1B38] font-semibold whitespace-nowrap">
+            {printItems.map((item, idx) => {
+              const qty = Number(item.quantity || 0);
+              const uPrice = Number(item.unit_price ?? item.unitPrice ?? 0);
+              const labor = Number(item.labor_cost ?? item.laborCost ?? 0);
+              const rowTotal = (qty * uPrice) + labor;
+              return (
+                <tr key={item.id || idx} className="hover:bg-gray-50/80 transition">
+                  <td className="p-3 text-center font-mono text-gray-400 font-bold">{idx + 1}</td>
+                  <td className="p-3 font-black text-[#0B1B38] whitespace-nowrap">
+                    <div className="flex items-center gap-1.5">
+                      <span dangerouslySetInnerHTML={{ __html: getCategoryIconSvg(item.category) }} />
+                      <span>{localCategoryNames[item.category] || categoryNames[item.category] || item.category || "—"}</span>
+                    </div>
+                  </td>
+                  <td className="p-3 text-gray-600 font-bold leading-relaxed whitespace-pre-wrap">{item.description || item.name}</td>
+                  <td className="p-3 text-center font-mono font-black">{qty.toLocaleString('en-US')}</td>
+                  <td className="p-3 text-center">{item.unit || "م²"}</td>
+                  <td className="p-3 text-center font-mono text-gray-500">{(uPrice).toLocaleString('en-US')}</td>
+                  <td className="p-3 text-center font-mono text-gray-500">{(labor).toLocaleString('en-US')}</td>
+                  <td className="p-3 text-center font-mono font-black text-[#0B1B38]">{(rowTotal).toLocaleString('en-US')}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
 
       {/* كارت وحاوية الأرصدة والمجاميع */}
@@ -1441,7 +1707,7 @@ export function PrintReportLayout({
           <span>رحلة وجدول التنفيذ الإنشائي المخطط للمشروع (Stages Timeline Map):</span>
         </h3>
         
-        {/* شبكة المراحل الـ 17 */}
+        {/* شبكة المراحل الـ 20 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-[9px] font-bold text-gray-500">
           {executionJourney.map((step, idx) => (
             <div 

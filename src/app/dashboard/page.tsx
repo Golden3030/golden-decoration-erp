@@ -122,7 +122,7 @@ const MiniCalendar = () => {
       </h3>
 
       {/* أسماء الأيام */}
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-black text-[#F0E6D2] select-none pb-1">
+      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-[#FCE7F3] select-none pb-1">
         <span>أحد</span>
         <span>إثن</span>
         <span>ثلا</span>
@@ -148,12 +148,12 @@ const MiniCalendar = () => {
               key={`day-${day}`}
               type="button"
               onClick={() => setSelectedDay(day)}
-              className={`w-8 h-8 rounded-lg text-[10px] font-black transition-all duration-200 cursor-pointer flex flex-col items-center justify-center relative ${
+              className={`w-8 h-8 rounded-lg text-[10px] font-bold transition-all duration-200 cursor-pointer flex flex-col items-center justify-center relative ${
                 isSelected
                   ? "border-2 border-[#D4AF37] text-white bg-[#020B1C]/30 shadow-[0_0_12px_rgba(212,175,55,0.15)]" 
                   : isCurrentToday
                   ? "bg-[#D4AF37] text-[#020B1C]" 
-                  : "bg-[#F0E6D2] text-black hover:border-slate-600 border border-transparent"
+                  : "bg-[#FCE7F3] text-bold hover:border-slate-600 border border-transparent"
               }`}
             >
               <span>{day}</span>
@@ -264,7 +264,7 @@ export default function DashboardPage() {
       <div className="min-h-screen bg-[#020B1C] flex items-center justify-center text-[#D4AF37] font-black select-none">
         <div className="text-center">
           <Loader2 className="animate-spin text-[#D4AF37] mx-auto mb-4" size={40} />
-          <p className="text-sm font-black animate-pulse">جاري تحميل لوحة التحكم Golden Decoration ERP...</p>
+          <p className="text-[#D4AF37] text-lg font-bold select-none animate-pulse">جاري تحميل لوحة التحكم Golden Decoration ERP</p>
         </div>
       </div>
     );
@@ -369,9 +369,9 @@ export default function DashboardPage() {
           {isOperationalStaff && (
             <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-2xl overflow-hidden">
               <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
-                <Sparkles className="w-6 h-6 text-[#D4AF37]" />
+                <Sparkles className="w-5 h-5 text-[#D4AF37] shrink-0" />
                 {/* تحويل لون ترويسة العنوان للون البني البرونزي المعتمد `#A17A4C` */}
-                <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">تتبع المشاريع الميدانية</h3>
+                <h3 className="text-[#D4AF37] text-md font-bold select-none">تتبع المشاريع الميدانية</h3>
               </div>
               <div className="overflow-x-auto max-h-[400px] ai-chat-scroll">
                 <ProjectsTable />
@@ -382,11 +382,11 @@ export default function DashboardPage() {
           {/* 3. المهام والمخطط */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {isEngineeringStaff && (
-              <div className="xl:col-span-1 bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl overflow-hidden">
+              <div className="xl:col-span-1 bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-[420px] overflow-auto">
                 <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
                   <ClipboardList className="w-6 h-6 text-[#D4AF37]" />
                   {/* تحويل لون ترويسة عنوان المهام للون البني البرونزي المعتمد `#A17A4C` */}
-                  <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">المهام الهندسية</h3>
+                  <h3 className="text-[#D4AF37] text-md font-bold select-none">المهام الهندسية</h3>
                 </div>
                 <Tasks />
               </div>
@@ -397,7 +397,7 @@ export default function DashboardPage() {
                 <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
                   <Wallet className="w-6 h-6 text-[#D4AF37]" />
                   {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
-                  <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">التدفقات النقدية</h3>
+                  <h3 className="text-[#D4AF37] text-md font-bold select-none">التدفقات النقدية</h3>
                 </div>
                 <PerformanceChart />
               </div>
@@ -411,18 +411,18 @@ export default function DashboardPage() {
                 <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
                   <Target className="w-6 h-6 text-[#D4AF37]" />
                   {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
-                  <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">كفاءة الأداء</h3>
+                  <h3 className="text-[#D4AF37] text-md font-bold select-none">كفاءة الأداء</h3>
                 </div>
                 <PerformanceIndicators />
               </div>
             )}
 
             {isOperationalStaff && (
-              <div className="xl:col-span-2 bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl overflow-hidden">
-                <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
+              <div className="xl:col-span-2 bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-[400px] overflow-auto">
+                <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2 sticky top-0 z-10">
                   <Bell className="w-6 h-6 text-[#D4AF37]" />
                   {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
-                  <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">مركز الإشعارات والتحليلات</h3>
+                  <h3 className="text-[#D4AF37] text-md font-bold select-none">مركز الإشعارات والتحليلات</h3>
                 </div>
                 <Notifications />
               </div>
@@ -431,20 +431,20 @@ export default function DashboardPage() {
 
           {/* 5. الأنشطة والتعاقدات والتقويم */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl overflow-hidden">
-              <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
+            <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-[420px] overflow-auto">
+              <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2 sticky top-0 z-10">
                 <Activity className="w-6 h-6 text-[#D4AF37]" />
                 {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
-                <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">آخر الأنشطة والعمليات الميدانية</h3>
+                <h3 className="text-[#D4AF37] text-md font-bold select-none">آخر الأنشطة والعمليات الميدانية</h3>
               </div>
               <RecentActivities />
             </div>
 
-            <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl overflow-hidden">
+            <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-[420px] overflow-auto">
               <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
                 <FileSignature className="w-6 h-6 text-[#D4AF37]" />
                 {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
-                <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">التعاقدات القادمة وعقود الملاك</h3>
+                <h3 className="text-[#D4AF37] text-md font-bold select-none">التعاقدات القادمة وعقود الملاك</h3>
               </div>
               <UpcomingProjects />
             </div>

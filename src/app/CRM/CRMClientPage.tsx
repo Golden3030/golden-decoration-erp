@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
@@ -819,26 +818,57 @@ export default function CRMPage() {
   return (
     <main className="min-h-screen bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       
-      {/* هيدر الهيكل لمنع وميض وتأخر تحميل الخط البصري FOUT */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-
-      {/* ورقة أنماط الخط الملكي الموحد والتمرير */}
+      {/* 🛠️ جدار الحماية البصري الموحد وتنسيق شريط التمرير المذهب وحظر التداخل بـ whitespace-nowrap و min-w-[850px] بالجدول لمنع القص والتقاطع كلياً */}
       <style dangerouslySetInnerHTML={{__html: `
-        *:not(code, pre, .font-mono, [class*="font-mono"]) {
-          font-family: 'Alexandria', Arial, sans-serif !important;
+        /* تفعيل وإظهار شريط التمرير الأفقي والرأسي بكافة الجداول بألوان ذهبية فاخرة */
+        ::-webkit-scrollbar { 
+          width: 6px !important; 
+          height: 6px !important; 
+          display: block !important;
+        }
+        ::-webkit-scrollbar-track { 
+          background: #020B1C !important; 
+        }
+        ::-webkit-scrollbar-thumb { 
+          background: #D4AF37 !important; 
+          border-radius: 9999px !important; 
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+          background: #AA7C11 !important; 
+        }
+
+        /* إلغاء أكواد الإخفاء لضمان انسيابية التمرير بالماوس والجوال */
+        .overflow-x-auto { 
+         
+          -ms-overflow-style: auto !important; 
+          overflow-x: auto !important; 
+        }
+
+        /* عزل تلوين وأوزان خلايا جدول الـ CRM ومنع تسريب الـ CSS للسايدبار */
+        .premium-crm-table thead th {
+          font-size: 0.75rem !important;
+          font-weight: 500 !important;
+          color: #D4AF37 !important;
+          text-align: right !important;
+          background-color: #020B1C !important;
+          border-bottom: 2px solid rgba(212, 175, 55, 0.3) !important;
+          padding: 14px 16px !important;
           letter-spacing: normal !important;
         }
 
-        ::-webkit-scrollbar { width: 6px !important; height: 6px !important; }
-        ::-webkit-scrollbar-track { background: #020B1C !important; }
-        ::-webkit-scrollbar-thumb { background: #D4AF37 !important; border-radius: 9999px !important; }
-        ::-webkit-scrollbar-thumb:hover { background: #D4AF37 !important; }
+        .premium-crm-table tbody td {
+          font-size: 0.8rem !important;
+          font-weight: 400 !important;
+         
+          text-align: right !important;
+          border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
+          padding: 14px 16px !important;
+          letter-spacing: normal !important;
+        }
 
-        ::-webkit-scrollbar-horizontal,
-        .overflow-x-auto::-webkit-scrollbar { display: none !important; height: 0px !important; }
-        .overflow-x-auto { scrollbar-width: none !important; -ms-overflow-style: none !important; overflow-x: auto !important; }
+        .premium-crm-table tbody tr:hover {
+          background-color: rgba(7, 19, 42, 0.8) !important;
+        }
       `}} />
 
       <Sidebar />
@@ -858,17 +888,17 @@ export default function CRMPage() {
 
           {isSearchOpen && (
             <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in select-none">
-              <div className="bg-[#07132a] border border-[#D4AF37]/50 rounded-3xl p-6 md:p-8 w-full max-w-4xl shadow-2xl relative space-y-4">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 md:p-8 w-full max-w-4xl shadow-2xl relative space-y-4">
                 <div className="flex justify-between items-center border-b border-[#243556] pb-3 mb-4 select-none">
                   <h3 className="text-[#D4AF37] font-bold text-lg flex items-center gap-1.5">
                     📂 أداة البحث الموحد للمشاريع والعملاء
                   </h3>
                   <button 
-                    type="button" // 👈 حظر إعادة التحميل
+                    type="button" 
                     onClick={(e) => { e.preventDefault(); setIsSearchOpen(false); }}
                     className="text-gray-400 hover:text-rose-500 font-bold text-sm cursor-pointer transition"
                   >
-                    ✕ إغلاق
+                    ✕ 
                   </button>
                 </div>
                 <CRMSearch onClose={() => setIsSearchOpen(false)} />
@@ -878,13 +908,13 @@ export default function CRMPage() {
 
           {isAddCustomerOpen && (
             <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in select-none">
-              <div className="bg-[#07132a] border border-[#D4AF37]/50 rounded-3xl p-6 md:p-8 w-full max-w-lg shadow-2xl relative space-y-4 text-right text-white">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 md:p-8 w-full max-w-lg shadow-2xl relative space-y-4 text-right text-white">
                 <div className="flex justify-between items-center border-b border-[#243556] pb-3 mb-4">
-                  <h3 className="text-[#D4AF37] font-black text-lg flex items-center gap-1.5">
+                  <h3 className="text-[#D4AF37] font-bold text-lg flex items-center gap-1.5">
                     ➕ نموذج إضافة عميل جديد للـ CRM
                   </h3>
                   <button 
-                    type="button" // 👈 حظر إعادة التحميل
+                    type="button" 
                     onClick={(e) => { e.preventDefault(); setIsAddCustomerOpen(false); }}
                     className="text-gray-400 hover:text-rose-500 font-bold text-sm cursor-pointer transition"
                   >
@@ -894,69 +924,71 @@ export default function CRMPage() {
 
                 <div className="space-y-4 text-sm font-semibold">
                   <div>
-                    <label className="block text-[#D4AF37] font-bold text-[11px] mb-1.5">اسم العميل *</label>
+                    <label className="block text-[#D4AF37] font-bold px-3 text-[12px] mb-1.5">اسم العميل *</label>
                     <input
                       type="text"
                       placeholder="الاسم الثلاثي للعميل"
                       value={addName}
                       onChange={(e) => setAddName(e.target.value)}
-                      className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#243556]/30 text-white px-3.5 outline-none focus:border-[#D4AF37]"
+                      className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#F0E6D2] px-3.5 outline-none focus:border-[#D4AF37] text-xs font-medium"
                     />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[#D4AF37] font-bold text-[11px] mb-1.5 whitespace-nowrap">رقم الأرضي (اختياري)</label>
-                      <input
-                        type="text"
-                        placeholder="رقم آخر إن وجد"
-                        value={addPhone}
-                        onChange={(e) => setAddPhone(e.target.value)}
-                        className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#243556]/30 text-white px-3.5 outline-none font-mono focus:border-[#D4AF37]"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[#D4AF37] font-bold text-[11px] mb-1.5 whitespace-nowrap">رقم الموبايل والواتساب *</label>
+ <div className="grid grid-cols-2 gap-4">
+ <div>
+                      <label className="block text-[#D4AF37] font-bold px-3 text-[12px]  mb-1.5 whitespace-nowrap">رقم الموبايل  *</label>
                       <input
                         type="text"
                         placeholder="010xxxxxxxx"
                         value={addMobile}
                         onChange={(e) => setAddMobile(e.target.value)}
-                        className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#243556]/30 text-white px-3.5 outline-none font-mono focus:border-[#D4AF37]"
+                        className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#F0E6D2] px-3.5 outline-none font-mono focus:border-[#D4AF37] text-xs font-medium"
                       />
                     </div>
+
+                 
+                    <div>
+                      <label className="block text-[#D4AF37] font-bold px-3 text-[12px]  mb-1.5 whitespace-nowrap">رقم موبايل اخر (اختياري)</label>
+                      <input
+                        type="text"
+                        placeholder="رقم موبايل اخر "
+                        value={addPhone}
+                        onChange={(e) => setAddPhone(e.target.value)}
+                        className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#F0E6D2] px-3.5 outline-none font-mono focus:border-[#D4AF37] text-xs font-medium"
+                      />
+                    </div>
+                   
                   </div>
 
                   <div>
-                    <label className="block text-[#D4AF37] font-bold text-[11px] mb-1.5">العنوان الجاري بالتفصيل</label>
+                    <label className="block text-[#D4AF37] font-bold px-3 text-[12px]  mb-1.5">العنوان بالتفصيل</label>
                     <input
                       type="text"
                       placeholder="مثال: التجمع الخامس - النرجس"
                       value={addAddress}
                       onChange={(e) => setAddAddress(e.target.value)}
-                      className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#243556]/30 text-white px-3.5 outline-none focus:border-[#D4AF37]"
+                      className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#F0E6D2] px-3.5 outline-none focus:border-[#D4AF37] text-xs font-medium"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[#D4AF37] font-bold text-[11px] mb-1.5">البريد الإلكتروني للعميل</label>
+                    <label className="block text-[#D4AF37] font-bold px-3 text-[12px]  mb-1.5">البريد الإلكتروني للعميل</label>
                     <input
                       type="email"
                       placeholder="email@example.com"
                       value={addEmail}
                       onChange={(e) => setAddEmail(e.target.value)}
-                      className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#243556]/30 text-white px-3.5 outline-none font-mono focus:border-[#D4AF37]"
+                      className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#F0E6D2] px-3.5 outline-none font-mono focus:border-[#D4AF37] text-xs font-medium"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[#D4AF37] font-bold text-[11px] mb-1.5 whitespace-nowrap">توزيع وإسناد العميل</label>
+                      <label className="block text-[#D4AF37] font-bold px-3 text-[12px] mb-1.5 whitespace-nowrap">توزيع وإسناد العميل</label>
                       {isManager ? (
                         <select
                           value={addAssignedTo}
                           onChange={(e) => setAddAssignedTo(e.target.value)}
-                          className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#243556]/30 text-[#D4AF37] font-bold px-3 outline-none cursor-pointer text-xs focus:border-[#D4AF37]"
+                          className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-bold px-3 outline-none cursor-pointer text-xs focus:border-[#D4AF37]"
                         >
                           <option value="">-- عام (بدون موظف محدد) --</option>
                           {salesStaff.map(staff => (
@@ -968,16 +1000,16 @@ export default function CRMPage() {
                           type="text"
                           value="إسناد تلقائي لحسابك الشخصي"
                           disabled
-                          className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-gray-500 px-3 outline-none text-center font-bold text-xs"
+                          className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-gray-500 px-3 outline-none text-center font-bold text-xs"
                         />
                       )}
                     </div>
                     <div>
-                      <label className="block text-[#D4AF37] font-bold text-[11px] mb-1.5 whitespace-nowrap">حالة العميل المبدئية *</label>
+                      <label className="block text-[#D4AF37] font-bold px-3 text-[12px]  mb-1.5 whitespace-nowrap">حالة العميل  *</label>
                       <select
                         value={addStatus}
                         onChange={(e) => setAddStatus(e.target.value)}
-                        className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#243556]/30 text-[#D4AF37] font-bold px-3 outline-none cursor-pointer text-xs focus:border-[#D4AF37]"
+                        className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-bold px-3 outline-none cursor-pointer text-xs focus:border-[#D4AF37]"
                       >
                         <option value="جديد">جديد</option>
                         <option value="متابعة مستمرة">متابعة مستمرة</option>
@@ -987,13 +1019,15 @@ export default function CRMPage() {
                 </div>
 
                 <div className="flex justify-end gap-3 pt-4 border-t border-[#243556]">
+                  {/* 🌟 تحديث وإعادة هيكلة زرار إضافة العميل للدستور البصري الحركي */}
                   <button
-                    type="button" // 👈 حظر إعادة التحميل
+                    type="button" 
                     onClick={(e) => { e.preventDefault(); handleInsertNewCustomer(); }}
                     disabled={saving}
-                    className="bg-black/60 hover:bg-[#D4AF37] border border-[#D4AF37] text-[#D4AF37] hover:text-[#020B1C] py-3.5 px-8 rounded-xl text-xs font-black shadow-[0_0_12px_rgba(212,175,55,0.25)] hover:shadow-[0_0_20px_rgba(212,175,55,0.55)] cursor-pointer transition-all duration-300 disabled:opacity-50"
+                    className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
                   >
                     {saving ? "جاري الحفظ..." : "💾 تسجيل العميل بالـ CRM"}
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                   </button>
                 </div>
               </div>
@@ -1001,7 +1035,7 @@ export default function CRMPage() {
           )}
 
           {isManager && (
-            <div className="bg-[#07132a] border border-[#D4AF37]/15 p-4 rounded-2xl flex items-center gap-3">
+            <div className="bg-[#07132a] border border-[#D4AF37]/20 p-4 rounded-[2rem] flex items-center gap-3">
               <label className="text-gray-300 text-sm whitespace-nowrap">تصفية بحسب مسؤول المبيعات:</label>
               <select
                 value={selectedSalesFilter}
@@ -1059,9 +1093,9 @@ export default function CRMPage() {
                 })}
               </div>
 
-              <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl overflow-hidden shadow-2xl transition duration-300">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] overflow-hidden shadow-2xl transition duration-300">
                 <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d] flex justify-between items-center select-none">
-                  <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">
+                  <h3 className="text-[#D4AF37] text-md md:text-md font-bold">
                     نتائج التصفية والفرز الجاري للعملاء والمبيعات ({filteredCustomers.length})
                   </h3>
 
@@ -1079,49 +1113,51 @@ export default function CRMPage() {
                       type="button"
                       onClick={() => setIsSearchOpen(true)}
                       className="w-11 h-11 rounded-xl bg-black/60 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-500 hover:text-black flex items-center justify-center cursor-pointer transition-all duration-300 hover:translate-y-[-2px] shadow-[0_0_10px_rgba(16,185,129,0.15)] hover:shadow-[0_0_20px_rgba(16,185,129,0.45)] shrink-0"
-                      title="البحث السحابي والاستعلام الشامل"
+                      title="البحث الاستعلام الشامل"
                     >
                       <Search size={16} strokeWidth={2.2} />
                     </button>
                   </div>
                 </div>
                 
+                {/* تفعيل جدار التمرير المذهب وحظر التداخل بـ whitespace-nowrap و min-w-[850px] بالجدول لمنع القص والتقاطع كلياً */}
                 <div className="overflow-x-auto max-h-56 overflow-y-auto pr-1">
                   {filteredCustomers.length > 0 ? (
-                    <table className="w-full text-right table-auto min-w-[750px]">
-                      <thead className="bg-[#0B1B38] text-[#D4AF37] font-bold border-b border-[#D4AF37] sticky top-0 z-10 select-none text-[13px]">
-                        <tr className="whitespace-nowrap">
-                          <th className="py-2.5 px-3.5 font-bold">كود العميل</th>
-                          <th className="py-2.5 px-3.5 font-bold">اسم العميل </th>
-                          <th className="py-2.5 px-3.5 font-bold">رقم الموبايل </th>
-                          <th className="py-2.5 px-3.5 font-bold">العنوان بالكامل</th>
-                          <th className="py-2.5 px-3.5 font-bold">تاريخ التسجيل</th>
-                          <th className="py-2.5 px-3.5 text-center font-bold">حالة العميل بالـ CRM</th>
+                    <table className="w-full text-right table-auto min-w-[850px] premium-crm-table">
+                      <thead>
+                        <tr className="whitespace-nowrap select-none">
+                          <th>كود العميل</th>
+                          <th>اسم العميل </th>
+                          <th>رقم الموبايل </th>
+                          <th>العنوان بالكامل</th>
+                          <th>تاريخ التسجيل</th>
+                          <th className="text-center">حالة العميل بالـ CRM</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#1f2d4d]/40">
+                      <tbody>
                         {filteredCustomers.map((c: any) => {
                           const isSelected = crmData.customer?.customerCode === c.customer_code;
                           return (
                             <tr
                               key={c.id}
                               onClick={() => handleSelectCustomerFromGrid(c)}
-                              className={`border-t border-[#D4AF37]/15 hover:bg-[#0B1B38] text-white text-xs md:text-sm cursor-pointer transition whitespace-nowrap ${
+                              className={`cursor-pointer transition whitespace-nowrap ${
                                 isSelected ? "bg-[#0b1b3d]/60 border-r-4 border-r-[#D4AF37] pr-2.5 pl-3" : ""
                               }`}
                             >
-                              <td className="py-2.5 px-3.5 font-mono text-[#D4AF37] font-bold">{c.customer_code}</td>
-                              <td className="py-2.5 px-3.5 font-mono text-white">{c.name}</td>
-                              <td className="py-2.5 px-3.5 font-mono text-white">
+                              <td className="font-mono text-[#D4AF37] font-bold">{c.customer_code}</td>
+                              <td className="font-mono text-white">{c.name}</td>
+                              <td className="font-mono text-white">
                                 {userRole === "engineer" ? "📞 [بيانات محجوبة]" : c.mobile}
                               </td>
-                              <td className="py-2.5 px-3.5 text-[#D4AF37] font-bold">{c.address || "-"}</td>
-                              <td className="py-2.5 px-3.5 font-mono text-white">
+                              <td className="text-[#D4AF37] font-bold">{c.address || "-"}</td>
+                              <td className="font-mono text-white">
                                 {c.created_at ? new Date(c.created_at).toLocaleDateString("ar-EG") : "-"}
                               </td>
-                              <td className="py-2.5 px-3.5 text-center">
-                                <span className={`px-2.5 py-0.5 rounded text-[10px] font-black ${
-                                  c.status === "تم التعاقد" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 animate-pulse" : "bg-brown-500/200 text-green-400"
+                              {/* 🌟 تم التحديث وتعديل كود البادج التالف بالـ CRM إلى ألوان ثابتة ومقروءة للدستور البصري الموحد للعملاء */}
+                              <td className="text-center">
+                                <span className={`px-2.5 py-1 rounded text-[10px] font-black ${
+                                  c.status === "تم التعاقد" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 animate-pulse" : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
                                 }`}>{c.status || "جديد"}</span>
                               </td>
                             </tr>
@@ -1234,14 +1270,14 @@ export default function CRMPage() {
               </div>
 
               {/* حاوية الحصر والمساحات الميدانية للغرف والريسبشن */}
-              <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl p-6 shadow-2xl space-y-5">
-                <p className="text-[#D4AF37] font-black flex items-center gap-2 text-xl border-b border-[#D4AF37] pb-3 select-none">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 shadow-2xl space-y-5">
+                <p className="text-[#D4AF37] font-bold flex items-center gap-2 text-xl border-b border-[#D4AF37]/20 pb-3 select-none">
                   <svg className="w-6 h-6 stroke-current fill-none stroke-[2] animate-pulse" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <rect x="4" y="4" width="16" height="16" rx="2" />
                     <rect x="9" y="9" width="6" height="6" rx="1" />
                     <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3" />
                   </svg>
-                  <span>حصر وتوزيع وتفاصيل الغرف والمساحات الميدانية للوحدة</span>
+                  <span> توزيع وتفاصيل الغرف والمساحات للوحدة</span>
                 </p>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 w-full">
@@ -1258,7 +1294,7 @@ export default function CRMPage() {
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch w-full">
                   
                   {/* كارت خط سير العمل المضيء الخماسي (العرض الأكبر lg:col-span-8) */}
-                  <div className="lg:col-span-8 bg-[#020B1C] p-5 rounded-2xl border border-[#D4AF37]/30 shadow-inner flex flex-col justify-between">
+                  <div className="lg:col-span-8 bg-[#020B1C] p-5 rounded-2xl border border-[#D4AF37]/20 shadow-inner flex flex-col justify-between">
                     <span className="text-[11px] text-[#D4AF37] font-black block text-right">مخطط وجدول خط سير وتدفق صفقات المبيعات حركياً:</span>
                     
                     <div className="flex items-center justify-between relative mt-4 px-2">
@@ -1296,7 +1332,7 @@ export default function CRMPage() {
                   </div>
 
                   {/* كارت الحديقة / الجاردن المصغر (العرض الأصغر lg:col-span-4 لضغط المساحة المهدرة) */}
-                  <div className="lg:col-span-4 border border-[#1f2d4d] rounded-2xl p-5 bg-[#0b1b3d]/40 shadow-xl flex flex-col justify-between space-y-4">
+                  <div className="lg:col-span-4 border border-[#D4AF37]/20 rounded-2xl p-5 bg-[#0b1b3d]/40 shadow-xl flex flex-col justify-between space-y-4">
                     <div className="flex items-center justify-between gap-4 select-none">
                       <div className="text-right flex-1">
                         <h4 className="text-[#D4AF37] text-xs font-black">الحديقة المفتوحة للوحدة (جاردن)</h4>
@@ -1356,7 +1392,7 @@ export default function CRMPage() {
                           <Plus size={10} className="stroke-[3]" />
                         </button>
                       </div>
-                      <span className="text-[#00FF00] font-bold text-[10px] select-none text-left">المساحة م²</span>
+                      <span className="text-[#00FF00] font-bold text-[10px] select-none text-left font-mono">المساحة م²</span>
                     </div>
                   </div>
 
@@ -1367,7 +1403,7 @@ export default function CRMPage() {
               {userRole !== "engineer" && (
                 <div className="bg-[#07132a] border border-[#d4af37] rounded-2xl p-6 space-y-4 shadow-2xl animate-fade-in">
                   <div className="flex justify-between items-center border-b border-[#d4af37] pb-3 select-none">
-                    <h3 className="text-[#D4AF37] text-lg md:text-xl font-black flex items-center justify-center gap-3 leading-none tracking-wide">
+                    <h3 className="text-[#D4AF37] text-lg md:text-xl font-bold flex items-center justify-center gap-3 leading-none tracking-wide">
                       <span>📞 سجل المحادثات والمتابعة للعميل</span>
                     </h3>
                     <button
@@ -1388,7 +1424,7 @@ export default function CRMPage() {
                     ) : customerLogs.length > 0 ? (
                       <>
                         {customerLogs.slice(0, visibleLogsCount).map((log) => (
-                          <div key={log.id} className="bg-[#020B1C] border border-[#1f2d4d] p-4 rounded-xl space-y-2 relative transition hover:border-[#D4AF37]/30 shadow-inner">
+                          <div key={log.id} className="bg-[#020B1C] border border-[#D4AF37]/20 p-4 rounded-xl space-y-2 relative transition hover:border-[#D4AF37]/40 shadow-inner">
                             <div className="flex justify-between items-center text-xs text-gray-500 border-b border-[#1f2d4d] pb-1">
                               <span className="font-bold text-[#D4AF37]">◀ {log.interaction_type}</span>
                               {/* دمج وعرض دالة التنسيق العربية الجديدة المانعة لتشتت الأرقام */}
@@ -1415,7 +1451,7 @@ export default function CRMPage() {
                         )}
                       </>
                     ) : (
-                      <div className="p-8 text-center text-gray-500 text-sm bg-[#020B1C]/50 rounded-xl border border-dashed border-[#1f2d4d]">
+                      <div className="p-8 text-center text-gray-500 text-sm bg-[#020B1C]/50 rounded-xl border border-dashed border-[#D4AF37]/25">
                         لا توجد متابعة مسجلة لهذا العميل من قبل.
                       </div>
                     )}
@@ -1428,7 +1464,7 @@ export default function CRMPage() {
                   <FinishingTabs />
                 </div>
               ) : (
-                <div className="mt-8 p-12 border-2 border-dashed border-[#1f2d4d] rounded-2xl text-center">
+                <div className="mt-8 p-12 border-2 border-dashed border-[#D4AF37]/25 rounded-2xl text-center">
                   <p className="text-[#F0E6D2] text-lg font-bold mb-2">📐 مواصفات التشطيب وإعداد المقايسة من اختصاص فريق المهندسين</p>
                 </div>
               )}
@@ -1436,7 +1472,7 @@ export default function CRMPage() {
             </div>
           ) : (
             !loading && (
-              <div className="mt-12 p-12 border-2 border-dashed border-[#1f2d4d] rounded-2xl text-center select-none bg-[#07132a]">
+              <div className="mt-12 p-12 border-2 border-dashed border-[#D4AF37]/25 rounded-2xl text-center select-none bg-[#07132a]">
                 <p className="text-[#F0E6D2] text-lg font-bold mb-2">مرحباً بك في برنامج Golden Decoration ERP لإدارة الديكور الذكي</p>
               </div>
             )
@@ -1444,9 +1480,9 @@ export default function CRMPage() {
 
           {isFollowUpOpen && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 text-right animate-fade-in select-none">
-              <div className="bg-[#07132a] border border-[#D4AF37]/50 rounded-3xl p-6 w-full max-w-md shadow-2xl relative space-y-4 text-white">
-                <div className="flex justify-between items-center border-b border-[#243556] pb-3">
-                  <h4 className="text-[#D4AF37] font-black text-lg">📞 تسجيل مكالمة ومتابعة جديدة للعميل</h4>
+              <div className="bg-[#07132a] border border-[#D4AF37] rounded-3xl p-6 w-full max-w-md shadow-2xl relative space-y-4 text-white">
+                <div className="flex justify-between items-center border-b border-[#D4AF37] pb-3">
+                  <h4 className="text-[#D4AF37] font-bold text-lg">📞 تسجيل متابعة جديدة للعميل</h4>
                   <button 
                     type="button" 
                     onClick={(e) => { e.preventDefault(); setIsFollowUpOpen(false); }} 
@@ -1458,11 +1494,11 @@ export default function CRMPage() {
 
                 <div className="space-y-4 text-sm font-bold">
                   <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5">نوعية الاتصال والمتابعة</label>
+                    <label className="block text-[#D4AF37] font-bold mb-1.5">نوعية الاتصال والمتابعة</label>
                     <select
                       value={followUpType}
                       onChange={(e) => setFollowUpType(e.target.value)}
-                      className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] font-bold px-3 outline-none focus:border-[#D4AF37]"
+                      className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#D4AF37]/25 text-[#D4AF37] font-bold px-3 outline-none focus:border-[#D4AF37]"
                     >
                       <option value="مكالمة هاتفية">📞 مكالمة هاتفية صادر</option>
                       <option value="محادثة واتساب">💬 محادثة واتساب</option>
@@ -1472,44 +1508,44 @@ export default function CRMPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5">تفاصيل المحادثة والاتفاق التاريخي *</label>
+                    <label className="block text-[#D4AF37] font-bold mb-1.5">تفاصيل المحادثة والاتفاق  *</label>
                     <textarea
                       rows={3}
-                      placeholder="ملخص الاتصال التاريخي..."
+                      placeholder="ملخص الاتصال ..."
                       value={followUpFeedback}
                       onChange={(e) => setFollowUpFeedback(e.target.value)}
-                      className="w-full rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-white p-3 outline-none text-right font-medium focus:border-[#D4AF37]"
+                      className="w-full rounded-lg bg-[#020B1C] border border-[#D4AF37]/25 text-white p-3 outline-none text-right font-medium focus:border-[#D4AF37]"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[#D4AF37] font-black mb-1.5">موعد المكالمة / المتابعة القادمة</label>
+                    <label className="block text-[#D4AF37] font-bold mb-1.5">موعد المكالمة / المتابعة القادمة</label>
                     <input
                       type="date"
                       value={followUpNextDate}
                       onChange={(e) => setFollowUpNextDate(e.target.value)}
-                      className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] font-bold px-3 outline-none font-mono focus:border-[#D4AF37]"
+                      className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#D4AF37]/25 text-[#D4AF37] font-bold px-3 outline-none font-mono focus:border-[#D4AF37]"
                     />
 
                     <div className="flex items-center gap-2 mt-2 flex-wrap">
                       <button
                         type="button" 
                         onClick={(e) => { e.preventDefault(); setQuickFollowUpDate(1); }}
-                        className="px-3 py-1.5 bg-[#020B1C] border border-[#243556] text-xs font-black text-[#D4AF37] hover:border-[#D4AF37] rounded-lg transition active:scale-95 cursor-pointer"
+                        className="px-3 py-1.5 bg-[#020B1C] border border-[#D4AF37]/20 text-xs text-[#D4AF37] hover:border-[#D4AF37] rounded-lg transition active:scale-95 cursor-pointer"
                       >
                         ⏳ غداً
                       </button>
                       <button
                         type="button" 
                         onClick={(e) => { e.preventDefault(); setQuickFollowUpDate(3); }}
-                        className="px-3 py-1.5 bg-[#020B1C] border border-[#243556] text-xs font-black text-[#D4AF37] hover:border-[#D4AF37] rounded-lg transition active:scale-95 cursor-pointer"
+                        className="px-3 py-1.5 bg-[#020B1C] border border-[#D4AF37]/20 text-xs  text-[#D4AF37] hover:border-[#D4AF37] rounded-lg transition active:scale-95 cursor-pointer"
                       >
                         ⏳ بعد 3 أيام
                       </button>
                       <button
                         type="button" 
                         onClick={(e) => { e.preventDefault(); setQuickFollowUpDate(7); }}
-                        className="px-3 py-1.5 bg-[#020B1C] border border-[#243556] text-xs font-black text-[#D4AF37] hover:border-[#D4AF37] rounded-lg transition active:scale-95 cursor-pointer"
+                        className="px-3 py-1.5 bg-[#020B1C] border border-[#D4AF37]/20 text-xs  text-[#D4AF37] hover:border-[#D4AF37] rounded-lg transition active:scale-95 cursor-pointer"
                       >
                         ⏳ بعد أسبوع
                       </button>
@@ -1518,13 +1554,15 @@ export default function CRMPage() {
                 </div>
 
                 <div className="pt-4 border-t border-[#243556]">
+                  {/* 🌟 تحديث وإعادة هيكلة زرار المتابعة التاريخية للدستور البصري الحركي الموحد */}
                   <button
                     type="button" 
                     onClick={(e) => { e.preventDefault(); handleSaveFollowUp(); }}
                     disabled={saving}
-                    className="w-full bg-black/60 hover:bg-[#D4AF37] border-2 border-[#D4AF37] text-[#D4AF37] hover:text-[#020B1C] font-black py-4 rounded-xl transition-all duration-300 shadow-[0_0_15px_rgba(212,175,55,0.25)] hover:shadow-[0_0_25px_rgba(212,175,55,0.45)] hover:translate-y-[-2px] text-sm cursor-pointer disabled:opacity-50"
+                    className="px-6 h-12 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50 w-full"
                   >
                     {saving ? "جاري الحفظ والمزامنة..." : "💾 حفظ المتابعة التاريخية للعميل"}
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                   </button>
                 </div>
               </div>
@@ -1538,7 +1576,7 @@ export default function CRMPage() {
 
   function RoomCounterWrapper({ label, value, field }: { label: string, value: number, field: string }) {
     return (
-      <div className="flex flex-row items-center justify-between bg-[#020B1C] border border-[#1f2d4d] px-3.5 rounded-xl transition-all hover:border-[#D4AF37]/35 shadow-inner group w-full h-11 select-none font-alexandria">
+      <div className="flex flex-row items-center justify-between bg-[#020B1C] border border-[#D4AF37]/15 px-3.5 rounded-xl transition-all hover:border-[#D4AF37]/35 shadow-inner group w-full h-11 select-none font-alexandria">
         
         <label className="text-white font-bold text-xs select-none truncate pr-1 group-hover:text-[#F0E6D2] cursor-pointer">
           {label}

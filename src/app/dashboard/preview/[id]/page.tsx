@@ -135,14 +135,14 @@ export default function AdminClientPreview() {
 
   const handleWhatsAppShare = () => {
     const customerName = customer?.name || "عميلنا الموقر";
-    const textMessage = `مرحباً سيد ${customerName}، يسعدنا في جولدن ديكوراشن إبلاغكم بإتاحة ونشر ملف المعاينة الفنية المحدث والمخطط ثلاثي الأبعاد لموقعكم الموقر عبر بوابتكم الرقمية الجارية: ${publicClientLink}`;
+    const textMessage = `مرحباً استاذ ${customerName}، يسعدنا في جولدن ديكوراشن إبلاغكم بإتاحة ونشر ملف المعاينة الفنية المحدث والمخطط ثلاثي الأبعاد لموقعكم الموقر عبر بوابتكم الرقمية الجارية: ${publicClientLink}`;
     window.open(`https://api.whatsapp.com/send?phone=${customer?.mobile ? '20' + customer.mobile : ''}&text=${encodeURIComponent(textMessage)}`, "_blank");
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#020B1C]" dir="rtl">
-        <div className="text-center select-none">
+        <div className="text-center select-none font-alexandria">
           <Loader2 className="animate-spin text-[#D4AF37] mx-auto" size={40} />
           <p className="text-sm text-gray-400 mt-4 font-black animate-pulse">جاري تحميل المجلد الفني والملف ثلاثي الأبعاد للموقع...</p>
         </div>
@@ -152,12 +152,13 @@ export default function AdminClientPreview() {
 
   if (error || !project) {
     return (
-      <div className="min-h-screen p-8 bg-[#020B1C] text-right" dir="rtl">
+      <div className="min-h-screen p-8 bg-[#020B1C] text-right font-alexandria" dir="rtl">
         <div className="max-w-md mx-auto bg-[#07132a] border border-rose-500/20 rounded-2xl p-6 text-center shadow-2xl">
           <AlertTriangle className="text-rose-500 mx-auto mb-4" size={40} />
           <h3 className="font-bold text-white text-lg">خلل في جلب الملف الفني</h3>
           <p className="text-xs text-rose-400 mt-2">{error || "لم يتم العثور على المشروع في قاعدة البيانات."}</p>
           <button 
+            type="button"
             onClick={() => router.back()}
             className="mt-6 bg-gradient-to-r from-[#D4AF37] to-[#F0E6D2] text-[#020B1C] text-xs font-black py-3 px-6 rounded-xl hover:scale-105 active:scale-95 transition cursor-pointer"
           >
@@ -169,14 +170,14 @@ export default function AdminClientPreview() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020B1C] p-4 md:p-8 text-right text-white select-none animate-fade-in" dir="rtl">
+    <div className="min-h-screen bg-[#020B1C] p-4 md:p-8 text-right text-white select-none animate-fade-in font-alexandria" dir="rtl">
       
-      {/* 🛠️ جدار الحماية البصري المعتمد لتوحيد شريط التمرير الفاخر 8px بأسهم التحكم */}
+      {/* 🛠️ جدار الحماية البصري المعتمد لتوحيد شريط التمرير الفاخر 6px بأسهم التحكم ومنع التقاطع */}
       <style dangerouslySetInnerHTML={{__html: `
-        ::-webkit-scrollbar { width: 5px !important; height: 5px !important; }
+        ::-webkit-scrollbar { width: 6px !important; height: 6px !important; }
         ::-webkit-scrollbar-track { background: #020B1C !important; }
         ::-webkit-scrollbar-thumb { background: #D4AF37 !important; border-radius: 9999px !important; }
-        ::-webkit-scrollbar-thumb:hover { background: #C9A45D !important; }
+        ::-webkit-scrollbar-thumb:hover { background: #AA7C11 !important; }
 
         /* تلوين أزرار أسهم الصعود والهبوط يدوياً لشريط التمرير */
         ::-webkit-scrollbar-button {
@@ -198,34 +199,40 @@ export default function AdminClientPreview() {
           background-position: center !important;
         }
 
-        /* توحيد كشوف البيانات والمرفقات لتكون أوف وايت */
+        /* إلغاء أكواد الإخفاء لضمان انسيابية التمرير بالماوس والجوال */
+        .overflow-x-auto { 
+          scrollbar-width: thin !important; 
+          -ms-overflow-style: auto !important; 
+          overflow-x: auto !important; 
+        }
+
+        /* توحيد كشوف البيانات والمرفقات لتكون أوف وايت ناعم */
         .spec-item, .spec-item * {
           color: #F0E6D2 !important;
         }
       `}} />
 
-      {/* شريط الإجراءات العلوي الفاخر الموحد مع لوحة التحكم */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8 border-b border-[#D4AF37]/20 pb-5">
+      {/* شريط الإجراءات العلوي الفاخر الموحد بالدستور البصري الميتاليكي المذهب للشركة */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8 border-b border-[#D4AF37]/20 pb-5 select-none">
         <div>
-          {/* تصغير حجم العنوان الرئيسي للتوافق مع الدستور الجمالي الموحد */}
           <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2">
             <span>إدارة ونشر الملف الفني للمشروع</span>
             <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
           </h1>
-          {/* تعديل لون التعريف بالكامل للأبيض الصافي لتعزيز التباين البصري */}
           <p className="text-white text-xs mt-2 font-semibold">إتاحة المخطط ثلاثي الأبعاد وشيت المقايسة لتصفح العميل المباشر.</p>
         </div>
 
-        <div className="flex items-center gap-4 flex-wrap">
-          {/* 1. فقاعة حالة النشر الحالية */}
-          <span className={`text-[10px] font-black px-3 py-1.5 rounded-full flex items-center gap-1.5 ${isPublished ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 animate-pulse" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"}`}>
+        <div className="flex items-center gap-3 flex-wrap">
+          {/* 1. فقاعة حالة النشر الحالية المذهب */}
+          <span className={`text-[10px] font-black px-3 py-1.5 rounded-xl flex items-center gap-1.5 ${isPublished ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 animate-pulse" : "bg-amber-500/10 text-amber-400 border border-amber-500/20"}`}>
             {isPublished ? <CheckCircle size={12} /> : <Lock size={12} />}
             {isPublished ? "منشور للعميل النهائي" : "مسودة (مخفي عن العميل)"}
           </span>
           
-          {/* 2. زر تبديل النشر وحجب الملف */}
+          {/* 2. زر تبديل النشر وحجب الملف للـ CRM */}
           <div className="relative group">
             <button 
+              type="button"
               onClick={handleTogglePublish}
               disabled={isUpdating}
               className={`flex items-center gap-2 text-[10px] font-black py-2.5 px-4 rounded-xl shadow-sm text-[#020B1C] transition-all cursor-pointer hover:scale-103 active:scale-97 ${isPublished ? "bg-gradient-to-r from-red-500 to-rose-400 hover:shadow-[0_0_15px_rgba(244,63,94,0.4)]" : "bg-gradient-to-r from-emerald-500 to-teal-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.4)]"}`}
@@ -236,16 +243,17 @@ export default function AdminClientPreview() {
             <div className="absolute top-full mt-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
               <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2.5 px-4 rounded-xl shadow-2xl relative">
                 🔄 تفعيل أو حظر صلاحية وصول العميل للمخطط التفصيلي والمقايسة
-                <div className="absolute bottom-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-t border-l border-[#D4AF37] rotate-45 -mb-1" />
+                <div className="absolute bottom-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-t border-l border-[#D4AF37] rotate-45 -mt-1" />
               </div>
             </div>
           </div>
 
-          {/* 3. زر معاينة بوابة العميل المباشرة */}
+          {/* 3. زر معاينة بوابة العميل المباشرة بالكبسولة المذهبة المعتمدة */}
           <div className="relative group">
             <button
+              type="button"
               onClick={() => window.open(`/public-estimate?code=${estimateNumber}`, "_blank")}
-              className="flex items-center gap-2 text-[10px] font-black bg-gradient-to-r from-[#D4AF37] to-[#F0E6D2] text-black px-5 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 hover:scale-105 active:scale-95 transition cursor-pointer animate-all"
+              className="flex items-center gap-2 text-[10px] font-black bg-gradient-to-r from-[#D4AF37] to-[#F0E6D2] text-black px-5 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 hover:scale-105 active:scale-95 transition cursor-pointer"
             >
               <UserCheck size={14} />
               <span>👁️ معاينة بوابة العميل</span>
@@ -253,7 +261,7 @@ export default function AdminClientPreview() {
             <div className="absolute top-full mt-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
               <div className="bg-[#07132a] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2.5 px-4 rounded-xl shadow-2xl relative">
                 📱 فتح الواجهة الرقمية الخارجية التي يتصفحها العميل الآن
-                <div className="absolute bottom-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-t border-l border-[#D4AF37] rotate-45 -mb-1" />
+                <div className="absolute bottom-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#07132a] border-t border-l border-[#D4AF37] rotate-45 -mt-1" />
               </div>
             </div>
           </div>
@@ -261,6 +269,7 @@ export default function AdminClientPreview() {
           {/* 4. زر العودة للخلف الفاخر */}
           <div className="relative group">
             <button 
+              type="button"
               onClick={() => router.push("/dashboard")}
               className="flex items-center gap-2 text-[10px] font-black text-[#D4AF37] hover:text-[#020B1C] hover:bg-gradient-to-r hover:from-[#D4AF37] hover:to-[#C9A45D] bg-[#07132a] border border-[#D4AF37]/40 hover:border-transparent px-4 py-2.5 rounded-xl transition-all duration-300 cursor-pointer hover:shadow-[0_0_15px_rgba(212,175,55,0.45)] hover:scale-103 active:scale-97"
             >
@@ -280,13 +289,12 @@ export default function AdminClientPreview() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* العمود الأيمن مدمج بالإطارات الرفيعة الشفافة الفاخرة */}
+        {/* العمود الأيمن مدمج بالإطارات الرفيعة الشفافة الفاخرة بالمقياس الإمبراطوري المتين بالمنصة */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl p-6 shadow-xl space-y-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
-            {/* تحويل لون ترويسة العنوان للون البني البرونزي المعتمد `#A17A4C` */}
-            <h2 className="text-sm font-black text-[#A17A4C] border-b border-[#D4AF37]/20 pb-3 flex items-center gap-2">
-              <Layout size={18} className="text-[#A17A4C]" />
+          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 shadow-xl space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+            <h2 className="text-sm font-black text-[#D4AF37] border-b border-[#D4AF37]/20 pb-3 flex items-center gap-2">
+              <Layout size={18} className="text-[#D4AF37]" />
               بيانات العميل والموقع الفنية
             </h2>
             <div className="space-y-4 text-xs spec-item">
@@ -319,12 +327,11 @@ export default function AdminClientPreview() {
             </div>
           </div>
 
-          {/* مديول مشاركة الرابط السريع للعميل عبر واتساب */}
-          <div className="bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl p-6 shadow-xl space-y-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
-            {/* تحويل لون ترويسة العنوان للون البني البرونزي المعتمد `#A17A4C` */}
-            <h2 className="text-sm font-black text-[#A17A4C] border-b border-[#D4AF37]/20 pb-3 flex items-center gap-2">
-              <Share2 size={18} className="text-[#A17A4C]" />
+          {/* مديول مشاركة الرابط السريع للعميل عبر واتساب بالمقياس الإمبراطوري المتين بالمنصة */}
+          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 shadow-xl space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+            <h2 className="text-sm font-black text-[#D4AF37] border-b border-[#D4AF37]/20 pb-3 flex items-center gap-2">
+              <Share2 size={18} className="text-[#D4AF37]" />
               مشاركة بوابة العميل والمقايسة
             </h2>
             <p className="text-[10px] text-gray-500 leading-relaxed font-bold">
@@ -335,6 +342,7 @@ export default function AdminClientPreview() {
               {/* زر نسخ الرابط مع التولتيب */}
               <div className="relative group">
                 <button
+                  type="button"
                   onClick={handleCopyLink}
                   className="w-full py-3 px-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#F0E6D2] hover:border-[#D4AF37] transition text-xs font-black flex items-center justify-between cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
                 >
@@ -351,9 +359,10 @@ export default function AdminClientPreview() {
                 </div>
               </div>
 
-              {/* زر إرسال واتساب مع التولتيب */}
+              {/* زر إرسال واتساب مع التولتيب بتصميم مستطيل رائع ذو ظل مذهب */}
               <div className="relative group">
                 <button
+                  type="button"
                   onClick={handleWhatsAppShare}
                   className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-[0_4px_15px_rgba(16,185,129,0.35)] text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 cursor-pointer transition hover:scale-[1.02] active:scale-[0.98]"
                 >
@@ -371,15 +380,14 @@ export default function AdminClientPreview() {
           </div>
 
           <div className="bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl p-6 shadow-sm space-y-4">
-            {/* تحويل لون ترويسة العنوان للون البني البرونزي المعتمد `#A17A4C` */}
-            <h2 className="text-sm font-bold text-[#A17A4C] border-b border-[#D4AF37]/20 pb-3 flex items-center gap-2">
-              <FileText size={18} className="text-[#A17A4C]" />
+            <h2 className="text-sm font-bold text-[#D4AF37] border-b border-[#D4AF37]/20 pb-3 flex items-center gap-2">
+              <FileText size={18} className="text-[#D4AF37]" />
               أحدث المرفقات والمستندات
             </h2>
             <div className="space-y-3 text-xs spec-item">
               <div className="flex justify-between items-center p-3 bg-[#020B1C]/50 rounded-xl border border-[#1f2d4d]">
                 <span className="font-semibold text-gray-300">شيت المقايسة التفصيلية المعتمد</span>
-                <button onClick={() => window.open(`/public-estimate?code=${estimateNumber}`, "_blank")} className="text-[#D4AF37] hover:text-[#F0E6D2] font-black flex items-center gap-1 cursor-pointer">
+                <button type="button" onClick={() => window.open(`/public-estimate?code=${estimateNumber}`, "_blank")} className="text-[#D4AF37] hover:text-[#F0E6D2] font-black flex items-center gap-1 cursor-pointer">
                   معاينة المخطط الرقمي <ExternalLink size={10} />
                 </button>
               </div>
@@ -389,9 +397,8 @@ export default function AdminClientPreview() {
           {/* مديول عرض الكروكي المرفوع حياً من العميل */}
           {project?.plan_url ? (
             <div className="bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl p-6 shadow-2xl space-y-4">
-              {/* تحويل لون ترويسة العنوان للون البني البرونزي المعتمد `#A17A4C` */}
-              <h2 className="text-sm font-bold text-[#A17A4C] border-b border-[#D4AF37]/20 pb-3 flex items-center gap-2">
-                <Upload size={18} className="text-[#A17A4C]" />
+              <h2 className="text-sm font-bold text-[#D4AF37] border-b border-[#D4AF37]/20 pb-3 flex items-center gap-2">
+                <Upload size={18} className="text-[#D4AF37]" />
                 الكروكي المرفق من العميل
               </h2>
               <div className="relative w-full h-44 rounded-xl overflow-hidden border border-[#1f2d4d]">
@@ -405,14 +412,13 @@ export default function AdminClientPreview() {
           )}
         </div>
 
-        {/* العمود الأيسر - نافذة العرض ثلاثية الأبعاد الفخمة */}
+        {/* العمود الأيسر - نافذة العرض ثلاثية الأبعاد الفخمة بالمقياس الإمبراطوري المتين بالمنصة */}
         <div className="lg:col-span-2">
-          <div className="bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl p-6 shadow-2xl h-full flex flex-col space-y-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 shadow-2xl h-full flex flex-col space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
             <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
-              {/* تحويل لون ترويسة العنوان للون البني البرونزي المعتمد `#A17A4C` */}
-              <h2 className="text-sm font-black text-[#A17A4C] flex items-center gap-2">
-                <Compass size={18} className="text-[#A17A4C]" />
+              <h2 className="text-sm font-black text-[#D4AF37] flex items-center gap-2">
+                <Compass size={18} className="text-[#D4AF37]" />
                 معاينة نموذج التصميم ثلاثي الأبعاد الفعلي (3D Model Panel)
               </h2>
               <span className="text-[10px] bg-[#020B1C] border border-[#D4AF37]/30 text-[#D4AF37] px-3 py-1.5 rounded-full font-bold">تفاعلي عبر المتصفح</span>

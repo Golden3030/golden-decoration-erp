@@ -116,13 +116,16 @@ export default function PayrollPage() {
         if (payErr) throw payErr;
 
         if (paymentStatus === "paid") {
+          // 🌟 تم معالجة وإصلاح ثغرة الـ payment_method وحقن طريقة صرف كاش افتراضية لتفادي تداخل القيود بقاعدة البيانات
           const { error: transErr } = await supabase
             .from("transactions")
             .insert([{
               project_id: null, 
               amount: calculatedNetSalary,
               type: "outflow",
-              category: "General_Expenses",
+              category: "administrative", // استخدام فئة المصاريف الإدارية المعتمدة بالخزينة
+              payment_method: "cash", // 👈 تم حل الثغرة وحقن طريقة الصرف الإلزامية كاش لمنع تعارض الـ Constraint
+              notes: `صرف مسير الراتب لشهر (${salaryMonth}) للموظف (${employeeName})`, // ربط بحقل الملاحظات المعتمد بالخزينة
               description: `صرف مسير الراتب الشهري لشهر (${salaryMonth}) للموظف (${employeeName}) [راتب أساسي: ${baseSalary} ج.م + حوافز: ${allowances} ج.م - الخصم المطبق للغياب والجزاءات: ${deductions} ج.م] وصافي منصرف الخزينة: ${calculatedNetSalary} ج.م.`
             }]);
 
@@ -167,42 +170,59 @@ export default function PayrollPage() {
   }, [payrollList]);
 
   return (
-    // 🌟 تم تعديل الكلاس البرمجي إلى flex-1 لإنهاء عائق الـ Box Model والقص الأفقي بالمتصفح كلياً
     <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       
-      {/* هيدر الهيكل لمنع وميض وتأخر تحميل الخط البصري FOUT */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-
       <Sidebar />
       
-      {/* 🛠️ جدار الحماية البصري الموحد وتعديل شريط التمرير المذهب للجريل والتفاصيل */}
+      {/* 🛠️ جدار الحماية البصري الموحد وتنسيق شريط التمرير المذهب ومنع التداخل نهائياً */}
       <style dangerouslySetInnerHTML={{__html: `
-        ::-webkit-scrollbar { width: 6px !important; height: 6px !important; }
-        ::-webkit-scrollbar-track { background: #020B1C !important; }
-        ::-webkit-scrollbar-thumb { background: #D4AF37 !important; border-radius: 9999px !important; }
-        ::-webkit-scrollbar-thumb:hover { background: #D4AF37 !important; }
-
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-          -webkit-appearance: none !important;
-          margin: 0 !important;
-        }
-        input[type="number"] { -moz-appearance: textfield !important; }
-
-        .overflow-x-auto::-webkit-scrollbar {
+        /* تفعيل وإظهار شريط التمرير الأفقي والرأسي بكافة الجداول بألوان ذهبية فاخرة */
+        ::-webkit-scrollbar { 
+          width: 4px !important; 
+          height: 4px !important; 
           display: block !important;
-          height: 6px !important;
         }
-        .overflow-x-auto::-webkit-scrollbar-thumb {
-          background: #D4AF37 !important;
-          border-radius: 9999px !important;
+        ::-webkit-scrollbar-track { 
+          background: #020B1C !important; 
+        }
+        ::-webkit-scrollbar-thumb { 
+          background: #D4AF37 !important; 
+          border-radius: 9999px !important; 
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+          background: #AA7C11 !important; 
         }
 
-        th, td, h1, h2, h3, h4, h5, h6, span, p, button, label, input, select, textarea {
-          font-family: 'Alexandria', Arial, sans-serif !important;
+        /* إلغاء أكواد الإخفاء لضمان انسيابية التمرير بالماوس والجوال */
+        .overflow-x-auto { 
+          
+          -ms-overflow-style: auto !important; 
+          overflow-x: auto !important; 
+        }
+
+        /* عزل تلوين وأوزان خلايا جدول الرواتب وحمايتها من التداخل الكلمي */
+        .premium-payroll-table thead th {
+          font-size: 0.75rem !important;
+          font-weight: 500 !important;
+          color: #D4AF37 !important;
+          text-align: right !important;
+          background-color: #020B1C !important;
+          border-bottom: 2px solid rgba(212, 175, 55, 0.3) !important;
+          padding: 14px 16px !important;
           letter-spacing: normal !important;
+        }
+
+        .premium-payroll-table tbody td {
+          font-size: 0.8rem !important;
+          font-weight: 400 !important;
+          text-align: center !important;
+          border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
+          padding: 14px 16px !important;
+          letter-spacing: normal !important;
+        }
+
+        .premium-payroll-table tbody tr:hover {
+          background-color: rgba(7, 19, 42, 0.8) !important;
         }
       `}} />
 
@@ -211,7 +231,6 @@ export default function PayrollPage() {
         
         <div className="p-4 md:p-8 space-y-6 text-right select-none">
           
-          {/* هيدر الصفحة متناسق بكسلياً مع شاشة الـ CRM والبنود والخامات */}
           <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-5 select-none">
             <div>
               <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2.5">
@@ -223,7 +242,7 @@ export default function PayrollPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 select-none text-xs md:text-sm font-bold">
-            <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between shadow-lg">
+            <div className="p-5 rounded-[2rem] bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between shadow-lg">
               <div className="flex justify-between items-start">
                 <Banknote className="w-6 h-6 text-rose-400" />
                 <span className="bg-red-500/10 text-red-400 text-xs px-2.5 py-0.5 rounded-full font-bold">مصروفات الموظفين الصادرة</span>
@@ -234,7 +253,7 @@ export default function PayrollPage() {
               </div>
             </div>
 
-            <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between shadow-lg">
+            <div className="p-5 rounded-[2rem] bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between shadow-lg">
               <div className="flex justify-between items-start">
                 <Receipt className="w-6 h-6 text-[#D4AF37]" />
                 <span className="bg-[#D4AF37]/10 text-[#D4AF37] text-[10px] px-2.5 py-0.5 rounded-full font-bold border border-[#D4AF37]/20">مجموع الخصومات والجزاءات</span>
@@ -257,7 +276,7 @@ export default function PayrollPage() {
               <div className="space-y-4 text-xs md:text-sm font-bold">
                 
                 <div>
-                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] select-none">الموظف / المهندس المستهدف *</label>
+                  <label className="block text-[#D4AF37] mb-1.5 px-3 text-[12px] select-none">الموظف / المهندس المستهدف *</label>
                   <select
                     value={selectedUserId}
                     onChange={(e) => setSelectedUserId(e.target.value)}
@@ -271,7 +290,7 @@ export default function PayrollPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] select-none">الشهر المالي للاستحقاق *</label>
+                  <label className="block text-[#D4AF37] mb-1.5 text-[12px] px-3 select-none">الشهر المالي للاستحقاق *</label>
                   <input
                     type="month"
                     value={salaryMonth}
@@ -282,10 +301,10 @@ export default function PayrollPage() {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] select-none whitespace-nowrap">الراتب الأساسي الثابت *</label>
+                    <label className="block text-[#D4AF37] mb-1.5 text-[12px] px-8 select-none whitespace-nowrap">الراتب الأساسي الثابت *</label>
                     <div className="flex items-center gap-2.5 h-11" dir="ltr">
                       <button
-                        type="button" // 👈 صمام الأمان المانع للريفريش
+                        type="button" 
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -307,7 +326,7 @@ export default function PayrollPage() {
                         className="flex-1 h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white text-center font-mono font-bold text-xs outline-none focus:border-[#D4AF37]"
                       />
                       <button
-                        type="button" // 👈 صمام الأمان المانع للريفريش
+                        type="button" 
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -321,10 +340,10 @@ export default function PayrollPage() {
                   </div>
 
                   <div>
-                    <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] select-none whitespace-nowrap">حوافز ومكافآت (البدلات)</label>
+                    <label className="block text-[#D4AF37] mb-1.5 text-[12px] px-8 select-none whitespace-nowrap">حوافز ومكافآت (البدلات)</label>
                     <div className="flex items-center gap-2.5 h-11" dir="ltr">
                       <button
-                        type="button" // 👈 صمام الأمان المانع للريفريش
+                        type="button" 
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -346,7 +365,7 @@ export default function PayrollPage() {
                         className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#F0E6D2] text-center px-3 outline-none font-mono font-bold text-xs focus:border-[#D4AF37]"
                       />
                       <button
-                        type="button" // 👈 صمام الأمان المانع للريفريش
+                        type="button" 
                         onClick={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
@@ -361,10 +380,10 @@ export default function PayrollPage() {
                 </div>
 
                 <div className="bg-[#020B1C] border border-red-500/20 p-4 rounded-xl space-y-3 select-none shadow-inner">
-                  <label className="block text-rose-400/80 mb-1 font-bold text-[10px] select-none">🚨 الخصم والاستقطاع والجزاءات المطبقة</label>
+                  <label className="block text-rose-400/80 mb-1 text-[11px] select-none">🚨 الخصم والاستقطاع والجزاءات المطبقة</label>
                   <div className="flex items-center gap-2.5 h-11" dir="ltr">
                     <button
-                      type="button" // 👈 صمام الأمان المانع للريفريش
+                      type="button" 
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -386,7 +405,7 @@ export default function PayrollPage() {
                       className="flex-1 h-11 rounded-xl bg-[#07132a] border border-[#243556] text-rose-400 text-center font-mono font-black text-xs outline-none focus:border-red-500/40"
                     />
                     <button
-                      type="button" // 👈 صمام الأمان المانع للريفريش
+                      type="button" 
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -408,7 +427,7 @@ export default function PayrollPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] select-none">حالة صرف وتسليم الراتب *</label>
+                  <label className="block text-[#D4AF37] mb-1.5 text-[12px] px-3 select-none">حالة صرف وتسليم الراتب *</label>
                   <select
                     value={paymentStatus}
                     onChange={(e) => setPaymentStatus(e.target.value as any)}
@@ -419,53 +438,53 @@ export default function PayrollPage() {
                   </select>
                 </div>
 
-                {/* زر حفظ وصرف الراتب بالشكل الميتاليكي الفاخر المتوهج */}
+                {/* زر حفظ وصرف الراتب المذهب */}
                 <button
-                  type="button" // 👈 صمام أمان المانع للريفريش
+                  type="button" 
                   onClick={(e) => { e.preventDefault(); handleCreatePayroll(); }}
                   disabled={saving}
                   className="w-full px-6 py-3.5 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300  text-md cursor-pointer flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-40"
                 >
                   {saving ? <Loader2 className="animate-spin w-4 h-4" /> : <Coins className="w-4 h-4" />}
                   <span>{saving ? "جاري إصدار الكشف ماليًا..." : "اعتماد وصرف الراتب"}</span>
-                  {/* عاكس الإضاءة النيوني المتوهج بقاع الزر */}
                   <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                 </button>
               </div>
             </div>
 
             <div className="lg:col-span-2 space-y-4">
-              <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl overflow-hidden shadow-2xl">
+              <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] overflow-hidden shadow-2xl">
                 <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d] select-none">
-                  <h3 className="text-[#D4AF37] text-md md:text-md">سجل رواتب وخصومات الموظفين التاريخي ({payrollList.length})</h3>
+                  <h3 className="text-[#D4AF37] font-bold text-md md:text-md">سجل رواتب وخصومات الموظفين  ({payrollList.length})</h3>
                 </div>
                 
+                {/* 🌟 تم تفعيل جدار التمرير المذهب وحظر التداخل بـ whitespace-nowrap و min-w-[850px] هنا بالبكسل */}
                 <div className="overflow-x-auto max-h-[550px] overflow-y-auto">
                   {loading ? (
-                    <div className="p-12 text-center text-[#D4AF37] text-xs md:text-sm animate-pulse">جاري سحب كشوف الرواتب التاريخية...</div>
+                    <div className="p-12 text-center text-[#D4AF37] text-xs md:text-sm animate-pulse">جاري سحب كشوف الرواتب ...</div>
                   ) : payrollList.length > 0 ? (
-                    <table className="w-full text-right table-auto">
-                      <thead className="bg-[#0b1d3d] text-[#D4AF37] font-bold border-b border-[#1f2d4d] select-none text-[13px]">
-                        <tr>
-                          <th className="py-3 px-4">الشهر المالي</th>
-                          <th className="py-3 px-4">اسم الموظف / المهندس</th>
-                          <th className="py-3 px-4 font-mono">الراتب الأساسي</th>
-                          <th className="py-3 px-4 font-mono">البدلات والحوافز</th>
-                          <th className="py-3 px-4 font-mono text-rose-400">الخصومات المطبقة</th>
-                          <th className="py-3 px-4 font-mono">صافي المنصرف ج.م</th>
-                          <th className="py-3 px-4 text-center">الوضعية المالية</th>
+                    <table className="w-full text-right table-auto min-w-[850px] premium-payroll-table">
+                      <thead>
+                        <tr className="whitespace-nowrap select-none">
+                          <th>الشهر المالي</th>
+                          <th>اسم الموظف / المهندس</th>
+                          <th>الراتب الأساسي</th>
+                          <th>البدلات والحوافز</th>
+                          <th className=" text-rose-400">الخصومات المطبقة</th>
+                          <th>صافي المنصرف ج.م</th>
+                          <th className="text-center">الوضعية المالية</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#1f2d4d]/60 text-xs md:text-sm text-slate-100 font-semibold">
                         {payrollList.map((p) => (
-                          <tr key={p.id} className="hover:bg-[#020B1C]/50 transition duration-150">
-                            <td className="p-4 font-mono text-gray-400 whitespace-nowrap">{p.salary_month}</td>
-                            <td className="p-4 font-black text-white">{p.users?.name || "موظف ممسوح"}</td>
-                            <td className="p-4 font-mono text-white whitespace-nowrap">{Number(p.base_salary).toLocaleString()} ج.م</td>
-                            <td className="p-4 font-mono text-emerald-400 font-bold whitespace-nowrap">+{Number(p.allowances).toLocaleString()} ج.م</td>
-                            <td className="p-4 font-mono text-rose-400 font-bold whitespace-nowrap">-{Number(p.deductions).toLocaleString()} ج.م</td>
-                            <td className="p-4 font-mono font-black text-[#D4AF37] whitespace-nowrap">{Number(p.net_salary).toLocaleString()} ج.م</td>
-                            <td className="p-4 text-center whitespace-nowrap">
+                          <tr key={p.id} className="whitespace-nowrap">
+                            <td className="font-mono text-gray-400">{p.salary_month}</td>
+                            <td className="font-black text-white">{p.users?.name || "موظف ممسوح"}</td>
+                            <td className="font-mono text-white">{Number(p.base_salary).toLocaleString()} ج.م</td>
+                            <td className="font-mono text-emerald-400 font-bold">+{Number(p.allowances).toLocaleString()} ج.م</td>
+                            <td className="font-mono text-rose-400 font-bold">-{Number(p.deductions).toLocaleString()} ج.م</td>
+                            <td className="font-mono font-black text-[#D4AF37]">{Number(p.net_salary).toLocaleString()} ج.م</td>
+                            <td className="text-center">
                               <span className={`px-2.5 py-1 rounded text-[10px] font-black ${
                                 p.payment_status === "paid" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 animate-pulse" : "bg-red-500/10 text-red-400 animate-pulse"
                               }`}>{p.payment_status === "paid" ? "تم الصرف" : "تحت الحساب"}</span>

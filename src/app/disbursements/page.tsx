@@ -5,6 +5,7 @@ import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { supabase } from "@/lib/supabaseClient";
 import { isOnline, addToOfflineQueue } from "@/lib/offline-sync";
+import { Plus, Minus, Clipboard, Info, CheckCircle2, Lock, Loader2, Package } from "lucide-react";
 
 interface Disbursement {
   id: string;
@@ -195,30 +196,37 @@ export default function MaterialDisbursementsPage() {
   }
 
   return (
-    <main className="min-h-screen flex flex-row-reverse bg-[#020B1C]">
+    <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       <Sidebar />
-      <section dir="rtl" className="flex-1 flex flex-col mr-64">
+      <section className="flex-1 flex flex-col lg:pr-56 m-0 min-h-screen">
         <Header />
-        <div className="p-8 space-y-6 text-right">
+        <div className="p-4 md:p-8 space-y-6 text-right select-none animate-fade-in">
           
           <div>
-            <h1 className="text-3xl font-bold text-[#D4AF37]">سندات صرف الخامات والمخازن</h1>
-            <p className="text-gray-400 text-sm mt-1">تتبع تداول وصرف المواد من مخازن الشركة للمواقع الميدانية ومقارنة الاستهلاك الفعلي بالمقايسة.</p>
+            <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2">
+              <span>سندات صرف الخامات والمخازن (Inventory Disbursements)</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
+            </h1>
+            <p className="text-white text-xs mt-2">تتبع تداول وصرف المواد من مخازن الشركة للمواقع الميدانية ومقارنة الاستهلاك الفعلي بالمقايسة.</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* لوحة تسجيل مستند صرف جديد */}
-            <div className="bg-[#07132a] border border-[#243556] rounded-2xl p-6 space-y-4 h-fit">
-              <h3 className="text-[#F0E6D2] font-bold text-sm border-b border-[#1f2d4d] pb-2">➕ تسجيل سند صرف خامات جديد</h3>
-              <div className="space-y-3.5 text-xs">
+            {/* لوحة تسجيل مستند صرف جديد مدمجة بالمقياس الإمبراطوري المتين بالمنصة */}
+            <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 space-y-5 h-fit shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+              
+              <h3 className="text-[#D4AF37] font-bold text-md md:text-md border-b border-[#D4AF37] pb-3 flex items-center gap-2 select-none">
+                <span>➕</span> تسجيل سند صرف خامات جديد
+              </h3>
+              <div className="space-y-4 font-semibold text-xs text-slate-300">
                 
                 <div>
-                  <label className="block text-white mb-1.5 font-bold">موقع العمل المستهدف *</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">موقع العمل المستهدف *</label>
                   <select
                     value={selectedProjectId}
                     onChange={(e) => setSelectedProjectId(e.target.value)}
-                    className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#243556] text-white px-3 outline-none"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-3 outline-none cursor-pointer focus:border-[#D4AF37]"
                   >
                     <option value="">-- اختر موقع العمل المسحوب له --</option>
                     {projects.map((p) => (
@@ -228,11 +236,11 @@ export default function MaterialDisbursementsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-white mb-1.5 font-bold">الخامة / المنتج المراد سحبه *</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">الخامة / المنتج المراد سحبه *</label>
                   <select
                     value={selectedProductId}
                     onChange={(e) => setSelectedProductId(e.target.value)}
-                    className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#243556] text-[#D4AF37] font-bold px-3 outline-none"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-bold px-3 outline-none cursor-pointer focus:border-[#D4AF37]"
                   >
                     <option value="">-- اختر الخامة من مكتبة المنتجات --</option>
                     {products.map((p) => (
@@ -243,8 +251,8 @@ export default function MaterialDisbursementsPage() {
 
                 {/* كارت كشف الانحراف ومقارنة ميزانية المتر بالمقايسة حياً */}
                 {selectedProjectId && selectedProductId && (
-                  <div className="bg-[#020B1C] border border-[#243556] rounded-xl p-3.5 space-y-2 select-none animate-fade-in text-[10px]">
-                    <p className="text-white font-bold border-b border-[#1f2d4d] pb-1">⚖️ ميزانية الاستهلاك الفعلي للمشروع:</p>
+                  <div className="bg-[#020B1C] border border-[#D4AF37]/20 rounded-xl p-3.5 space-y-2 select-none animate-fade-in text-[10px] shadow-inner">
+                    <p className="text-white font-bold border-b border-[#D4AF37]/10 pb-1">⚖️ ميزانية الاستهلاك الفعلي للمشروع:</p>
                     <div className="flex justify-between">
                       <span className="text-gray-400">الكمية المعتمدة للعميل بالمقايسة:</span>
                       <span className="text-[#D4AF37] font-bold">{currentProductStatistics.budgeted} {currentProductStatistics.unit}</span>
@@ -262,84 +270,94 @@ export default function MaterialDisbursementsPage() {
                 )}
 
                 <div>
-                  <label className="block text-white mb-1.5 font-bold">الكمية المنصرفة والموردة فعلياً *</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">الكمية المنصرفة والموردة  *</label>
                   <input
                     type="number"
                     min="1"
                     placeholder="0"
                     value={qtyDisbursed}
                     onChange={(e) => setQtyDisbursed(e.target.value !== "" ? Number(e.target.value) : "")}
-                    className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none font-mono focus:border-[#D4AF37]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-white mb-1.5 font-bold">المستلم الفعلي للمواد بالموقع</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">المستلم الفعلي للمواد بالموقع</label>
                   <input
                     type="text"
                     placeholder="مثال: المهندس المشرف / المقاول"
                     value={receivedBy}
                     onChange={(e) => setReceivedBy(e.target.value)}
-                    className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#243556] text-white px-3 outline-none"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none focus:border-[#D4AF37] font-medium"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-white mb-1.5 font-bold">تاريخ صرف وتسليم المواد</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">تاريخ صرف وتسليم المواد</label>
                   <input
                     type="date"
                     value={disbursedDate}
                     onChange={(e) => setDisbursedDate(e.target.value)}
-                    className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono"
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-bold px-4 outline-none font-mono focus:border-[#D4AF37]"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-white mb-1.5 font-bold">ملاحظات الصرف والتشوين بالموقع</label>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">ملاحظات الصرف والتشوين بالموقع</label>
                   <textarea
                     placeholder="تفاصيل التشوين بالموقع، حالة استلام المواد..."
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
-                    className="w-full h-20 bg-[#020B1C] border border-[#243556] text-white p-3 rounded-lg outline-none"
+                    className="w-full h-20 bg-[#020B1C] border border-[#D4AF37]/20 text-white p-3.5 rounded-xl outline-none focus:border-[#D4AF37] resize-none font-medium"
                   />
                 </div>
 
+                {/* 🌟 ترقية زرار صرف الخامات للدستور البصري الحركي الموحد بـ عاكس الإضاءة السفلي */}
                 <button
-                  onClick={handleCreateDisbursement}
+                  type="button" 
+                  onClick={(e) => { e.preventDefault(); handleCreateDisbursement(); }}
                   disabled={saving}
-                  className="w-full bg-[#D4AF37] hover:bg-[#F0E6D2] text-black font-bold py-3.5 rounded-lg text-xs cursor-pointer transition disabled:opacity-50"
+                  className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-40 cursor-pointer"
                 >
-                  {saving ? "جاري تسجيل السند..." : "💾 تسجيل وصرف مستند الخامات"}
+                  {saving ? <Loader2 className="animate-spin w-4 h-4 text-[#D4AF37]" /> : <Package className="w-4 h-4 text-[#D4AF37]" />}
+                  <span>{saving ? "جاري تسجيل السند..." : "💾 تسجيل وصرف مستند الخامات"}</span>
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                 </button>
               </div>
             </div>
 
             {/* جدول عرض كشوف وحركات صرف الخامات للمشاريع */}
             <div className="lg:col-span-2 space-y-4">
-              <div className="bg-[#07132a] border border-[#1f2d4d] rounded-2xl overflow-hidden shadow-2xl">
-                <div className="p-4 border-b border-[#243556] bg-[#0b1b3d]">
-                  <h3 className="text-[#F0E6D2] font-bold text-xs">سجل المخرجات وسندات صرف الخامات الميدانية للمواقع ({disbursements.length})</h3>
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] overflow-hidden shadow-2xl flex flex-col relative w-full">
+                <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+                <div className="p-4 border-b border-[#D4AF37]/20 bg-[#0b1b3d]/60 select-none">
+                  <h3 className="text-[#D4AF37] text-md font-bold flex items-center gap-2">
+                    <span>📦</span> سجل المخرجات وسندات صرف الخامات للمواقع ({disbursements.length})
+                  </h3>
                 </div>
-                <div className="overflow-x-auto max-h-[550px] overflow-y-auto">
+                
+                {/* تفعيل التمرير مذهب الألوان وحماية الجدول من التقاطع بـ whitespace-nowrap و min-w-[850px] بالكامل */}
+                <div className="overflow-x-auto max-h-[550px] overflow-y-auto ai-chat-scroll">
                   {loading ? (
-                    <div className="p-12 text-center text-gray-400 text-sm animate-pulse">جاري جلب سجل حركات مخازن المواقع...</div>
+                    <div className="p-12 text-center text-[#D4AF37] animate-pulse text-xs font-bold">جاري جلب سجل حركات مخازن المواقع...</div>
                   ) : disbursements.length > 0 ? (
-                    <table className="w-full text-right text-xs text-white">
-                      <thead className="bg-[#0b1d3d] text-[#F0E6D2]">
-                        <tr>
-                          <th className="p-4">تاريخ الصرف</th>
-                          <th className="p-4">موقع المشروع المستلم</th>
-                          <th className="p-4">اسم الخامة الإنشائية</th>
-                          <th className="p-4 font-mono">الكمية المنصرفة</th>
-                          <th className="p-4">مستلم المواد بالموقع</th>
-                          <th className="p-4">ملاحظات المستند</th>
+                    <table className="w-full text-right table-auto min-w-[850px] premium-disbursements-table">
+                      <thead>
+                        <tr className="whitespace-nowrap select-none bg-black">
+                          {/* 🌟 تم حل ثغرة التباين الصامت هنا بحقن كلاس التلوين المذهب والـ bg الأسود مباشرة على الـ th لمنع أي تداخل */}
+                          <th className="p-4 text-sm font-medium text-[#D4AF37] bg-[#07132a]/60 text-right border-b-2 border-[#D4AF37]/30">تاريخ الصرف</th>
+                          <th className="p-4 text-sm font-medium text-[#D4AF37] bg-[#07132a]/60 text-right border-b-2 border-[#D4AF37]/30">موقع المشروع المستلم</th>
+                          <th className="p-4 text-sm font-medium text-[#D4AF37] bg-[#07132a]/60 text-right border-b-2 border-[#D4AF37]/30">اسم الخامة الإنشائية</th>
+                          <th className="p-4 text-sm font-medium text-[#D4AF37] bg-[#07132a]/60 text-right border-b-2 border-[#D4AF37]/30">الكمية المنصرفة</th>
+                          <th className="p-4 text-sm font-medium text-[#D4AF37] bg-[#07132a]/60 text-right border-b-2 border-[#D4AF37]/30">مستلم المواد بالموقع</th>
+                          <th className="p-4 text-sm font-medium text-[#D4AF37] bg-[#07132a]/60 text-right border-b-2 border-[#D4AF37]/30">ملاحظات المستند</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#1f2d4d]">
+                      <tbody className="divide-y divide-[#1f2d4d]/60 text-xs md:text-sm text-slate-100 font-semibold">
                         {disbursements.map((d) => (
-                          <tr key={d.id} className="hover:bg-[#020B1C]/50 transition duration-150">
+                          <tr key={d.id} className="whitespace-nowrap">
                             <td className="p-4 font-mono text-gray-400">{d.disbursed_date}</td>
-                            <td className="p-4 font-bold text-[#F0E6D2]">{d.projects?.project_name || "موقع ممسوح"}</td>
+                            <td className="p-4 font-black text-[#F0E6D2]">{d.projects?.project_name || "موقع ممسوح"}</td>
                             <td className="p-4 font-bold">{d.products_library?.product_name || "خامة ممسوحة"}</td>
                             <td className="p-4 font-mono font-bold text-[#D4AF37]">{d.quantity_disbursed} {d.products_library?.unit || "وحدة"}</td>
                             <td className="p-4 text-gray-300 font-bold">{d.received_by || "مشرف الموقع"}</td>

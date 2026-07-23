@@ -79,7 +79,7 @@ export default function AddCustomerModal({ onClose }: { onClose: () => void }) {
             <label className="block text-white text-sm mb-2 font-bold">رقم الموبايل *</label>
             <input
               type="text"
-              placeholder="رقم المحمول الرئيسي"
+              placeholder="رقم الموبايل "
               value={mobile}
               onChange={(e) => setMobile(e.target.value)}
               className="w-full h-12 text-base rounded-xl bg-[#020B1C] border border-[#243556] text-white px-4 outline-none focus:border-[#F0E6D2]"
@@ -89,7 +89,7 @@ export default function AddCustomerModal({ onClose }: { onClose: () => void }) {
             <label className="block text-white text-sm mb-2 font-bold">الهاتف (اختياري)</label>
             <input
               type="text"
-              placeholder="رقم الهاتف الأرضي أو الإضافي"
+              placeholder="رقم موبايل اخر"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               className="w-full h-12 text-base rounded-xl bg-[#020B1C] border border-[#243556] text-white px-4 outline-none focus:border-[#F0E6D2]"
@@ -98,7 +98,7 @@ export default function AddCustomerModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div>
-          <label className="block text-white text-sm mb-2 font-bold">العنوان الرئيسي (اختياري)</label>
+          <label className="block text-white text-sm mb-2 font-bold">العنوان  (اختياري)</label>
           <input
             type="text"
             placeholder="عنوان إقامة العميل الرئيسي"

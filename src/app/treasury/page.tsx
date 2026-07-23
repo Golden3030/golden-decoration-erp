@@ -87,6 +87,39 @@ const specialtyLabels: Record<string, string> = {
 export default function TreasuryPage() {
   const router = useRouter();
 
+  // 🔒 حارس الصلاحيات الحقيقي - كانت الشاشة دي متاحة لأي حد يعرف الرابط مباشرة
+  // بغض النظر عن دوره، وده كان بيسمح لغير المخوّلين يشوفوا أو حتى يسجّلوا سندات مالية فعلية
+  const [authChecked, setAuthChecked] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const ALLOWED_TREASURY_ROLES = ["admin", "owner", "manager", "accountant"];
+
+  useEffect(() => {
+    async function verifyAccess() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push("/");
+          return;
+        }
+        const { data: profile } = await supabase.from("users").select("role").eq("id", user.id).single();
+        const role = String(profile?.role || "").toLowerCase();
+
+        if (!ALLOWED_TREASURY_ROLES.includes(role)) {
+          alert("⛔ ليس لديك صلاحية الوصول لشاشة إدارة المالية والحسابات.");
+          router.push("/dashboard");
+          return;
+        }
+        setIsAuthorized(true);
+      } catch (err) {
+        console.error("Access verification error:", err);
+        router.push("/dashboard");
+      } finally {
+        setAuthChecked(true);
+      }
+    }
+    verifyAccess();
+  }, [router]);
+
   const [activeTab, setActiveTab] = useState<"overview" | "vouchers" | "ledgers" | "analysis">("overview");
 
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -141,13 +174,15 @@ export default function TreasuryPage() {
     document.title = "إدارة المالية والحسابات | Golden Decoration";
   }, []);
 
+  // 🌟 تم الحل البرمجي هنا بحقن [isAuthorized] في مصفوفة التبعيات لتنبيه مستشعر الجلب فور تفعيل الصلاحية
   useEffect(() => {
+    if (!isAuthorized) return;
     loadTreasuryData();
     const unsubscribe = setupRealtimeSubscription();
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [isAuthorized]);
 
   useEffect(() => {
     if (!projId) {
@@ -177,6 +212,11 @@ export default function TreasuryPage() {
       ]);
 
       if (transRes.error) throw transRes.error;
+      if (projRes.error) throw projRes.error;
+      if (subsRes.error) throw subsRes.error;
+      if (custRes.error) throw custRes.error;
+      if (usersRes.error) throw usersRes.error;
+
       setTransactions(transRes.data || []);
       setProjects(projRes.data || []);
       setSubcontractors(subsRes.data || []);
@@ -521,40 +561,87 @@ export default function TreasuryPage() {
     setStatementType(type);
   };
 
+  if (!authChecked) {
+    return (
+      <div className="min-h-screen bg-[#020B1C] flex items-center justify-center text-[#D4AF37] font-black">
+        جاري التحقق من الصلاحيات...
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
+
   return (
-    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden" dir="rtl">
+    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       
+      {/* 🛠️ ورقة التنسيق الموحدة للدفتر العام - محصورة لحماية السايدبار والهيدر */}
       <style dangerouslySetInnerHTML={{ __html: `
-        ::-webkit-scrollbar { width: 6px !important; height: 6px !important; }
-        ::-webkit-scrollbar-track { background: #020B1C !important; }
-        ::-webkit-scrollbar-thumb { background: #D4AF37 !important; border-radius: 9999px !important; }
-        ::-webkit-scrollbar-thumb:hover { background: #D4AF37 !important; }
+          ::-webkit-scrollbar {
+            width: 6px !important;
+            height: 6px !important;
+          }
+          ::-webkit-scrollbar-track {
+            background: #020B1C !important;
+          }
+          ::-webkit-scrollbar-thumb {
+            background: #D4AF37 !important;
+            border-radius: 9999px !important;
+          }
+          ::-webkit-scrollbar-thumb:hover {
+            background: #C9A45D !important;
+          }
 
-        ::-webkit-scrollbar-horizontal,
-        .overflow-x-auto::-webkit-scrollbar { display: none !important; height: 0px !important; }
-        .overflow-x-auto { scrollbar-width: none !important; -ms-overflow-style: none !important; overflow-x: auto !important; }
-
-        th, td, h1, h2, h3, h4, h5, h6, span, p, button, label, input, select, textarea, a {
-          font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+          /* إلغاء أكواد الإخفاء لضمان انسيابية التمرير بالماوس والجوال */
+        .overflow-x-auto { 
+          
+          -ms-overflow-style: auto !important; 
+          overflow-x: auto !important; 
         }
-
-        thead th, th {
-          font-size: 0.95rem !important;
-          font-weight: 900 !important;
+          /* تلوين أزرار أسهم الصعود والهبوط يدوياً لشريط التمرير */
+          ::-webkit-scrollbar-button {
+            display: block !important;
+            background-color: #020B1C !important;
+            height: 10px !important;
+            width: 10px !important;
+          }
+          ::-webkit-scrollbar-button:vertical:decrement {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23D4AF37'><polygon points='50,20 15,80 85,80'/></svg>") !important;
+            background-size: 6px !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+          }
+          ::-webkit-scrollbar-button:vertical:increment {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23D4AF37'><polygon points='15,20 85,20 50,80'/></svg>") !important;
+            background-size: 6px !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+          }
+        
+          
+        .premium-treasury-table thead th {
+          font-size: 0.75rem !important;
+          font-weight: 500 !important;
           color: #D4AF37 !important;
           text-align: right !important;
-          border-bottom: 2px solid #1f2d4d !important;
-          background-color: #0b1d3d !important;
+          background-color: #020B1C !important;
+          border-bottom: 2px solid rgba(212, 175, 55, 0.3) !important;
           padding: 14px 16px !important;
+          letter-spacing: normal !important;
         }
 
-        tbody td, td {
-          font-size: 0.85rem !important;
-          font-weight: 600 !important;
-          color: #F0E6D2 !important;
-          text-align: right !important;
-          border-bottom: 1px solid rgba(31, 45, 77, 0.4) !important;
+        .premium-treasury-table tbody td {
+          font-size: 0.8rem !important;
+          font-weight: 400 !important;
+          text-align: center !important;
+          border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
           padding: 14px 16px !important;
+          letter-spacing: normal !important;
+        }
+
+        .premium-treasury-table tbody tr:hover {
+          background-color: rgba(7, 19, 42, 0.8) !important;
         }
       `}} />
 
@@ -562,42 +649,63 @@ export default function TreasuryPage() {
       <section className="w-full lg:pr-56 min-h-screen flex flex-col">
         <Header />
         
-        <div className="p-4 md:p-8 space-y-6 text-right select-none font-sans">
+        <div className="p-4 md:p-8 space-y-6 text-right select-none">
           
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#1f2d4d] pb-5">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-[#D4AF37]/20 pb-5">
             <div>
-              <h1 className="text-3xl md:text-4xl font-black text-[#D4AF37] flex items-center gap-2">
-                <span>الدفتر العام وحسابات الخزينة والعهد</span>
+              <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2">
+                <span>الدفتر العام وحسابات الخزنة والعهد</span>
                 <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
               </h1>
-              <p className="text-slate-400 text-xs mt-2 font-bold">تسجيل السندات، مقاصة عُهد المهندسين، ومطابقة حسابات الموردين والشركاء حياً.</p>
+              <p className="text-white text-xs mt-2">تسجيل السندات، مقاصة عهد المهندسين، ومطابقة حسابات الموردين والشركاء .</p>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-2.5 border-b border-[#243556]/60 pb-4">
+          {/* 🌟 إعادة تصميم تابات التحكم العلوية بالدستور المعتمد بالبكسل */}
+          <div className="flex flex-row flex-nowrap overflow-x-auto gap-2 border-b border-[#D4AF37]/20 pb-4 print:hidden select-none">
             <button 
               onClick={() => { setActiveTab("overview"); clearForm(); }}
-              className={`py-3 px-5 text-xs font-black flex items-center gap-2 rounded-full cursor-pointer transition-all duration-300 ${activeTab === "overview" ? "bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] text-[#020B1C]" : "border border-gray-600 text-white hover:border-gray-400"}`}
+              className={`py-2.5 px-4 text-xs flex items-center gap-1.5 rounded-xl cursor-pointer transition-all duration-300 whitespace-nowrap shrink-0 ${
+                activeTab === "overview" 
+                  ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.25)] font-bold scale-[1.02]" 
+                  : "bg-[#07132a] border border-[#D4AF37]/10 text-[#F0E6D2] hover:border-[#D4AF37]/30 hover:text-[#F0E6D2]"
+              }`}
             >
-              <Coins size={14} /> الأرصدة وقنوات السيولة
+              <Coins size={14} /> 
+              <span>الأرصدة وقنوات السيولة</span>
             </button>
             <button 
               onClick={() => { setActiveTab("vouchers"); clearForm(); }}
-              className={`py-3 px-5 text-xs font-black flex items-center gap-2 rounded-full cursor-pointer transition-all duration-300 ${activeTab === "vouchers" ? "bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] text-[#020B1C]" : "border border-gray-600 text-white hover:border-gray-400"}`}
+              className={`py-2.5 px-4 text-xs flex items-center gap-1.5 rounded-xl cursor-pointer transition-all duration-300 whitespace-nowrap shrink-0 ${
+                activeTab === "vouchers" 
+                  ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.25)] font-bold scale-[1.02]" 
+                  : "bg-[#07132a] border border-[#D4AF37]/10 text-[#F0E6D2] hover:border-[#D4AF37]/30 hover:text-[#F0E6D2]"
+              }`}
             >
-              <Receipt size={14} /> تحرير سند (قبض / صرف)
+              <Receipt size={14} /> 
+              <span>تحرير سند (قبض / صرف)</span>
             </button>
             <button 
               onClick={() => { setActiveTab("ledgers"); clearForm(); }}
-              className={`py-3 px-5 text-xs font-black flex items-center gap-2 rounded-full cursor-pointer transition-all duration-300 ${activeTab === "ledgers" ? "bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] text-[#020B1C]" : "border border-gray-600 text-white hover:border-gray-400"}`}
+              className={`py-2.5 px-4 text-xs flex items-center gap-1.5 rounded-xl cursor-pointer transition-all duration-300 whitespace-nowrap shrink-0 ${
+                activeTab === "ledgers" 
+                  ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.25)] font-bold scale-[1.02]" 
+                  : "bg-[#07132a] border border-[#D4AF37]/10 text-[#F0E6D2] hover:border-[#D4AF37]/30 hover:text-[#F0E6D2]"
+              }`}
             >
-              <Users size={14} /> كشوف الشركاء والذمم
+              <Users size={14} /> 
+              <span>كشوف الشركاء والذمم المالية</span>
             </button>
             <button 
               onClick={() => { setActiveTab("analysis"); clearForm(); }}
-              className={`py-3 px-5 text-xs font-black flex items-center gap-2 rounded-full cursor-pointer transition-all duration-300 ${activeTab === "analysis" ? "bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] text-[#020B1C]" : "border border-gray-600 text-white hover:border-gray-400"}`}
+              className={`py-2.5 px-4 text-xs flex items-center gap-1.5 rounded-xl cursor-pointer transition-all duration-300 whitespace-nowrap shrink-0 ${
+                activeTab === "analysis" 
+                  ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.25)] font-bold scale-[1.02]" 
+                  : "bg-[#07132a] border border-[#D4AF37]/10 text-[#F0E6D2] hover:border-[#D4AF37]/30 hover:text-[#F0E6D2]"
+              }`}
             >
-              <Briefcase size={14} /> الأرباح والمصروفات
+              <Briefcase size={14} /> 
+              <span>الأرباح والمصروفات</span>
             </button>
           </div>
 
@@ -606,56 +714,56 @@ export default function TreasuryPage() {
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-right">
                 
-                <div className="p-4 rounded-2xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between h-24">
+                <div className="p-4 rounded-[2rem] bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between h-24 shadow-xl">
                   <span className="text-[10px] text-gray-400 font-bold block">💵 رصيد الخزينة (كاش)</span>
                   <span className="text-sm sm:text-base font-black text-[#D4AF37] font-mono tracking-tight">
                     {financialTotals.cashBalance.toLocaleString('en-US')} ج.م
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between h-24">
+                <div className="p-4 rounded-[2rem] bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between h-24 shadow-xl">
                   <span className="text-[10px] text-gray-400 font-bold block">🏦 رصيد الحساب البنكي</span>
                   <span className="text-sm sm:text-base font-black text-[#D4AF37] font-mono tracking-tight">
                     {financialTotals.bankBalance.toLocaleString('en-US')} ج.م
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between h-24">
+                <div className="p-4 rounded-[2rem] bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between h-24 shadow-xl">
                   <span className="text-[10px] text-gray-400 font-bold block">📥 إجمالي المقبوضات (الوارد)</span>
                   <span className="text-sm sm:text-base font-black text-emerald-400 font-mono tracking-tight">
                     +{financialTotals.totalReceipts.toLocaleString('en-US')} ج.م
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between h-24">
+                <div className="p-4 rounded-[2rem] bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between h-24 shadow-xl">
                   <span className="text-[10px] text-gray-400 font-bold block">📤 إجمالي المصروفات (الصادر)</span>
                   <span className="text-sm sm:text-base font-black text-rose-400 font-mono tracking-tight">
                     -{financialTotals.totalPayments.toLocaleString('en-US')} ج.م
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#07132a] border-2 border-[#D4AF37] flex flex-col justify-between h-24 shadow-md shadow-[#D4AF37]/5">
+                <div className="p-4 rounded-[2rem] bg-[#07132a] border-2 border-[#D4AF37] flex flex-col justify-between h-24 shadow-md shadow-[#D4AF37]/10">
                   <span className="text-[10px] text-[#D4AF37] font-black block">🏆 صافي الأرباح للشركة</span>
                   <span className="text-sm sm:text-base font-black text-[#D4AF37] font-mono tracking-tight">
                     {financialTotals.netProfit.toLocaleString('en-US')} ج.م
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between h-24">
+                <div className="p-4 rounded-[2rem] bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between h-24 shadow-xl">
                   <span className="text-[10px] text-gray-400 font-bold block">👥 مستحقات جارية لدى العملاء</span>
                   <span className="text-sm sm:text-base font-black text-emerald-400 font-mono tracking-tight">
                     {financialTotals.clientReceivables.toLocaleString('en-US')} ج.م
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between h-24">
+                <div className="p-4 rounded-[2rem] bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between h-24 shadow-xl">
                   <span className="text-[10px] text-gray-400 font-bold block">📦 مستحقات آجلة للموردين</span>
                   <span className="text-sm sm:text-base font-black text-rose-400 font-mono tracking-tight">
                     {financialTotals.supplierPayables.toLocaleString('en-US')} ج.م
                   </span>
                 </div>
 
-                <div className="p-4 rounded-2xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between h-24">
+                <div className="p-4 rounded-[2rem] bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between h-24 shadow-xl">
                   <span className="text-[10px] text-gray-400 font-bold block">👷 مستحقات مقاولي الباطن</span>
                   <span className="text-sm sm:text-base font-black text-rose-400 font-mono tracking-tight">
                     {financialTotals.subcontractorPayables.toLocaleString('en-US')} ج.م
@@ -664,17 +772,17 @@ export default function TreasuryPage() {
 
               </div>
 
-              <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
-                <h3 className="text-[#D4AF37] font-black text-base md:text-lg mb-4 flex items-center gap-2">
+                <h3 className="text-[#D4AF37] font-bold text-base md:text-lg mb-4 flex items-center gap-2">
                   <Landmark size={18} />
                   <span>توزيع وهيكلة قنوات السيولة الجارية (Liquidity Channels)</span>
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-semibold text-xs">
                   
-                  <div className="p-4 bg-[#020B1C]/50 rounded-2xl border border-[#1f2d4d] space-y-3">
-                    <span className="text-white text-sm font-black block">الصندوق الرئيسي (الخزينة)</span>
+                  <div className="p-4 bg-[#020B1C]/50 rounded-2xl border border-[#D4AF37]/15 space-y-3 shadow-xl">
+                    <span className="text-[#F0E6D2] text-sm font-bold block">الصندوق الرئيسي (الخزينة)</span>
                     <div className="flex justify-between">
                       <span className="text-gray-400">إجمالي الدخل:</span>
                       <span className="font-mono text-emerald-400">+{liquidityChannels.main.in.toLocaleString('en-US')} ج.م</span>
@@ -683,14 +791,14 @@ export default function TreasuryPage() {
                       <span className="text-gray-400">إجمالي الخارج:</span>
                       <span className="font-mono text-rose-400 font-bold">-{liquidityChannels.main.out.toLocaleString('en-US')} ج.م</span>
                     </div>
-                    <div className="border-t border-[#1f2d4d] pt-2 flex justify-between font-bold text-sm">
+                    <div className="border-t border-[#D4AF37]/10 pt-2 flex justify-between font-bold text-sm">
                       <span className="text-[#D4AF37]">السيولة الحالية:</span>
                       <span className="font-mono text-[#D4AF37]">{liquidityChannels.main.current.toLocaleString('en-US')} ج.م</span>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-[#020B1C]/50 rounded-2xl border border-[#1f2d4d] space-y-3">
-                    <span className="text-white text-sm font-black block">صندوق الموقع (عُهد المهندسين المجمعة)</span>
+                  <div className="p-4 bg-[#020B1C]/50 rounded-2xl border border-[#D4AF37]/15 space-y-3 shadow-xl">
+                    <span className="text-[#F0E6D2] text-sm font-bold block">صندوق الموقع (عُهد المهندسين)</span>
                     <div className="flex justify-between">
                       <span className="text-gray-400">عهد منصرفة:</span>
                       <span className="font-mono text-emerald-400">+{liquidityChannels.site.in.toLocaleString('en-US')} ج.م</span>
@@ -699,14 +807,14 @@ export default function TreasuryPage() {
                       <span className="text-gray-400">تسويات مستلمة:</span>
                       <span className="font-mono text-rose-400">-{liquidityChannels.site.out.toLocaleString('en-US')} ج.م</span>
                     </div>
-                    <div className="border-t border-[#1f2d4d] pt-2 flex justify-between font-bold text-sm">
+                    <div className="border-t border-[#D4AF37]/10 pt-2 flex justify-between font-bold text-sm">
                       <span className="text-[#D4AF37]">السيولة المعلقة:</span>
                       <span className="font-mono text-[#D4AF37]">{liquidityChannels.site.current.toLocaleString('en-US')} ج.م</span>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-[#020B1C]/50 rounded-2xl border border-[#1f2d4d] space-y-3">
-                    <span className="text-white text-sm font-black block">الحساب البنكي الرسمي للشركة</span>
+                  <div className="p-4 bg-[#020B1C]/50 rounded-2xl border border-[#D4AF37]/15 space-y-3 shadow-xl">
+                    <span className="text-[#F0E6D2] text-sm font-bold block">الحساب البنكي الرسمي للشركة</span>
                     <div className="flex justify-between">
                       <span className="text-gray-400">إجمالي الدخل:</span>
                       <span className="font-mono text-emerald-400">+{liquidityChannels.bank.in.toLocaleString('en-US')} ج.م</span>
@@ -715,7 +823,7 @@ export default function TreasuryPage() {
                       <span className="text-gray-400">إجمالي الخارج:</span>
                       <span className="font-mono text-rose-400">-{liquidityChannels.bank.out.toLocaleString('en-US')} ج.م</span>
                     </div>
-                    <div className="border-t border-[#1f2d4d] pt-2 flex justify-between font-bold text-sm">
+                    <div className="border-t border-[#D4AF37]/10 pt-2 flex justify-between font-bold text-sm">
                       <span className="text-[#D4AF37]">السيولة الحالية:</span>
                       <span className="font-mono text-[#D4AF37]">{liquidityChannels.bank.current.toLocaleString('en-US')} ج.م</span>
                     </div>
@@ -727,58 +835,58 @@ export default function TreasuryPage() {
           )}
 
           {activeTab === "vouchers" && (
-            <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] p-6 space-y-6 relative overflow-hidden animate-in slide-in-from-bottom-2 duration-300">
+            <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 space-y-6 relative overflow-hidden animate-in slide-in-from-bottom-2 duration-300">
               <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
               
-              <div className="flex items-center justify-between border-b border-[#243556] pb-4">
-                <h3 className="text-[#D4AF37] font-black text-lg md:text-xl flex items-center gap-2">
+              <div className="flex items-center justify-between border-b border-[#D4AF37] pb-4">
+                <h3 className="text-[#D4AF37] font-bold text-lg md:text-xl flex items-center gap-2">
                   <Sparkles className="w-5 h-5 animate-pulse text-[#D4AF37]" />
                   <span>إصدار وتحرير المعاملة المالية (سند القبض / سند الصرف)</span>
                 </h3>
                 
-                <div className="flex items-center gap-2 bg-[#020B1C] border border-[#1f2d4d] rounded-xl p-1 select-none text-[10px] font-bold">
+                <div className="flex items-center gap-2 bg-[#020B1C] border border-[#D4AF37]/35 rounded-xl p-1 select-none text-[10px] font-bold">
                   <button 
                     type="button"
                     onClick={() => { setVoucherType("receipt"); clearForm(); }}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${voucherType === "receipt" ? "bg-emerald-600 text-white" : "text-gray-400 hover:text-white"}`}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${voucherType === "receipt" ? "bg-emerald-600 text-white" : "text-gray-400 hover:text-white"}`}
                   >
                     🟢 سند قبــض (وارد)
                   </button>
                   <button 
                     type="button"
                     onClick={() => { setVoucherType("payment"); clearForm(); }}
-                    className={`px-4 py-1.5 rounded-lg text-xs font-black transition-all cursor-pointer ${voucherType === "payment" ? "bg-rose-600 text-white" : "text-gray-400 hover:text-white"}`}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${voucherType === "payment" ? "bg-rose-600 text-white" : "text-gray-400 hover:text-white"}`}
                   >
                     🔴 سند صــرف (صادر)
                   </button>
                 </div>
               </div>
 
-              <form onSubmit={handleRegisterVoucher} className="grid grid-cols-1 md:grid-cols-2 gap-5 font-semibold text-xs text-slate-300">
+              <form onSubmit={handleRegisterVoucher} className="grid grid-cols-1 md:grid-cols-2 gap-5 text-sm font-semibold text-slate-300">
                 
                 <div>
-                  <label className="block text-[#D4AF37] font-black mb-2">رقم السند المالي المولد تلقائياً *</label>
+                  <label className="block text-[#D4AF37] mb-2 px-2">رقم السند المالي تلقائياً *</label>
                   <input
                     type="text"
                     value={voucherType === "receipt" ? nextReceiptNumber : nextPaymentNumber}
                     disabled
-                    className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-gray-500 px-4 outline-none text-center font-mono font-bold text-sm animate-pulse"
+                    className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-gray-500 px-4 outline-none text-center font-mono font-bold text-sm animate-pulse"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] font-black mb-2">تاريخ القيد والتأريخ اليومي *</label>
+                  <label className="block text-[#D4AF37] px-2 mb-2">تاريخ القيد والتأريخ اليومي *</label>
                   <input
                     type="date"
                     required
                     defaultValue={new Date().toISOString().split("T")[0]}
-                    className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-[#F0E6D2] px-4 outline-none font-mono focus:border-[#D4AF37]"
+                    className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#F0E6D2] px-4 outline-none font-mono focus:border-[#D4AF37]"
                   />
                 </div>
 
                 {voucherType === "receipt" ? (
                   <div>
-                    <label className="block text-[#D4AF37] font-black mb-2">العميل المسدد للدفعة *</label>
+                    <label className="block text-[#D4AF37] px-2 mb-2">العميل المسدد للدفعة *</label>
                     <select
                       value={selectedCustomerId}
                       required
@@ -787,7 +895,7 @@ export default function TreasuryPage() {
                         const matchedProj = projects.find(p => p.customer_id === e.target.value);
                         if (matchedProj) setProjectId(matchedProj.id);
                       }}
-                      className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] font-bold px-3 outline-none focus:border-[#D4AF37]"
+                      className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-bold px-3 outline-none focus:border-[#D4AF37]"
                     >
                       <option value="">-- اختر العميل من سجل الـ CRM --</option>
                       {customers.map((c: any) => (
@@ -801,7 +909,7 @@ export default function TreasuryPage() {
                     <select
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37]"
+                      className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-3 outline-none focus:border-[#D4AF37]"
                     >
                       <option value="material_purchase">شراء وتوريد خامات ومواد بالموقع</option>
                       <option value="subcontractor_labor">مصنعيات وأجور عمالة الباطن</option>
@@ -813,24 +921,32 @@ export default function TreasuryPage() {
                   </div>
                 )}
 
+                {/* 🌟 حقن معالج وسام فاصل الآلاف المحاسبي الفوري لمنع الأخطاء المليونية */}
                 <div>
-                  <label className="block text-[#D4AF37] font-black mb-2">قيمة المبلغ المالي المطلوب (ج.م) *</label>
+                  <div className="flex justify-between items-center mb-2 px-1">
+                    <label className="block text-[#D4AF37] px-2">قيمة المبلغ المالي المطلوب (ج.م) *</label>
+                    {amount !== "" && (
+                      <span className="text-emerald-400 font-mono font-black text-xs animate-pulse">
+                        {Number(amount).toLocaleString('en-US')} ج.م
+                      </span>
+                    )}
+                  </div>
                   <input
                     type="number"
                     placeholder="0.00"
                     required
                     value={amount}
                     onChange={(e) => setAmount(e.target.value !== "" ? Number(e.target.value) : "")}
-                    className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-4 outline-none focus:border-[#D4AF37] font-mono text-sm font-black"
+                    className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none focus:border-[#D4AF37] font-mono text-sm font-black"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] font-black mb-2">طريقة الدفع أو الاستلام *</label>
+                  <label className="block text-[#D4AF37] px-2 mb-2">طريقة الدفع أو الاستلام *</label>
                   <select
                     value={payMethod}
                     onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] font-bold px-3 outline-none focus:border-[#D4AF37]"
+                    className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-bold px-3 outline-none focus:border-[#D4AF37]"
                   >
                     <option value="cash">خزينة نقدية (كاش) 🏛️</option>
                     <option value="bank">حساب بنكي للشركة 🏦</option>
@@ -840,22 +956,22 @@ export default function TreasuryPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] font-black mb-2">📁 رابط مستند المرفق (شيك، إيصال تحويل Google Drive)</label>
+                  <label className="block text-[#D4AF37] px-2 mb-2">📁 رابط مستند المرفق (شيك، إيصال تحويل Google Drive)</label>
                   <input
                     type="url"
                     placeholder="https://drive.google.com/file/d/..."
                     value={attachmentUrl}
                     onChange={(e) => setAttachmentUrl(e.target.value)}
-                    className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-emerald-400 px-4 outline-none font-mono focus:border-[#D4AF37] text-xs"
+                    className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-emerald-400 px-4 outline-none font-mono focus:border-[#D4AF37] text-xs"
                   />
                 </div>
 
                 <div className="col-span-1 md:col-span-2">
-                  <label className="block text-[#D4AF37] font-black mb-2">مشروع موقع العمل المرتبط (مركز التكلفة للموازنة) *</label>
+                  <label className="block text-[#D4AF37] px-2 mb-2">مشروع موقع العمل المرتبط (مركز التكلفة للموازنة) *</label>
                   <select
                     value={projId}
                     onChange={(e) => setProjectId(e.target.value)}
-                    className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-sm"
+                    className="w-full h-12 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-3 outline-none focus:border-[#D4AF37] text-sm"
                   >
                     <option value="">-- عام لمقرات ومصاريف الشركة (بدون مشروع محدد) --</option>
                     {projects.map((p: any) => (
@@ -865,7 +981,7 @@ export default function TreasuryPage() {
                 </div>
 
                 {voucherType === "receipt" && installments.length > 0 && (
-                  <div className="col-span-1 md:col-span-2 bg-[#020B1C] p-4 rounded-xl border border-[#D4AF37]/30 space-y-2">
+                  <div className="col-span-1 md:col-span-2 bg-[#020B1C] p-4 rounded-xl border border-[#D4AF37]/25 space-y-2">
                     <label className="block text-[#D4AF37] text-xs font-black">⚙️ مقاصة الأقساط: حدد القسط المجدول لتسويته وإغلاقه في حساب العميل *</label>
                     <select
                       value={linkedInstallmentId}
@@ -883,7 +999,7 @@ export default function TreasuryPage() {
                 )}
 
                 {voucherType === "payment" && (category === "petty_cash_advance" || category === "petty_cash_settled") && (
-                  <div className="col-span-1 md:col-span-2 bg-[#020B1C] p-4 rounded-xl border border-[#D4AF37]/30 space-y-2">
+                  <div className="col-span-1 md:col-span-2 bg-[#020B1C] p-4 rounded-xl border border-[#D4AF37]/25 space-y-2">
                     <label className="block text-[#D4AF37] text-xs font-black">👷 تحديد مهندس الموقع المسؤول عن العهدة النقدية للربط والتسوية *</label>
                     <select
                       value={selectedEngineerId}
@@ -899,7 +1015,7 @@ export default function TreasuryPage() {
                 )}
 
                 {voucherType === "payment" && category === "subcontractor_labor" && (
-                  <div className="col-span-1 md:col-span-2 bg-[#020B1C] p-4 rounded-xl border border-[#243556] space-y-2">
+                  <div className="col-span-1 md:col-span-2 bg-[#020B1C] p-4 rounded-xl border border-[#D4AF37]/25 space-y-2">
                     <label className="block text-[#D4AF37] text-xs font-bold">👤 تحديد مقاول الباطن المستلم للدفعة النقدية *</label>
                     <select
                       value={selectedSubcontractorId}
@@ -915,7 +1031,7 @@ export default function TreasuryPage() {
                 )}
 
                 <div className="col-span-1 md:col-span-2">
-                  <label className="block text-[#D4AF37] font-black mb-2">البيان المالي والشرح التفصيلي لغرض السند (ملاحظات)</label>
+                  <label className="block text-[#D4AF37] px-2 mb-2">البيان المالي والشرح التفصيلي لغرض السند (ملاحظات)</label>
                   <input
                     type="text"
                     required
@@ -926,21 +1042,23 @@ export default function TreasuryPage() {
                   />
                 </div>
 
+                {/* 🌟 إعادة تنسيق الأزرار بالدستور البصري المذهب مع عواكس الإضاءة النيونية السفلى الحصرية */}
                 <div className="col-span-1 md:col-span-2 flex justify-end gap-3 pt-4 border-t border-[#243556]">
                   <button 
                     type="button" 
                     onClick={clearForm}
-                    className="h-12 bg-transparent border border-gray-600 text-gray-300 px-6 py-3.5 rounded-xl font-bold hover:bg-gray-800 transition duration-150 cursor-pointer text-xs"
+                    className="px-6 h-12 rounded-xl bg-transparent border border-gray-600 text-gray-300 hover:bg-gray-800 transition duration-150 cursor-pointer text-xs font-bold"
                   >
                     تفريغ الحقول
                   </button>
                   <button 
                     type="submit"
                     disabled={actionLoading}
-                    className="h-12 bg-gradient-to-r from-[#C9A45D] via-[#F0E6D2] to-[#D4AF37] text-black px-8 rounded-xl font-black transition-all hover:scale-103 active:scale-97 cursor-pointer flex items-center gap-2 shadow-lg text-xs"
+                    className="px-8 h-12 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center gap-2 select-none relative overflow-hidden disabled:opacity-50"
                   >
                     {actionLoading ? <Loader2 className="animate-spin w-4 h-4" /> : <ShieldCheck size={16} />}
                     <span>تأكيد وإصدار السند المالي رسمياً</span>
+                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                   </button>
                 </div>
 
@@ -952,8 +1070,8 @@ export default function TreasuryPage() {
           {activeTab === "ledgers" && (
             <div className="space-y-6 animate-in fade-in duration-300">
               
-              <div className="bg-[#07132a] border border-[#1f2d4d] rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <span className="text-gray-400 font-bold text-xs">🔍 محرك البحث في كشوف الشركاء والمقاصة المالية للشركة</span>
+              <div className="bg-[#07132a] border border-[#D4AF37]/20 rounded-xl p-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <span className="text-gray-200 font-bold text-xs">🔍 محرك البحث في كشوف الشركاء والمقاصة المالية للشركة</span>
                 <div className="relative group w-full sm:w-80">
                   <input
                     type="text"
@@ -967,20 +1085,20 @@ export default function TreasuryPage() {
               </div>
 
               {/* 1. دفتر أستاذ كشوف العملاء */}
-              <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-2xl overflow-hidden shadow-2xl relative flex flex-col w-full">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] overflow-hidden shadow-2xl relative flex flex-col w-full">
                 <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
-                <div className="p-4 border-b border-[#243556] bg-[#0b1b3d]/60 flex items-center justify-between">
-                  <h3 className="text-[#D4AF37] font-black text-sm md:text-base flex items-center gap-1.5">
+                <div className="p-4 border-b border-[#D4AF37]/20 bg-[#0b1b3d]/60 flex items-center justify-between">
+                  <h3 className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5">
                     <Users size={16} />
                     <span>كشوف مديونيات وعقود العملاء الجارية بالـ CRM ({filteredLedgers.clients.length})</span>
                   </h3>
                 </div>
                 
                 <div className="overflow-x-auto max-h-[220px] overflow-y-auto">
-                  <table className="w-full text-right table-auto">
+                  <table className="w-full text-right table-auto premium-treasury-table">
                     <thead>
-                      <tr className="whitespace-nowrap select-none">
-                        <th>كود العميل</th>
+                      <tr className="whitespace-nowrap select-none ">
+                        <th className="">كود العميل</th>
                         <th>كود المشروع</th>
                         <th>اسم العميل</th>
                         <th>قيمة العقد الكلي</th>
@@ -992,14 +1110,14 @@ export default function TreasuryPage() {
                     </thead>
                     <tbody>
                       {filteredLedgers.clients.map((c) => (
-                        <tr key={c.id} className="hover:bg-[#0B1B38] transition-all">
-                          <td className="p-4 font-mono text-[#D4AF37] font-black text-xs">{c.code}</td>
-                          <td className="p-4 font-mono text-slate-300 font-bold text-xs">{c.projCode}</td>
-                          <td className="p-4 font-black text-slate-100">{c.name}</td>
-                          <td className="p-4 font-mono text-slate-200 font-bold">{(c.contractValue).toLocaleString('en-US')} ج.م</td>
-                          <td className="p-4 font-mono text-emerald-400 font-black">{(c.paid).toLocaleString('en-US')} ج.م</td>
-                          <td className="p-4 font-mono text-rose-400 font-black">{(c.remaining).toLocaleString('en-US')} ج.م</td>
-                          <td className="p-4 font-mono text-slate-400 text-xs">{c.lastPaymentDate}</td>
+                        <tr key={c.id}>
+                          <td className="font-mono text-[#D4AF37] font-medium">{c.code}</td>
+                          <td className="font-mono text-slate-300">{c.projCode}</td>
+                          <td className="font-medium text-slate-100">{c.name}</td>
+                          <td className="font-mono text-slate-200">{(c.contractValue).toLocaleString('en-US')} ج.م</td>
+                          <td className="font-mono text-emerald-400 font-medium">{(c.paid).toLocaleString('en-US')} ج.م</td>
+                          <td className="font-mono text-rose-400 font-medium">{(c.remaining).toLocaleString('en-US')} ج.م</td>
+                          <td className="font-mono text-slate-400 text-xs">{c.lastPaymentDate}</td>
                           <td className="text-center">
                             <button 
                               onClick={() => openStatementPopup(c, "customer")}
@@ -1016,17 +1134,17 @@ export default function TreasuryPage() {
               </div>
 
               {/* 2. دفتر أستاذ كشوف الموردين */}
-              <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] overflow-hidden shadow-2xl relative flex flex-col w-full">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] overflow-hidden shadow-2xl relative flex flex-col w-full">
                 <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
-                <div className="p-4 border-b border-[#243556] bg-[#0b1b3d]/60">
-                  <h3 className="text-[#D4AF37] font-black text-sm md:text-base flex items-center gap-1.5">
+                <div className="p-4 border-b border-[#D4AF37]/20 bg-[#0b1b3d]/60">
+                  <h3 className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5">
                     <Briefcase size={16} />
                     <span>كشوف حسابات الموردين المعتمدين والمشتريات الآجلة ({filteredLedgers.suppliers.length})</span>
                   </h3>
                 </div>
                 
                 <div className="overflow-x-auto max-h-[220px] overflow-y-auto">
-                  <table className="w-full text-right table-auto">
+                  <table className="w-full text-right table-auto premium-treasury-table">
                     <thead>
                       <tr className="whitespace-nowrap select-none">
                         <th>اسم المورد / الشركة</th>
@@ -1040,12 +1158,12 @@ export default function TreasuryPage() {
                     </thead>
                     <tbody>
                       {filteredLedgers.suppliers.map((s, idx) => (
-                        <tr key={idx} className="hover:bg-[#0B1B38] transition-all">
-                          <td className="p-4 font-black text-slate-100">{s.name}</td>
-                          <td className="p-4 font-mono text-slate-300 font-bold">{(s.purchases).toLocaleString('en-US')} ج.م</td>
-                          <td className="p-4 font-mono text-emerald-400 font-black">{(s.paid).toLocaleString('en-US')} ج.م</td>
-                          <td className="p-4 font-mono text-rose-400 font-black">{(s.remaining).toLocaleString('en-US')} ج.م</td>
-                          <td className="text-white font-bold">{s.projectName}</td>
+                        <tr key={idx}>
+                          <td className="font-medium text-slate-100">{s.name}</td>
+                          <td className="font-mono text-slate-300">{(s.purchases).toLocaleString('en-US')} ج.م</td>
+                          <td className="font-mono text-emerald-400 font-medium">{(s.paid).toLocaleString('en-US')} ج.م</td>
+                          <td className="font-mono text-rose-400 font-medium">{(s.remaining).toLocaleString('en-US')} ج.م</td>
+                          <td className="text-white font-medium">{s.projectName}</td>
                           <td className="text-gray-400 text-xs max-w-xs truncate">{s.notes}</td>
                           <td className="text-center">
                             <button 
@@ -1063,21 +1181,21 @@ export default function TreasuryPage() {
               </div>
 
               {/* 3. دفتر أستاذ حسابات مقاولي الباطن */}
-              <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] overflow-hidden shadow-2xl relative flex flex-col w-full">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] overflow-hidden shadow-2xl relative flex flex-col w-full">
                 <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
-                <div className="p-4 border-b border-[#243556] bg-[#0b1b3d]/60">
-                  <h3 className="text-[#D4AF37] font-black text-sm md:text-base flex items-center gap-1.5">
+                <div className="p-4 border-b border-[#D4AF37]/20 bg-[#0b1b3d]/60">
+                  <h3 className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5">
                     <HardHat size={16} />
-                    <span>كشوف حسابات مقاولي الباطن والورش وعقود التشغيل ({filteredLedgers.subcontractorsList.length})</span>
+                    <span>كشوف حسابات مقاولي الباطن وعقود التشغيل ({filteredLedgers.subcontractorsList.length})</span>
                   </h3>
                 </div>
                 
                 <div className="overflow-x-auto max-h-[220px] overflow-y-auto">
-                  <table className="w-full text-right table-auto">
+                  <table className="w-full text-right table-auto premium-treasury-table">
                     <thead>
                       <tr className="whitespace-nowrap select-none">
-                        <th>اسم المقاول المسؤول</th>
-                        <th>التخصص الفني المعماري</th>
+                        <th>اسم المقاول </th>
+                        <th>التخصص المعماري</th>
                         <th>قيمة المقاولة الإجمالية</th>
                         <th>المستخلص المسدد</th>
                         <th>المتبقي له ذمة للشركة</th>
@@ -1087,13 +1205,13 @@ export default function TreasuryPage() {
                     </thead>
                     <tbody>
                       {filteredLedgers.subcontractorsList.map((sub) => (
-                        <tr key={sub.id} className="hover:bg-[#0B1B38] transition-all">
-                          <td className="p-4 font-black text-slate-100">{sub.name}</td>
-                          <td className="text-[#F0E6D2] font-bold text-xs">{sub.specialty}</td>
-                          <td className="p-4 font-mono text-slate-300 font-bold">{(sub.contractValue).toLocaleString('en-US')} ج.م</td>
-                          <td className="p-4 font-mono text-emerald-400 font-black">{(sub.paid).toLocaleString('en-US')} ج.م</td>
-                          <td className="p-4 font-mono text-rose-400 font-black">{(sub.remaining).toLocaleString('en-US')} ج.م</td>
-                          <td className="text-white font-bold text-xs">{sub.projectName}</td>
+                        <tr key={sub.id}>
+                          <td className="font-medium text-slate-100">{sub.name}</td>
+                          <td className="text-[#F0E6D2] text-xs">{sub.specialty}</td>
+                          <td className="font-mono text-slate-300">{(sub.contractValue).toLocaleString('en-US')} ج.م</td>
+                          <td className="font-mono text-emerald-400 font-medium">{(sub.paid).toLocaleString('en-US')} ج.م</td>
+                          <td className="font-mono text-rose-400 font-medium">{(sub.remaining).toLocaleString('en-US')} ج.م</td>
+                          <td className="text-white text-xs">{sub.projectName}</td>
                           <td className="text-center">
                             <button 
                               onClick={() => openStatementPopup(sub, "subcontractor")}
@@ -1115,32 +1233,32 @@ export default function TreasuryPage() {
           {activeTab === "analysis" && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
               
-              <div className="lg:col-span-1 bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden h-fit">
+              <div className="lg:col-span-1 bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 shadow-2xl relative overflow-hidden h-fit">
                 <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
-                <h3 className="text-[#D4AF37] font-black text-base md:text-lg mb-4 flex items-center gap-1.5 border-b border-[#243556] pb-3">
+                <h3 className="text-[#D4AF37] font-bold text-md md:text-md mb-4 flex items-center gap-1.5 border-b border-[#D4AF37] pb-3">
                   <Receipt size={16} />
-                  <span>تبويب وتوزيع المصروفات الـ 12</span>
+                  <span> توزيع المصروفات </span>
                 </h3>
 
                 <div className="space-y-3 font-semibold text-xs text-slate-300">
                   {categorizedExpenses.list.map((cat: any, idx: number) => (
-                    <div key={idx} className="p-3 bg-[#020B1C]/55 rounded-xl border border-[#1f2d4d] flex justify-between items-center">
-                      <span className="text-[#F0E6D2] font-black">{cat.label}</span>
-                      <span className="font-mono font-black text-[#D4AF37]">{(cat.value).toLocaleString('en-US')} ج.م</span>
+                    <div key={idx} className="p-3 bg-[#020B1C]/55 rounded-xl border border-[#D4AF37]/10 flex justify-between items-center transition-all hover:border-[#D4AF37]/35">
+                      <span className="text-[#F0E6D2] font-bold">{cat.label}</span>
+                      <span className="font-mono font-bold text-[#D4AF37]">{(cat.value).toLocaleString('en-US')} ج.م</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="lg:col-span-2 bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden h-fit">
+              <div className="lg:col-span-2 bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 shadow-2xl relative overflow-hidden h-fit">
                 <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
-                <h3 className="text-[#D4AF37] font-black text-base md:text-lg mb-4 flex items-center gap-1.5 border-b border-[#243556] pb-3">
+                <h3 className="text-[#D4AF37] font-bold text-md md:text-md mb-4 flex items-center gap-1.5 border-b border-[#D4AF37] pb-3">
                   <TrendingUp size={16} />
                   <span>الأرباح ونسب الهامش الصافي لكل مشروع</span>
                 </h3>
 
                 <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
-                  <table className="w-full text-right table-auto">
+                  <table className="w-full text-right table-auto premium-treasury-table">
                     <thead>
                       <tr className="whitespace-nowrap select-none">
                         <th>اسم المشروع وموقعه</th>
@@ -1154,13 +1272,13 @@ export default function TreasuryPage() {
                       {projectProfitsList.map((p) => {
                         const isHighProfit = p.profitMargin >= 30;
                         return (
-                          <tr key={p.id} className="hover:bg-[#0B1B38] transition-all">
-                            <td className="font-black text-slate-100">{p.name}</td>
-                            <td className="font-mono text-slate-200 font-bold">{(p.totalContract).toLocaleString('en-US')} ج.م</td>
-                            <td className="font-mono text-rose-400 font-bold">{(p.totalOutflows).toLocaleString('en-US')} ج.م</td>
-                            <td className="font-mono text-emerald-400 font-black">{(p.netProfit).toLocaleString('en-US')} ج.م</td>
+                          <tr key={p.id}>
+                            <td className="font-medium text-slate-100">{p.name}</td>
+                            <td className="font-mono text-slate-200">{(p.totalContract).toLocaleString('en-US')} ج.م</td>
+                            <td className="font-mono text-rose-400">{(p.totalOutflows).toLocaleString('en-US')} ج.م</td>
+                            <td className="font-mono text-emerald-400 font-medium">{(p.netProfit).toLocaleString('en-US')} ج.م</td>
                             <td className="text-center">
-                              <span className={`px-2.5 py-1 rounded-full text-xs font-mono font-black ${isHighProfit ? "bg-emerald-500/10 text-emerald-400" : "bg-[#C9A45D]/10 text-[#C9A45D]"}`}>
+                              <span className={`px-2.5 py-1 rounded-full text-xs font-mono font-medium ${isHighProfit ? "bg-emerald-500/10 text-emerald-400" : "bg-[#C9A45D]/10 text-[#C9A45D]"}`}>
                                 {p.profitMargin}%
                               </span>
                             </td>
@@ -1191,11 +1309,12 @@ export default function TreasuryPage() {
         </div>
       </section>
 
+      {/* 🌟 إعادة هيكلة وتصميم بوب اب كشف الحساب الرقابي بالدستور الملكي */}
       {statementPartner && statementType && (
         <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 text-white text-right select-none animate-in zoom-in duration-300">
-          <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-3xl p-6 md:p-8 w-full max-w-2xl shadow-2xl relative space-y-6">
+          <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 md:p-8 w-full max-w-2xl shadow-2xl relative space-y-6">
             
-            <div className="flex justify-between items-center border-b border-[#1f2d4d] pb-3">
+            <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
               <h3 className="text-[#D4AF37] font-black text-lg md:text-xl flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-[#D4AF37] animate-pulse" />
                 <span>كشف الحساب المالي التفصيلي والرقابي للشركة</span>
@@ -1203,7 +1322,7 @@ export default function TreasuryPage() {
               <button 
                 type="button"
                 onClick={() => { setStatementPartner(null); setStatementType(null); }}
-                className="w-8 h-8 rounded-lg bg-[#ff2a3a] hover:bg-red-700 transition flex items-center justify-center font-black cursor-pointer text-white shadow-md text-sm select-none"
+                className="w-8 h-8 rounded-lg bg-red-950/40 border border-red-500/30 hover:bg-red-600 transition flex items-center justify-center font-black cursor-pointer text-white shadow-md text-sm select-none"
               >
                 -
               </button>
@@ -1211,15 +1330,15 @@ export default function TreasuryPage() {
 
             <div className="space-y-4 text-xs md:text-sm font-semibold text-slate-300 max-h-[380px] overflow-y-auto pr-1">
               
-              <div className="p-4 bg-[#020B1C]/50 rounded-2xl border border-[#1f2d4d] grid grid-cols-2 gap-4">
+              <div className="p-4 bg-[#020B1C]/50 rounded-2xl border border-[#D4AF37]/15 grid grid-cols-2 gap-4">
                 <div>
                   <span className="text-gray-400 block text-[10px]">الاسم المسجل للطرف الثاني:</span>
-                  <span className="text-white font-black text-sm block mt-0.5">{statementPartner.name}</span>
+                  <span className="text-white font-medium text-sm block mt-0.5">{statementPartner.name}</span>
                 </div>
                 {statementType === "customer" ? (
                   <div>
                     <span className="text-gray-400 block text-[10px]">كود العميل والمشروع الموحد:</span>
-                    <span className="text-[#D4AF37] font-mono font-black text-xs block mt-0.5">{statementPartner.code} | {statementPartner.projCode}</span>
+                    <span className="text-[#D4AF37] font-mono font-medium text-xs block mt-0.5">{statementPartner.code} | {statementPartner.projCode}</span>
                   </div>
                 ) : (
                   <div>
@@ -1230,31 +1349,31 @@ export default function TreasuryPage() {
               </div>
 
               <div className="grid grid-cols-3 gap-4 text-center">
-                <div className="p-3 bg-[#020B1C]/50 border border-[#1f2d4d] rounded-xl">
+                <div className="p-3 bg-[#020B1C]/50 border border-[#D4AF37]/15 rounded-xl">
                   <span className="text-gray-400 block text-[10px]">إجمالي الالتزام / العقد</span>
-                  <span className="text-[#F0E6D2] font-mono font-black block mt-1">
+                  <span className="text-[#F0E6D2] font-mono font-medium block mt-1">
                     {(statementType === "customer" ? statementPartner.contractValue : statementType === "supplier" ? statementPartner.purchases : statementPartner.contractValue).toLocaleString('en-US')} ج.م
                   </span>
                 </div>
-                <div className="p-3 bg-[#020B1C]/50 border border-[#1f2d4d] rounded-xl">
+                <div className="p-3 bg-[#020B1C]/50 border border-[#D4AF37]/15 rounded-xl">
                   <span className="text-gray-400 block text-[10px]">المسدد كاش فعلياً</span>
-                  <span className="text-emerald-400 font-mono font-black block mt-1">
+                  <span className="text-emerald-400 font-mono font-medium block mt-1">
                     {(statementPartner.paid || 0).toLocaleString('en-US')} ج.م
                   </span>
                 </div>
                 <div className="p-3 bg-[#020B1C]/50 border border-rose-500/20 rounded-xl">
                   <span className="text-gray-400 block text-[10px]">المتبقي (الذمة المالية المعلقة)</span>
-                  <span className="text-rose-400 font-mono font-black block mt-1">
+                  <span className="text-rose-400 font-mono font-medium block mt-1">
                     {(statementPartner.remaining || 0).toLocaleString('en-US')} ج.م
                   </span>
                 </div>
               </div>
 
-              <div className="border border-[#1f2d4d] rounded-xl overflow-hidden mt-4">
-                <div className="p-2.5 bg-[#0b1b3d] text-white text-xs font-black">سجل السندات المرتبطة المأرشفة في الخزينة:</div>
+              <div className="border border-[#D4AF37]/20 rounded-xl overflow-hidden mt-4">
+                <div className="p-2.5 bg-black/60 border-b border-[#D4AF37]/20 text-white text-xs font-black">سجل السندات المرتبطة المأرشفة في الخزينة:</div>
                 <div className="max-h-40 overflow-y-auto">
-                  <table className="w-full text-right text-[11px]">
-                    <thead className="bg-[#020B1C] text-[#D4AF37] font-bold">
+                  <table className="w-full text-right premium-treasury-table">
+                    <thead>
                       <tr>
                         <th className="p-2">تاريخ القيد</th>
                         <th className="p-2">طريقة الدفع</th>
@@ -1262,7 +1381,7 @@ export default function TreasuryPage() {
                         <th className="p-2 text-left">المبلغ</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#1f2d4d]/40">
+                    <tbody className="divide-y divide-[#D4AF37]/10">
                       {transactions
                         .filter(t => 
                           (statementType === "customer" && t.project_id === projects.find(p => p.customer_id === statementPartner.id)?.id) ||
@@ -1273,7 +1392,7 @@ export default function TreasuryPage() {
                             <td className="p-2 font-mono">{new Date(tx.created_at).toLocaleDateString("ar-EG")}</td>
                             <td className="p-2">{methodLabels[tx.payment_method]}</td>
                             <td className="p-2 max-w-[140px] truncate" title={tx.notes}>{tx.notes || "-"}</td>
-                            <td className={`p-2 font-mono font-black text-left ${tx.type === "inflow" ? "text-emerald-400" : "text-rose-400"}`}>
+                            <td className={`p-2 font-mono font-medium text-left ${tx.type === "inflow" ? "text-emerald-400" : "text-rose-400"}`}>
                               {tx.type === "inflow" ? "+" : "-"}{(tx.amount || 0).toLocaleString('en-US')} ج.م
                             </td>
                           </tr>
@@ -1294,7 +1413,8 @@ export default function TreasuryPage() {
 
             </div>
 
-            <div className="border-t border-[#1f2d4d] pt-4 flex justify-between items-center text-xs font-bold">
+            {/* أزرار تفاعلية مذهبة مطابقة للدستور البصري الحركي */}
+            <div className="border-t border-[#D4AF37]/20 pt-4 flex justify-between items-center text-xs font-bold">
               <span className="flex items-center gap-1 text-emerald-400">
                 <ShieldCheck className="w-4 h-4 text-emerald-400 animate-pulse" />
                 <span>حسابات معتمدة ومطابقة لشركة جولدن ديكوراشن</span>
@@ -1302,9 +1422,10 @@ export default function TreasuryPage() {
               <button
                 type="button"
                 onClick={() => { setStatementPartner(null); setStatementType(null); }}
-                className="bg-[#D4AF37] hover:bg-[#F0E6D2] text-[#020B1C] font-black py-2.5 px-6 rounded-xl transition cursor-pointer active:scale-95 hover:shadow-[0_0_12px_rgba(212,175,55,0.3)]"
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.2)] hover:shadow-[0_0_25px_rgba(212,175,55,0.35)] transition-all duration-300 cursor-pointer text-xs font-black relative overflow-hidden"
               >
                 إغلاق كشف الحساب
+                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
               </button>
             </div>
 

@@ -73,18 +73,18 @@ export default function Tasks() {
       <div dir="rtl" className="h-full bg-[#07132a] border border-[#1f2d4d] rounded-2xl p-5 overflow-hidden transition-all duration-300 hover:border-[#D4AF37]/35 shadow-2xl flex flex-col justify-between font-alexandria">   
         
         {/* رأس ترويسة المهام اليومية مع إحلال أيقونات Lucide الفاخرة للتحكم الفوري */}
-        <div className="flex justify-between items-center border-b border-[#243556] pb-3 mb-4 select-none">
+        <div className="flex justify-between items-center border-b border-[#D4AF37] pb-3 mb-4 select-none">
           <div className="flex items-center gap-3 justify-start bg-[#0b1b3d] px-3.5 py-2 rounded-xl border border-[#D4AF37]/15">
             <Target className="w-5 h-5 text-[#D4AF37] shrink-0 animate-pulse" />
             <h2 className="text-[#D4AF37] text-sm font-bold">
-              المهام الموقعية اليومية
+              المهام اليومية
             </h2>
           </div>
 
           {/* زر إظهار الكل الموصول الآن بنموذج الـ CRUD المنبثق بأيقونة فاخرة */}
           <button
             onClick={() => setIsManagerOpen(true)}
-            className="text-[#D4AF37] hover:text-[#F0E6D2] text-[11px] font-black transition cursor-pointer flex items-center gap-1.5 select-none hover:translate-x-[-2px] duration-200"
+            className="text-[#D4AF37] hover:text-[#F0E6D2] text-[11px] transition cursor-pointer flex items-center gap-1.5 select-none hover:translate-x-[-2px] duration-200"
           >
             <span>إظهار الكل</span>
             <FolderOpen size={13} className="shrink-0 text-[#D4AF37]" />

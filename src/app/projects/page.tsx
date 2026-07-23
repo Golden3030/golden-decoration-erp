@@ -630,16 +630,55 @@ export default function ProjectsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden" dir="rtl">
+    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
 
       <Sidebar />
       
       {/* 🛠️ جدار الحماية البصري الموحد وتعديل شريط التمرير المذهب للجريل والتفاصيل */}
       <style dangerouslySetInnerHTML={{ __html: `
-        ::-webkit-scrollbar { width: 6px !important; height: 6px !important; }
-        ::-webkit-scrollbar-track { background: #020B1C !important; }
-        ::-webkit-scrollbar-thumb { background: #D4AF37 !important; border-radius: 9999px !important; }
-        ::-webkit-scrollbar-thumb:hover { background: #D4AF37 !important; }
+        /* تفعيل وتوحيد أبعاد وألوان شريط التمرير الأفقي والرأسي بالكامل */
+        ::-webkit-scrollbar { 
+          width: 6px !important; 
+          height: 6px !important; 
+          display: block !important;
+        }
+        ::-webkit-scrollbar-track { 
+          background: #020B1C !important; 
+        }
+        ::-webkit-scrollbar-thumb { 
+          background: #D4AF37 !important; 
+          border-radius: 9999px !important; 
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+          background: #AA7C11 !important; 
+        }
+
+         /* إلغاء أكواد الإخفاء لضمان انسيابية التمرير بالماوس والجوال */
+        .overflow-x-auto { 
+          
+          -ms-overflow-style: auto !important; 
+          overflow-x: auto !important; 
+        }
+
+       /* تلوين أزرار أسهم الصعود والهبوط يدوياً لشريط التمرير */
+          ::-webkit-scrollbar-button {
+            display: block !important;
+            background-color: #020B1C !important;
+            height: 10px !important;
+            width: 10px !important;
+          }
+          ::-webkit-scrollbar-button:vertical:decrement {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23D4AF37'><polygon points='50,20 15,80 85,80'/></svg>") !important;
+            background-size: 6px !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+          }
+          ::-webkit-scrollbar-button:vertical:increment {
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23D4AF37'><polygon points='15,20 85,20 50,80'/></svg>") !important;
+            background-size: 6px !important;
+            background-repeat: no-repeat !important;
+            background-position: center !important;
+          }
 
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
@@ -648,37 +687,28 @@ export default function ProjectsPage() {
         }
         input[type="number"] { -moz-appearance: textfield !important; }
 
-        .overflow-x-auto::-webkit-scrollbar {
-          display: block !important;
-          height: 6px !important;
-        }
-        .overflow-x-auto::-webkit-scrollbar-thumb {
-          background: #D4AF37 !important;
-          border-radius: 9999px !important;
-        }
-
-        th, td, h1, h2, h3, h4, h5, h6, span, p, button, label, input, select, textarea {
-          font-family: 'Alexandria', Arial, sans-serif !important;
+        .premium-projects-table thead th {
+          font-size: 0.80rem !important;
+          font-weight: 500 !important;
+          color: #D4AF37 !important;
+          text-align: right !important;
+          background-color: #020B1C !important;
+          border-bottom: 2px solid rgba(212, 175, 55, 0.3) !important;
+          padding: 14px 16px !important;
           letter-spacing: normal !important;
         }
 
-        thead th, th {
-          font-size: 0.8rem !important;
-          font-weight: 900 !important;
-          color: #D4AF37 !important;
-          text-align: right !important;
-          border-bottom: 2px solid #1f2d4d !important;
-          background-color: #050914 !important;
-          padding: 12px 14px !important;
+        .premium-projects-table tbody td {
+           font-size: 0.8rem !important;
+          font-weight: 400 !important;
+          text-align: center !important;
+          border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
+          padding: 14px 16px !important;
+          letter-spacing: normal !important;
         }
 
-        tbody td, td {
-          font-size: 0.75rem !important;
-          font-weight: 700 !important;
-          color: #F0E6D2 !important;
-          text-align: right !important;
-          border-bottom: 1px solid rgba(212, 175, 55, 0.15) !important;
-          padding: 12px 14px !important;
+        .premium-projects-table tbody tr:hover {
+          background-color: rgba(7, 19, 42, 0.8) !important;
         }
       `}} />
 
@@ -718,13 +748,13 @@ export default function ProjectsPage() {
               {loading ? (
                 <div className="p-12 text-center text-[#D4AF37] text-base animate-pulse">جاري سحب المشاريع من قاعدة البيانات...</div>
               ) : filteredProjects.length > 0 ? (
-                <table className="w-full text-right table-auto min-w-[850px]">
+                <table className="w-full text-right table-auto min-w-[850px] premium-projects-table">
                   <thead>
                     <tr className="whitespace-nowrap select-none">
                       <th>كود المشروع</th>
                       <th>اسم المشروع</th>
-                      <th>اسم العميل</th>
-                      <th className="font-mono">المساحة م²</th>
+                      <th >اسم العميل</th>
+                      <th>المساحة م²</th>
                       <th>مستوى التشطيب</th>
                       <th className="text-center">مكونات الوحدة</th>
                       <th className="text-center">الحالة الإدارية</th>
@@ -732,19 +762,19 @@ export default function ProjectsPage() {
                   </thead>
                   <tbody className="divide-y divide-[#1f2d4d]/50">
                     {filteredProjects.map((p) => (
-                      <tr
+                      <tr 
                         key={p.id}
                         onClick={() => selectProjectRow(p)}
                         className={`hover:bg-[#0B1B38] cursor-pointer transition-all duration-200 ${
                           selectedProject?.id === p.id ? "bg-[#0b1b3d]/70 border-r-4 border-r-[#D4AF37]" : ""
                         }`}
                       >
-                        <td className="font-mono text-[#D4AF37] font-black text-xs md:text-sm">{p.project_code}</td>
-                        <td className="font-black text-[#B48C34]">{p.project_name}</td>
+                        <td className="font-mono text-[#D4AF37] font-bold text-md md:text-md">{p.project_code}</td>
+                        <td className="font-bold text-[#B48C34]">{p.project_name}</td>
                         <td className="text-gray-200 font-bold">{p.customers?.name || "غير محدد"}</td>
                         <td className="font-mono text-white">{p.area} م²</td>
                         <td className="text-gray-200">{p.finishing_level}</td>
-                        <td className="text-center text-xs text-gray-300">
+                        <td className="text-center text-xs font-bold text-gray-300">
                           {p.rooms_count}غ / {p.bathrooms_count}ح / {p.corridors_count}ط / {p.garden_exist ? "حديقة" : "-"}
                         </td>
                         <td className="text-center">
@@ -822,27 +852,27 @@ export default function ProjectsPage() {
                         <div className="space-y-4 animate-in fade-in duration-200">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">كود المشروع *</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">كود المشروع *</label>
                               <input type="text" value={pCode} disabled className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-gray-500 px-3 outline-none text-center font-mono font-bold text-xs" />
                             </div>
 
                             <div>
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">اسم المشروع *</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">اسم المشروع *</label>
                               <input type="text" value={pName} disabled={!canEditFullDetails} onChange={(e) => setPName(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-xs" />
                             </div>
 
                             <div className="col-span-2">
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">عنوان المشروع بالتفصيل *</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">عنوان المشروع بالتفصيل *</label>
                               <input type="text" placeholder="الشارع، رقم العمارة، اسم الكمبوند بالتفصيل..." value={pUnitAddress} disabled={!canEditFullDetails} onChange={(e) => setPUnitAddress(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-xs" />
                             </div>
 
                             <div>
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">المنطقة الجغرافية / المدينة</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">المنطقة الجغرافية / المدينة</label>
                               <input type="text" placeholder="التجمع الخامس، الشيخ زايد، هليوبوليس..." value={pLocation} disabled={!canEditFullDetails} onChange={(e) => setPLocation(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none focus:border-[#D4AF37] text-xs" />
                             </div>
 
                             <div>
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">اسم العميل المتعاقد *</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">اسم العميل المتعاقد *</label>
                               <select value={pCustomerId} disabled={!canChangeCustomer} onChange={(e) => setPCustomerId(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-base">
                                 <option value="">-- اختر العميل --</option>
                                 {customers.map((c) => (
@@ -851,8 +881,16 @@ export default function ProjectsPage() {
                               </select>
                             </div>
 
+                            {/* 🌟 تم التحديث هنا: إضافة مستشعر مالي محاسبي حي لفصل الآلاف فوق حقل الإدخال تلقائياً للحد من أخطاء الإدخال المليونية */}
                             <div className="col-span-2">
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">إجمالي القيمة المالية للعقد (ج.م)</label>
+                              <div className="flex justify-between items-center mb-2 px-1">
+                                <label className="block text-[#D4AF37] font-bold px-2 text-[13px]">إجمالي القيمة المالية للعقد (ج.م) *</label>
+                                {pContractValue !== "" && (
+                                  <span className="text-emerald-400 font-mono font-bold text-xs animate-pulse">
+                                    {Number(pContractValue).toLocaleString('en-US')} ج.م
+                                  </span>
+                                )}
+                              </div>
                               <input type="number" placeholder="قيمة العقد الكلية" value={pContractValue} disabled={!canEditFullDetails} onChange={(e) => setPContractValue(e.target.value !== "" ? Number(e.target.value) : "")} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono font-bold focus:border-[#D4AF37] disabled:opacity-50 text-xs" />
                             </div>
                           </div>
@@ -864,7 +902,7 @@ export default function ProjectsPage() {
                         <div className="space-y-4 animate-in fade-in duration-200">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">المهندس المشرف *</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">المهندس المشرف *</label>
                               <select value={pAssignedEngineerId} disabled={!canEditTechnical} onChange={(e) => setPCAssignedEngineerId(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-sm">
                                 <option value="">-- إسناد لمهندس المشروعات --</option>
                                 {engineersList.map(eng => (
@@ -873,7 +911,7 @@ export default function ProjectsPage() {
                               </select>
                             </div>
                             <div>
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">مسؤول المبيعات (Sales)</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">مسؤول المبيعات (Sales)</label>
                               <div className="w-full h-11 rounded-xl bg-[#020B1C]/50 border border-[#243556] text-gray-300 px-3 flex items-center text-xs">
                                 <User className="w-3.5 h-3.5 text-[#D4AF37] ml-1.5 shrink-0" />
                                 <span className="truncate">{currentSalesRepName}</span>
@@ -881,7 +919,7 @@ export default function ProjectsPage() {
                             </div>
 
                             <div className="col-span-2">
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">حالة الموقع الإدارية *</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">حالة الموقع الإدارية *</label>
                               <select value={pUnitStatus} disabled={!canEditFullDetails} onChange={(e) => setPUnitStatus(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#D4AF37] font-bold px-3 text-xs outline-none cursor-pointer focus:border-[#D4AF37]">
                                 <option value="معلق / قيد الانتظار">معلق / قيد الانتظار</option>
                                 <option value="In_progress">نشط / جاري العمل بالموقع</option>
@@ -890,15 +928,15 @@ export default function ProjectsPage() {
 
                             <div className="grid grid-cols-3 gap-3 col-span-2">
                               <div>
-                                <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">تاريخ بدء العمل *</label>
+                                <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">تاريخ بدء العمل *</label>
                                 <input type="date" required value={pStartDate} disabled={!canEditTechnical} onChange={(e) => setPStartDate(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-[#F0E6D2] px-2 outline-none font-mono font-bold text-xs focus:border-[#D4AF37]" />
                               </div>
                               <div>
-                                <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">التسليم المبدئي (تلقائي)</label>
+                                <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">التسليم المبدئي </label>
                                 <input type="date" disabled value={pProvisionalDate} className="w-full h-11 rounded-xl bg-[#020B1C]/40 border border-[#243556] text-amber-400 px-2 outline-none font-mono font-bold text-xs text-center animate-pulse" />
                               </div>
                               <div>
-                                <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">التسليم النهائي (المعتمد)</label>
+                                <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">التسليم النهائي </label>
                                 <input type="date" disabled value={pFinalDate} className="w-full h-11 rounded-xl bg-[#020B1C]/40 border border-[#243556] text-emerald-400 px-2 outline-none font-mono font-bold text-xs text-center animate-pulse" />
                               </div>
                             </div>
@@ -911,7 +949,7 @@ export default function ProjectsPage() {
                         <div className="space-y-4 animate-in fade-in duration-200">
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">نوع الوحدة الإنشائية *</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">نوع الوحدة الإنشائية *</label>
                               <select value={pUnitType} disabled={!canEditFullDetails} onChange={(e) => setPUnitType(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none cursor-pointer focus:border-[#D4AF37] text-xs">
                                 <option>شقة</option>
                                 <option>فيلا</option>
@@ -921,12 +959,12 @@ export default function ProjectsPage() {
                               </select>
                             </div>
                             <div>
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">المساحة الإجمالية (م²) *</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">المساحة الإجمالية (م²) *</label>
                               <input type="number" value={pArea} disabled={!canEditFullDetails} onChange={(e) => setPArea(e.target.value !== "" ? Number(e.target.value) : "")} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono focus:border-[#D4AF37] text-xs" />
                             </div>
 
                             <div className="col-span-2">
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">مستوى التشطيب المطلوب *</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">مستوى التشطيب المطلوب *</label>
                               <select value={pFinishingLevel} disabled={!canEditFullDetails} onChange={(e) => setPFinishingLevel(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] px-3 font-black outline-none cursor-pointer focus:border-[#D4AF37] text-xs">
                                 <option>اقتصادى (لوكس)</option>
                                 <option>متوسط (سوبر لوكس )</option>
@@ -935,12 +973,12 @@ export default function ProjectsPage() {
                             </div>
 
                             <div className="col-span-2">
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">رابط مجسم الـ 3D التفاعلي للمشروع</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">رابط مجسم الـ 3D التفاعلي للمشروع</label>
                               <input type="url" placeholder="https://sketchfab.com/models/..." value={pDesignUrl} disabled={!canEditTechnical} onChange={(e) => setPDesignUrl(e.target.value)} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono focus:border-[#D4AF37] disabled:opacity-50 text-xs" />
                             </div>
 
                             <div className="col-span-2">
-                              <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">نسبة الإنجاز الفعلي بالموقع (%)</label>
+                              <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">نسبة الإنجاز الفعلي بالموقع (%)</label>
                               <input type="number" min="0" max="100" value={pProgress} disabled={!canEditMilestones} onChange={(e) => setPProgress(Number(e.target.value))} className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#243556] text-white px-3 outline-none font-mono font-bold focus:border-[#D4AF37] disabled:opacity-50 text-xs" />
                             </div>
                           </div>
@@ -1152,7 +1190,7 @@ export default function ProjectsPage() {
                     
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                       <div>
-                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">اسم مرحلة الدفعة *</label>
+                        <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">اسم مرحلة الدفعة *</label>
                         <input 
                           type="text"
                           value={instMilestoneName}
@@ -1162,7 +1200,7 @@ export default function ProjectsPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">النسبة % من العقد *</label>
+                        <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">النسبة % من العقد *</label>
                         <input 
                           type="number"
                           value={instPercentage}
@@ -1173,7 +1211,7 @@ export default function ProjectsPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">القيمة المستحقة (تلقائي)</label>
+                        <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">القيمة المستحقة (تلقائي)</label>
                         <div className="w-full h-10 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] flex items-center px-3 font-mono font-black">
                           {instAmount.toLocaleString()} ج.م
                         </div>
@@ -1182,7 +1220,7 @@ export default function ProjectsPage() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
                       <div>
-                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">تاريخ الاستحقاق المتوقع</label>
+                        <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">تاريخ الاستحقاق المتوقع</label>
                         <input 
                           type="date"
                           value={instDueDate}
@@ -1191,7 +1229,7 @@ export default function ProjectsPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-[#D4AF37] font-bold mb-2 text-[11px]">ربط استحقاق الدفعة بانتهاء مرحلة *</label>
+                        <label className="block text-[#D4AF37] font-bold mb-2 px-2 text-[13px]">ربط استحقاق الدفعة بانتهاء مرحلة *</label>
                         <select
                           value={instLinkedStageId}
                           onChange={(e) => setInstLinkedStageId(e.target.value !== "" ? Number(e.target.value) : "")}
@@ -1225,7 +1263,7 @@ export default function ProjectsPage() {
               <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 space-y-4 shadow-2xl relative w-full text-xs md:text-sm">
                 <p className="text-[#D4AF37] font-black text-sm md:text-base border-b border-[#D4AF37] pb-3 flex items-center gap-2 select-none">
                   <Layers className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5" />
-                  <span>خطة العمل والمراحل الإنشائية والزمنية الـ 12 للموقع:</span>
+                  <span>خطة العمل والمراحل الإنشائية والزمنية لبنود للموقع:</span>
                 </p>
                 
                 <p className="text-white text-xs leading-relaxed select-none">

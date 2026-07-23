@@ -340,10 +340,6 @@ export default function SubcontractorsPage() {
     <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden" dir="rtl">
       
       {/* 🌟 هيدر الهيكل لمنع وميض وتأخر تحميل الخط البصري FOUT بسيرفرات الإنتاج */}
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-
       <style dangerouslySetInnerHTML={{__html: `
         ::-webkit-scrollbar {
           width: 6px !important;
@@ -365,10 +361,6 @@ export default function SubcontractorsPage() {
         }
         
         /* جدار أمان الخط الموحد Alexandria */
-        *:not(code, pre, .font-mono, [class*="font-mono"]) {
-          font-family: 'Alexandria', Arial, sans-serif !important;
-          letter-spacing: normal !important;
-        }
       `}} />
 
       <Sidebar />
@@ -420,7 +412,7 @@ export default function SubcontractorsPage() {
             <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex flex-col sm:flex-row justify-between items-center gap-4 select-none">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-[#D4AF37]" />
-                <h3 className="text-[#D4AF37] text-md md:text-md">سجل مقاولي الباطن مع روابط عقود الاسناد</h3>
+                <h3 className="text-[#D4AF37] font-bold text-md md:text-md">سجل مقاولي الباطن مع روابط عقود الاسناد</h3>
               </div>
 
               <div className="relative w-full sm:w-72">
@@ -489,7 +481,7 @@ export default function SubcontractorsPage() {
           <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 space-y-5 animate-fade-in shadow-2xl relative w-full text-xs">
             <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
             
-            <h3 className="text-[#D4AF37] text-base md:text-base  border-b border-[#D4AF37] pb-3 flex items-center gap-2 select-none">
+            <h3 className="text-[#D4AF37] text-base md:text-base font-bold  border-b border-[#D4AF37] pb-3 flex items-center gap-2 select-none">
               <Sparkles className="w-5 h-5 text-[#D4AF37] shrink-0 animate-pulse" />
               <span>تفاصيل وبيانات مقاول الباطن / المورد المحدد</span>
             </h3>

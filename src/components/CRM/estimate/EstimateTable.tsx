@@ -96,17 +96,17 @@ export default function EstimateTable({ items, isEditable = false }: EstimateTab
   if (!items || items.length === 0) return null;
 
   return (
-    <div className="rounded-2xl bg-[#07132a] border border-[#1f2d4d] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+    <div className="rounded-2xl bg-[#07132a] border border-[#D4AF37] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
       <div className="overflow-x-auto">
         <table className="w-full text-right border-collapse min-w-[900px]">
           <thead>
-            <tr className="bg-[#1f2d4d]/40 border-b border-[#1f2d4d] text-[#F0E6D2] text-lg font-bold select-none">
+            <tr className="bg-[#020B1C]/40 border-b border-[#D4AF37] text-[#D4AF37] text-sm font-bold select-none">
               <th className="p-4 w-[35%] text-right">بيان البند والوصف الهندسي</th>
               <th className="p-4 text-center w-[10%]">الوحدة</th>
               <th className="p-4 text-center w-[12%]">الكمية</th>
-              <th className="p-4 text-center w-[12%]">سعر مادة الخام</th>
-              <th className="p-4 text-center w-[12%]">أجور المصنعيات</th>
-              <th className="p-4 text-center w-[14%]">إجمالي التكلفة</th>
+              <th className="p-4 text-center w-[14%]">تكلفة الخامات</th>
+              <th className="p-4 text-center w-[16%]">تكلفة المصنعيات</th>
+              <th className="p-4 text-center w-[12%]">الإجمالي </th>
               {editable && <th className="p-4 text-center w-[5%]">خيارات</th>}
             </tr>
           </thead>
