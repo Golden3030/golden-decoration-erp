@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { supabase } from "@/lib/supabaseClient"; // توحيد عميل الاتصال لمنع تكرار GoTrueClient
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react"; // 🌟 تم الاستيراد بنجاح هنا لتفادي انهيار المترجم
 
 export default function LoginPage() {
   const router = useRouter();
@@ -79,7 +79,7 @@ export default function LoginPage() {
         await supabase.auth.signOut();
         const errorDetail = profileError 
           ? `كود الخطأ: ${profileError.code} - تفاصيل الخلل: ${profileError.message}`
-          : "لم يتم العثور على سطر صلاحيات متطابق لمعرف هذا الحساب بجدول المستخدمين.";
+          : "لم يتم العثور على صلاحيات متطابق لمعرف هذا الحساب بقاعدة المستخدمين.";
         throw new Error(`عذراً، حسابك لا يمتلك أي صلاحية فنية نشطة. ${errorDetail}`);
       }
 
@@ -121,7 +121,7 @@ export default function LoginPage() {
         link: "/users"
       });
 
-      alert(`📩 تم إرسال رابط مشفر بنجاح لإعادة تعيين كلمة المرور إلى البريد: (${resetEmail})، ومزامنة إشعار الدعم الفني للمدير العام حياً.`);
+      alert(`📩 تم إرسال رابط مشفر بنجاح لإعادة تعيين كلمة المرور إلى البريد: (${resetEmail})، ومزامنة إشعار الدعم الفني للمدير العام .`);
       setView("login");
       setResetEmail("");
     } catch (err: any) {
@@ -132,7 +132,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen w-full flex items-center justify-center bg-[#020B1C] px-4 relative overflow-hidden" dir="rtl">
+    <main className="min-h-screen w-full flex items-center justify-center bg-[#020B1C] px-4 relative overflow-hidden font-alexandria" dir="rtl">
       
       {/* 🛠️ جدار الأنماط والحركية الفاخرة للـ Breathing Glow والمصادقة والخطوط الموحدة */}
       <style dangerouslySetInnerHTML={{ __html: `
@@ -177,7 +177,7 @@ export default function LoginPage() {
             className="mx-auto drop-shadow-[0_4px_15px_rgba(212,175,55,0.25)]"
             priority
           />
-          <h2 className="text-[#F0E6D2] text-xl font-black mt-1">نظام تخطيط وإدارة الحسابات (ERP)</h2>
+          <h2 className="text-[#D4AF37] text-xl font-bold mt-1">نظام تخطيط وإدارة الحسابات (ERP)</h2>
           <p className="text-gray-400 text-[10px] font-serif tracking-widest mt-1">GOLDEN DECORATION — EXCELLENCE IN WORK</p>
         </div>
 
@@ -199,7 +199,7 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-[#F0E6D2] text-xs font-bold">كلمة المرور المشفرة *</label>
+              <label className="block text-[#F0E6D2] text-xs font-bold">كلمة المرور  *</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
@@ -242,21 +242,29 @@ export default function LoginPage() {
               </span>
             </div>
 
-            {/* زر الدخول التفاعلي الجديد الموجه ديناميكياً لجميع الرتب دون تجميد */}
+            {/* 🌟 ترقية وتوحيد زر تسجيل الدخول للدستور البصري الحركي الموحد بـ عاكس الإضاءة السفلي */}
             <button
               type="button"
               onClick={handleClientSideLogin}
               disabled={loading}
-              className="w-full h-12 bg-gradient-to-r from-[#D4AF37] to-[#F0E6D2] text-black rounded-xl font-bold hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 text-sm mt-6 shadow-lg shadow-[#D4AF37]/15 flex items-center justify-center gap-2"
+              className="w-full h-12 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-bold flex items-center justify-center gap-2 select-none relative overflow-hidden disabled:opacity-40"
             >
-              {loading ? "جاري فحص الصلاحيات الإدارية..." : "🔑 تسجيل دخول آمن للنظام"}
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin w-4 h-4 text-[#D4AF37]" />
+                  <span>جاري فحص الصلاحيات الإدارية...</span>
+                </>
+              ) : (
+                <span>🔑 تسجيل دخول للنظام</span>
+              )}
+              <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
             </button>
           </div>
         )}
 
         {view === "reset" && (
           <form onSubmit={handleResetPassword} className="space-y-4 text-right transition-all duration-300">
-            <p className="text-gray-300 text-xs leading-relaxed mb-3 text-center">أدخل بريدك الإلكتروني المسجل وسيقوم النظام بإرسال رابط آمن ومشر لتغيير وتحديث كلمة المرور ببريدك حياً.</p>
+            <p className="text-gray-300 text-xs leading-relaxed mb-3 text-center">أدخل بريدك الإلكتروني المسجل وسيقوم النظام بإرسال رابط آمن ومشر لتغيير وتحديث كلمة المرور ببريدك .</p>
             
             <div>
               <label className="block text-[#F0E6D2] text-xs mb-1.5 font-bold">البريد الإلكتروني المسجل *</label>
@@ -279,12 +287,21 @@ export default function LoginPage() {
               </span>
             </div>
 
+            {/* 🌟 ترقية وتوحيد زر استعادة كلمة المرور للدستور البصري الحركي الموحد بـ عاكس الإضاءة السفلي */}
             <button
               type="submit"
               disabled={resetLoading}
-              className="w-full h-12 bg-gradient-to-r from-[#D4AF37] to-[#F0E6D2] text-black rounded-xl font-bold hover:scale-[1.01] active:scale-[0.99] cursor-pointer transition-all duration-200 disabled:opacity-50 text-sm mt-6 shadow-lg shadow-[#D4AF37]/15 flex items-center justify-center gap-2"
+              className="w-full h-12 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-2 select-none relative overflow-hidden disabled:opacity-40"
             >
-              {resetLoading ? "جاري إرسال الرابط..." : "📩 إرسال رابط الاستعادة للبريد"}
+              {resetLoading ? (
+                <>
+                  <Loader2 className="animate-spin w-4 h-4 text-[#D4AF37]" />
+                  <span>جاري إرسال الرابط...</span>
+                </>
+              ) : (
+                <span>📩 إرسال رابط الاستعادة للبريد</span>
+              )}
+              <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
             </button>
           </form>
         )}
