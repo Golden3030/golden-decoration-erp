@@ -43,8 +43,11 @@ export default function EstimatesPage() {
             id,
             project_name,
             location,
+            area,
             customers (
-              name
+              name,
+              mobile,
+              customer_code
             )
           )
         `)
@@ -69,14 +72,17 @@ export default function EstimatesPage() {
     setCRMData((prev: any) => ({
       ...prev,
       customer: {
-        name: item.projects?.customers?.name || "عميل غير محدد"
+        name: item.projects?.customers?.name || "عميل غير محدد",
+        mobile: item.projects?.customers?.mobile || "",
+        customerCode: item.projects?.customers?.customer_code || ""
       },
       project: {
         id: item.projects?.id,
         projectName: item.projects?.project_name,
         estimateNumber: item.estimate_number,
         estimateDate: new Date(item.created_at).toLocaleDateString("en-CA"),
-        unitAddress: item.projects?.location
+        unitAddress: item.projects?.location,
+        area: item.projects?.area || 0
       },
       estimate: {
         number: item.estimate_number,

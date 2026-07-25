@@ -149,6 +149,33 @@ export default function CRMPage() {
     }
   };
 
+  // ✅ إصلاح: كانت الأكواد (CUST/P/EST) بتتولد عشوائياً بالكامل، فمكنش فيها أي تسلسل منطقي.
+  // الدالة دي بتجيب أعلى رقم مسجل فعلياً بنفس البادئة، وترجع الرقم اللي بعده مباشرة
+  async function generateSequentialCode(table: string, column: string, prefix: string): Promise<string> {
+    try {
+      const { data, error } = await supabase
+        .from(table)
+        .select(column)
+        .ilike(column, `${prefix}-%`);
+
+      if (error) throw error;
+
+      let maxNum = 1000;
+      (data || []).forEach((row: any) => {
+        const val = row[column] as string;
+        const match = val?.match(new RegExp(`^${prefix}-(\\d+)$`));
+        if (match) {
+          const num = parseInt(match[1], 10);
+          if (num > maxNum) maxNum = num;
+        }
+      });
+      return `${prefix}-${maxNum + 1}`;
+    } catch (err) {
+      console.error(`تعذر توليد كود متسلسل لـ ${prefix}، سيتم استخدام رقم عشوائي احتياطي:`, err);
+      return `${prefix}-${Math.floor(1000 + Math.random() * 9000)}`;
+    }
+  }
+
   async function loadAllCRMData() {
     setLoading(true);
     try {
@@ -207,7 +234,7 @@ export default function CRMPage() {
 
     setSaving(true);
     const assignedRepId = isManager ? (addAssignedTo || null) : currentUserId;
-    const generatedCustomerCode = "CUST-" + Math.floor(1000 + Math.random() * 9000);
+    const generatedCustomerCode = await generateSequentialCode("customers", "customer_code", "CUST");
 
     const payload = {
       customer_code: generatedCustomerCode,
@@ -222,11 +249,18 @@ export default function CRMPage() {
 
     try {
       if (isOnline()) {
-        const { error } = await supabase
+        const { data: newCustomer, error } = await supabase
           .from("customers")
-          .insert([payload]);
+          .insert([payload])
+          .select()
+          .single();
 
         if (error) throw error;
+
+        // ✅ إصلاح: إضافة العميل الجديد مباشرة للقائمة المحلية بدل عمل تحميل كامل للصفحة يشبه الـ Reload
+        if (newCustomer) {
+          setCustomersList(prev => [newCustomer, ...prev]);
+        }
 
         if (assignedRepId && assignedRepId !== currentUserId) {
           await supabase.from("notifications").insert({
@@ -252,7 +286,6 @@ export default function CRMPage() {
       setAddAssignedTo("");
       setAddStatus("جديد");
 
-      await loadAllCRMData();
     } catch (err: any) {
       alert("حدث خطأ أثناء تسجيل العميل: " + err.message);
     } finally {
@@ -348,8 +381,8 @@ export default function CRMPage() {
 
       if (!custData) throw new Error("فشل العثور على معرّف العميل المستهدف بالسحابة.");
 
-      const generatedProjCode = crmData.project?.projectCode || "P-" + Math.floor(1000 + Math.random() * 9000);
-      const generatedEstNum = crmData.project?.estimateNumber || "EST-" + Math.floor(1000 + Math.random() * 9000);
+      const generatedProjCode = crmData.project?.projectCode || await generateSequentialCode("projects", "project_code", "P");
+      const generatedEstNum = crmData.project?.estimateNumber || await generateSequentialCode("projects", "estimate_number", "EST");
 
       const payload = {
         customer_id: custData.id,
@@ -447,7 +480,6 @@ export default function CRMPage() {
         alert("⚠️ تم حفظ ميزانية المشروع محلياً مؤقتاً؛ سيتم مزامنتها تلقائياً فور توفر الإنترنت.");
       }
 
-      await loadAllCRMData();
     } catch (err: any) {
       console.error("Save Project Error:", err);
       alert("حدث خطأ أثناء حفظ المشروع: " + err.message);
@@ -1244,7 +1276,6 @@ export default function CRMPage() {
                         } : c));
                         
                         alert("✅ تم تحديث بيانات العميل وتفعيل بروتوكول التجميد التعاقدي بنجاح!");
-                        await loadAllCRMData();
                         if (crmData.project?.id) {
                           await loadProjectData(crmData.project.id);
                         }

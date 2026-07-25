@@ -1286,7 +1286,7 @@ export default function InitialEstimate() {
       // 1. مراجعة واستدعاء ترويسة المقايسة المبدئية الحالية
       const { data: existingHeader } = await supabase
         .from("estimate_headers")
-        .select("id")
+        .select("id, estimate_number")
         .eq("project_id", project.id)
         .eq("status", status)
         .maybeSingle();
@@ -1296,9 +1296,16 @@ export default function InitialEstimate() {
       const matTotal = items.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0);
       const labTotal = items.reduce((sum, item) => sum + Number(item.laborCost || 0), 0);
 
+      // ✅ إصلاح حرج: كان بيولّد رقم مقايسة عشوائي جديد ويكتب فوق الرقم الأصلي في *كل* عملية حفظ تلقائي،
+      // حتى لو المقايسة موجودة بالفعل من قبل! دلوقتي بيعيد استخدام نفس الرقم المحفوظ فعلياً،
+      // وبيولّد رقم جديد بس أول مرة (لما تتنشأ المقايسة فعلاً)
+      const finalEstimateNumber = existingHeader?.estimate_number
+        || project.estimateNumber
+        || `EST-${Math.floor(1000 + Math.random() * 9000)}`;
+
       const payloadHeader = {
         project_id: project.id,
-        estimate_number: project.estimateNumber || `EST-${Math.floor(1000 + Math.random() * 9000)}`,
+        estimate_number: finalEstimateNumber,
         status: status,
         materials_total: matTotal,
         labor_total: labTotal,
