@@ -384,7 +384,7 @@ export default function PublicCampaignCalculator() {
                   احسب تكلفة تشطيب شقتك
                 </h1>
                 {/* تم تعديل الحجم إلى 3.5xl مع تحرير ارتفاع السطر وإضافة حشوة سفلية لضمان ظهور الذيول كاملة */}
-                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-black text-4xl md:text-4xl block font-alexandria leading-none">
+                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-bold text-3xl md:text-4xl block font-alexandria leading-none">
                   من موبايلك
                 </span>
               </div>
@@ -396,7 +396,7 @@ export default function PublicCampaignCalculator() {
             </div>
 
             {/* الأوسمة الثلاثة - مع مسافات توزيع واضحة وواسعة */}
-            <div className="flex flex-row flex-nowrap items-center justify-center gap-4 select-none w-full pt-1.5">
+            <div className="flex flex-row flex-nowrap items-center justify-center gap-4 select-none w-full pt-1">
               {[
                 { icon: UserX, label: "بدون تسجيل" },
                 { icon: Gift, label: "مجاني" },
