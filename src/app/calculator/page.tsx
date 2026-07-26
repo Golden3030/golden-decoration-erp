@@ -445,7 +445,7 @@ export default function PublicCampaignCalculator() {
                   </div>
 
                   <p className="mt-2.5 pt-2 border-t border-[#D4AF37]/20 text-[10px] text-emerald-400/95 font-bold text-center select-none font-alexandria">
-                    الأسعار شاملة أرقى الخامات المعتمدة والمصنعية
+                    الأسعار شاملة الخامات والمصنعيات
                   </p>
 
                   {/* الوشاح الدائري المذهب الدقيق جداً أعلى يسار الصندوق بدلاً من المربع المائل */}
@@ -551,7 +551,7 @@ export default function PublicCampaignCalculator() {
                   onClick={() => setShowLeadForm(true)}
                   className="cta-shimmer relative overflow-hidden w-full h-12 bg-gradient-to-r from-black via-[#0d0904] to-black border-2 border-[#D4AF37] text-[#F0E6D2] rounded-full font-black text-xs shadow-[0_4px_18px_rgba(212,175,55,0.2)] flex items-center justify-center gap-2.5 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(212,175,55,0.55)] hover:border-[#F0E6D2] active:scale-[1.01] transition-all duration-300 cursor-pointer font-alexandria"
                 >
-                  <span className="text-[#F0E6D2] tracking-wider">احصل على مقايسة تفصيلية رسمية الآن</span>
+                  <span className="text-[#F0E6D2] tracking-wider">احصل على مقايسة تفصيلية الآن</span>
                   <ChevronLeft size={16} className="text-[#D4AF37] shrink-0" />
                 </button>
 
@@ -566,7 +566,7 @@ export default function PublicCampaignCalculator() {
                     onClick={() => setShowLeadForm(false)} 
                     className="text-[#D4AF37] text-[10px] font-black underline cursor-pointer hover:text-[#F0E6D2] transition-colors font-alexandria"
                   >
-                    تعديل المساحة والباقة
+                    تعديل المساحة 
                   </button>
                 </div>
                 
@@ -663,7 +663,7 @@ export default function PublicCampaignCalculator() {
               <CheckCircle className="text-emerald-400 mx-auto drop-shadow-[0_0_12px_rgba(52,211,153,0.4)]" size={54} strokeWidth={1.5} />
               <h2 className="text-[#F0E6D2] text-lg font-black tracking-wide">طلبك قيد الدراسة الفنية</h2>
               <p className="text-gray-300 text-[10px] leading-relaxed font-semibold px-4">
-                نشكر ثقتكم في Golden Decoration. تم تسجيل تفاصيل طلبك بنجاح، وسيتم ارسال مقايستك المعتمدة فورا عبر الواتساب في أقرب وقت.
+                نشكر ثقتكم في Golden Decoration. تم تسجيل تفاصيل طلبك بنجاح، وسيتم ارسال مقايستك المعتمدة عبر الواتساب في أقرب وقت.
               </p>
               
               <div className="pt-2 select-none font-alexandria">
