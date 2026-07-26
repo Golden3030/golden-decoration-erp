@@ -396,7 +396,7 @@ export default function PublicCampaignCalculator() {
             </div>
 
             {/* الأوسمة الثلاثة - مع مسافات توزيع واضحة وواسعة */}
-            <div className="flex flex-row flex-nowrap items-center justify-center gap-3 select-none w-full pt-1.5">
+            <div className="flex flex-row flex-nowrap items-center justify-center gap-4 select-none w-full pt-1.5">
               {[
                 { label: "بدون تسجيل" },
                 { label: "مجاني" },
