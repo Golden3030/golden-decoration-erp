@@ -384,7 +384,7 @@ export default function PublicCampaignCalculator() {
                   احسب تكلفة تشطيب شقتك
                 </h1>
                 {/* تم تعديل الحجم إلى 3.5xl مع تحرير ارتفاع السطر وإضافة حشوة سفلية لضمان ظهور الذيول كاملة */}
-                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-bold text-3xl md:text-3xl font-alexandria leading-none">
+                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-bold text-3xl md:text-3xl font-Arial leading-none">
                   من موبايلك
                 </span>
               </div>
@@ -396,7 +396,7 @@ export default function PublicCampaignCalculator() {
             </div>
 
             {/* الأوسمة الثلاثة - مع مسافات توزيع واضحة وواسعة */}
-            <div className="flex flex-row flex-nowrap items-center justify-center gap-4 select-none w-full pt-2.5">
+            <div className="flex flex-row flex-nowrap items-center justify-center gap-3 select-none w-full pt-1.5">
               {[
                 { label: "بدون تسجيل" },
                 { label: "مجاني" },
@@ -483,15 +483,15 @@ export default function PublicCampaignCalculator() {
                   </div>
 
                   <input
-                    type="range" min="40" max="600" step="1"
+                    type="range" max="600" min="40" step="1"
                     value={area}
                     onChange={(e) => setArea(Number(e.target.value))}
                     className="w-full cursor-pointer"
                     style={{ ["--slider-progress" as string]: `${sliderPercentage}%` }}
                   />
                   <div className="flex justify-between text-[9px] text-[#F0E6D2]/40 font-mono">
-                    <span>600 م²</span>
                     <span>40 م²</span>
+                    <span>600 م²</span>
                   </div>
                 </div>
 
