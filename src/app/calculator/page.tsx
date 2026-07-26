@@ -398,17 +398,17 @@ export default function PublicCampaignCalculator() {
             {/* الأوسمة الثلاثة - مع مسافات توزيع واضحة وواسعة */}
             <div className="flex flex-row flex-nowrap items-center justify-center gap-3 select-none w-full pt-1.5">
               {[
-                { icon: UserX, label: "بدون تسجيل" },
-                { icon: Gift, label: "مجاني" },
-                { icon: Zap, label: "نتيجة فورية" },
-              ].map(({ icon: Icon, label }) => (
+                { label: "بدون تسجيل" },
+                { label: "مجاني" },
+                { label: "نتيجة فورية" },
+              ].map(({ label }) => (
                 <span
                   key={label}
                   className="inline-flex items-center gap-1.5 bg-[#000000] border border-[#D4AF37]/30 text-[#F0E6D2] px-2.5 py-1 rounded-full text-[9px] font-bold whitespace-nowrap font-alexandria"
                 >
                   <CheckCircle className="w-3 h-3 text-emerald-400 shrink-0" />
                   <span>{label}</span>
-                  <Icon className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+                  
                 </span>
               ))}
             </div>
