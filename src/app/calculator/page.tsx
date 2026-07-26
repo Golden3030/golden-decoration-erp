@@ -384,7 +384,7 @@ export default function PublicCampaignCalculator() {
                   احسب تكلفة تشطيب شقتك
                 </h1>
                 {/* تم تعديل الحجم إلى 3.5xl مع تحرير ارتفاع السطر وإضافة حشوة سفلية لضمان ظهور الذيول كاملة */}
-                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-black text-3xl md:text-3xl block font-arial leading-none">
+                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-black text-3xl md:text-3xl block font-Arial leading-none">
                   من موبايلك
                 </span>
               </div>
@@ -549,7 +549,7 @@ export default function PublicCampaignCalculator() {
                 {/* زر الإجراء الأساسي بالهوية الأرستقراطية الملكية (The Matte Royal Velvet Button) */}
                 <button
                   onClick={() => setShowLeadForm(true)}
-                  className="cta-shimmer relative overflow-hidden w-full h-12 bg-gradient-to-r from-black via-[#0d0904] to-black border-2 border-[#D4AF37] text-[#F0E6D2] rounded-full font-black text-xs shadow-[0_4px_18px_rgba(212,175,55,0.2)] flex items-center justify-center gap-2.5 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(212,175,55,0.55)] hover:border-[#F0E6D2] active:scale-[1.01] transition-all duration-300 cursor-pointer font-alexandria"
+                  className="cta-shimmer relative overflow-hidden w-full h-12 bg-gradient-to-r from-black via-[#0d0904] to-black border-2 border-[#D4AF37] text-[#F0E6D2] rounded-full font-bold text-xs shadow-[0_4px_18px_rgba(212,175,55,0.2)] flex items-center justify-center gap-2.5 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(212,175,55,0.55)] hover:border-[#F0E6D2] active:scale-[1.01] transition-all duration-300 cursor-pointer font-alexandria"
                 >
                   <span className="text-[#F0E6D2] tracking-wider">احصل على مقايسة تفصيلية الآن</span>
                   <ChevronLeft size={16} className="text-[#D4AF37] shrink-0" />
