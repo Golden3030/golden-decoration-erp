@@ -380,11 +380,11 @@ export default function PublicCampaignCalculator() {
             {/* كتلة النصوص الرئيسية مع تطبيق إزاحة للأعلى بنسبة صغيرة ممتازة وإحكام المسافات البينية بدقة متناهية لمنع اقتصاص الحروف */}
             <div className="inline-flex items-center justify-center gap-2.5 select-none mx-auto mt-1.5 translate-y-[-6px]">
               <div className="flex flex-col items-center text-center space-y-2">
-                <h1 className="text-lg font-bold text-white leading-tight font-alexandria">
+                <h1 className="text-md font-bold text-white leading-tight font-alexandria">
                   احسب تكلفة تشطيب شقتك
                 </h1>
                 {/* تم تعديل الحجم إلى 3.5xl مع تحرير ارتفاع السطر وإضافة حشوة سفلية لضمان ظهور الذيول كاملة */}
-                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-bold text-3xl md:text-4xl block font-alexandria leading-none">
+                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-black text-3xl md:text-4xl block font-alexandria leading-none">
                   من موبايلك
                 </span>
               </div>
@@ -396,7 +396,7 @@ export default function PublicCampaignCalculator() {
             </div>
 
             {/* الأوسمة الثلاثة - مع مسافات توزيع واضحة وواسعة */}
-            <div className="flex flex-row flex-nowrap items-center justify-center gap-4 select-none w-full pt-1">
+            <div className="flex flex-row flex-nowrap items-center justify-center gap-3 select-none w-full pt-1.5">
               {[
                 { icon: UserX, label: "بدون تسجيل" },
                 { icon: Gift, label: "مجاني" },
