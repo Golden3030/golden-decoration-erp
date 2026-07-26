@@ -283,15 +283,15 @@ export default function PublicCampaignCalculator() {
         }
 
         .frame-glow {
-          animation: frame-glow-pulse 5s ease-in-out infinite;
+          animation: frame-glow-pulse 8s ease-in-out infinite;
         }
         @keyframes frame-glow-pulse {
           0%, 100% { 
-            box-shadow: 0 0 35px rgba(212,175,55,0.06), inset 0 0 25px rgba(255,255,255,0.01);
+            box-shadow: 0 0 20px rgba(212,175,55,0.05);
             border-color: rgba(212,175,55,0.3);
           }
           50% { 
-            box-shadow: 0 0 55px rgba(212,175,55,0.22), inset 0 0 35px rgba(255,255,255,0.03);
+            box-shadow: 0 0 30px rgba(212,175,55,0.15);
             border-color: rgba(212,175,55,0.65);
           }
         }
@@ -354,7 +354,7 @@ export default function PublicCampaignCalculator() {
         />
         
         {/* الكارت الرئيسي بلون أسود كامل لمنح الهوية الملكية أقصى قدر من البروز */}
-        <div className="frame-glow bg-[#000000]/95 backdrop-blur-[24px] border border-[#D4AF37]/40 rounded-[2.5rem] pt-4 pb-6 px-4.5 space-y-4 transition-all duration-300">
+        <div className="frame-glow bg-[#000000]/95 backdrop-blur-md border border-[#D4AF37]/40 rounded-[2.5rem] pt-4 pb-6 px-4.5 space-y-4 transition-all duration-300">
           
           {/* ترويسة التطبيق مع زيادة ذكية ومتجانسة للمسافات لتوفير الراحة والبروز البصري الفاخر */}
           <header className="text-center space-y-4 pb-1">
