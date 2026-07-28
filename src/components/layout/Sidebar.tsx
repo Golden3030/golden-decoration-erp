@@ -301,7 +301,7 @@ export default function Sidebar() {
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <ClipboardList size={15} className={isAnySubActive ? "text-[#D4AF37]" : "text-[#F0E6D2]/40"} />
+                          <ClipboardList size={15} className={isAnySubActive ? "text-[#D4AF37]" : "text-[#F0E6D2]"} />
                           <span> المبيعات والـ CRM</span>
                         </div>
                         <ChevronDown 
