@@ -297,11 +297,11 @@ export default function Sidebar() {
                         className={`w-full px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-between transition-all duration-300 cursor-pointer border ${
                           isAnySubActive 
                             ? "border-[#D4AF37]/50 text-[#D4AF37] bg-[#07132a]/60 shadow-[0_0_12px_rgba(212,175,55,0.15)]" 
-                            : "text-[#F0E6D2]/80 border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
+                            : "text-[#F0E6D2] border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <ClipboardList size={15} className={isAnySubActive ? "text-[#D4AF37]" : "text-[#F0E6D2]"} />
+                          <ClipboardList size={15} className={isAnySubActive ? "text-[#D4AF37]" : "text-[#F0E6D2]/40"} />
                           <span> المبيعات والـ CRM</span>
                         </div>
                         <ChevronDown 
