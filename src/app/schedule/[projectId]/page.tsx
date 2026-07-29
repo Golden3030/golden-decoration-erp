@@ -150,7 +150,7 @@ export default function ProjectSchedulePage() {
   return (
     <div className="min-h-screen bg-[#020B1C] text-white p-6 md:p-10" dir="rtl">
       <div className="max-w-5xl mx-auto">
-        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[#D4AF37] text-sm mb-6 hover:opacity-80">
+        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[#D4AF37] text-sm mb-6 hover:opacity-80 cursor:pointer">
           <ArrowRight size={16} /> رجوع لتفاصيل المشروع
         </button>
 
@@ -164,12 +164,12 @@ export default function ProjectSchedulePage() {
 
         {phases.length === 0 ? (
           <div className="rounded-2xl border border-[#243556] bg-[#0A1730] p-10 text-center">
-            <p className="text-[#8AA1C9] mb-5">مفيش جدول زمني لسه لهذا المشروع. هيتولد تلقائياً من بنود المقايسة المعتمدة.</p>
+            <p className="text-[#8AA1C9] mb-5">لا يوجد جدول زمني لهذا المشروع. هيتولد تلقائياً من بنود المقايسة المعتمدة.</p>
             {errorMsg && <p className="text-red-400 text-sm mb-4">{errorMsg}</p>}
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="px-6 py-3 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border border-[#D4AF37] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)] transition-all disabled:opacity-50"
+              className="px-6 py-3 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border border-[#D4AF37] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)] transition-all disabled:opacity-50 cursor:pointer"
             >
               {generating ? <Loader2 className="animate-spin w-4 h-4 inline" /> : "⚡ توليد الجدول الزمني تلقائياً"}
             </button>

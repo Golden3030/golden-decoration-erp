@@ -22,7 +22,9 @@ export default function SalesResult({ analysis }: { analysis: AnalysisData }) {
       ...prev,
       activeTab: "المقايسة",
       customer: {
-        customerCode: "C-" + Math.floor(1000 + Math.random() * 9000),
+        // ✅ إصلاح: كان فيه كود عميل عشوائي هنا بيتخزن فى المسودة، وبيتاخد كـ"القيمة النهائية"
+        // وقت الحفظ الفعلي (بسبب منطق "|| generateSequentialCode" فى دالة الحفظ)، فيتخطى التوليد
+        // التسلسلي الصحيح تماماً. حذفناه عشان الحفظ الفعلي يولد كود تسلسلي حقيقي دايماً.
         name: "عميل مبيعات ذكي (محتمل)",
         mobile: "010xxxxxxx",
         phone: "",
@@ -32,9 +34,9 @@ export default function SalesResult({ analysis }: { analysis: AnalysisData }) {
       },
       project: {
         id: "d19b7d8d-6927-4481-8608-d8f96e4ab50f",
-        projectCode: "P-" + Math.floor(1000 + Math.random() * 9000),
+        // ✅ نفس الإصلاح: مفيش projectCode ولا estimateNumber هنا عمداً، عشان الحفظ الفعلي
+        // فى CRMClientPage.tsx يولدهم تسلسلياً بدل ما ياخد قيمة عشوائية جاهزة من هنا.
         projectName: `مشروع ${analysis.area}م² ${analysis.level} - مبيعات ذكي`,
-        estimateNumber: "EST-" + Math.floor(1000 + Math.random() * 9000),
         estimateDate: new Date().toLocaleDateString("en-CA"),
         unitAddress: "موقع تشطيب مبيعات ذكي",
         unitType: "شقة",

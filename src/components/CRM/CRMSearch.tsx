@@ -93,7 +93,10 @@ export default function CRMSearch({ onClose }: CRMSearchProps) {
               project: {
                 projectCode: proj.project_code,
                 projectName: proj.project_name,
-                estimateNumber: "EST-1001", 
+                // ✅ إصلاح: كان رقم مقايسة وهمي ثابت "EST-1001" هنا لكل النتائج بدون استثناء،
+                // بدل الرقم الحقيقي. سيبناه فاضي، وبيتحمل الرقم الحقيقي فور تحميل بيانات المشروع الكاملة
+                // (loadProjectData بيتنادى بعد الاختيار مباشرة للمشاريع الحقيقية).
+                estimateNumber: undefined,
                 estimateDate: new Date().toLocaleDateString("en-CA"),
                 unitAddress: proj.location,
                 unitType: proj.unit_type,
@@ -126,9 +129,12 @@ export default function CRMSearch({ onClose }: CRMSearchProps) {
               status: cust.status
             },
             project: {
-              projectCode: "قيد المتابعة",
+              // ✅ إصلاح: كانت هنا قيم وهمية ثابتة ("قيد المتابعة"، "EST-0000") بتتسرب كـ"قيمة نهائية"
+              // حقيقية لو المستخدم دوس على العميل ده عشان يبدأ مشروع جديد (بسبب منطق || فى دالة الحفظ).
+              // خليناها undefined عمداً عشان الحفظ الفعلي يولد كود تسلسلي حقيقي دايماً فى الحالة دي.
+              projectCode: undefined,
               projectName: "لم يتم إنشاء مشروع بعد",
-              estimateNumber: "EST-0000",
+              estimateNumber: undefined,
               estimateDate: "-",
               unitAddress: "غير محددة",
               unitType: "غير محددة",

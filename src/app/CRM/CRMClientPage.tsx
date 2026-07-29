@@ -608,9 +608,11 @@ export default function CRMPage() {
           contractValue: resolvedContractValue 
         } : {
           // تهيئة مشروع افتراضي فارغ ومزامنته حياً مع ليد الحاسبة
+          // ✅ إصلاح: كان فيه كود مشروع عشوائي هنا (P-xxxx) بيتسجل فى المسودة ويتاخد كـ"نهائي" وقت
+          // الحفظ الفعلي بسبب "crmData.project?.projectCode || generateSequentialCode(...)"، فيتخطى
+          // التوليد التسلسلي الصحيح تماماً. حذفناه عشان دايماً يتولد كود تسلسلي حقيقي وقت الحفظ.
           id: "new-" + Date.now(),
           projectName: `مشروع العميل ${customer.name}`,
-          projectCode: "P-" + Math.floor(1000 + Math.random() * 9000),
           location: resolvedLocation || "",
           unitType: "شقة",
           unitStatus: "بدون تشطيب (طوب احمر)",
