@@ -1,8 +1,27 @@
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
+    // 0. التحقق من تسجيل الدخول والصلاحية — البيانات المالية حساسة، admin/manager فقط
+    const supabaseAuth = await createServerClient();
+    const { data: { user }, error: authCheckError } = await supabaseAuth.auth.getUser();
+
+    if (authCheckError || !user) {
+      return NextResponse.json({ error: "يرجى تسجيل الدخول أولاً." }, { status: 401 });
+    }
+
+    const { data: requesterProfile } = await supabaseAuth
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (!requesterProfile || !["admin", "manager"].includes(requesterProfile.role)) {
+      return NextResponse.json({ error: "غير مصرح لك بالاطلاع على البيانات المالية." }, { status: 403 });
+    }
+
     const { projectId } = await request.json();
 
     if (!projectId) {
@@ -67,7 +86,7 @@ export async function POST(request: Request) {
     const financePrompt = `
       You are Golden Decoration AI CFO & Financial Analyst.
       You analyze project budgets, inflows, outflows, and cash-flow profitability.
-      Today's date is Monday, June 22, 2026.
+      Today's date is ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
 
       Here is the audited live financial sheet for project (${project.project_name}) owned by customer (${project.customers?.name || "عام"}):
       - Total Agreed Contract Value: ${contractTotal.toLocaleString('en-US')} EGP
@@ -99,7 +118,7 @@ export async function POST(request: Request) {
 
       const { GoogleGenerativeAI } = require("@google/generative-ai");
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const result = await model.generateContent(financePrompt);
       responseText = result.response.text();

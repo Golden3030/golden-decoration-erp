@@ -6,6 +6,7 @@ import Header from "@/components/layout/Header";
 import ImportLeadsModal from "@/components/CRM/ImportLeadsModal"; // 👈 استيراد مودال الاستيراد وتأصيل المكون
 import { supabase } from "@/lib/supabaseClient";
 import { isOnline, addToOfflineQueue } from "@/lib/offline-sync";
+import { generateSequentialCode } from "@/lib/generateSequentialCode";
 import { 
   Plus, 
   Minus, 
@@ -137,7 +138,8 @@ export default function CustomersPage() {
 
     setSaving(true);
     try {
-      const generatedCode = "CUST-" + Math.floor(1000 + Math.random() * 9000);
+      // توليد كود عميل تسلسلي (زي CUST-2031 فالتالي CUST-2032)، مش عشوائي
+      const generatedCode = await generateSequentialCode("customers", "customer_code", "CUST");
       const assignedRepId = isManager ? (cAssignedTo || null) : currentUserId;
 
       const payload = {

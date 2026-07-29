@@ -6,7 +6,10 @@ import { supabase } from "@/lib/supabaseClient";
 // 🌟 تم تصحيح الاستيراد هنا بإضافة Search لحل خطأ بناء المترجم الحاسم تماماً وتأمين البناء
 import { Printer, Sparkles, ShieldCheck, Check, Cpu, Layers, Search, Loader2 } from "lucide-react";
 
-export const categoryNames: Record<string, string> = {
+// ملحوظة: القاموس ده مش مُصدَّر (export) عمداً — صفحات App Router (page.tsx) في Next.js
+// مسموح تصدّر بس أسماء محددة (default, metadata, إلخ)، وأي تصدير زيادة بيوقف الـ build.
+// القاموس ده مستخدم جوه الصفحة دي بس، ومختلف شوية عن نسخة EstimateTable.tsx (فيه بند engineering_fee إضافي)
+const categoryNames: Record<string, string> = {
   archMod: "تعديل معماري وتكسير",
   masonry: "أعمال المباني والطوب",
   plaster: "أعمال البياض والمحارة",

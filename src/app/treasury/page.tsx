@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { supabase } from "@/lib/supabaseClient";
+import { generateSequentialCode } from "@/lib/generateSequentialCode";
 import { isOnline, addToOfflineQueue } from "@/lib/offline-sync";
 // 🌟 تم تصحيح الاستيراد هنا بحقن الأيقونتين الناقصتين لتفادي انهيار بناء تجميع المنظومة نهائياً
 import { 
@@ -461,15 +462,17 @@ export default function TreasuryPage() {
     }).filter(p => p.totalContract > 0);
   }, [projects, transactions]);
 
+  const currentYear = new Date().getFullYear();
+
   const nextReceiptNumber = useMemo(() => {
     const count = transactions.filter(t => t.type === "inflow").length;
-    return `REC-2026-${String(count + 1001).slice(1)}`;
-  }, [transactions]);
+    return `REC-${currentYear}-${String(count + 1001).slice(1)}`;
+  }, [transactions, currentYear]);
 
   const nextPaymentNumber = useMemo(() => {
     const count = transactions.filter(t => t.type === "outflow").length;
-    return `PAY-2026-${String(count + 1001).slice(1)}`;
-  }, [transactions]);
+    return `PAY-${currentYear}-${String(count + 1001).slice(1)}`;
+  }, [transactions, currentYear]);
 
   async function handleRegisterVoucher(e: React.FormEvent) {
     e.preventDefault();
@@ -494,6 +497,11 @@ export default function TreasuryPage() {
       const typeKey = voucherType === "receipt" ? "inflow" : "outflow";
       const catKey = voucherType === "receipt" ? "customer_payment" : category;
 
+      // ✅ إصلاح: كان رقم السند (REC/PAY) بيتحسب للعرض بس في الشاشة ومكنش بيتحفظ في قاعدة البيانات خالص،
+      // فمكنش فيه رقم رسمي ثابت للرجوع له لاحقاً أو طباعته. دلوقتي بيتحسب بدقة وقت الحفظ نفسه ويتخزن دائماً.
+      const voucherPrefix = voucherType === "receipt" ? `REC-${currentYear}` : `PAY-${currentYear}`;
+      const finalVoucherNumber = await generateSequentialCode("transactions", "voucher_number", voucherPrefix);
+
       const { data: transData, error: transErr } = await supabase
         .from("transactions")
         .insert({
@@ -501,6 +509,7 @@ export default function TreasuryPage() {
           type: typeKey,
           category: catKey,
           payment_method: payMethod,
+          voucher_number: finalVoucherNumber,
           project_id: projId || null,
           subcontractor_id: catKey === "subcontractor_labor" ? selectedSubcontractorId : null,
           engineer_id: (catKey === "petty_cash_advance" || catKey === "petty_cash_settled") ? selectedEngineerId : null,

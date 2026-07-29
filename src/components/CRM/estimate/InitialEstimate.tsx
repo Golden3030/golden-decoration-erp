@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useCRM } from "@/components/CRM/context/CRMContext";
 import { supabase } from "@/lib/supabaseClient";
+import { generateSequentialCode } from "@/lib/generateSequentialCode";
 import EstimateHeader from "./EstimateHeader";
 import EstimateTable from "./EstimateTable";
 import EstimateTotals from "./EstimateTotals";
@@ -1301,7 +1302,7 @@ export default function InitialEstimate() {
       // وبيولّد رقم جديد بس أول مرة (لما تتنشأ المقايسة فعلاً)
       const finalEstimateNumber = existingHeader?.estimate_number
         || project.estimateNumber
-        || `EST-${Math.floor(1000 + Math.random() * 9000)}`;
+        || await generateSequentialCode("estimate_headers", "estimate_number", "EST");
 
       const payloadHeader = {
         project_id: project.id,

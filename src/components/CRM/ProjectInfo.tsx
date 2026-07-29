@@ -172,7 +172,7 @@ export default function ProjectInfo({
         <h3 className="text-[#D4AF37] text-sm md:text-base font-bold border-b border-[#D4AF37] pb-3 flex items-center justify-between select-none">
           <div className="flex items-center gap-2">
             <Home className="w-5 h-5 text-[#D4AF37] shrink-0" />
-            <span>بيانات ومواصفات المشروع والوحدة الإنشائية</span>
+            <span>بيانات ومواصفات المشروع والوحدة</span>
           </div>
 
           {/* أيقونة برونزية مذهبة لتسجيل طلبات تعديل العميل تفتح الشاشة المنبثقة الفخمة */}

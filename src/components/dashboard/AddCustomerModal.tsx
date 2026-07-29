@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { generateSequentialCode } from "@/lib/generateSequentialCode";
 
 export default function AddCustomerModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState("");
@@ -21,8 +22,9 @@ export default function AddCustomerModal({ onClose }: { onClose: () => void }) {
     setLoading(true);
 
     try {
-      // توليد كود عميل عشوائي فريد تلقائياً (مثال: C-5829)
-      const generatedCustomerCode = "C-" + Math.floor(1000 + Math.random() * 9000);
+      // توليد كود عميل تسلسلي (زي CUST-2031 فالتالي CUST-2032)، مش عشوائي
+      // ملحوظة: البادئة اتوحدت لـ "CUST" بدل "C" عشان تطابق باقي شاشات النظام (شاشة العملاء وCRM)
+      const generatedCustomerCode = await generateSequentialCode("customers", "customer_code", "CUST");
 
       const { error } = await supabase
         .from("customers")

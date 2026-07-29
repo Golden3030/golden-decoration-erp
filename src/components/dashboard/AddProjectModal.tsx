@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { generateSequentialCode } from "@/lib/generateSequentialCode";
 
 export default function AddProjectModal({ onClose }: { onClose: () => void }) {
   const [customers, setCustomers] = useState<any[]>([]); // قائمة العملاء للربط
@@ -54,8 +55,8 @@ export default function AddProjectModal({ onClose }: { onClose: () => void }) {
     setLoading(true);
 
     try {
-      // توليد كود مشروع عشوائي فريد تلقائياً (مثال: P-8492)
-      const generatedProjectCode = "P-" + Math.floor(1000 + Math.random() * 9000);
+      // توليد كود مشروع تسلسلي (زي P-1005 فالتالي P-1006)، مش عشوائي
+      const generatedProjectCode = await generateSequentialCode("projects", "project_code", "P");
 
       const { error } = await supabase
         .from("projects")

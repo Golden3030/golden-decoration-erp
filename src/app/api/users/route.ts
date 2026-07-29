@@ -1,8 +1,27 @@
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
+    // 0. التحقق من إن الطالب مسجل دخول أصلاً وله دور "admin" — قبل أي حاجة تانية
+    const supabaseAuth = await createServerClient();
+    const { data: { user }, error: authCheckError } = await supabaseAuth.auth.getUser();
+
+    if (authCheckError || !user) {
+      return NextResponse.json({ error: "يرجى تسجيل الدخول أولاً." }, { status: 401 });
+    }
+
+    const { data: requesterProfile } = await supabaseAuth
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (!requesterProfile || requesterProfile.role !== "admin") {
+      return NextResponse.json({ error: "غير مصرح لك بإنشاء مستخدمين جدد." }, { status: 403 });
+    }
+
     const { email, password, name, mobile, role } = await request.json();
 
     if (!email || !password || !name || !role) {

@@ -1,8 +1,27 @@
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
+    // 0. التحقق من تسجيل الدخول — هذا API داخلي لفريق العمل فقط (مش لعملاء غير مسجلين)
+    const supabaseAuth = await createServerClient();
+    const { data: { user }, error: authCheckError } = await supabaseAuth.auth.getUser();
+
+    if (authCheckError || !user) {
+      return NextResponse.json({ error: "يرجى تسجيل الدخول أولاً." }, { status: 401 });
+    }
+
+    const { data: requesterProfile } = await supabaseAuth
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (!requesterProfile || requesterProfile.role === "client") {
+      return NextResponse.json({ error: "غير مصرح لك بهذا الإجراء." }, { status: 403 });
+    }
+
     const { projectId, ceilingLocation } = await request.json();
 
     if (!projectId) {
@@ -78,7 +97,7 @@ export async function POST(request: Request) {
     const estimatePrompt = `
       You are Golden Decoration AI BOQ Estimating Engineer.
       You generate weekly material quantity takeoff reports.
-      Today's date is Monday, June 22, 2026.
+      Today's date is ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
 
       Here is the calculated raw engineering takeoff data for project: (${project.project_name}) owned by customer (${project.customers?.name || "عام"}):
       - Apartment Area: ${area} m²
@@ -118,7 +137,7 @@ export async function POST(request: Request) {
 
       const { GoogleGenerativeAI } = require("@google/generative-ai");
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
       const result = await model.generateContent(estimatePrompt);
       responseText = result.response.text();

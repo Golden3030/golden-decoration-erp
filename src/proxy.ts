@@ -1,7 +1,7 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const hostname = request.nextUrl.hostname
 
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
@@ -61,5 +61,6 @@ export const config = {
     '/reports/:path*',
     '/customers/:path*',
     '/CRM/:path*',
+    '/schedule/:path*',
   ],
 }

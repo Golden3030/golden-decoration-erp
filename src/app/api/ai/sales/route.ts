@@ -23,7 +23,7 @@ export async function POST(req: Request) {
       Your goal is to answer client inquiries in Egyptian Arabic with extreme politeness, warm tone, and commercial smartness.
       We offer luxury interior design and residential finishing services.
       Our average rate is 5000 EGP per square meter for Super Lux.
-      Today's date is Monday, June 22, 2026.
+      Today's date is ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
 
       Here is the current client message:
       "${message || "تم إرفاق مخطط كروكي الشقة للتسعير والحصر الفني"}"
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     try {
       // المحاولة الأولى: استخدام خادم جوجل جيميناي المستقر والنشط
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" }); // تم التغيير لـ gemini-1.5-flash لضمان استقرار الاتصال الأول
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // تم التغيير لـ gemini-1.5-flash لضمان استقرار الاتصال الأول
       
       const result = imagePart 
         ? await model.generateContent([salesPrompt, imagePart])

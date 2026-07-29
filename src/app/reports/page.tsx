@@ -244,22 +244,29 @@ export default function ReportsDashboard() {
   }, [dbProjects, dbTransactions]);
 
   const cashFlowTimelineReport = useMemo(() => {
-    const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
-    return months.map((m: string) => {
-      const inMonth = filteredTransactions
-        .filter((t: any) => t.type === "inflow" && (t.payment_date || t.created_at)?.split("-")[1] === m)
-        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-      const outMonth = filteredTransactions
-        .filter((t: any) => t.type === "outflow" && (t.payment_date || t.created_at)?.split("-")[1] === m)
-        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    // ✅ إصلاح: كان بيجمع المعاملات بالشهر بس (01-12) من غير ما يفرّق بين السنين،
+    // فلو الفلتر شمل أكتر من سنة، معاملات "يوليو 2025" و"يوليو 2026" كانت بتتجمع مع بعض غلط.
+    // دلوقتي المفتاح بقى "سنة-شهر" عشان كل شهر فعلي يفضل منفصل بغض النظر عن مدى الفلتر.
+    const monthMap = new Map<string, { inflow: number; outflow: number }>();
 
-      return {
-        month: `شهر ${m}`,
-        inflow: inMonth,
-        outflow: outMonth,
-        net: inMonth - outMonth
-      };
+    filteredTransactions.forEach((t: any) => {
+      const rawDate = t.payment_date || t.created_at;
+      if (!rawDate) return;
+      const key = rawDate.slice(0, 7); // "YYYY-MM"
+      const entry = monthMap.get(key) || { inflow: 0, outflow: 0 };
+      if (t.type === "inflow") entry.inflow += Number(t.amount || 0);
+      if (t.type === "outflow") entry.outflow += Number(t.amount || 0);
+      monthMap.set(key, entry);
     });
+
+    return Array.from(monthMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, { inflow, outflow }]) => ({
+        month: `شهر ${key.slice(5, 7)} / ${key.slice(0, 4)}`,
+        inflow,
+        outflow,
+        net: inflow - outflow
+      }));
   }, [filteredTransactions]);
 
   const categorizedExpenses = useMemo(() => {

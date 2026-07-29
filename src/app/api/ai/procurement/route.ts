@@ -53,7 +53,7 @@ export async function POST(req: Request) {
     const procurementPrompt = `
       You are Golden Decoration AI Procurement Assistant.
       You generate weekly material purchase lists and procurement orders.
-      Today's current date is exactly: Monday, June 22, 2026.
+      Today's current date is exactly: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
 
       Here is the raw data of detailed materials (BOQ items) required for this active project:
       ${JSON.stringify(items)}
@@ -80,7 +80,7 @@ export async function POST(req: Request) {
     try {
       // المحاولة الأولى: استخدام خادم جوجل جيميناي المستقر
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
       const result = await model.generateContent(procurementPrompt);
       responseText = result.response.text();
     } catch (geminiError: any) {

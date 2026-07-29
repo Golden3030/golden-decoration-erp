@@ -989,7 +989,14 @@ export default function ProjectsPage() {
                   </div>
 
                   {/* زر حفظ المشروع الفاخر والمحصن تماماً */}
-                  <div className="pt-4 border-t border-[#D4AF37]/20 flex justify-end select-none">
+                  <div className="pt-4 border-t border-[#D4AF37]/20 flex justify-end gap-3 select-none">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/schedule/${selectedProject.id}`); }}
+                      className="px-6 py-3 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#7FD1D9] border border-[#7FD1D9]/60 hover:shadow-[0_0_20px_rgba(127,209,217,0.35)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-sm flex items-center justify-center gap-1.5 select-none"
+                    >
+                      📅 الجدول الزمني للمشروع
+                    </button>
                     <button
                       type="button" 
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleUpdateProject(e); }} // 👈 تم تفعيل الحصانة البرمجية للاعراض المباشر

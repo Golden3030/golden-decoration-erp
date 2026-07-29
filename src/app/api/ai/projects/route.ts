@@ -68,13 +68,13 @@ export async function GET() {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     // هندسة الأوامر (Prompt Engineering) لتلقين المساعد الإداري تواريخ التسليم الحالية وتحليل الأخطاء
     const managerPrompt = `
       You are Golden Decoration AI Project Manager.
       You analyze active projects and construction tasks.
-      Today's current date is exactly: Monday, June 22, 2026.
+      Today's current date is exactly: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
 
       Here is the raw live data of active tasks from our Supabase database:
       ${JSON.stringify(finalTasksData)}
