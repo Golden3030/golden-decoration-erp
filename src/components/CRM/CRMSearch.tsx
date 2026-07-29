@@ -234,7 +234,6 @@ export default function CRMSearch({ onClose }: CRMSearchProps) {
 
         /* إلغاء أكواد الإخفاء لضمان انسيابية التمرير بالماوس والجوال */
         .overflow-x-auto { 
-          scrollbar-width: thin !important; 
           -ms-overflow-style: auto !important; 
           overflow-x: auto !important; 
         }
@@ -245,7 +244,7 @@ export default function CRMSearch({ onClose }: CRMSearchProps) {
           font-weight: 500 !important;
           color: #D4AF37 !important;
           text-align: right !important;
-          background-color: #000000 !important;
+          background-color: #020B1C !important;
           border-bottom: 2px solid rgba(212, 175, 55, 0.3) !important;
           padding: 14px 16px !important;
           letter-spacing: normal !important;
@@ -254,7 +253,6 @@ export default function CRMSearch({ onClose }: CRMSearchProps) {
         .premium-crm-search-table tbody td {
           font-size: 0.8rem !important;
           font-weight: 400 !important;
-          color: #F0E6D2 !important;
           text-align: right !important;
           border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
           padding: 14px 16px !important;

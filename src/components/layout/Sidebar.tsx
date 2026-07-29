@@ -84,7 +84,7 @@ export default function Sidebar() {
     if (["/appointments", "/collaboration", "/notes"].includes(pathname)) {
       setIsCollabOpen(true);
     }
-    if (["/treasury", "/payroll", "/disbursements"].includes(pathname)) {
+    if (["/treasury", "/payroll", "/disbursements", "/purchase-orders"].includes(pathname)) {
       setIsFinanceOpen(true);
     }
   }, [pathname]);
@@ -112,6 +112,7 @@ export default function Sidebar() {
     { name: "المالية والحسابات", path: "/treasury", icon: Wallet, hint: "حساب الخزينة الرئيسي وتتبع الإيرادات والمصروفات." },
     { name: "الرواتب والمسيرات", path: "/payroll", icon: Coins, hint: "إصدار كشوف مسيرات رواتب الموظفين والمهندسين وتسييلها ماليًا بالخزينة." },
     { name: "صرف الخامات", path: "/disbursements", icon: Package, hint: "سندات صرف الخامات والمخازن للمواقع الميدانية ومراقبة الهدر." },
+    { name: "أوامر الشراء", path: "/purchase-orders", icon: Package, hint: "أوامر الشراء من الموردين، استلام الخامات، وتحديث المخزون تلقائياً." },
 
     // المجموعة الثالثة: التنسيق والجدولة المشتركة والمهام
     { name: "جدول المواعيد", path: "/appointments", icon: CalendarDays, hint: "جدولة اللقاءات والمعاينات الميدانية ومنع تضارب مواعيد الموظفين." },
@@ -176,7 +177,7 @@ export default function Sidebar() {
   const SALES_PATHS = ["/customer-requests", "/CRM", "/customers"];
   const PROJECT_PATHS = ["/projects", "/estimates", "/maintenance", "/settings"];
   const COLLAB_PATHS = ["/appointments", "/collaboration", "/notes"];
-  const FINANCE_PATHS = ["/treasury", "/payroll", "/disbursements"];
+  const FINANCE_PATHS = ["/treasury", "/payroll", "/disbursements", "/purchase-orders"];
 
   return (
     <>
@@ -297,7 +298,7 @@ export default function Sidebar() {
                         className={`w-full px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-between transition-all duration-300 cursor-pointer border ${
                           isAnySubActive 
                             ? "border-[#D4AF37]/50 text-[#D4AF37] bg-[#07132a]/60 shadow-[0_0_12px_rgba(212,175,55,0.15)]" 
-                            : "text-[#F0E6D2] border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
+                            : "text-[#F0E6D2]/80 border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -322,7 +323,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/customer-requests"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/customer-requests" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -336,7 +337,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/CRM"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/CRM" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -350,7 +351,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/customers"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/customers" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -376,7 +377,7 @@ export default function Sidebar() {
                         className={`w-full px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-between transition-all duration-300 cursor-pointer border ${
                           isAnySubActive 
                             ? "border-[#D4AF37]/50 text-[#D4AF37] bg-[#07132a]/60 shadow-[0_0_12px_rgba(212,175,55,0.15)]" 
-                            : "text-[#F0E6D2] border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
+                            : "text-[#F0E6D2]/80 border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -401,7 +402,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/projects"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/projects" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -415,7 +416,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/estimates"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/estimates" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -429,7 +430,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/maintenance"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/maintenance" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -443,7 +444,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/settings"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/settings" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -469,7 +470,7 @@ export default function Sidebar() {
                         className={`w-full px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-between transition-all duration-300 cursor-pointer border ${
                           isAnySubActive 
                             ? "border-[#D4AF37]/50 text-[#D4AF37] bg-[#07132a]/60 shadow-[0_0_12px_rgba(212,175,55,0.15)]" 
-                            : "text-[#F0E6D2] border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
+                            : "text-[#F0E6D2]/80 border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -494,7 +495,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/appointments"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/appointments" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -508,7 +509,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/collaboration"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/collaboration" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -522,7 +523,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/notes"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/notes" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -548,7 +549,7 @@ export default function Sidebar() {
                         className={`w-full px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-between transition-all duration-300 cursor-pointer border ${
                           isAnySubActive 
                             ? "border-[#D4AF37]/50 text-[#D4AF37] bg-[#07132a]/60 shadow-[0_0_12px_rgba(212,175,55,0.15)]" 
-                            : "text-[#F0E6D2] border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
+                            : "text-[#F0E6D2]/80 border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37]"
                         }`}
                       >
                         <div className="flex items-center gap-3">
@@ -573,7 +574,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/treasury"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/treasury" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -588,7 +589,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/payroll"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/payroll" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -603,7 +604,7 @@ export default function Sidebar() {
                             className={`w-full px-3 py-2 rounded-lg font-bold text-[11px] flex items-center justify-start gap-2.5 transition-all duration-200 cursor-pointer border ${
                               pathname === "/disbursements"
                                 ? "bg-black border border-[#D4AF37] text-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.2)]"
-                                : "text-[#F0E6D2] border-transparent hover:text-[#D4AF37]"
+                                : "text-[#F0E6D2]/70 border-transparent hover:text-[#D4AF37]"
                             }`}
                           >
                             <span className={`w-1.5 h-1.5 rounded-full ${pathname === "/disbursements" ? "bg-[#D4AF37] animate-pulse" : "bg-gray-700"}`} />
@@ -626,7 +627,7 @@ export default function Sidebar() {
                     className={`w-full px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-start gap-3 transition-all duration-300 cursor-pointer border relative overflow-hidden ${
                       isActive 
                         ? "royal-active-btn" 
-                        : "text-[#F0E6D2] border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37] hover:translate-x-[-3px]"
+                        : "text-[#F0E6D2]/80 border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37] hover:translate-x-[-3px]"
                     }`}
                   >
                     {/* نبضة نيون ذهبية دائرية تظهر بجانب الخيار النشط بالسايدبار لتوحيد النسق */}

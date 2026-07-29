@@ -75,7 +75,7 @@ export default function MaterialDisbursementsPage() {
       // 3. جلب منتجات مكتبة الخامات المعتمدة
       const { data: prodData } = await supabase
         .from("products_library")
-        .select("id, product_name, unit");
+        .select("id, product_name, unit, quantity_in_stock, reorder_level");
       setProducts(prodData || []);
 
     } catch (err: any) {
@@ -164,16 +164,31 @@ export default function MaterialDisbursementsPage() {
 
         if (error) throw error;
 
+        // ✅ إصلاح: الرسالة كانت بتدّعي "تحديث جرد المخزن" من غير ما يحصل فعلياً (مفيش عمود كمية أصلاً).
+        // دلوقتي بنخصم الكمية المصروفة فعلياً من الكمية المتاحة فى مكتبة المنتجات.
+        const matchedProd = products.find(p => p.id === selectedProductId);
+        const newStock = Math.max(0, Number(matchedProd?.quantity_in_stock || 0) - Number(qtyDisbursed));
+        await supabase.from("products_library").update({ quantity_in_stock: newStock }).eq("id", selectedProductId);
+
         // إرسال إشعار فوري وتلقائي للخزينة والمخازن بحدوث سحب مواد للموقع
         const matchedProj = projects.find(p => p.id === selectedProjectId);
-        const matchedProd = products.find(p => p.id === selectedProductId);
-        
+
         await supabase.from("notifications").insert({
           title: "صرف خامات ومواد لموقع",
           message: `📦 تم صرف كمية (${qtyDisbursed} ${matchedProd?.unit || "وحدة"}) من خامة (${matchedProd?.product_name || "غير معروف"}) وتوجيهها فوراً لموقع (${matchedProj?.project_name || "موقع غير محدد"}) المستلم بالموقع (${receivedBy || "فني الموقع"}).`,
           type: "procurement",
           link: "/disbursements"
         });
+
+        // ✅ تنبيه فوري لو الكمية بعد الخصم بقت تحت حد إعادة الطلب
+        if (matchedProd && newStock <= Number(matchedProd.reorder_level || 0)) {
+          await supabase.from("notifications").insert({
+            title: "⚠️ تنبيه نقص مخزون",
+            message: `الكمية المتبقية من (${matchedProd.product_name}) بقت ${newStock} ${matchedProd.unit || "وحدة"} بس — تحت حد إعادة الطلب (${matchedProd.reorder_level}). محتاج أمر شراء جديد.`,
+            type: "procurement",
+            link: "/products"
+          });
+        }
 
         alert("✅ تم تسجيل سند صرف المواد وتحديث جرد المخزن السحابي للموقع بنجاح!");
       } else {
