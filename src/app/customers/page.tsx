@@ -251,7 +251,6 @@ export default function CustomersPage() {
 
           /* إلغاء أكواد الإخفاء لضمان انسيابية التمرير بالماوس والجوال */
           .overflow-x-auto { 
-            scrollbar-width: thin !important; 
             -ms-overflow-style: auto !important; 
             overflow-x: auto !important; 
           }
@@ -272,7 +271,6 @@ export default function CustomersPage() {
           .premium-customers-table tbody td {
             font-size: 0.8rem !important;
             font-weight: 400 !important;
-            color: #F0E6D2 !important;
             text-align: right !important;
             border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
             padding: 14px 16px !important;
@@ -304,7 +302,7 @@ export default function CustomersPage() {
               <div className="p-4 border-b border-[#D4AF37] bg-[#050914]/80 flex items-center justify-between gap-2 select-none">
                 <div className="flex items-center gap-2">
                   <Users className="w-6 h-6 text-[#D4AF37]" />
-                  <h3 className="text-[#D4AF37] font-bold text-md md:text-md">سجل العملاء والـ CRM المسجل ({customers.length})</h3>
+                  <h3 className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5">سجل العملاء والـ CRM المسجل ({customers.length})</h3>
                 </div>
 
                 {/* 🌟 دمج أزرار الإجراءات وصرف الأقسام للدستور البصري الحركي الموحد */}
@@ -351,7 +349,7 @@ export default function CustomersPage() {
               </div>
             
               <div className="overflow-x-auto w-full max-w-full max-h-[240px] overflow-y-auto ai-chat-scroll">
-                <table className="w-full text-right table-auto min-w-[850px] premium-customers-table">
+                <table className="w-full text-right fond-bold table-auto min-w-[850px] premium-customers-table">
                   <thead>
                     <tr className="whitespace-nowrap select-none">
                       <th className="p-4">كود العميل</th>

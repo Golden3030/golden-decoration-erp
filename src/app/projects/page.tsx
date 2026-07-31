@@ -748,7 +748,7 @@ export default function ProjectsPage() {
               {loading ? (
                 <div className="p-12 text-center text-[#D4AF37] text-base animate-pulse">جاري سحب المشاريع من قاعدة البيانات...</div>
               ) : filteredProjects.length > 0 ? (
-                <table className="w-full text-right table-auto min-w-[850px] premium-projects-table">
+                <table className="w-full text-right font-bold table-auto min-w-[850px] premium-projects-table">
                   <thead>
                     <tr className="whitespace-nowrap select-none">
                       <th>كود المشروع</th>
@@ -769,8 +769,8 @@ export default function ProjectsPage() {
                           selectedProject?.id === p.id ? "bg-[#0b1b3d]/70 border-r-4 border-r-[#D4AF37]" : ""
                         }`}
                       >
-                        <td className="font-mono text-[#D4AF37] font-bold text-md md:text-md">{p.project_code}</td>
-                        <td className="font-bold text-[#B48C34]">{p.project_name}</td>
+                        <td className="text-[#D4AF37] font-bold">{p.project_code}</td>
+                        <td className="font-bold text-right ">{p.project_name}</td>
                         <td className="text-gray-200 font-bold">{p.customers?.name || "غير محدد"}</td>
                         <td className="font-mono text-white">{p.area} م²</td>
                         <td className="text-gray-200">{p.finishing_level}</td>
