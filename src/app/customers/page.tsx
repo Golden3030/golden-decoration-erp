@@ -346,7 +346,7 @@ export default function CustomersPage() {
               <div className="p-4 border-b border-[#D4AF37] bg-[#050914]/80 flex items-center justify-between gap-2 select-none">
                 <div className="flex items-center gap-2">
                   <Users className="w-6 h-6 text-[#D4AF37]" />
-                  <h3 className="text-white font-black text-xs md:text-sm">سجل العملاء والـ CRM المسجل ({customers.length})</h3>
+                  <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">سجل العملاء والـ CRM المسجل ({customers.length})</h3>
                 </div>
 
                 {/* 🌟 دمج أزرار الإجراءات وصرف الأقسام للدستور البصري الحركي الموحد */}

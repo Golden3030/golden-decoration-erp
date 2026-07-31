@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from "next/navigation"; 
 import Sidebar from "@/components/layout/Sidebar"; 
 import Header from "@/components/layout/Header"; 
@@ -96,7 +96,7 @@ const STAGES_METADATA = [
   { id: 12, name: " النظافة والتسليم النهائي" }
 ];
 
-export default function ProjectsPage() {
+function ProjectsPageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -1415,5 +1415,20 @@ export default function ProjectsPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+// ✅ إصلاح: useSearchParams() لازم يكون جوه Suspense boundary وقت الـ production build
+// (next build)، وإلا الـ build كله بيفشل بالكامل (زي ما ظهر فى لوج Vercel). ده الغلاف
+// المطلوب — الكومبوننت الحقيقي فضل زي ما هو من غير أي تغيير فى منطقه الداخلي.
+export default function ProjectsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#020B1C] text-[#D4AF37]">
+        جاري تحميل شاشة المشاريع...
+      </div>
+    }>
+      <ProjectsPageInner />
+    </Suspense>
   );
 }
