@@ -638,8 +638,8 @@ export default function ProjectsPage() {
       <style dangerouslySetInnerHTML={{ __html: `
         /* تفعيل وتوحيد أبعاد وألوان شريط التمرير الأفقي والرأسي بالكامل */
         ::-webkit-scrollbar { 
-          width: 6px !important; 
-          height: 6px !important; 
+          width: 5px !important; 
+          height: 5px !important; 
           display: block !important;
         }
         ::-webkit-scrollbar-track { 
@@ -688,7 +688,7 @@ export default function ProjectsPage() {
         input[type="number"] { -moz-appearance: textfield !important; }
 
         .premium-projects-table thead th {
-          font-size: 0.80rem !important;
+          font-size: 0.88rem !important;
           font-weight: 500 !important;
           color: #D4AF37 !important;
           text-align: right !important;

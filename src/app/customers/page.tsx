@@ -234,8 +234,8 @@ export default function CustomersPage() {
         <style dangerouslySetInnerHTML={{ __html: `
           /* تفعيل وإظهار شريط التمرير الأفقي والرأسي بكافة الجداول بألوان ذهبية فاخرة */
           ::-webkit-scrollbar { 
-            width: 6px !important; 
-            height: 6px !important; 
+            width: 5px !important; 
+            height: 5px !important; 
             display: block !important;
           }
           ::-webkit-scrollbar-track { 
@@ -257,7 +257,7 @@ export default function CustomersPage() {
 
           /* كشوف رؤوس الجداول الموحدة والمحصورة داخل الصفحة فقط */
           .premium-customers-table thead th {
-            font-size: 0.75rem !important;
+            font-size: 0.88rem !important;
             font-weight: 500 !important;
             color: #D4AF37 !important;
             text-align: right !important;
