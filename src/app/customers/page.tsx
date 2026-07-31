@@ -346,7 +346,7 @@ export default function CustomersPage() {
               <div className="p-4 border-b border-[#D4AF37] bg-[#050914]/80 flex items-center justify-between gap-2 select-none">
                 <div className="flex items-center gap-2">
                   <Users className="w-6 h-6 text-[#D4AF37]" />
-                  <h3 className="text-white text-xs md:text-sm font-bold border-b border-[#D4AF37]/20 pb-3 flex items-center justify-between select-none">سجل العملاء والـ CRM المسجل ({customers.length})</h3>
+                  <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">سجل العملاء والـ CRM المسجل ({customers.length})</h3>
                 </div>
 
                 {/* 🌟 دمج أزرار الإجراءات وصرف الأقسام للدستور البصري الحركي الموحد */}
@@ -414,7 +414,7 @@ export default function CustomersPage() {
                         }`}
                       >
                         <td className="font-mono text-[#D4AF37] font-medium">{c.customer_code}</td>
-                        <td className="text-white">{c.name}</td>
+                        <td className="text-[#F0E6D2]">{c.name}</td>
                         <td className="font-mono text-[#F0E6D2]/80">{c.mobile}</td>
                         <td className="text-[#F0E6D2]/70 truncate max-w-xs">{c.address || "-"}</td>
                         <td className="text-center font-mono text-[#F0E6D2]/60 text-xs">
@@ -438,10 +438,10 @@ export default function CustomersPage() {
             <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 space-y-4 animate-fade-in shadow-2xl relative overflow-hidden w-full">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
               
-              <h3 className="text-[#D4AF37] text-xs md:text-sm font-bold border-b border-[#D4AF37]/20 pb-3 flex items-center justify-between select-none">
+              <h3 className="text-[#D4AF37] text-xs md:text-sm font-black border-b border-[#D4AF37]/20 pb-3 flex items-center justify-between select-none">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-[#D4AF37] animate-pulse" />
-                  <span>{isAddingNew ? "اضافة عميل جديد بالـ CRM" : "بيانات ملف العميل المسجل بالمنظومة"}</span>
+                  <span>{isAddingNew ? "تأسيس كارت عميل جديد بالـ CRM" : "بيانات ملف العميل المسجل بالمنظومة"}</span>
                 </div>
                 {selectedCustomer && (
                   <span className="bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] px-3 py-1 rounded-xl font-mono text-xs shadow-inner">
