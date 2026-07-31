@@ -701,7 +701,6 @@ export default function ProjectsPage() {
         .premium-projects-table tbody td {
            font-size: 0.8rem !important;
           font-weight: 400 !important;
-          text-align: center !important;
           border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
           padding: 14px 16px !important;
           letter-spacing: normal !important;
