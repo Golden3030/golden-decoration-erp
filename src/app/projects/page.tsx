@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from 'react';
-import { useRouter } from "next/navigation"; 
+import { useRouter, useSearchParams } from "next/navigation"; 
 import Sidebar from "@/components/layout/Sidebar"; 
 import Header from "@/components/layout/Header"; 
 import { useCRM } from "@/components/CRM/context/CRMContext";
@@ -98,6 +98,7 @@ const STAGES_METADATA = [
 
 export default function ProjectsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -345,6 +346,15 @@ export default function ProjectsPage() {
     const activeAndNotCompleted = normalizedStages.find(stage => !stage.isExcluded && pProgress < stage.cumulative);
     return activeAndNotCompleted ? activeAndNotCompleted.name : "تم التسليم النهائي بالكامل 🎉";
   }, [pProgress, normalizedStages]);
+
+  // ✅ فتح مشروع معين تلقائياً لو الرابط جاي من مكان تاني (زي ملف عميل) بمعامل ?open=<project_id>
+  useEffect(() => {
+    const openId = searchParams.get("open");
+    if (openId && projects.length > 0) {
+      const target = projects.find((p) => p.id === openId);
+      if (target) selectProjectRow(target);
+    }
+  }, [searchParams, projects]);
 
   function selectProjectRow(proj: Project) {
     setSelectedProject(proj);
@@ -638,8 +648,8 @@ export default function ProjectsPage() {
       <style dangerouslySetInnerHTML={{ __html: `
         /* تفعيل وتوحيد أبعاد وألوان شريط التمرير الأفقي والرأسي بالكامل */
         ::-webkit-scrollbar { 
-          width: 5px !important; 
-          height: 5px !important; 
+          width: 6px !important; 
+          height: 6px !important; 
           display: block !important;
         }
         ::-webkit-scrollbar-track { 
@@ -688,7 +698,7 @@ export default function ProjectsPage() {
         input[type="number"] { -moz-appearance: textfield !important; }
 
         .premium-projects-table thead th {
-          font-size: 0.88rem !important;
+          font-size: 0.80rem !important;
           font-weight: 500 !important;
           color: #D4AF37 !important;
           text-align: right !important;
@@ -701,6 +711,7 @@ export default function ProjectsPage() {
         .premium-projects-table tbody td {
            font-size: 0.8rem !important;
           font-weight: 400 !important;
+          text-align: center !important;
           border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
           padding: 14px 16px !important;
           letter-spacing: normal !important;
@@ -747,10 +758,10 @@ export default function ProjectsPage() {
               {loading ? (
                 <div className="p-12 text-center text-[#D4AF37] text-base animate-pulse">جاري سحب المشاريع من قاعدة البيانات...</div>
               ) : filteredProjects.length > 0 ? (
-                <table className="w-full text-right font-bold table-auto min-w-[850px] premium-projects-table">
+                <table className="w-full text-right table-auto min-w-[850px] premium-projects-table">
                   <thead>
                     <tr className="whitespace-nowrap select-none">
-                      <th className="text-[#D4AF37] font-bold">كود المشروع</th>
+                      <th>كود المشروع</th>
                       <th>اسم المشروع</th>
                       <th >اسم العميل</th>
                       <th>المساحة م²</th>
@@ -768,8 +779,8 @@ export default function ProjectsPage() {
                           selectedProject?.id === p.id ? "bg-[#0b1b3d]/70 border-r-4 border-r-[#D4AF37]" : ""
                         }`}
                       >
-                        <td className="text-[#D4AF37] font-bold">{p.project_code}</td>
-                        <td className="font-bold text-white text-right ">{p.project_name}</td>
+                        <td className="font-mono text-[#D4AF37] font-bold text-md md:text-md">{p.project_code}</td>
+                        <td className="font-bold text-[#B48C34]">{p.project_name}</td>
                         <td className="text-gray-200 font-bold">{p.customers?.name || "غير محدد"}</td>
                         <td className="font-mono text-white">{p.area} م²</td>
                         <td className="text-gray-200">{p.finishing_level}</td>

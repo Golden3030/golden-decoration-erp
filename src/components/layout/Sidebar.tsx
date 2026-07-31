@@ -179,6 +179,16 @@ export default function Sidebar() {
   const COLLAB_PATHS = ["/appointments", "/collaboration", "/notes"];
   const FINANCE_PATHS = ["/treasury", "/payroll", "/disbursements", "/purchase-orders"];
 
+  // ✅ إصلاح: كان ظهور المجموعة كاملة (زرار الأكورديون + محتواها) مربوط بمسار "مرساة" ثابت
+  // بعينه (زي "/customer-requests") — فلو دور المستخدم مالوش صلاحية على المسار ده تحديداً،
+  // المجموعة كلها كانت بتختفي تماماً حتى لو باقي عناصرها (زي CRM والعملاء) مسموح له بيها.
+  // دلوقتي بنحسب أول عنصر "ظاهر فعلياً" لكل مجموعة حسب صلاحيات المستخدم الحالي بدل الاعتماد
+  // على مسار ثابت، فالمجموعة تفضل تظهر طول ما فيها عنصر واحد على الأقل مسموح للدور ده.
+  const firstVisibleSalesPath = filteredMenuItems.find((fi) => SALES_PATHS.includes(fi.path))?.path;
+  const firstVisibleProjectPath = filteredMenuItems.find((fi) => PROJECT_PATHS.includes(fi.path))?.path;
+  const firstVisibleCollabPath = filteredMenuItems.find((fi) => COLLAB_PATHS.includes(fi.path))?.path;
+  const firstVisibleFinancePath = filteredMenuItems.find((fi) => FINANCE_PATHS.includes(fi.path))?.path;
+
   return (
     <>
       <style jsx global>{`
@@ -288,7 +298,7 @@ export default function Sidebar() {
 
               // 1. المجموعة الأولى: المبيعات والـ CRM
               if (SALES_PATHS.includes(item.path)) {
-                if (item.path === "/customer-requests") {
+                if (item.path === firstVisibleSalesPath) {
                   const isAnySubActive = SALES_PATHS.includes(pathname);
                   return (
                     <li key="sales-accordion" className="space-y-1 animate-fade-in">
@@ -367,7 +377,7 @@ export default function Sidebar() {
 
               // 2. المجموعة الثانية: المشاريع والـ BOQ
               if (PROJECT_PATHS.includes(item.path)) {
-                if (item.path === "/projects") {
+                if (item.path === firstVisibleProjectPath) {
                   const isAnySubActive = PROJECT_PATHS.includes(pathname);
                   return (
                     <li key="project-accordion" className="space-y-1 animate-fade-in">
@@ -460,7 +470,7 @@ export default function Sidebar() {
 
               // 3. المجموعة الثالثة: التنسيق والجدولة المشتركة والمهام
               if (COLLAB_PATHS.includes(item.path)) {
-                if (item.path === "/appointments") {
+                if (item.path === firstVisibleCollabPath) {
                   const isAnySubActive = COLLAB_PATHS.includes(pathname);
                   return (
                     <li key="collab-accordion" className="space-y-1 animate-fade-in">
@@ -539,7 +549,7 @@ export default function Sidebar() {
 
               // 4. المجموعة الرابعة: المالية والحسابات الموحدة
               if (FINANCE_PATHS.includes(item.path)) {
-                if (item.path === "/treasury") {
+                if (item.path === firstVisibleFinancePath) {
                   const isAnySubActive = FINANCE_PATHS.includes(pathname);
                   return (
                     <li key="finance-accordion" className="space-y-1 animate-fade-in">

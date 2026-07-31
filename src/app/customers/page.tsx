@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import ImportLeadsModal from "@/components/CRM/ImportLeadsModal"; // 👈 استيراد مودال الاستيراد وتأصيل المكون
@@ -24,7 +25,8 @@ import {
   Sparkles, 
   Trash2, 
   RefreshCw,
-  FolderCheck // 👈 إضافة أيقونة استيراد الكشوف المعتمدة
+  FolderCheck, // 👈 إضافة أيقونة استيراد الكشوف المعتمدة
+  PlusCircle
 } from "lucide-react";
 
 interface Customer {
@@ -41,6 +43,7 @@ interface Customer {
 }
 
 export default function CustomersPage() {
+  const router = useRouter();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [salesReps, setSalesReps] = useState<any[]>([]); 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
@@ -114,6 +117,9 @@ export default function CustomersPage() {
     setCAssignedTo("");
   }
 
+  const [customerProjects, setCustomerProjects] = useState<any[]>([]);
+  const [loadingCustomerProjects, setLoadingCustomerProjects] = useState(false);
+
   function selectCustomerRow(cust: Customer) {
     setIsAddingNew(false); 
     setSelectedCustomer(cust);
@@ -124,6 +130,20 @@ export default function CustomersPage() {
     setCAddress(cust.address || "");
     setCStatus(cust.status || "جديد");
     setCAssignedTo(cust.assigned_to || "");
+    loadCustomerProjects(cust.id);
+  }
+
+  // ✅ جلب كل مشاريع العميل ده (ممكن يكون عنده أكتر من مشروع)، عشان الموظف يشوفهم
+  // كلهم فى مكان واحد من غير ما يدور فى شاشة المشاريع العامة عن كل مشروع لوحده
+  async function loadCustomerProjects(customerId: string) {
+    setLoadingCustomerProjects(true);
+    const { data } = await supabase
+      .from("projects")
+      .select("id, project_code, project_name, area, unit_status, created_at")
+      .eq("customer_id", customerId)
+      .order("created_at", { ascending: false });
+    setCustomerProjects(data || []);
+    setLoadingCustomerProjects(false);
   }
 
   const isManager = ["admin", "owner", "manager", "sales_manager"].includes(userRole);
@@ -133,6 +153,28 @@ export default function CustomersPage() {
   async function handleInsertCustomer() {
     if (!cName || !cMobile) {
       alert("يرجى ملء الحقول المطلوبة (الاسم بالكامل، رقم المحمول) لإصدار كارت العميل.");
+      return;
+    }
+
+    // ✅ إصلاح: قبل إنشاء عميل جديد، نتأكد إنه مش مسجل بالفعل بنفس رقم الموبايل — عشان
+    // ميحصلش تسجيل مكرر لنفس العميل لو رجع تاني بمشروع جديد، ونقترح نضيفله مشروع بدل كده
+    const { data: existingCustomer } = await supabase
+      .from("customers")
+      .select("id, name, customer_code")
+      .eq("mobile", cMobile)
+      .maybeSingle();
+
+    if (existingCustomer) {
+      const wantsToOpen = confirm(
+        `⚠️ العميل ده مسجل بالفعل باسم "${existingCustomer.name}" (${existingCustomer.customer_code}).\n` +
+        `مش محتاج تسجله تاني — لو عنده مشروع جديد، تقدر تضيفه من ملفه مباشرة.\n\n` +
+        `عايز تفتح ملف العميل الموجود دلوقتي؟`
+      );
+      if (wantsToOpen) {
+        const found = customers.find((c) => c.id === existingCustomer.id);
+        if (found) selectCustomerRow(found);
+        setIsAddingNew(false);
+      }
       return;
     }
 
@@ -234,8 +276,8 @@ export default function CustomersPage() {
         <style dangerouslySetInnerHTML={{ __html: `
           /* تفعيل وإظهار شريط التمرير الأفقي والرأسي بكافة الجداول بألوان ذهبية فاخرة */
           ::-webkit-scrollbar { 
-            width: 5px !important; 
-            height: 5px !important; 
+            width: 6px !important; 
+            height: 6px !important; 
             display: block !important;
           }
           ::-webkit-scrollbar-track { 
@@ -251,13 +293,14 @@ export default function CustomersPage() {
 
           /* إلغاء أكواد الإخفاء لضمان انسيابية التمرير بالماوس والجوال */
           .overflow-x-auto { 
+            scrollbar-width: thin !important; 
             -ms-overflow-style: auto !important; 
             overflow-x: auto !important; 
           }
 
           /* كشوف رؤوس الجداول الموحدة والمحصورة داخل الصفحة فقط */
           .premium-customers-table thead th {
-            font-size: 0.88rem !important;
+            font-size: 0.75rem !important;
             font-weight: 500 !important;
             color: #D4AF37 !important;
             text-align: right !important;
@@ -271,6 +314,7 @@ export default function CustomersPage() {
           .premium-customers-table tbody td {
             font-size: 0.8rem !important;
             font-weight: 400 !important;
+            color: #F0E6D2 !important;
             text-align: right !important;
             border-bottom: 1px solid rgba(212, 175, 55, 0.1) !important;
             padding: 14px 16px !important;
@@ -302,7 +346,7 @@ export default function CustomersPage() {
               <div className="p-4 border-b border-[#D4AF37] bg-[#050914]/80 flex items-center justify-between gap-2 select-none">
                 <div className="flex items-center gap-2">
                   <Users className="w-6 h-6 text-[#D4AF37]" />
-                  <h3 className="text-[#D4AF37] font-bold text-sm md:text-base flex items-center gap-1.5">سجل العملاء والـ CRM المسجل ({customers.length})</h3>
+                  <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">سجل العملاء والـ CRM المسجل ({customers.length})</h3>
                 </div>
 
                 {/* 🌟 دمج أزرار الإجراءات وصرف الأقسام للدستور البصري الحركي الموحد */}
@@ -349,13 +393,14 @@ export default function CustomersPage() {
               </div>
             
               <div className="overflow-x-auto w-full max-w-full max-h-[240px] overflow-y-auto ai-chat-scroll">
-                <table className="w-full text-right fond-bold table-auto min-w-[850px] premium-customers-table">
+                <table className="w-full text-right table-auto min-w-[850px] premium-customers-table">
                   <thead>
                     <tr className="whitespace-nowrap select-none">
                       <th className="p-4">كود العميل</th>
                       <th className="p-4">اسم العميل </th>
                       <th className="p-4">رقم المحمول والواتساب</th>
                       <th className="p-4">العنوان والإقامة</th>
+                      <th className="p-4 text-center">تاريخ التسجيل</th>
                       <th className="p-4 text-center">حالة الحساب الجاري</th>
                     </tr>
                   </thead>
@@ -368,10 +413,13 @@ export default function CustomersPage() {
                           selectedCustomer?.id === c.id ? "bg-[#0b1b3d]/60 border-r-4 border-r-[#D4AF37]" : ""
                         }`}
                       >
-                        <td className="text-[#D4AF37]">{c.customer_code}</td>
-                        <td className="text-right text-[#F0E6D2]/80">{c.name}</td>
+                        <td className="font-mono text-[#D4AF37] font-medium">{c.customer_code}</td>
+                        <td className="text-[#F0E6D2]">{c.name}</td>
                         <td className="font-mono text-[#F0E6D2]/80">{c.mobile}</td>
                         <td className="text-[#F0E6D2]/70 truncate max-w-xs">{c.address || "-"}</td>
+                        <td className="text-center font-mono text-[#F0E6D2]/60 text-xs">
+                          {c.created_at ? new Date(c.created_at).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" }) : "-"}
+                        </td>
                         <td className="text-center">
                           <span className={`px-3 py-1 rounded-full text-[10px] font-medium ${
                             c.status === "تم التعاقد" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
@@ -390,10 +438,10 @@ export default function CustomersPage() {
             <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 space-y-4 animate-fade-in shadow-2xl relative overflow-hidden w-full">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
               
-              <h3 className="text-[#D4AF37] text-md md:text-md font-bold border-b border-[#D4AF37]/20 pb-3 flex items-center justify-between select-none">
+              <h3 className="text-[#D4AF37] text-xs md:text-sm font-black border-b border-[#D4AF37]/20 pb-3 flex items-center justify-between select-none">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-[#D4AF37] animate-pulse" />
-                  <span>{isAddingNew ? "اضافة بيانات عميل جديد بالـ CRM" : "بيانات ملف العميل المسجل بالمنظومة"}</span>
+                  <span>{isAddingNew ? "تأسيس كارت عميل جديد بالـ CRM" : "بيانات ملف العميل المسجل بالمنظومة"}</span>
                 </div>
                 {selectedCustomer && (
                   <span className="bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] px-3 py-1 rounded-xl font-mono text-xs shadow-inner">
@@ -405,7 +453,7 @@ export default function CustomersPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 font-semibold text-xs md:text-sm">
                 
                 <div>
-                  <label className="block text-[#D4AF37] font-bold mb-1.5 px-2 text-[13px]">اسم العميل بالكامل *</label>
+                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">اسم العميل بالكامل *</label>
                   <input
                     type="text"
                     placeholder="الاسم الثلاثي المعتمد للتعاقد"
@@ -416,7 +464,7 @@ export default function CustomersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] font-bold mb-1.5 px-2 text-[13px]">رقم الموبايل الرئيسي *</label>
+                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">رقم الموبايل والواتساب الرئيسي *</label>
                   <input
                     type="text"
                     placeholder="010xxxxxxxx"
@@ -427,7 +475,7 @@ export default function CustomersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] font-blafont-bold mb-1.5 px-2 text-[13px]">رقم موبايل بديل (إضافي)</label>
+                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">رقم موبايل بديل (إضافي)</label>
                   <input
                     type="text"
                     placeholder="رقم هاتف آخر للتواصل"
@@ -438,7 +486,7 @@ export default function CustomersPage() {
                 </div>
 
                 <div className="col-span-1 sm:col-span-2">
-                  <label className="block text-[#D4AF37] font-bold mb-1.5 px-2 text-[13px]">عنوان العميل *</label>
+                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">عنوان المراسلة والإقامة بالتفصيل *</label>
                   <input
                     type="text"
                     placeholder="المحافظة، المدينة، اسم الشارع ورقم المبنى بالتفصيل..."
@@ -448,8 +496,9 @@ export default function CustomersPage() {
                   />
                 </div>
 
+
                 <div>
-                  <label className="block text-[#D4AF37] font-bold mb-1.5 px-2 text-[13px]">البريد الإلكتروني للعميل</label>
+                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">البريد الإلكتروني للعميل</label>
                   <input
                     type="email"
                     placeholder="email@example.com"
@@ -460,7 +509,7 @@ export default function CustomersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] font-bold mb-1.5 px-2 text-[13px]">موظف المبيعات المسؤول عن المتابعة</label>
+                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">موظف المبيعات المسؤول عن المتابعة</label>
                   {isManager ? (
                     <select
                       value={cAssignedTo}
@@ -483,7 +532,7 @@ export default function CustomersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] font-bold mb-1.5 px-2 text-[13px]">حالة حساب العميل الجارية والمتابعة *</label>
+                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">حالة حساب العميل الجارية والمتابعة *</label>
                   <select
                     value={cStatus}
                     onChange={(e) => setCStatus(e.target.value)}
@@ -509,13 +558,13 @@ export default function CustomersPage() {
                   <button
                     type="button"
                     onClick={clearForm}
-                    className="px-6 h-11 rounded-xl bg-transparent border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 active:scale-95 transition-all text-xs font-bold cursor-pointer"
+                    className="px-6 h-11 rounded-xl bg-transparent border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 active:scale-95 transition-all text-xs font-black cursor-pointer"
                   >
                     إلغاء وتراجع
                   </button>
 
                   <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                    <div className="bg-[#050914] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-bold py-2 px-4 rounded-xl shadow-2xl relative">
+                    <div className="bg-[#050914] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
                       ❌ تفريغ حقول النموذج وإغلاق استمارة الإضافة أو التعديل
                       <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#050914] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
                     </div>
@@ -529,7 +578,7 @@ export default function CustomersPage() {
                       type="button"
                       onClick={(e) => { e.preventDefault(); handleInsertCustomer(); }}
                       disabled={saving}
-                      className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
+                      className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
                     >
                       {saving ? "جاري الإدراج..." : "💾 حفظ عميل جديد"}
                       <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
@@ -551,14 +600,14 @@ export default function CustomersPage() {
                       type="button"
                       onClick={(e) => { e.preventDefault(); handleUpdateCustomer(); }}
                       disabled={saving}
-                      className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#064e3b] to-[#022c22] text-[#34d399] border-2 border-[#34d399] shadow-[0_0_20px_rgba(52,211,153,0.25)] hover:shadow-[0_0_30px_rgba(52,211,153,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
+                      className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#064e3b] to-[#022c22] text-[#34d399] border-2 border-[#34d399] shadow-[0_0_20px_rgba(52,211,153,0.25)] hover:shadow-[0_0_30px_rgba(52,211,153,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
                     >
                       {saving ? "جاري الحفظ..." : "✏️ حفظ التعديلات الجارية"}
                       <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#34d399] to-transparent shadow-[0_-1px_6px_rgba(52,211,153,0.8)]" />
                     </button>
 
                     <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                      <div className="bg-[#050914] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-bold py-2 px-4 rounded-xl shadow-2xl relative">
+                      <div className="bg-[#050914] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
                         💾 حفظ وتحديث التعديلات الجارية للعميل 
                         <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#050914] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
                       </div>
@@ -571,7 +620,50 @@ export default function CustomersPage() {
           ) : (
             /* كارت التنبيه التوجيهي الشفاف المذهب */
             <div className="bg-[#07132a]/40 border border-dashed border-[#D4AF37]/50 rounded-[2rem] p-8 text-center select-none text-gray-400 text-xs">
-              ⚠️ برجاء تحديد أحد العملاء من جدول المبيعات أعلاه لتنشيط التعديل، أو الضغط على أيقونة الإضافة اضافة بيانات عميل جديد.
+              ⚠️ برجاء تحديد أحد العملاء من جدول المبيعات أعلاه لتنشيط التعديل، أو الضغط على أيقونة الإضافة لتأسيس كارت عميل جديد.
+            </div>
+          )}
+
+          {/* ✅ قسم مشاريع هذا العميل — عميل واحد ممكن يكون عنده أكتر من مشروع (مشروع قديم
+              وجديد مثلاً)، فبدل ما نبحث عن كل مشروع لوحده، كل مشاريع العميل ظاهرة هنا مع بعض */}
+          {selectedCustomer && !isAddingNew && (
+            <div className="bg-[#07132a] border border-[#D4AF37]/30 rounded-[2rem] p-6 space-y-3 animate-fade-in shadow-2xl w-full">
+              <div className="flex items-center justify-between border-b border-[#D4AF37]/20 pb-3">
+                <h3 className="text-[#D4AF37] text-xs md:text-sm font-black flex items-center gap-2">
+                  🏗️ مشاريع هذا العميل ({customerProjects.length})
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/CRM`)}
+                  className="text-[10px] px-3 py-1.5 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/40 hover:bg-[#D4AF37]/20 flex items-center gap-1"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" /> مشروع جديد لنفس العميل (عن طريق CRM)
+                </button>
+              </div>
+
+              {loadingCustomerProjects ? (
+                <p className="text-gray-500 text-xs text-center py-4">جاري التحميل...</p>
+              ) : customerProjects.length === 0 ? (
+                <p className="text-gray-500 text-xs text-center py-4">مفيش مشاريع مسجلة لهذا العميل لسه.</p>
+              ) : (
+                <div className="space-y-2">
+                  {customerProjects.map((p) => (
+                    <div
+                      key={p.id}
+                      onClick={() => router.push(`/projects?open=${p.id}`)}
+                      className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl p-3 cursor-pointer hover:border-[#D4AF37]/50 transition-all text-xs"
+                    >
+                      <div>
+                        <p className="text-[#F0E6D2] font-bold">{p.project_name}</p>
+                        <p className="text-gray-500 font-mono text-[10px]">{p.project_code} · {p.area ? `${p.area} م²` : "—"}</p>
+                      </div>
+                      <span className="text-[10px] text-gray-500">
+                        {p.created_at ? new Date(p.created_at).toLocaleDateString("ar-EG", { year: "numeric", month: "short", day: "numeric" }) : ""}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
