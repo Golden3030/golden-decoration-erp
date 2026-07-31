@@ -20,19 +20,23 @@ export default function PurchaseOrdersPage() {
   const [showForm, setShowForm] = useState(false);
 
   const [supplierId, setSupplierId] = useState("");
+  const [poProjectId, setPoProjectId] = useState(""); // فاضي = مخزون عام مشترك، وإلا = مخصص لمشروع معين
+  const [projectsList, setProjectsList] = useState<any[]>([]);
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<POItem[]>([{ product_id: "", quantity: 0, unit_price: 0 }]);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [ordersRes, suppliersRes, productsRes] = await Promise.all([
-      supabase.from("purchase_orders").select("*, subcontractors(name, rating, specialty)").order("created_at", { ascending: false }),
+    const [ordersRes, suppliersRes, productsRes, projectsRes] = await Promise.all([
+      supabase.from("purchase_orders").select("*, subcontractors(name, rating, specialty), projects(project_name, project_code)").order("created_at", { ascending: false }),
       supabase.from("subcontractors").select("id, name, rating, specialty").order("name"),
       supabase.from("products_library").select("id, product_name, unit, price, quantity_in_stock"),
+      supabase.from("projects").select("id, project_name, project_code").order("created_at", { ascending: false }),
     ]);
     setOrders(ordersRes.data || []);
     setSuppliers((suppliersRes.data || []).sort((a: any, b: any) => (a.specialty === "materials_supplier" ? -1 : 1) - (b.specialty === "materials_supplier" ? -1 : 1)));
     setProducts(productsRes.data || []);
+    setProjectsList(projectsRes.data || []);
     setLoading(false);
   }, []);
 
@@ -72,7 +76,7 @@ export default function PurchaseOrdersPage() {
 
       const { data: order, error: orderErr } = await supabase
         .from("purchase_orders")
-        .insert({ po_number: poNumber, supplier_id: supplierId, status: "pending", total_amount: totalAmount, notes: notes || null, created_by: user?.id || null })
+        .insert({ po_number: poNumber, supplier_id: supplierId, project_id: poProjectId || null, status: "pending", total_amount: totalAmount, notes: notes || null, created_by: user?.id || null })
         .select()
         .single();
       if (orderErr) throw orderErr;
@@ -83,6 +87,7 @@ export default function PurchaseOrdersPage() {
 
       setShowForm(false);
       setSupplierId("");
+      setPoProjectId("");
       setNotes("");
       setItems([{ product_id: "", quantity: 0, unit_price: 0 }]);
       loadAll();
@@ -94,20 +99,27 @@ export default function PurchaseOrdersPage() {
   }
 
   async function markAsReceived(order: any) {
-    if (!confirm(`تأكيد استلام أمر الشراء ${order.po_number}؟ الكميات هتضاف للمخزون فوراً.`)) return;
+    if (!confirm(`تأكيد استلام أمر الشراء ${order.po_number}؟`)) return;
 
     const { data: poItems } = await supabase.from("purchase_order_items").select("*").eq("purchase_order_id", order.id);
 
-    for (const item of poItems || []) {
-      const product = products.find((p) => p.id === item.product_id);
-      const newStock = Number(product?.quantity_in_stock || 0) + Number(item.quantity);
-      await supabase.from("products_library").update({ quantity_in_stock: newStock }).eq("id", item.product_id);
+    // ✅ لو الأمر مخصص لمشروع معين، الكمية دي "رصيد مخصص للمشروع" بيتحسب مباشرة من
+    // (مشتريات المشروع - مصروفات المشروع) وقت العرض، مش بتضاف للمخزون العام.
+    // المخزون العام (quantity_in_stock) بيتحدث بس لو الأمر عام (project_id فاضي).
+    if (!order.project_id) {
+      for (const item of poItems || []) {
+        const product = products.find((p) => p.id === item.product_id);
+        const newStock = Number(product?.quantity_in_stock || 0) + Number(item.quantity);
+        await supabase.from("products_library").update({ quantity_in_stock: newStock }).eq("id", item.product_id);
+      }
     }
 
     await supabase.from("purchase_orders").update({ status: "received", received_at: new Date().toISOString() }).eq("id", order.id);
     await supabase.from("notifications").insert({
       title: "📥 استلام أمر شراء",
-      message: `تم استلام أمر الشراء (${order.po_number}) وتحديث المخزون تلقائياً.`,
+      message: order.project_id
+        ? `تم استلام أمر الشراء (${order.po_number}) وإضافته كرصيد مخصص للمشروع.`
+        : `تم استلام أمر الشراء (${order.po_number}) وتحديث المخزون العام تلقائياً.`,
       type: "procurement",
       link: "/purchase-orders",
     });
@@ -147,9 +159,17 @@ export default function PurchaseOrdersPage() {
                 </select>
               </div>
               <div>
-                <label className="text-[#8AA1C9] text-xs block mb-1">ملاحظات</label>
-                <input value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full h-10 rounded-xl bg-[#020B1C] border border-[#243556] px-3 text-sm" />
+                <label className="text-[#8AA1C9] text-xs block mb-1">لمشروع معين، ولا مخزون عام مشترك؟</label>
+                <select value={poProjectId} onChange={(e) => setPoProjectId(e.target.value)} className="w-full h-10 rounded-xl bg-[#020B1C] border border-[#243556] px-3 text-sm">
+                  <option value="">📦 مخزون عام مشترك (لأي مشروع)</option>
+                  {projectsList.map((p) => <option key={p.id} value={p.id}>🏗️ {p.project_name} ({p.project_code})</option>)}
+                </select>
               </div>
+            </div>
+
+            <div className="mb-4">
+              <label className="text-[#8AA1C9] text-xs block mb-1">ملاحظات</label>
+              <input value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full h-10 rounded-xl bg-[#020B1C] border border-[#243556] px-3 text-sm" />
             </div>
 
             <div className="space-y-2 mb-4">
@@ -181,9 +201,11 @@ export default function PurchaseOrdersPage() {
             <div key={o.id} className="rounded-xl border border-[#243556] bg-[#0A1730] p-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="font-mono text-[#D4AF37] font-bold">{o.po_number}</p>
-                <p className="text-xs text-[#8AA1C9] flex items-center gap-1">
+                <p className="text-xs text-[#8AA1C9] flex items-center gap-1 flex-wrap">
                   {o.subcontractors?.name || "مورد غير معروف"}
                   {o.subcontractors?.rating && <span className="flex items-center gap-0.5 text-amber-400"><Star size={12} fill="currentColor" /> {o.subcontractors.rating}</span>}
+                  <span className="mx-1 text-[#243556]">·</span>
+                  {o.projects ? <span className="text-blue-400">🏗️ {o.projects.project_name}</span> : <span className="text-slate-500">📦 مخزون عام</span>}
                 </p>
               </div>
               <span className="text-sm font-mono">{Number(o.total_amount).toLocaleString("en-US")} ج.م</span>

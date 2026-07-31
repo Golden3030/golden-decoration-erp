@@ -24,6 +24,8 @@ export default function MaterialDisbursementsPage() {
   const [projects, setProjects] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
   const [budgetItems, setBudgetItems] = useState<any[]>([]); // كميات المقايسة للمشروع المختار
+  const [projectPurchases, setProjectPurchases] = useState<any[]>([]); // مشتريات مخصصة لمشاريع (من أوامر الشراء المستلمة)
+  const [disburseFrom, setDisburseFrom] = useState<"project" | "general">("project");
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -78,6 +80,14 @@ export default function MaterialDisbursementsPage() {
         .select("id, product_name, unit, quantity_in_stock, reorder_level");
       setProducts(prodData || []);
 
+      // 4. جلب المشتريات المخصصة لمشاريع معينة (عشان نحسب "رصيد كل مشروع" لوحده منفصل عن المخزون العام)
+      const { data: poItemsData } = await supabase
+        .from("purchase_order_items")
+        .select("product_id, quantity, purchase_orders!inner(project_id, status)")
+        .eq("purchase_orders.status", "received")
+        .not("purchase_orders.project_id", "is", null);
+      setProjectPurchases(poItemsData || []);
+
     } catch (err: any) {
       console.error("Error loading disbursements data:", err.message);
     } finally {
@@ -111,7 +121,7 @@ export default function MaterialDisbursementsPage() {
 
   // حساب تراكمي لإجمالي المنصرف الفعلي لكل منتج داخل المشروع المختار للتحذير من التجاوز
   const currentProductStatistics = useMemo(() => {
-    if (!selectedProjectId || !selectedProductId) return { budgeted: 0, actualDisbursed: 0, unit: "متر" };
+    if (!selectedProjectId || !selectedProductId) return { budgeted: 0, actualDisbursed: 0, unit: "متر", projectAllocated: 0, projectRemaining: 0, generalStock: 0 };
 
     const selectedProduct = products.find(p => p.id === selectedProductId);
     const productName = selectedProduct ? selectedProduct.product_name : "";
@@ -129,12 +139,22 @@ export default function MaterialDisbursementsPage() {
       .filter(d => d.project_id === selectedProjectId && d.product_id === selectedProductId)
       .reduce((sum, d) => sum + Number(d.quantity_disbursed || 0), 0);
 
+    // ✅ الرصيد المخصص فعلياً لهذا المشروع = (اللي اتشترى خصيصاً له) - (اللي اتصرف منه فعلياً)
+    // منفصل تماماً عن المخزون العام المشترك، عشان مايتلخبطش الرصيد بين المشاريع
+    const purchasedForThisProject = projectPurchases
+      .filter((it: any) => it.purchase_orders?.project_id === selectedProjectId && it.product_id === selectedProductId)
+      .reduce((sum: number, it: any) => sum + Number(it.quantity || 0), 0);
+    const projectRemaining = Math.max(0, purchasedForThisProject - totalDisbursedInProject);
+
     return {
       budgeted: budgetedQty,
       actualDisbursed: totalDisbursedInProject,
-      unit: productUnit
+      unit: productUnit,
+      projectAllocated: purchasedForThisProject,
+      projectRemaining,
+      generalStock: Number(selectedProduct?.quantity_in_stock || 0),
     };
-  }, [selectedProjectId, selectedProductId, budgetItems, disbursements, products]);
+  }, [selectedProjectId, selectedProductId, budgetItems, disbursements, products, projectPurchases]);
 
   // إرسال وحفظ سند الصرف للموقع مع جدار حماية الأوفلاين التلقائي
   async function handleCreateDisbursement() {
@@ -164,11 +184,14 @@ export default function MaterialDisbursementsPage() {
 
         if (error) throw error;
 
-        // ✅ إصلاح: الرسالة كانت بتدّعي "تحديث جرد المخزن" من غير ما يحصل فعلياً (مفيش عمود كمية أصلاً).
-        // دلوقتي بنخصم الكمية المصروفة فعلياً من الكمية المتاحة فى مكتبة المنتجات.
+        // ✅ نحدّث المخزون العام بس لو الصرف اختار "من المخزون العام" — لو من "رصيد المشروع"،
+        // الرصيد بيتحدث تلقائياً لأنه محسوب لحظياً (مشتريات المشروع - مصروفاته) مش رقم مخزّن
         const matchedProd = products.find(p => p.id === selectedProductId);
-        const newStock = Math.max(0, Number(matchedProd?.quantity_in_stock || 0) - Number(qtyDisbursed));
-        await supabase.from("products_library").update({ quantity_in_stock: newStock }).eq("id", selectedProductId);
+        let newStock = Number(matchedProd?.quantity_in_stock || 0);
+        if (disburseFrom === "general") {
+          newStock = Math.max(0, newStock - Number(qtyDisbursed));
+          await supabase.from("products_library").update({ quantity_in_stock: newStock }).eq("id", selectedProductId);
+        }
 
         // إرسال إشعار فوري وتلقائي للخزينة والمخازن بحدوث سحب مواد للموقع
         const matchedProj = projects.find(p => p.id === selectedProjectId);
@@ -180,13 +203,21 @@ export default function MaterialDisbursementsPage() {
           link: "/disbursements"
         });
 
-        // ✅ تنبيه فوري لو الكمية بعد الخصم بقت تحت حد إعادة الطلب
-        if (matchedProd && newStock <= Number(matchedProd.reorder_level || 0)) {
+        // ✅ تنبيه فوري حسب مصدر الصرف: نقص فى المخزون العام، أو نفاذ الرصيد المخصص للمشروع
+        if (disburseFrom === "general" && matchedProd && newStock <= Number(matchedProd.reorder_level || 0)) {
           await supabase.from("notifications").insert({
-            title: "⚠️ تنبيه نقص مخزون",
-            message: `الكمية المتبقية من (${matchedProd.product_name}) بقت ${newStock} ${matchedProd.unit || "وحدة"} بس — تحت حد إعادة الطلب (${matchedProd.reorder_level}). محتاج أمر شراء جديد.`,
+            title: "⚠️ تنبيه نقص مخزون عام",
+            message: `الكمية المتبقية من (${matchedProd.product_name}) فى المخزون العام بقت ${newStock} ${matchedProd.unit || "وحدة"} بس — تحت حد إعادة الطلب (${matchedProd.reorder_level}). محتاج أمر شراء جديد.`,
             type: "procurement",
             link: "/products"
+          });
+        }
+        if (disburseFrom === "project" && currentProductStatistics.projectRemaining - Number(qtyDisbursed) <= 0) {
+          await supabase.from("notifications").insert({
+            title: "⚠️ نفاذ رصيد خامة مخصص لمشروع",
+            message: `رصيد (${matchedProd?.product_name || "الخامة"}) المخصص لمشروع (${matchedProj?.project_name || "المشروع"}) خلص أو قارب على الخلاص. محتاج أمر شراء جديد لنفس المشروع.`,
+            type: "procurement",
+            link: "/purchase-orders"
           });
         }
 
@@ -280,6 +311,29 @@ export default function MaterialDisbursementsPage() {
                       <p className="text-rose-400 font-bold border-t border-rose-500/10 pt-1 text-center animate-pulse">
                         🚨 تحذير: لقد تجاوزت الموقع الحصة المتفق عليها للعميل بالمقايسة!
                       </p>
+                    )}
+
+                    <p className="text-white font-bold border-b border-t border-[#D4AF37]/10 pb-1 pt-2 mt-2">📦 اصرف من:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDisburseFrom("project")}
+                        className={`rounded-lg p-2 text-center border transition-all ${disburseFrom === "project" ? "border-blue-500 bg-blue-500/10 text-blue-300" : "border-[#243556] text-gray-500"}`}
+                      >
+                        🏗️ رصيد هذا المشروع<br />
+                        <span className="font-mono font-bold">{currentProductStatistics.projectRemaining} {currentProductStatistics.unit}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDisburseFrom("general")}
+                        className={`rounded-lg p-2 text-center border transition-all ${disburseFrom === "general" ? "border-emerald-500 bg-emerald-500/10 text-emerald-300" : "border-[#243556] text-gray-500"}`}
+                      >
+                        📦 المخزون العام<br />
+                        <span className="font-mono font-bold">{currentProductStatistics.generalStock} {currentProductStatistics.unit}</span>
+                      </button>
+                    </div>
+                    {disburseFrom === "project" && currentProductStatistics.projectRemaining <= 0 && (
+                      <p className="text-amber-400 text-center pt-1">⚠️ رصيد المشروع المخصص خلص — اعمل أمر شراء جديد له، أو اصرف من المخزون العام مؤقتاً.</p>
                     )}
                   </div>
                 )}

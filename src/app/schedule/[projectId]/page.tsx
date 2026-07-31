@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { generateProjectSchedule } from "@/lib/generateProjectSchedule";
-import { Loader2, CalendarDays, CheckCircle2, XCircle, PlayCircle, Send, ArrowRight } from "lucide-react";
+import { openWhatsAppChat } from "@/lib/whatsapp";
+import { Loader2, CalendarDays, CheckCircle2, XCircle, PlayCircle, Send, ArrowRight, MessageCircle } from "lucide-react";
 
 interface Phase {
   id: string;
@@ -60,7 +61,7 @@ export default function ProjectSchedulePage() {
       }
 
       const [projRes, phasesRes, usersRes, subsRes] = await Promise.all([
-        supabase.from("projects").select("project_name, project_code, area, is_compound").eq("id", projectId).single(),
+        supabase.from("projects").select("project_name, project_code, area, is_compound, customers(name, mobile)").eq("id", projectId).single(),
         supabase.from("project_schedule_phases").select("*").eq("project_id", projectId).order("sort_order", { ascending: true }),
         supabase.from("users").select("id, name, role").in("role", ["engineer", "admin", "manager"]),
         supabase.from("subcontractors").select("id, name, specialty"),
@@ -139,6 +140,19 @@ export default function ProjectSchedulePage() {
     loadAll();
   }
 
+  function notifyClientPhaseApproved(phase: Phase) {
+    if (!project?.customers?.mobile) {
+      alert("مفيش رقم موبايل مسجل للعميل بتاع المشروع ده.");
+      return;
+    }
+    const clientName = project.customers.name || "عميلنا العزيز";
+    const message =
+      `السلام عليكم يا فندم، مع حضرتك شركة *Golden Decoration* للتشطيبات الفاخرة.\n\n` +
+      `يسعدنا نبلغكم إن مرحلة *"${phase.phase_name}"* من مشروعكم *(${project.project_name})* تم تنفيذها ومراجعتها واعتمادها بنجاح ✅\n\n` +
+      `تقدر تتابع باقي مراحل التنفيذ والتفاصيل من بوابة العميل الخاصة بيك:\n${window.location.origin}/client`;
+    openWhatsAppChat(project.customers.mobile, message);
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#020B1C]">
@@ -150,13 +164,18 @@ export default function ProjectSchedulePage() {
   return (
     <div className="min-h-screen bg-[#020B1C] text-white p-6 md:p-10" dir="rtl">
       <div className="max-w-5xl mx-auto">
-        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[#D4AF37] text-sm mb-6 hover:opacity-80 cursor:pointer">
+        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-[#D4AF37] text-sm mb-6 hover:opacity-80">
           <ArrowRight size={16} /> رجوع لتفاصيل المشروع
         </button>
 
-        <div className="flex items-center gap-3 mb-2">
-          <CalendarDays className="text-[#D4AF37]" />
-          <h1 className="text-2xl font-bold">الجدول الزمني — {project?.project_name || "مشروع"}</h1>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <CalendarDays className="text-[#D4AF37]" />
+            <h1 className="text-2xl font-bold">الجدول الزمني — {project?.project_name || "مشروع"}</h1>
+          </div>
+          <button onClick={() => router.push(`/snags/${projectId}`)} className="text-xs px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20">
+            📸 ملاحظات الجودة
+          </button>
         </div>
         <p className="text-[#8AA1C9] text-sm mb-8">
           {project?.project_code} · المساحة {project?.area} م² {project?.is_compound ? "· داخل كمبوند" : ""}
@@ -164,12 +183,12 @@ export default function ProjectSchedulePage() {
 
         {phases.length === 0 ? (
           <div className="rounded-2xl border border-[#243556] bg-[#0A1730] p-10 text-center">
-            <p className="text-[#8AA1C9] mb-5">لا يوجد جدول زمني لهذا المشروع. هيتولد تلقائياً من بنود المقايسة المعتمدة.</p>
+            <p className="text-[#8AA1C9] mb-5">مفيش جدول زمني لسه لهذا المشروع. هيتولد تلقائياً من بنود المقايسة المعتمدة.</p>
             {errorMsg && <p className="text-red-400 text-sm mb-4">{errorMsg}</p>}
             <button
               onClick={handleGenerate}
               disabled={generating}
-              className="px-6 py-3 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border border-[#D4AF37] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)] transition-all disabled:opacity-50 cursor:pointer"
+              className="px-6 py-3 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border border-[#D4AF37] hover:shadow-[0_0_25px_rgba(212,175,55,0.4)] transition-all disabled:opacity-50"
             >
               {generating ? <Loader2 className="animate-spin w-4 h-4 inline" /> : "⚡ توليد الجدول الزمني تلقائياً"}
             </button>
@@ -262,6 +281,14 @@ export default function ProjectSchedulePage() {
                           </button>
                         )}
                       </>
+                    )}
+                    {phase.status === "approved" && project?.customers?.mobile && (
+                      <button
+                        onClick={() => notifyClientPhaseApproved(phase)}
+                        className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-green-500/10 text-green-400 border border-green-500/30 hover:bg-green-500/20"
+                      >
+                        <MessageCircle size={14} /> إبلاغ العميل واتساب
+                      </button>
                     )}
                   </div>
                 </div>

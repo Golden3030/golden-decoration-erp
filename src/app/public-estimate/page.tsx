@@ -3,6 +3,7 @@
 import React, { useEffect, useState, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import PrintableEstimate from "@/components/CRM/estimate/PrintableEstimate";
 // 🌟 تم تصحيح الاستيراد هنا بإضافة Search لحل خطأ بناء المترجم الحاسم تماماً وتأمين البناء
 import { Printer, Sparkles, ShieldCheck, Check, Cpu, Layers, Search, Loader2 } from "lucide-react";
 
@@ -115,6 +116,7 @@ function PublicEstimateContent() {
   const project = estimateData?.project || {};
   const customer = estimateData?.customer || {};
   const printItems = estimateData?.items || [];
+  const estimateForPrint = { ...header, items: printItems };
 
   const progressPercentage = Number(project.progress_percentage || 0);
   const currentStageName = project.current_stage || "أعمال الهدم والتعديل المعماري";
@@ -279,8 +281,8 @@ function PublicEstimateContent() {
       </div>
 
       {/* لوحة استعلام المقايسة السريع - تم تطبيق مقاييس الكروت الإمبراطورية الفاخرة */}
-      <div className="w-full max-w-3xl bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 md:p-8 shadow-2xl mb-8 space-y-4 print:hidden relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+      <div className="w-full max-w-3xl bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4xl p-6 md:p-8 shadow-2xl mb-8 space-y-4 print:hidden relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
         <h3 className="text-lg md:text-xl font-black text-[#D4AF37] flex items-center gap-2 z-10 relative">
           <span>🔍</span>
           <span>الاستعلام الفوري والتحميل الرقمي لعروض الأسعار</span>
@@ -300,10 +302,10 @@ function PublicEstimateContent() {
           {/* 🌟 ترقية وتوحيد زرار الاستعلام السحابي للدستور البصري الحركي لـ Golden Decoration */}
           <button
             type="submit"
-            className="w-full sm:w-auto h-12 px-8 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-sm font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
+            className="w-full sm:w-auto h-12 px-8 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-sm font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
           >
             <span>استعلم الآن 🚀</span>
-            <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
           </button>
         </form>
 
@@ -321,9 +323,14 @@ function PublicEstimateContent() {
         </div>
       ) : estimateData ? (
         <div className="w-full max-w-5xl space-y-6">
+
+          {/* ✅ نسخة الطباعة الرسمية بتصميم البراند الموحد — مخفية على الشاشة، تظهر بس وقت الطباعة */}
+          <div className="hidden print:block">
+            <PrintableEstimate customer={customer} project={project} estimate={estimateForPrint} />
+          </div>
           
-          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 shadow-2xl relative overflow-hidden w-full text-right print:hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4xl p-6 shadow-2xl relative overflow-hidden w-full text-right print:hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
             
             <h3 className="text-[#D4AF37] text-xl font-black border-b border-[#1f2d4d] pb-3 flex items-center gap-2 select-none">
               <Sparkles className="w-5 h-5 text-[#D4AF37] animate-pulse" />
@@ -371,7 +378,7 @@ function PublicEstimateContent() {
                       key={stage.id}
                       className={`p-3 rounded-xl border flex items-center justify-between transition-all duration-300 ${
                         isCompleted
-                          ? "border-[#D4AF37]/60 bg-gradient-to-br from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_8px_rgba(212,175,55,0.06)]"
+                          ? "border-[#D4AF37]/60 bg-linear-to-br from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_8px_rgba(212,175,55,0.06)]"
                           : "border-[#1f2d4d]/80 bg-[#020B1C]/40 opacity-40"
                       }`}
                     >
@@ -393,11 +400,11 @@ function PublicEstimateContent() {
             {/* 🌟 ترقية وتوحيد زرار طباعة المقايسة للدستور البصري الحركي لـ Golden Decoration */}
             <button
               onClick={() => window.print()}
-              className="px-8 py-3.5 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-2 select-none relative overflow-hidden"
+              className="px-8 py-3.5 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-2 select-none relative overflow-hidden"
             >
               <Printer className="w-4 h-4 stroke-[2.5]" />
               <span>📥 تحميل المقايسة كـ PDF / طباعة فورية</span>
-              <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
             </button>
           </div>
 
@@ -437,7 +444,7 @@ function PublicEstimateContent() {
                 </div>
               </div>
 
-              <div className="border-2 border-[#C9A45D]/40 rounded-2xl p-5 bg-gradient-to-br from-white to-gray-50 flex flex-col justify-between shadow-sm">
+              <div className="border-2 border-[#C9A45D]/40 rounded-2xl p-5 bg-linear-to-br from-white to-gray-50 flex flex-col justify-between shadow-sm">
                 <div>
                   <span className="text-[#C9A45D] text-[10px] font-black uppercase tracking-wider block mb-2">بيانات وموقع المشروع</span>
                   <h4 className="text-sm font-black text-[#0B1B38] mb-2">{project.project_name || "مشروع العميل السكني"}</h4>
@@ -467,7 +474,7 @@ function PublicEstimateContent() {
 
             {/* 3. جدول المقايسة - تم تسييل حظر التداخل وتفعيل الـ Gilded Scrollbar للأجهزة المحمولة */}
             <div className="border border-gray-200 rounded-2xl overflow-x-auto mb-8 shadow-sm">
-              <table className="w-full border-collapse text-xs text-right min-w-[850px] premium-public-estimate-table">
+              <table className="w-full border-collapse text-xs text-right min-w-212.5 premium-public-estimate-table">
                 <thead>
                   <tr className="bg-[#0B1B38] text-white select-none whitespace-nowrap">
                     <th className="p-3.5 text-center w-12 font-black">م</th>
@@ -509,7 +516,7 @@ function PublicEstimateContent() {
             {/* 4. Summary & Donut Wheel Section */}
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8 items-stretch">
               
-              <div className="lg:col-span-3 border border-gray-200 rounded-2xl p-5 bg-gradient-to-br from-white to-gray-50 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+              <div className="lg:col-span-3 border border-gray-200 rounded-2xl p-5 bg-linear-to-br from-white to-gray-50 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
                 <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
                   <svg className="w-full h-full transform -rotate-90">
                     <circle cx="80" cy="84" r={svgRadius} stroke="#F3F4F6" strokeWidth="12" fill="transparent" />
@@ -612,7 +619,7 @@ function PublicEstimateContent() {
         <div className="w-full max-w-5xl space-y-8 animate-fade-in mt-4">
           
           {/* 1. مديول شريط المقارنة التفاعلي (Before & After Slider) */}
-          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 shadow-[0_0_40px_rgba(212,175,55,0.12)] space-y-4 text-right">
+          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4xl p-6 shadow-[0_0_40px_rgba(212,175,55,0.12)] space-y-4 text-right">
             <div className="select-none space-y-1.5 pb-2">
               <h4 className="text-[#D4AF37] font-black text-xl flex items-center gap-2">
                 <span>📸</span>
@@ -624,7 +631,7 @@ function PublicEstimateContent() {
             </div>
 
             {/* المنزلق التفاعلي الذكي للمقارنة البصرية يعتمد على خاماتك المحلية بجهازك (/before.jpg و /after.jpg) */}
-            <div className="relative w-full h-[280px] md:h-[350px] rounded-3xl overflow-hidden border border-[#D4AF37]/30 select-none shadow-2xl">
+            <div className="relative w-full h-70 md:h-87.5 rounded-3xl overflow-hidden border border-[#D4AF37]/30 select-none shadow-2xl">
               
               {/* الخلفية: بعد التشطيب والإنارة الفاخرة */}
               <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('/after.jpg')" }}>
@@ -635,7 +642,7 @@ function PublicEstimateContent() {
                 <div className="absolute bottom-4 left-4 bg-black/60 backdrop-blur-sm text-gray-300 px-3.5 py-1.5 rounded-xl text-[10px] font-black select-none">قبل البدء والتنفيذ (على الطوب) 🧱</div>
               </div>
               {/* الخط المذهب الفاصل والكبسولة التفاعلية */}
-              <div className="absolute top-0 bottom-0 w-[3px] bg-[#D4AF37] pointer-events-none" style={{ left: `${sliderPos}%` }}>
+              <div className="absolute top-0 bottom-0 w-0.75 bg-[#D4AF37] pointer-events-none" style={{ left: `${sliderPos}%` }}>
                 <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-[#020B1C] border-2 border-[#D4AF37] flex items-center justify-center text-[#D4AF37] text-xs font-black shadow-lg shadow-black/50 select-none pointer-events-none">↔</div>
               </div>
               {/* منزلق السحب الخفي اللمسي المتوافق مع الجوال والآيباد */}
@@ -651,7 +658,7 @@ function PublicEstimateContent() {
           </div>
 
           {/* 2. مديول المزايا الـ 6 الفاخرة لـ GOLDEN DECORATION */}
-          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 shadow-2xl space-y-6">
+          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4xl p-6 shadow-2xl space-y-6">
             <div className="text-right border-b border-[#D4AF37]/20 pb-3 select-none">
               <h4 className="text-[#D4AF37] font-black text-xl tracking-wider uppercase font-sans">GOLDEN DECORATION</h4>
               <p className="text-gray-400 text-xs font-bold leading-normal mt-1">تأصيل معايير الجودة والضمان المعتمد في كافة مشاريعنا السكنية والتجارية:</p>

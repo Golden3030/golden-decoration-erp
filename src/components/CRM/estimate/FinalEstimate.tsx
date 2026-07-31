@@ -7,6 +7,7 @@ import { ShieldCheck, RotateCcw, Printer } from "lucide-react";
 import EstimateHeader from "./EstimateHeader";
 import EstimateTotals from "./EstimateTotals";
 import EstimateTable from "./EstimateTable";
+import PrintableEstimate from "./PrintableEstimate";
 
 interface FinalEstimateProps {
   userRole?: string;
@@ -48,7 +49,7 @@ export default function FinalEstimate({ userRole = "" }: FinalEstimateProps) {
     <div dir="rtl" className="space-y-8 text-right">
       <div className="flex flex-col sm:flex-row items-center justify-between p-5 rounded-2xl bg-[#020B1C] border border-[#D4AF37] relative overflow-hidden shadow-[0_0_15px_rgba(212,175,55,0.08)]">
         {isSaving && (
-          <div className="absolute top-0 right-0 left-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent animate-pulse" />
+          <div className="absolute top-0 right-0 left-0 h-0.5 bg-linear-to-r from-transparent via-[#D4AF37] to-transparent animate-pulse" />
         )}
 
         <div className="flex items-center gap-3">
@@ -89,6 +90,12 @@ export default function FinalEstimate({ userRole = "" }: FinalEstimateProps) {
         <EstimateTable items={frozenItems} isEditable={false} />
         {/* 🌟 تم التعديل هنا: استدعاء نظيف ومباشر متوافق مع حقل الحسابات الموحد للـ BOQ */}
         <EstimateTotals />
+      </div>
+
+      {/* ✅ نسخة الطباعة الرسمية بتصميم البراند المخصص للعميل — مخفية فى الشاشة العادية،
+          وبتظهر بس عند الطباعة (window.print) بفضل قواعد @media print فى globals.css */}
+      <div className="hidden print:block">
+        <PrintableEstimate customer={crmData?.customer} project={crmData?.project} estimate={crmData?.estimate} />
       </div>
     </div>
   );

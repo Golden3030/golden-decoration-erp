@@ -25,3 +25,24 @@ body {
   color: var(--foreground);
   font-family: var(--font-alexandria), Tahoma, Arial, sans-serif;
 }
+
+/* قواعد الطباعة: عند طباعة المقايسة، إخفاء كل واجهة التطبيق (القائمة، الأزرار، الخلفية الغامقة)
+   وإظهار مكون PrintableEstimate بس، بتصميمه الأبيض المخصص للعميل */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-estimate,
+  #printable-estimate * {
+    visibility: visible;
+  }
+  #printable-estimate {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+  }
+  @page {
+    margin: 0.5cm;
+  }
+}

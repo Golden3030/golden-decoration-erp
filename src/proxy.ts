@@ -63,5 +63,7 @@ export const config = {
     '/CRM/:path*',
     '/schedule/:path*',
     '/purchase-orders/:path*',
+    '/snags/:path*',
+    '/gallery/:path*',
   ],
 }
