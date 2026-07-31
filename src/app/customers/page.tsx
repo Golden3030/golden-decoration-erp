@@ -304,7 +304,7 @@ export default function CustomersPage() {
               <div className="p-4 border-b border-[#D4AF37] bg-[#050914]/80 flex items-center justify-between gap-2 select-none">
                 <div className="flex items-center gap-2">
                   <Users className="w-6 h-6 text-[#D4AF37]" />
-                  <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">سجل العملاء والـ CRM المسجل ({customers.length})</h3>
+                  <h3 className="text-[#D4AF37] font-bold text-md md:text-md">سجل العملاء والـ CRM المسجل ({customers.length})</h3>
                 </div>
 
                 {/* 🌟 دمج أزرار الإجراءات وصرف الأقسام للدستور البصري الحركي الموحد */}
@@ -370,8 +370,8 @@ export default function CustomersPage() {
                           selectedCustomer?.id === c.id ? "bg-[#0b1b3d]/60 border-r-4 border-r-[#D4AF37]" : ""
                         }`}
                       >
-                        <td className="font-mono text-[#D4AF37] font-medium">{c.customer_code}</td>
-                        <td className="text-[#F0E6D2]">{c.name}</td>
+                        <td className="text-[#D4AF37]">{c.customer_code}</td>
+                        <td className="text-right text-[#F0E6D2]/80">{c.name}</td>
                         <td className="font-mono text-[#F0E6D2]/80">{c.mobile}</td>
                         <td className="text-[#F0E6D2]/70 truncate max-w-xs">{c.address || "-"}</td>
                         <td className="text-center">
@@ -392,10 +392,10 @@ export default function CustomersPage() {
             <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 space-y-4 animate-fade-in shadow-2xl relative overflow-hidden w-full">
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
               
-              <h3 className="text-[#D4AF37] text-xs md:text-sm font-black border-b border-[#D4AF37]/20 pb-3 flex items-center justify-between select-none">
+              <h3 className="text-[#D4AF37] text-md md:text-md font-bold border-b border-[#D4AF37]/20 pb-3 flex items-center justify-between select-none">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-[#D4AF37] animate-pulse" />
-                  <span>{isAddingNew ? "تأسيس كارت عميل جديد بالـ CRM" : "بيانات ملف العميل المسجل بالمنظومة"}</span>
+                  <span>{isAddingNew ? "اضافة بيانات عميل جديد بالـ CRM" : "بيانات ملف العميل المسجل بالمنظومة"}</span>
                 </div>
                 {selectedCustomer && (
                   <span className="bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] px-3 py-1 rounded-xl font-mono text-xs shadow-inner">
@@ -407,7 +407,7 @@ export default function CustomersPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 font-semibold text-xs md:text-sm">
                 
                 <div>
-                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">اسم العميل بالكامل *</label>
+                  <label className="block text-[#D4AF37] font-bold mb-1.5 px-2 text-[13px]">اسم العميل بالكامل *</label>
                   <input
                     type="text"
                     placeholder="الاسم الثلاثي المعتمد للتعاقد"
@@ -418,7 +418,7 @@ export default function CustomersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">رقم الموبايل والواتساب الرئيسي *</label>
+                  <label className="block text-[#D4AF37] font-bold mb-1.5 px-2 text-[13px]">رقم الموبايل الرئيسي *</label>
                   <input
                     type="text"
                     placeholder="010xxxxxxxx"
@@ -429,7 +429,7 @@ export default function CustomersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">رقم موبايل بديل (إضافي)</label>
+                  <label className="block text-[#D4AF37] font-blafont-bold mb-1.5 px-2 text-[13px]">رقم موبايل بديل (إضافي)</label>
                   <input
                     type="text"
                     placeholder="رقم هاتف آخر للتواصل"
@@ -440,7 +440,7 @@ export default function CustomersPage() {
                 </div>
 
                 <div className="col-span-1 sm:col-span-2">
-                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">عنوان المراسلة والإقامة بالتفصيل *</label>
+                  <label className="block text-[#D4AF37] font-bold mb-1.5 px-2 text-[13px]">عنوان العميل *</label>
                   <input
                     type="text"
                     placeholder="المحافظة، المدينة، اسم الشارع ورقم المبنى بالتفصيل..."
@@ -451,7 +451,7 @@ export default function CustomersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">البريد الإلكتروني للعميل</label>
+                  <label className="block text-[#D4AF37] font-bold mb-1.5 px-2 text-[13px]">البريد الإلكتروني للعميل</label>
                   <input
                     type="email"
                     placeholder="email@example.com"
@@ -462,7 +462,7 @@ export default function CustomersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">موظف المبيعات المسؤول عن المتابعة</label>
+                  <label className="block text-[#D4AF37] font-bold mb-1.5 px-2 text-[13px]">موظف المبيعات المسؤول عن المتابعة</label>
                   {isManager ? (
                     <select
                       value={cAssignedTo}
@@ -485,7 +485,7 @@ export default function CustomersPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[#D4AF37] font-black mb-1.5 text-[10px]">حالة حساب العميل الجارية والمتابعة *</label>
+                  <label className="block text-[#D4AF37] font-bold mb-1.5 px-2 text-[13px]">حالة حساب العميل الجارية والمتابعة *</label>
                   <select
                     value={cStatus}
                     onChange={(e) => setCStatus(e.target.value)}
@@ -511,13 +511,13 @@ export default function CustomersPage() {
                   <button
                     type="button"
                     onClick={clearForm}
-                    className="px-6 h-11 rounded-xl bg-transparent border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 active:scale-95 transition-all text-xs font-black cursor-pointer"
+                    className="px-6 h-11 rounded-xl bg-transparent border border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 active:scale-95 transition-all text-xs font-bold cursor-pointer"
                   >
                     إلغاء وتراجع
                   </button>
 
                   <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                    <div className="bg-[#050914] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
+                    <div className="bg-[#050914] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-bold py-2 px-4 rounded-xl shadow-2xl relative">
                       ❌ تفريغ حقول النموذج وإغلاق استمارة الإضافة أو التعديل
                       <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#050914] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
                     </div>
@@ -531,7 +531,7 @@ export default function CustomersPage() {
                       type="button"
                       onClick={(e) => { e.preventDefault(); handleInsertCustomer(); }}
                       disabled={saving}
-                      className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
+                      className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
                     >
                       {saving ? "جاري الإدراج..." : "💾 حفظ عميل جديد"}
                       <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
@@ -553,14 +553,14 @@ export default function CustomersPage() {
                       type="button"
                       onClick={(e) => { e.preventDefault(); handleUpdateCustomer(); }}
                       disabled={saving}
-                      className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#064e3b] to-[#022c22] text-[#34d399] border-2 border-[#34d399] shadow-[0_0_20px_rgba(52,211,153,0.25)] hover:shadow-[0_0_30px_rgba(52,211,153,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
+                      className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#064e3b] to-[#022c22] text-[#34d399] border-2 border-[#34d399] shadow-[0_0_20px_rgba(52,211,153,0.25)] hover:shadow-[0_0_30px_rgba(52,211,153,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-bold flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
                     >
                       {saving ? "جاري الحفظ..." : "✏️ حفظ التعديلات الجارية"}
                       <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#34d399] to-transparent shadow-[0_-1px_6px_rgba(52,211,153,0.8)]" />
                     </button>
 
                     <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
-                      <div className="bg-[#050914] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
+                      <div className="bg-[#050914] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-bold py-2 px-4 rounded-xl shadow-2xl relative">
                         💾 حفظ وتحديث التعديلات الجارية للعميل 
                         <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#050914] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
                       </div>
@@ -573,7 +573,7 @@ export default function CustomersPage() {
           ) : (
             /* كارت التنبيه التوجيهي الشفاف المذهب */
             <div className="bg-[#07132a]/40 border border-dashed border-[#D4AF37]/50 rounded-[2rem] p-8 text-center select-none text-gray-400 text-xs">
-              ⚠️ برجاء تحديد أحد العملاء من جدول المبيعات أعلاه لتنشيط التعديل، أو الضغط على أيقونة الإضافة لتأسيس كارت عميل جديد.
+              ⚠️ برجاء تحديد أحد العملاء من جدول المبيعات أعلاه لتنشيط التعديل، أو الضغط على أيقونة الإضافة اضافة بيانات عميل جديد.
             </div>
           )}
 
