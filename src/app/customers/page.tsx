@@ -346,7 +346,7 @@ export default function CustomersPage() {
               <div className="p-4 border-b border-[#D4AF37] bg-[#050914]/80 flex items-center justify-between gap-2 select-none">
                 <div className="flex items-center gap-2">
                   <Users className="w-6 h-6 text-[#D4AF37]" />
-                  <h3 className="text-[#D4AF37] font-black text-xs md:text-sm">سجل العملاء والـ CRM المسجل ({customers.length})</h3>
+                  <h3 className="text-white font-black text-xs md:text-sm">سجل العملاء والـ CRM المسجل ({customers.length})</h3>
                 </div>
 
                 {/* 🌟 دمج أزرار الإجراءات وصرف الأقسام للدستور البصري الحركي الموحد */}
@@ -441,7 +441,7 @@ export default function CustomersPage() {
               <h3 className="text-[#D4AF37] text-xs md:text-sm font-black border-b border-[#D4AF37]/20 pb-3 flex items-center justify-between select-none">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-5 h-5 text-[#D4AF37] animate-pulse" />
-                  <span>{isAddingNew ? "تأسيس كارت عميل جديد بالـ CRM" : "بيانات ملف العميل المسجل بالمنظومة"}</span>
+                  <span>{isAddingNew ? "تأسيس بيانات عميل جديد بالـ CRM" : "بيانات ملف العميل المسجل بالمنظومة"}</span>
                 </div>
                 {selectedCustomer && (
                   <span className="bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] px-3 py-1 rounded-xl font-mono text-xs shadow-inner">
@@ -586,7 +586,7 @@ export default function CustomersPage() {
 
                     <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
                       <div className="bg-[#050914] border border-[#D4AF37] text-[#F0E6D2] text-[10px] font-black py-2 px-4 rounded-xl shadow-2xl relative">
-                        💾 حفظ وتثبيت كارت العميل الجديد في قاعدة البيانات 
+                        💾 حفظ وتثبيت بيانات العميل الجديد في قاعدة البيانات 
                         <div className="absolute top-full right-1/2 translate-x-1/2 w-2 h-2 bg-[#050914] border-r border-b border-[#D4AF37] rotate-45 -mt-1" />
                       </div>
                     </div>
@@ -620,7 +620,7 @@ export default function CustomersPage() {
           ) : (
             /* كارت التنبيه التوجيهي الشفاف المذهب */
             <div className="bg-[#07132a]/40 border border-dashed border-[#D4AF37]/50 rounded-[2rem] p-8 text-center select-none text-gray-400 text-xs">
-              ⚠️ برجاء تحديد أحد العملاء من جدول المبيعات أعلاه لتنشيط التعديل، أو الضغط على أيقونة الإضافة لتأسيس كارت عميل جديد.
+              ⚠️ برجاء تحديد أحد العملاء من جدول المبيعات أعلاه لتنشيط التعديل، أو الضغط على الإضافة لتأسيس بيانات عميل جديد.
             </div>
           )}
 
