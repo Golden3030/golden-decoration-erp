@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 
@@ -36,6 +36,7 @@ const roleLabels: { [key: string]: string } = {
 
 export default function CRMPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { crmData, setCRMData, loadProjectData, saveEstimateSnapshot, isLocked } = useCRM();
 
   const [saving, setSaving] = useState(false);
@@ -98,6 +99,53 @@ export default function CRMPage() {
     document.title = "Golden Decoration ERP - الـ CRM وسجل بيانات العملاء والمتابعات";
     loadAllCRMData();
   }, []);
+
+  // ✅ لو الرابط جاي من مكان تاني (زي زرار "مشروع جديد لنفس العميل" فى ملف العميل) ومعاه
+  // ?customer_id=، نجيب بيانات العميل ده ونبدأله مشروع جديد تلقائياً بدل ما يتسجل من الصفر
+  // ✅ لو الرابط جاي من مكان تاني (زي زرار "مشروع جديد لنفس العميل" فى ملف العميل، أو من
+  // إشعار "طلب تسعير معلق") ومعاه ?customer_id= أو ?project_id=، نجيب البيانات المناسبة تلقائياً
+  useEffect(() => {
+    const customerIdParam = searchParams.get("customer_id");
+    const projectIdParam = searchParams.get("project_id");
+    if ((!customerIdParam && !projectIdParam) || loading) return; // نستنى لحد ما يخلص التحميل الأساسي الأول (المشاريع، إلخ) لتجنب أي تعارض فى البيانات
+
+    (async () => {
+      if (projectIdParam) {
+        // فتح مشروع موجود بالفعل بالظبط (زي لما مهندس يدوس على إشعار طلب تسعير معلق)
+        const { data: existingProject } = await supabase
+          .from("projects")
+          .select("customer_id")
+          .eq("id", projectIdParam)
+          .maybeSingle();
+
+        if (existingProject?.customer_id) {
+          const { data: existingCustomer } = await supabase
+            .from("customers")
+            .select("*")
+            .eq("id", existingProject.customer_id)
+            .maybeSingle();
+
+          if (existingCustomer) {
+            await handleSelectCustomerFromGrid(existingCustomer);
+            await handleSwitchActiveProject(projectIdParam);
+          }
+        }
+        return;
+      }
+
+      if (customerIdParam) {
+        const { data: existingCustomer } = await supabase
+          .from("customers")
+          .select("*")
+          .eq("id", customerIdParam)
+          .maybeSingle();
+
+        if (existingCustomer) {
+          await handleSelectCustomerFromGrid(existingCustomer);
+        }
+      }
+    })();
+  }, [searchParams, loading]);
 
   // 🌟 استعلام أوتوماتيكي ذكي لمنع الانهيارات واستخراج أحدث طلب مسجل للحاسبة لهذا الهاتف تلقائياً
   useEffect(() => {
@@ -1298,6 +1346,7 @@ export default function CRMPage() {
                     handleSaveProject={handleSaveProject}
                     saving={saving}
                     advanceWorkflowStage={advanceWorkflowStage}
+                    userRole={userRole}
                   />
                 </div>
               </div>

@@ -23,6 +23,7 @@ interface ProjectInfoProps {
   handleSaveProject: () => Promise<void>;
   saving: boolean;
   advanceWorkflowStage: (projectId: string, stage: string, role: string, msg: string) => Promise<void>;
+  userRole: string;
 }
 
 export default function ProjectInfo({
@@ -30,9 +31,13 @@ export default function ProjectInfo({
   handleSwitchActiveProject,
   handleSaveProject,
   saving,
-  advanceWorkflowStage
+  advanceWorkflowStage,
+  userRole
 }: ProjectInfoProps) {
   const { crmData, setCRMData, isLocked } = useCRM();
+  // ✅ إصلاح: مرحلة "تجهيز وإصدار المقايسة" كانت متاحة لأي حد يدوس عليها (حتى سيلز)
+  // من غير ما المهندس يعمل التسعير الفعلي فعلاً. دلوقتي مقفولة على المهندس والإدارة بس.
+  const canActAsEngineer = ["admin", "owner", "manager", "engineer"].includes(String(userRole || "").toLowerCase());
 
   const project = crmData.project || {};
 
@@ -172,7 +177,7 @@ export default function ProjectInfo({
         <h3 className="text-[#D4AF37] text-sm md:text-base font-bold border-b border-[#D4AF37] pb-3 flex items-center justify-between select-none">
           <div className="flex items-center gap-2">
             <Home className="w-5 h-5 text-[#D4AF37] shrink-0" />
-            <span>بيانات ومواصفات المشروع والوحدة</span>
+            <span>بيانات ومواصفات المشروع والوحدة الإنشائية</span>
           </div>
 
           {/* أيقونة برونزية مذهبة لتسجيل طلبات تعديل العميل تفتح الشاشة المنبثقة الفخمة */}
@@ -405,11 +410,19 @@ export default function ProjectInfo({
                 </button>
               )}
 
-              {/* أيقونة إصدار المقايسة المبدئية (FileText) بتنسيق رائع ومضيء */}
-              {activeStageIndex === 1 && (
+              {/* أيقونة إصدار المقايسة المبدئية (FileText) — مقفولة على المهندس/الإدارة بس */}
+              {activeStageIndex === 1 && canActAsEngineer && (
                 <button
                   type="button" 
-                  onClick={(e) => { e.preventDefault(); advanceWorkflowStage(project.id, "initial_ready", "sales", `✅ تم الانتهاء من حصر البنود وإصدار المقايسة المبدئية لموقع: ${project.projectName}`); }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // ✅ تحقق إضافي: منع اعتماد المقايسة كـ"جاهزة" لو لسه مفيش بنود مسجلة فعلياً بيها
+                    if (!crmData?.estimate?.items || crmData.estimate.items.length === 0) {
+                      alert("⚠️ لازم تسجل بنود المقايسة الفعلية الأول (من تبويب المقايسة) قبل ما تعتمدها كجاهزة للعميل.");
+                      return;
+                    }
+                    advanceWorkflowStage(project.id, "initial_ready", "sales", `✅ تم الانتهاء من حصر البنود وإصدار المقايسة المبدئية لموقع: ${project.projectName}`);
+                  }}
                   disabled={saving}
                   className="w-10 h-10 rounded-xl bg-black/60 border border-emerald-500 text-emerald-400 hover:bg-emerald-500 hover:text-black flex items-center justify-center cursor-pointer transition-all duration-300 shadow-[0_0_12px_rgba(16,185,129,0.15)] disabled:opacity-50"
                   title="تجهيز وإصدار المقايسة المبدئية لإرسالها للعميل"
@@ -417,9 +430,18 @@ export default function ProjectInfo({
                   <FileText className="w-4.5 h-4.5" />
                 </button>
               )}
+              {/* لغير المهندس/الإدارة: مؤشر انتظار بس، من غير أي إمكانية تخطي خطوة المهندس */}
+              {activeStageIndex === 1 && !canActAsEngineer && (
+                <div
+                  className="w-10 h-10 rounded-xl bg-black/40 border border-amber-500/40 text-amber-400 flex items-center justify-center opacity-70 cursor-not-allowed"
+                  title="بانتظار قيام المهندس بالمعاينة والتسعير الفعلي — مش متاح لدورك الحالي"
+                >
+                  <FileText className="w-4.5 h-4.5" />
+                </div>
+              )}
 
-              {/* أيقونة إعادة إصدار وتعديل المقايسة (Sparkles) بتنسيق رائع ومضيء */}
-              {activeStageIndex === 3 && (
+              {/* أيقونة إعادة إصدار وتعديل المقايسة (Sparkles) — مقفولة على المهندس/الإدارة بس */}
+              {activeStageIndex === 3 && canActAsEngineer && (
                 <button
                   type="button" 
                   onClick={(e) => { e.preventDefault(); advanceWorkflowStage(project.id, "initial_ready", "sales", `✅ تم تحديث وتعديل المقايسة بناء على الطلب لموقع: ${project.projectName}`); }}
@@ -429,6 +451,14 @@ export default function ProjectInfo({
                 >
                   <Sparkles className="w-4.5 h-4.5" />
                 </button>
+              )}
+              {activeStageIndex === 3 && !canActAsEngineer && (
+                <div
+                  className="w-10 h-10 rounded-xl bg-black/40 border border-amber-500/40 text-amber-400 flex items-center justify-center opacity-70 cursor-not-allowed"
+                  title="بانتظار قيام المهندس بتنفيذ التعديلات المطلوبة — مش متاح لدورك الحالي"
+                >
+                  <Sparkles className="w-4.5 h-4.5" />
+                </div>
               )}
             </div>
           )}

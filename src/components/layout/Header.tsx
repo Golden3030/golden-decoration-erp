@@ -9,7 +9,9 @@ import AddUserModal from "./AddUserModal";
 interface NotificationItem {
   id: string;
   text: string;
-  type: "sales" | "finance" | "procurement" | "tasks";
+  type: "sales" | "finance" | "procurement" | "tasks" | "engineer_task";
+  projectId?: string | null;
+  link?: string | null;
 }
 
 const roleLabels: { [key: string]: string } = {
@@ -60,6 +62,12 @@ export default function Header() {
       unsubscribe();
     };
   }, []);
+
+  // ✅ إعادة تحميل الإشعارات بمجرد ما دور المستخدم يتحدد فعلياً (كانت الفلترة بالدور
+  // بتشتغل بقيمة فاضية أول ما الصفحة تفتح، قبل ما بروفايل المستخدم يخلص تحميله)
+  useEffect(() => {
+    if (userProfile.role) loadHeaderNotifications();
+  }, [userProfile.role]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -216,6 +224,8 @@ export default function Header() {
     setLoading(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      const myRole = String(userProfile.role || "").toLowerCase();
+      const isOversightRole = ["admin", "owner", "manager"].includes(myRole);
 
       const { data: dbNotifications, error: dbError } = await supabase
         .from("notifications")
@@ -224,7 +234,16 @@ export default function Header() {
 
       if (dbError) throw dbError;
 
-      const unreadForMe = (dbNotifications || []).filter((n: any) => {
+      // ✅ إصلاح: كانت كل الإشعارات (مالية، مشتريات، مبيعات، مهام مهندسين) بتظهر لكل المستخدمين
+      // من غير أي فلترة حسب الدور. دلوقتي كل مستخدم بيشوف بس الإشعارات العامة (بدون target_role)
+      // أو المخصصة لدوره، والإدارة (admin/owner/manager) بتشوف كل حاجة للإشراف العام.
+      const relevantForMe = (dbNotifications || []).filter((n: any) => {
+        if (!n.target_role) return true;
+        if (isOversightRole) return true;
+        return String(n.target_role).toLowerCase() === myRole;
+      });
+
+      const unreadForMe = relevantForMe.filter((n: any) => {
         const reads = n.notification_reads || [];
         return !reads.some((r: any) => r.user_id === user?.id);
       });
@@ -234,11 +253,14 @@ export default function Header() {
         if (n.type === "finance") prefix = "💳 ";
         if (n.type === "procurement") prefix = "📦 ";
         if (n.type === "tasks") prefix = "🚨 ";
+        if (n.type === "engineer_task") prefix = "🛠️ ";
 
         return {
           id: n.id,
           text: `${prefix}${n.message}`,
           type: n.type as any,
+          projectId: n.project_id || null,
+          link: n.link || null,
         };
       });
 
@@ -601,9 +623,16 @@ export default function Header() {
                     notifications.map((alert) => (
                       <div 
                         key={alert.id} 
-                        onClick={() => handleDismissSingle(alert.id)}
+                        onClick={() => {
+                          if (alert.projectId) {
+                            router.push(`/CRM?project_id=${alert.projectId}`);
+                          } else if (alert.link) {
+                            router.push(alert.link);
+                          }
+                          handleDismissSingle(alert.id);
+                        }}
                         className="text-white text-xs font-bold border-b border-[#1f2d4d] pb-3 last:border-0 hover:text-[#D4AF37] cursor-pointer leading-relaxed transition duration-150 hover:bg-[#07132a]/40 p-2 rounded"
-                        title="اضغط لوضع علامة مقروء وإخفاء التنبيه"
+                        title={alert.projectId || alert.link ? "اضغط للانتقال مباشرة" : "اضغط لوضع علامة مقروء وإخفاء التنبيه"}
                       >
                         {alert.text}
                       </div>
