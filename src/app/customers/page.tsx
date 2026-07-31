@@ -414,7 +414,7 @@ export default function CustomersPage() {
                         }`}
                       >
                         <td className="font-mono text-[#D4AF37] font-medium">{c.customer_code}</td>
-                        <td className="text-[#F0E6D2]">{c.name}</td>
+                        <td className="text-white">{c.name}</td>
                         <td className="font-mono text-[#F0E6D2]/80">{c.mobile}</td>
                         <td className="text-[#F0E6D2]/70 truncate max-w-xs">{c.address || "-"}</td>
                         <td className="text-center font-mono text-[#F0E6D2]/60 text-xs">
