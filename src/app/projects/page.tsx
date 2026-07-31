@@ -750,7 +750,7 @@ export default function ProjectsPage() {
                 <table className="w-full text-right font-bold table-auto min-w-[850px] premium-projects-table">
                   <thead>
                     <tr className="whitespace-nowrap select-none">
-                      <th>كود المشروع</th>
+                      <th className="text-[#D4AF37] font-bold">كود المشروع</th>
                       <th>اسم المشروع</th>
                       <th >اسم العميل</th>
                       <th>المساحة م²</th>
