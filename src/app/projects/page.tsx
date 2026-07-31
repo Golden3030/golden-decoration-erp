@@ -769,7 +769,7 @@ export default function ProjectsPage() {
                         }`}
                       >
                         <td className="text-[#D4AF37] font-bold">{p.project_code}</td>
-                        <td className="font-bold text-right ">{p.project_name}</td>
+                        <td className="font-bold text-white text-right ">{p.project_name}</td>
                         <td className="text-gray-200 font-bold">{p.customers?.name || "غير محدد"}</td>
                         <td className="font-mono text-white">{p.area} م²</td>
                         <td className="text-gray-200">{p.finishing_level}</td>
