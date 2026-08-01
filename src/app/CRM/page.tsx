@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import CRMClientPage from "./CRMClientPage";
 
 // 🌟 تصدير ترويسة المتصفح الرسمية لـ Next.js بشكل آمن وسريع على السيرفر
@@ -8,5 +9,9 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <CRMClientPage />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#020B1C]" />}>
+      <CRMClientPage />
+    </Suspense>
+  );
 }
