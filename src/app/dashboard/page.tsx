@@ -203,6 +203,7 @@ export default function DashboardPage() {
     revenue: 0,
     costs: 0
   });
+  const [pendingEstimateProjectIds, setPendingEstimateProjectIds] = useState<string[]>([]);
 
   useEffect(() => {
     document.title = "لوحة التحكم الإدارية | Golden Decoration";
@@ -227,13 +228,16 @@ export default function DashboardPage() {
       const roleKey = String(profile?.role || "sales").toLowerCase();
       setUserRole(roleKey);
 
-      const [custCount, projCount, estCount, contractedCount, financialData] = await Promise.all([
+      const [custCount, projCount, estCount, contractedCount, financialData, pendingProjectsData] = await Promise.all([
         supabase.from("customers").select("id", { count: "exact", head: true }),
         supabase.from("projects").select("id", { count: "exact", head: true }).eq("unit_status", "جاري التنفيذ الميداني"),
         supabase.from("projects").select("id", { count: "exact", head: true }).eq("workflow_stage", "needs_estimate"),
         supabase.from("customers").select("id", { count: "exact", head: true }).eq("status", "تم التعاقد"),
-        supabase.from("estimate_headers").select("grand_total, materials_total, labor_total").eq("status", "نهائية")
+        supabase.from("estimate_headers").select("grand_total, materials_total, labor_total").eq("status", "نهائية"),
+        supabase.from("projects").select("id").eq("workflow_stage", "needs_estimate")
       ]);
+
+      setPendingEstimateProjectIds((pendingProjectsData.data || []).map((p: any) => p.id));
 
       const totalRevenue = (financialData.data || []).reduce((sum, h) => sum + Number(h.grand_total || 0), 0);
       const totalCosts = (financialData.data || []).reduce((sum, h) => sum + Number(h.materials_total || 0) + Number(h.labor_total || 0), 0);
@@ -350,7 +354,18 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <StatCard icon={<Users />} label="عملاء CRM" value={stats.customers} onClick={() => router.push("/customers")} />
             <StatCard icon={<Activity />} label="مشاريع جارية" value={stats.activeProjects} onClick={() => router.push("/projects")} />
-            <StatCard icon={<Clock />} label="مقايسات معلقة" value={stats.pendingEstimates} onClick={() => router.push("/estimates")} />
+            <StatCard
+              icon={<Clock />}
+              label="مقايسات معلقة"
+              value={stats.pendingEstimates}
+              onClick={() => {
+                if (pendingEstimateProjectIds.length === 1) {
+                  router.push(`/CRM?project_id=${pendingEstimateProjectIds[0]}`);
+                } else {
+                  router.push("/CRM");
+                }
+              }}
+            />
             <StatCard icon={<ShieldCheck />} label="تعاقدات نهائية" value={stats.contracted} onClick={() => router.push("/estimates")} />
             
             {isFinancialStaff ? (
