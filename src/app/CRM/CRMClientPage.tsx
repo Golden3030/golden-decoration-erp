@@ -419,6 +419,21 @@ export default function CRMPage() {
       return;
     }
 
+    // ✅ إصلاح: كانت كل الحقول دي (رغم علامة * الإلزامية فى الواجهة) بتتسجل فاضية أو بصفر
+    // بصمت من غير أي تحذير — وده خطير لأن المساحة تحديداً أساس لحسابات تانية كتير
+    // (الجدول الزمني، تقدير الميزانية، وغيرها). دلوقتي لازم تتملى فعلياً قبل الحفظ.
+    const missingFields: string[] = [];
+    if (!crmData.customer?.mobile?.trim()) missingFields.push("رقم الموبايل");
+    if (!crmData.project?.unitType?.trim()) missingFields.push("نوع الوحدة");
+    if (!crmData.project?.unitAddress?.trim()) missingFields.push("موقع وعنوان الوحدة بالتفصيل");
+    if (!Number(crmData.project?.area)) missingFields.push("المساحة الإجمالية (م²)");
+    if (!Number(crmData.project?.contractValue)) missingFields.push("إجمالي القيمة المالية للعقد (ج.م)");
+
+    if (missingFields.length > 0) {
+      alert(`⚠️ يرجى تعبئة الحقول الإلزامية الآتية قبل الحفظ:\n\n${missingFields.map((f) => `• ${f}`).join("\n")}`);
+      return;
+    }
+
     setSaving(true);
     try {
       const { data: custData } = await supabase
