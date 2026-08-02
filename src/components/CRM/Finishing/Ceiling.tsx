@@ -365,8 +365,8 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
                         </div>
                         <div className="text-right">
                           <h5 className="text-md font-black text-[#D4AF37]">{area.name}</h5>
-                          <p className="text-xs text-gray-500 mt-1">المساحة المحصورة للفراغ: {area.areaSize} م²</p>
-                          <p className="text-xs text-white mt-0.5">الباقة المخصصة: {dbSpecs.find(o => o.uuid === config.type || o.code === config.type)?.spec_name || 'سقف فلات مستوي'} — {config.area} م²</p>
+                          <p className="text-xs text-gray-500 mt-1">مساحة للفراغ: {area.areaSize} م²</p>
+                          <p className="text-xs text-white mt-0.5">الديكور المطلوب: {dbSpecs.find(o => o.uuid === config.type || o.code === config.type)?.spec_name || 'سقف فلات مستوي'} — {config.area} م²</p>
                         </div>
                       </div>
 
@@ -374,7 +374,7 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
                         
                         {/* 🎯 تعديل عداد مسطح الجبس بورد ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
                         <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
-                          <span className="text-xs text-gray-400 font-bold block select-none">مسطح الجبس بورد:</span>
+                          <span className="text-xs text-gray-400 font-bold block select-none">مسطح الجبسبورد:</span>
                           <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none min-w-[130px]" dir="ltr">
                             <button 
                               type="button" 
@@ -404,7 +404,7 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
                               }}
                               className="px-2.5 py-1.5 rounded bg-black/60 border border-[#D4AF37]/45 text-[10px] font-black text-[#D4AF37] hover:border-[#D4AF37] flex items-center gap-1.5 cursor-pointer"
                             >
-                              <span>تخصيص الخامات</span>
+                              <span>تحديد الديكور</span>
                               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
                             </button>
                           )}

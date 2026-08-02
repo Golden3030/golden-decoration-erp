@@ -16,8 +16,6 @@ interface ProductItem {
   product_name: string;
   unit: string;
   price: number;
-  quantity_in_stock?: number;
-  reorder_level?: number;
 }
 
 interface SpecItem {
@@ -125,7 +123,6 @@ export default function ItemsMaterialsPage() {
   const [pName, setPName] = useState("");
   const [pUnit, setPUnit] = useState("بستلة");
   const [pPrice, setPPrice] = useState<number | "">("");
-  const [pReorderLevel, setPReorderLevel] = useState<number | "">("");
 
   const [sName, setSName] = useState("");
   const [sDesc, setSDesc] = useState("");
@@ -140,7 +137,6 @@ export default function ItemsMaterialsPage() {
     setPCompany("");
     setPName("");
     setPPrice("");
-    setPReorderLevel("");
     setSName("");
     setSDesc("");
     setSCategory("plaster");
@@ -271,7 +267,6 @@ export default function ItemsMaterialsPage() {
     setPName(p.product_name || "");
     setPUnit(p.unit || "بستلة");
     setPPrice(p.price || "");
-    setPReorderLevel(p.reorder_level ?? "");
   }
 
   function selectSpecCard(s: SpecItem) {
@@ -301,8 +296,7 @@ export default function ItemsMaterialsPage() {
       company: pCompany || null,
       product_name: pName,
       unit: pUnit,
-      price: Number(pPrice),
-      reorder_level: Number(pReorderLevel || 0)
+      price: Number(pPrice)
     };
 
     try {
@@ -348,8 +342,7 @@ export default function ItemsMaterialsPage() {
       company: pCompany || null,
       product_name: pName,
       unit: pUnit,
-      price: Number(pPrice),
-      reorder_level: Number(pReorderLevel || 0)
+      price: Number(pPrice)
     };
 
     try {
@@ -772,17 +765,6 @@ export default function ItemsMaterialsPage() {
                         className="w-35 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-emerald-400 font-bold px-4 outline-none focus:border-[#D4AF37] font-mono text-left text-[11px]"
                       />
                     </div>
-
-                    <div>
-                      <label className="block text-[#D4AF37] px-0.5 mb-1.5 font-bold text-[12px] select-none">حد إعادة الطلب (تنبيه نقص)</label>
-                      <input
-                        type="number"
-                        placeholder="0"
-                        value={pReorderLevel || ""}
-                        onChange={(e) => setPReorderLevel(e.target.value !== "" ? Number(e.target.value) : "")}
-                        className="w-35 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-amber-400 font-bold px-4 outline-none focus:border-[#D4AF37] font-mono text-left text-[11px]"
-                      />
-                    </div>
                   </div>
 
                 </div>
@@ -961,7 +943,6 @@ export default function ItemsMaterialsPage() {
                               <th className="py-2 px-3 text-center border-b border-[#1f2d4d]">اسم المنتج </th>
                               <th className="py-2 px-3 text-center border-b border-[#1f2d4d]">وحدة الحساب</th>
                               <th className="py-2 px-3 text-center border-b border-[#1f2d4d]">سعر الوحدة </th>
-                              <th className="py-2 px-3 text-center border-b border-[#1f2d4d]">الكمية المتاحة</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#1f2d4d]/60 text-[11px] md:text-xs text-slate-100">
@@ -989,18 +970,6 @@ export default function ItemsMaterialsPage() {
                                     <span className="bg-emerald-950/20 border border-emerald-500/20 px-2.5 py-1 rounded-lg">
                                       {Number(p.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ج.م
                                     </span>
-                                  </td>
-                                  <td className="p-2.5 text-center text-xs md:text-sm">
-                                    {(() => {
-                                      const stock = Number(p.quantity_in_stock || 0);
-                                      const reorder = Number(p.reorder_level || 0);
-                                      const isLow = stock <= reorder;
-                                      return (
-                                        <span className={`px-2.5 py-1 rounded-lg border font-mono font-bold ${isLow ? "bg-red-950/30 border-red-500/40 text-red-400" : "bg-[#020B1C] border-[#243556] text-slate-200"}`}>
-                                          {isLow && "⚠️ "}{stock} {p.unit}
-                                        </span>
-                                      );
-                                    })()}
                                   </td>
                                 </tr>
                               );

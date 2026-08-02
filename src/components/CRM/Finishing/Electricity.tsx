@@ -169,9 +169,9 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
   // دالة لتوليد قائمة الأسلاك المبدئية عند الحصر الأول
   const generateInitialWires = (): WireRow[] => {
     return [
-      { id: "w-01", wireType: "سلك السويدي 1.5 مم", quantity: 2, rate: 1400 },
-      { id: "w-02", wireType: "سلك السويدي 2 مم", quantity: 3, rate: 1800 },
-      { id: "w-03", wireType: "سلك السويدي 4 مم", quantity: 1, rate: 2900 }
+      { id: "w-01", wireType: "سلك السويدي معتمد 1.5 مم", quantity: 2, rate: 1400 },
+      { id: "w-02", wireType: "سلك السويدي معتمد 2 مم", quantity: 3, rate: 1800 },
+      { id: "w-03", wireType: "سلك السويدي معتمد 4 مم", quantity: 1, rate: 2900 }
     ];
   };
 
@@ -706,12 +706,16 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                               onChange={(e) => handleWireRowEdit(row.id, { wireType: e.target.value })}
                               className="bg-[#020B1C] border border-[#1f2d4d] p-1 rounded-md text-white outline-none cursor-pointer focus:border-[#D4AF37]"
                             >
-                              <option>سلك السويدي معتمد م مقطع 1.5 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 2 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 3 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 4 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 6 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 10 مم</option>
+                              <option>سلك السويدي معتمد 1.5 مم</option>
+                              <option>سلك السويدي معتمد 2 مم</option>
+                              <option>سلك السويدي معتمد 3 مم</option>
+                              <option>سلك السويدي معتمد 4 مم</option>
+                              <option>سلك السويدي معتمد 6 مم</option>
+                              <option>سلك السويدي معتمد 10 مم</option>
+                              <option>سلك سماعة السويدي معتمد م مقطع 1 مم</option>
+                              <option>سلك تليفون السويدى</option>
+                              <option> سلك دش</option>
+                              <option> سلك نت كات 6 سويدى</option>
                             </select>
                           </td>
                           <td className="py-3 text-center">
@@ -884,9 +888,9 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <div className="bg-[#07132a]/60 p-2 rounded-xl h-11 flex flex-col items-center justify-between gap-1 select-none">
                         <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج)</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
-                          <button type="button" onClick={() => handleRateChange('insulationTapeRate', (state.accessoriesRates.insulationTapeRate ?? 15) + 2)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
+                          <button type="button" onClick={() => handleRateChange('insulationTapeRate', (state.accessoriesRates.insulationTapeRate ?? 15) + 1)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                           <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.accessoriesRates.insulationTapeRate}</span>
-                          <button type="button" onClick={() => handleRateChange('insulationTapeRate', Math.max(0, (state.accessoriesRates.insulationTapeRate ?? 15) - 2))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
+                          <button type="button" onClick={() => handleRateChange('insulationTapeRate', Math.max(0, (state.accessoriesRates.insulationTapeRate ?? 15) - 1))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
                     </div>
@@ -1040,9 +1044,9 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                             <span className="text-[10px] text-gray-500 font-bold block mb-1">السعر:</span>
                             {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                             <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none">
-                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { rate: (item.rate ?? 0) + 100 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer font-sans">+</button>
+                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { rate: (item.rate ?? 0) + 10 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer font-sans">+</button>
                               <span className="text-xs font-black text-[#D4AF37] font-mono">{item.rate}</span>
-                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 100) })} className="text-red-400 font-bold text-sm cursor-pointer font-sans">-</button>
+                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 10) })} className="text-red-400 font-bold text-sm cursor-pointer font-sans">-</button>
                             </div>
                           </div>
                         </div>
@@ -1282,7 +1286,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* لقم قواطع فرعية */}
                 <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                    <span className="text-sm font-black text-[#D4AF37] block">لقم قواطع </span>
+                    <span className="text-sm font-black text-[#D4AF37] block"> قواطع اتوماتيك </span>
                   </div>
                   <div className="space-y-3 mt-1">
                     {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
@@ -1435,9 +1439,9 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                             <span className="text-[10px] text-gray-500 font-bold block mb-1">السعر:</span>
                             {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                             <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none">
-                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { rate: (item.rate ?? 0) + 100 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer font-sans">+</button>
+                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { rate: (item.rate ?? 0) + 10 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer font-sans">+</button>
                               <span className="text-xs font-black text-[#D4AF37] font-mono">{item.rate}</span>
-                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 100) })} className="text-red-400 font-bold text-sm cursor-pointer font-sans">-</button>
+                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 10) })} className="text-red-400 font-bold text-sm cursor-pointer font-sans">-</button>
                             </div>
                           </div>
                         </div>

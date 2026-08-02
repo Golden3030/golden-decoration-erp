@@ -1344,7 +1344,8 @@ export default function InitialEstimate() {
           quantity: Number(item.quantity || 0),
           unit_price: Number(item.unitPrice || 0),
           labor_cost: Number(item.laborCost || 0),
-          description: item.description || ""
+          description: item.description || "",
+          product_id: item.product_id || null
         }));
 
         const { error: iErr } = await supabase

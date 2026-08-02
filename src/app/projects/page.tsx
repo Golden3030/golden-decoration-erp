@@ -1002,6 +1002,13 @@ function ProjectsPageInner() {
                   <div className="pt-4 border-t border-[#D4AF37]/20 flex justify-end gap-3 select-none">
                     <button
                       type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/project-materials/${selectedProject.id}`); }}
+                      className="px-6 py-3 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-blue-300 border border-blue-400/50 hover:shadow-[0_0_20px_rgba(96,165,250,0.3)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-sm flex items-center justify-center gap-1.5 select-none"
+                    >
+                      📦 خامات وكميات المشروع
+                    </button>
+                    <button
+                      type="button"
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/gallery/${selectedProject.id}`); }}
                       className="px-6 py-3 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-purple-300 border border-purple-400/50 hover:shadow-[0_0_20px_rgba(192,132,252,0.3)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-sm flex items-center justify-center gap-1.5 select-none"
                     >

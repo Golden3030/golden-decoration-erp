@@ -445,8 +445,8 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 <Notebook className="w-7 h-7" />
               </div>
               <div className="text-right">
-                <h4 className="text-lg font-bold text-[#D4AF37]"> ترميم التسكير والفتحات (المرمات) </h4>
-                <p className="text-xs text-white mt-1">تسجيل مقطوعات مصنعية الفنيين مع حصر خامات المونة والجبس للمرمات</p>
+                <h4 className="text-lg font-bold text-[#D4AF37]"> ترميم التكسير (المرمات) </h4>
+                <p className="text-xs text-white mt-1"> مقطوعات مصنعية الفنيين مع حصر خامات المونة والجبس للمرمات</p>
               </div>
             </div>
             

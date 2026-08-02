@@ -65,5 +65,6 @@ export const config = {
     '/purchase-orders/:path*',
     '/snags/:path*',
     '/gallery/:path*',
+    '/project-materials/:path*',
   ],
 }

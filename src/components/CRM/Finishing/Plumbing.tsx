@@ -277,7 +277,7 @@ export default function PlumbingTab({ projectId }: { projectId: string }) {
               <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2.5 w-32" onClick={(e) => e.stopPropagation()}>
                 <button 
                   type="button" 
-                  onClick={() => editItem(key, item.id, { rate: (item.rate || 0) + 100 })}
+                  onClick={() => editItem(key, item.id, { rate: (item.rate || 0) + 1 })}
                   className="w-5 h-5 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] font-bold text-xs flex items-center justify-center cursor-pointer transition-all active:scale-95"
                 >
                   +
@@ -293,7 +293,7 @@ export default function PlumbingTab({ projectId }: { projectId: string }) {
                 </div>
                 <button 
                   type="button" 
-                  onClick={() => editItem(key, item.id, { rate: Math.max(0, (item.rate || 0) - 100) })}
+                  onClick={() => editItem(key, item.id, { rate: Math.max(0, (item.rate || 0) - 1) })}
                   className="w-5 h-5 rounded bg-[#020B1C] border border-rose-500/20 text-rose-400 hover:bg-rose-600 hover:text-white font-bold text-xs flex items-center justify-center cursor-pointer transition-all active:scale-95"
                 >
                   -

@@ -1,4 +1,3 @@
-
 import { supabase } from "@/lib/supabaseClient";
 
 const COMPOUND_BUFFER_DAYS = 2; // أيام إضافية على أول مرحلة لو المشروع داخل كمبوند (إجراءات دخول/تصاريح)
@@ -51,7 +50,7 @@ export async function generateProjectSchedule(projectId: string) {
   const { data: items } = await supabase
     .from("estimate_items")
     .select("category")
-    .eq("estimate_header_id", header.id);
+    .eq("estimate_id", header.id);
 
   const usedCategories = Array.from(new Set((items || []).map((i: any) => i.category).filter(Boolean)));
 
