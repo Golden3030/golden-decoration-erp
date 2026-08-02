@@ -160,7 +160,7 @@ export default function Masonry({ projectId }: MasonryProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
           <MasonryCard 
-            title="حصر أعداد الطوب الكلي" 
+            title="حصر كمية الطوب " 
             icon={<Package className="w-5 h-5"/>} 
             unit="طوبة" 
             value={state.brickCount} 
@@ -186,7 +186,7 @@ export default function Masonry({ projectId }: MasonryProps) {
           />
 
           <MasonryCard 
-            title="حصر أمتار الرمل الإنشائي" 
+            title="حصر أمتار الرمل" 
             icon={<Droplet className="w-5 h-5"/>} 
             unit="م٣" 
             value={state.sandMeters} 
@@ -199,7 +199,7 @@ export default function Masonry({ projectId }: MasonryProps) {
           />
 
           <MasonryCard 
-            title="أجور مصنعية البناء" 
+            title=" مصنعية البناء" 
             icon={<HardHat className="w-5 h-5"/>} 
             unit="جنية مصري" 
             value={state.laborLumpSum} 
@@ -210,7 +210,7 @@ export default function Masonry({ projectId }: MasonryProps) {
           />
 
           <MasonryCard 
-            title="تكاليف النقل والتشوين" 
+            title="تكلفة النقل والتشوين" 
             icon={<Truck className="w-5 h-5"/>} 
             unit="جنية مصري" 
             value={state.logisticsCost} 

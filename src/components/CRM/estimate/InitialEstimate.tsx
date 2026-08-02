@@ -1238,7 +1238,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
 }
 
 export default function InitialEstimate() {
-  const { crmData, saveEstimateSnapshot, autoSaveEstimateToDB, isHydrating } = useCRM();
+  const { crmData, saveEstimateSnapshot, autoSaveEstimateToDB, isHydrating, updateEstimate } = useCRM();
 
   const [dbMaterials, setDbMaterials] = useState<any[]>([]);
   const [dbSpecs, setDbSpecs] = useState<any[]>([]);
@@ -1362,7 +1362,13 @@ export default function InitialEstimate() {
   useEffect(() => {
     if (detailedBOQ.length > 0 && calculatedTotal > 0 && !loading && !isHydrating) {
       const percentage = crmData.estimate?.engineeringPercentage ?? 15;
-      
+
+      // ✅ إصلاح: البنود المحسوبة هنا (detailedBOQ) كانت بتتحفظ فى قاعدة البيانات مباشرة
+      // من غير ما تتمرر أبداً على crmData.estimate.items — فكروت الملخص (إجمالي الخامات/
+      // المصنعيات/الإجمالي النهائي) كانت بتفضل صفر للأبد لأنها بتقرا من مكان محدش بيحدثه.
+      // دلوقتي بنزامن البنود مع الحالة المشتركة، واللي بدورها بتعيد حساب الإجماليات تلقائياً.
+      updateEstimate({ items: detailedBOQ });
+
       // 🌟 تفعيل بروتوكول صمام الأمان لمنع تجميد الشاشة حيوياً وتوجيه الحفظ
       if (typeof autoSaveEstimateToDB === 'function') {
         autoSaveEstimateToDB(detailedBOQ, calculatedTotal, "مبدئية", percentage);

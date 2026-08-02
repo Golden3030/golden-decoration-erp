@@ -292,13 +292,42 @@ export function CRMProvider({
   }
 
   function updateEstimate(data: any) {
-    setCRMData((prev: any) => ({
-      ...prev,
-      estimate: {
+    setCRMData((prev: any) => {
+      const merged = {
         ...prev.estimate,
         ...data
+      };
+
+      // ✅ إصلاح: كروت الملخص (إجمالي الخامات/المصنعيات/الإجمالي النهائي) كانت بتفضل
+      // مجمدة على صفر للأبد، لأن كل شاشة قسم (محارة، دهانات، كهرباء...) كانت بتحدّث
+      // بنودها الخاصة بس من غير ما حد يعيد حساب الإجماليات الكلية من كل البنود مع بعض.
+      // دلوقتي كل مرة أي بنود تتغير، بيتم إعادة حساب الإجماليات تلقائياً من الصفر هنا
+      // فى مكان مركزي واحد، بغض النظر عن أي شاشة قسم غيّرت البنود.
+      if (data.items) {
+        const items = merged.items || [];
+        const recalculatedMaterials = items.reduce(
+          (sum: number, it: any) => sum + Number(it.quantity || 0) * Number(it.unitPrice ?? it.unit_price ?? 0),
+          0
+        );
+        const recalculatedLabor = items.reduce(
+          (sum: number, it: any) => sum + Number(it.laborCost ?? it.labor_cost ?? 0),
+          0
+        );
+        const engineeringPercentage = Number(merged.engineeringPercentage || 15);
+        const recalculatedEngineeringValue = (recalculatedMaterials + recalculatedLabor) * (engineeringPercentage / 100);
+        const recalculatedTotal = recalculatedMaterials + recalculatedLabor + recalculatedEngineeringValue;
+
+        merged.materialsCost = Number(recalculatedMaterials.toFixed(2));
+        merged.laborCost = Number(recalculatedLabor.toFixed(2));
+        merged.engineeringValue = Number(recalculatedEngineeringValue.toFixed(2));
+        merged.total = Number(recalculatedTotal.toFixed(2));
       }
-    }));
+
+      return {
+        ...prev,
+        estimate: merged
+      };
+    });
   }
 
   return (

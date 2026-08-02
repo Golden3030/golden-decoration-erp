@@ -96,6 +96,8 @@ const DEFAULT_PLASTER_STATE = {
   selectedCementId: '',
   selectedSandId: '',
   notes: '',
+  cementCoverageRate: 5,   // معدل فرد الأسمنت (م²/شكارة) — قابل للتعديل حسب براند الأسمنت
+  plasterThicknessCm: 2.5, // سمك طبقة المحارة بالسنتيمتر
   meshMetalPrice: 180,   
   meshFiberPrice: 90,     
   nailsBoxPrice: 75,      
@@ -190,6 +192,8 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
         selectedCementId: plasterContext.selectedCementId ?? '',
         selectedSandId: plasterContext.selectedSandId ?? '',
         notes: plasterContext.notes ?? '',
+        cementCoverageRate: plasterContext.cementCoverageRate ?? 5,
+        plasterThicknessCm: plasterContext.plasterThicknessCm ?? 2.5,
         meshMetalPrice: plasterContext.meshMetalPrice ?? 180,   
         meshFiberPrice: plasterContext.meshFiberPrice ?? 90,     
         nailsBoxPrice: plasterContext.nailsBoxPrice ?? 75,      
@@ -304,8 +308,16 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
 
   const totalPlasterArea = state.wallArea + (state.includeCeilings ? state.ceilingArea : 0);
 
-  const requiredCementBags = Math.ceil(totalPlasterArea * 0.25); 
-  const requiredSandVolume = Number((totalPlasterArea * 0.025).toFixed(2)); 
+  // ✅ إصلاح: المعادلة القديمة كانت بتضرب المساحة فى نسبة ثابتة (0.25 شكارة/م²) من غير أي اعتبار
+  // لمعدل فرد الأسمنت الفعلي أو سمك طبقة المحارة، فكانت بتطلع كمية أسمنت أعلى من الحقيقي بـ 25%
+  // وكمية رمل أقل من الحقيقي بـ 25% تقريباً. المعادلة الصح: عدد الشكاير = المساحة ÷ معدل الفرد،
+  // وحجم الرمل = المساحة × سمك المحارة (بالمتر) × معامل انتفاخ الرمل السائب القياسي (4/3).
+  const coverageRate = Number(state.cementCoverageRate) > 0 ? Number(state.cementCoverageRate) : 5;
+  const thicknessMeters = Number(state.plasterThicknessCm || 2.5) / 100;
+  const SAND_BULKING_FACTOR = 4 / 3;
+
+  const requiredCementBags = Math.ceil(totalPlasterArea / coverageRate);
+  const requiredSandVolume = Number((totalPlasterArea * thicknessMeters * SAND_BULKING_FACTOR).toFixed(2));
 
   const activeCement = dbProducts.find((p) => p.id === state.selectedCementId) || cementProducts[0];
   const activeSand = dbProducts.find((p) => p.id === state.selectedSandId) || sandProducts[0];
@@ -395,7 +407,7 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 <Layers className="w-7 h-7" />
               </div>
               <div className="text-right">
-                <h4 className="text-lg font-bold text-[#D4AF37]">أعمال بياض المحارة والمصيص الإنشائية</h4>
+                <h4 className="text-lg font-bold text-[#D4AF37]">أعمال المحارة والمصيص</h4>
                 <p className="text-xs text-white mt-1">حساب تلقائي متكامل بالمساحات، الكماليات، المون، واللوجستيات</p>
               </div>
             </div>
@@ -433,7 +445,7 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 <Notebook className="w-7 h-7" />
               </div>
               <div className="text-right">
-                <h4 className="text-lg font-bold text-[#D4AF37]"> ترميم التسكير والفتحات يدوياً (المرمات) </h4>
+                <h4 className="text-lg font-bold text-[#D4AF37]"> ترميم التسكير والفتحات (المرمات) </h4>
                 <p className="text-xs text-white mt-1">تسجيل مقطوعات مصنعية الفنيين مع حصر خامات المونة والجبس للمرمات</p>
               </div>
             </div>
@@ -640,6 +652,28 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
               <div className="flex items-center gap-2 border-b border-[#D4AF37] pb-4 text-[#D4AF37] text-right">
                 <Layers className="w-5 h-5 animate-pulse" />
                 <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2">ثالثاً: مون التأسيس لأعمال المحارة المعتمدة  🧪:</h4>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="p-4 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d]">
+                  <span className="text-xs font-semibold text-[#F0E6D2] block mb-1.5">معدل فرد الأسمنت (م² / شكارة):</span>
+                  <input
+                    type="number"
+                    value={state.cementCoverageRate}
+                    onChange={(e) => updateStateAndSave(() => ({ cementCoverageRate: Number(e.target.value) || 5 }))}
+                    className="p-2 rounded-lg bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] text-xs font-bold outline-none w-full font-mono"
+                  />
+                </div>
+                <div className="p-4 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d]">
+                  <span className="text-xs font-semibold text-[#F0E6D2] block mb-1.5">سمك طبقة المحارة (سم):</span>
+                  <input
+                    type="number"
+                    step="0.5"
+                    value={state.plasterThicknessCm}
+                    onChange={(e) => updateStateAndSave(() => ({ plasterThicknessCm: Number(e.target.value) || 2.5 }))}
+                    className="p-2 rounded-lg bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] text-xs font-bold outline-none w-full font-mono"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
