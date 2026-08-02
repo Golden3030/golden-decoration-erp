@@ -37,8 +37,6 @@ interface ElectricalProductItem {
   price: number;
   company?: string;      // حقل اسم الشركة المصنّعة المطلوب
   subcategory?: string;  // التصنيف الفرعي
-  amperage?: number;     // الحمل بالأمبير (للقواطع تحديداً)
-  recommended_use?: string; // الاستخدام الموصى به (lighting/sockets/ac/water_heater/kitchen/main/bell)
 }
 
 // واجهة تمديد الأسلاك الديناميكية بالتأسيس
@@ -105,10 +103,6 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
     selectedOutletId: 'vn-01',
     selectedMainPanelId: 'pa-01',
     selectedLowCurrentPanelId: 'pa-03',
-    selectedBreakerId: '',
-    selectedAcBreakerId: '',
-    selectedHeaterBreakerId: '',
-    selectedBellBreakerId: '',
     backboxCount: 150,
     floorConduitCount: 15,
     wallConduitCount: 20,
@@ -175,9 +169,9 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
   // دالة لتوليد قائمة الأسلاك المبدئية عند الحصر الأول
   const generateInitialWires = (): WireRow[] => {
     return [
-      { id: "w-01", wireType: "سلك السويدي 1.5 مم", quantity: 2, rate: 1400 },
-      { id: "w-02", wireType: "سلك السويدي 2 مم", quantity: 3, rate: 1800 },
-      { id: "w-03", wireType: "سلك السويدي 4 مم", quantity: 1, rate: 2900 }
+      { id: "w-01", wireType: "سلك السويدي معتمد 1.5 مم", quantity: 2, rate: 1400 },
+      { id: "w-02", wireType: "سلك السويدي معتمد 2 مم", quantity: 3, rate: 1800 },
+      { id: "w-03", wireType: "سلك السويدي معتمد 4 مم", quantity: 1, rate: 2900 }
     ];
   };
 
@@ -234,10 +228,6 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
         selectedOutletId: elecContext.selectedOutletId ?? 'vn-01',
         selectedMainPanelId: elecContext.selectedMainPanelId ?? 'pa-01',
         selectedLowCurrentPanelId: elecContext.selectedLowCurrentPanelId ?? 'pa-03',
-        selectedBreakerId: elecContext.selectedBreakerId ?? '',
-        selectedAcBreakerId: elecContext.selectedAcBreakerId ?? '',
-        selectedHeaterBreakerId: elecContext.selectedHeaterBreakerId ?? '',
-        selectedBellBreakerId: elecContext.selectedBellBreakerId ?? '',
         backboxCount: elecContext.backboxCount ?? Math.ceil(totalUnitArea * 1.5),
         floorConduitCount: elecContext.floorConduitCount ?? Math.ceil(totalUnitArea * 0.15),
         wallConduitCount: elecContext.wallConduitCount ?? Math.ceil(totalUnitArea * 0.2),
@@ -432,63 +422,6 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
       };
     });
   };
-
-  // ✅ إصلاح: القواطع كانت بسعر ثابت مكتوب فى الكود (120 ج.م) من غير أي ربط بقاعدة
-  // البيانات، رغم وجود أنواع قواطع حقيقية بأسعار مختلفة مسجلة فعلاً فى شاشة المنتجات.
-  // دلوقتي بنفس منطق اللوحات بالظبط: اختيار القاطع بيحدث السعر الفعلي المستخدم فى الحساب.
-  const handleBreakerChange = (id: string) => {
-    const selectedProd = dbProducts.find(p => p.id === id);
-    updateStateAndSave(prev => {
-      const updatedRates = {
-        ...prev.accessoriesRates,
-        rateBreakerFinishing: selectedProd ? selectedProd.price : prev.accessoriesRates.rateBreakerFinishing
-      };
-      return {
-        selectedBreakerId: id,
-        accessoriesRates: updatedRates
-      };
-    });
-  };
-
-  const handleAcBreakerChange = (id: string) => {
-    const selectedProd = dbProducts.find(p => p.id === id);
-    updateStateAndSave(prev => ({
-      selectedAcBreakerId: id,
-      accessoriesRates: { ...prev.accessoriesRates, rateAcSwitch: selectedProd ? selectedProd.price : prev.accessoriesRates.rateAcSwitch }
-    }));
-  };
-
-  const handleHeaterBreakerChange = (id: string) => {
-    const selectedProd = dbProducts.find(p => p.id === id);
-    updateStateAndSave(prev => ({
-      selectedHeaterBreakerId: id,
-      accessoriesRates: { ...prev.accessoriesRates, rateHeaterSwitch: selectedProd ? selectedProd.price : prev.accessoriesRates.rateHeaterSwitch }
-    }));
-  };
-
-  const handleBellBreakerChange = (id: string) => {
-    const selectedProd = dbProducts.find(p => p.id === id);
-    updateStateAndSave(prev => ({
-      selectedBellBreakerId: id,
-      accessoriesRates: { ...prev.accessoriesRates, rateBellSwitch: selectedProd ? selectedProd.price : prev.accessoriesRates.rateBellSwitch }
-    }));
-  };
-
-  // ✅ القواطع المتاحة مفلترة حسب الاستخدام الموصى به المسجل فى شاشة المنتجات لكل قاطع
-  const generalBreakers = dbProducts.filter(p => p.subcategory === 'قواطع' && ['lighting', 'sockets'].includes(p.recommended_use || ''));
-  const acBreakers = dbProducts.filter(p => p.subcategory === 'قواطع' && p.recommended_use === 'ac');
-  const heaterBreakers = dbProducts.filter(p => p.subcategory === 'قواطع' && p.recommended_use === 'water_heater');
-  const bellBreakers = dbProducts.filter(p => p.subcategory === 'قواطع' && p.recommended_use === 'bell');
-
-  // ✅ اقتراح تلقائي: أول ما قواطع الاستخدام المناسب تتسجل فعلياً فى قاعدة البيانات، لو
-  // المهندس لسه ما اختارش حاجة، النظام بيقترح أول قاطع مطابق تلقائياً بدل ما يفضل فاضي
-  useEffect(() => {
-    if (!state.selectedBreakerId && generalBreakers.length > 0) handleBreakerChange(generalBreakers[0].id);
-    if (!state.selectedAcBreakerId && acBreakers.length > 0) handleAcBreakerChange(acBreakers[0].id);
-    if (!state.selectedHeaterBreakerId && heaterBreakers.length > 0) handleHeaterBreakerChange(heaterBreakers[0].id);
-    if (!state.selectedBellBreakerId && bellBreakers.length > 0) handleBellBreakerChange(bellBreakers[0].id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dbProducts]);
 
   // دالة حفظ الملاحظات بحدث الـ Blur
   const handleNotesBlur = async () => {
@@ -773,12 +706,16 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                               onChange={(e) => handleWireRowEdit(row.id, { wireType: e.target.value })}
                               className="bg-[#020B1C] border border-[#1f2d4d] p-1 rounded-md text-white outline-none cursor-pointer focus:border-[#D4AF37]"
                             >
-                              <option>سلك السويدي معتمد م مقطع 1.5 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 2 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 3 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 4 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 6 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 10 مم</option>
+                              <option>سلك السويدي معتمد 1.5 مم</option>
+                              <option>سلك السويدي معتمد 2 مم</option>
+                              <option>سلك السويدي معتمد 3 مم</option>
+                              <option>سلك السويدي معتمد 4 مم</option>
+                              <option>سلك السويدي معتمد 6 مم</option>
+                              <option>سلك السويدي معتمد 10 مم</option>
+                              <option>سلك سماعة السويدي معتمد م مقطع 1 مم</option>
+                              <option>سلك تليفون السويدى</option>
+                              <option> سلك دش</option>
+                              <option> سلك نت كات 6 سويدى</option>
                             </select>
                           </td>
                           <td className="py-3 text-center">
@@ -951,9 +888,9 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <div className="bg-[#07132a]/60 p-2 rounded-xl h-11 flex flex-col items-center justify-between gap-1 select-none">
                         <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج)</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
-                          <button type="button" onClick={() => handleRateChange('insulationTapeRate', (state.accessoriesRates.insulationTapeRate ?? 15) + 2)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
+                          <button type="button" onClick={() => handleRateChange('insulationTapeRate', (state.accessoriesRates.insulationTapeRate ?? 15) + 1)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
                           <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.accessoriesRates.insulationTapeRate}</span>
-                          <button type="button" onClick={() => handleRateChange('insulationTapeRate', Math.max(0, (state.accessoriesRates.insulationTapeRate ?? 15) - 2))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
+                          <button type="button" onClick={() => handleRateChange('insulationTapeRate', Math.max(0, (state.accessoriesRates.insulationTapeRate ?? 15) - 1))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
                     </div>
@@ -1107,9 +1044,9 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                             <span className="text-[10px] text-gray-500 font-bold block mb-1">السعر:</span>
                             {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                             <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none">
-                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { rate: (item.rate ?? 0) + 100 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer font-sans">+</button>
+                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { rate: (item.rate ?? 0) + 10 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer font-sans">+</button>
                               <span className="text-xs font-black text-[#D4AF37] font-mono">{item.rate}</span>
-                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 100) })} className="text-red-400 font-bold text-sm cursor-pointer font-sans">-</button>
+                              <button type="button" onClick={() => handleCustomRoughInEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 10) })} className="text-red-400 font-bold text-sm cursor-pointer font-sans">-</button>
                             </div>
                           </div>
                         </div>
@@ -1349,21 +1286,9 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* لقم قواطع فرعية */}
                 <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                    <span className="text-sm font-black text-[#D4AF37] block">لقم قواطع </span>
+                    <span className="text-sm font-black text-[#D4AF37] block"> قواطع اتوماتيك </span>
                   </div>
                   <div className="space-y-3 mt-1">
-                    <select
-                      value={state.selectedBreakerId}
-                      onChange={(e) => handleBreakerChange(e.target.value)}
-                      className="w-full h-10 px-2 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-xs text-[#B48C34] outline-none focus:border-[#D4AF37] cursor-pointer"
-                    >
-                      <option value="">— اختر القاطع (إضاءة/بريزات) —</option>
-                      {generalBreakers.map(prod => (
-                        <option key={prod.id} value={prod.id} className="bg-[#020B1C] text-white">
-                          {prod.company ? `${prod.company} - ` : ''}{prod.product_name} ({prod.amperage}A)
-                        </option>
-                      ))}
-                    </select>
                     {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
                       <span className="text-xs text-white font-bold">السعر :</span>
@@ -1398,18 +1323,6 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <span className="text-sm font-black text-[#D4AF37] block">مفتاح تكييف </span>
                     </div>
                     <div className="space-y-3 mt-1">
-                      <select
-                        value={state.selectedAcBreakerId}
-                        onChange={(e) => handleAcBreakerChange(e.target.value)}
-                        className="w-full h-10 px-2 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-xs text-[#B48C34] outline-none focus:border-[#D4AF37] cursor-pointer"
-                      >
-                        <option value="">— اختر قاطع التكييف —</option>
-                        {acBreakers.map(prod => (
-                          <option key={prod.id} value={prod.id} className="bg-[#020B1C] text-white">
-                            {prod.company ? `${prod.company} - ` : ''}{prod.product_name} ({prod.amperage}A)
-                          </option>
-                        ))}
-                      </select>
                       {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between text-right">
                         <span className="text-xs text-white font-bold">السعر :</span>
@@ -1437,18 +1350,6 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <span className="text-sm font-black text-[#D4AF37] block">مفتاح سخان ثنائي مضيء</span>
                     </div>
                     <div className="space-y-3 mt-1">
-                      <select
-                        value={state.selectedHeaterBreakerId}
-                        onChange={(e) => handleHeaterBreakerChange(e.target.value)}
-                        className="w-full h-10 px-2 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-xs text-[#B48C34] outline-none focus:border-[#D4AF37] cursor-pointer"
-                      >
-                        <option value="">— اختر قاطع السخان —</option>
-                        {heaterBreakers.map(prod => (
-                          <option key={prod.id} value={prod.id} className="bg-[#020B1C] text-white">
-                            {prod.company ? `${prod.company} - ` : ''}{prod.product_name} ({prod.amperage}A)
-                          </option>
-                        ))}
-                      </select>
                       {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between text-right">
                         <span className="text-xs text-white font-bold">السعر :</span>
@@ -1476,18 +1377,6 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <span className="text-sm font-black text-[#D4AF37] block">مفتاح جرس   </span>
                     </div>
                     <div className="space-y-3 mt-1">
-                      <select
-                        value={state.selectedBellBreakerId}
-                        onChange={(e) => handleBellBreakerChange(e.target.value)}
-                        className="w-full h-10 px-2 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-xs text-[#B48C34] outline-none focus:border-[#D4AF37] cursor-pointer"
-                      >
-                        <option value="">— اختر قاطع الجرس —</option>
-                        {bellBreakers.map(prod => (
-                          <option key={prod.id} value={prod.id} className="bg-[#020B1C] text-white">
-                            {prod.company ? `${prod.company} - ` : ''}{prod.product_name} ({prod.amperage}A)
-                          </option>
-                        ))}
-                      </select>
                       {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between text-right">
                         <span className="text-xs text-white font-bold">السعر :</span>
@@ -1550,9 +1439,9 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                             <span className="text-[10px] text-gray-500 font-bold block mb-1">السعر:</span>
                             {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                             <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none">
-                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { rate: (item.rate ?? 0) + 100 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer font-sans">+</button>
+                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { rate: (item.rate ?? 0) + 10 })} className="text-[#D4AF37] font-bold text-sm cursor-pointer font-sans">+</button>
                               <span className="text-xs font-black text-[#D4AF37] font-mono">{item.rate}</span>
-                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 100) })} className="text-red-400 font-bold text-sm cursor-pointer font-sans">-</button>
+                              <button type="button" onClick={() => handleCustomFinishingEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 10) })} className="text-red-400 font-bold text-sm cursor-pointer font-sans">-</button>
                             </div>
                           </div>
                         </div>
