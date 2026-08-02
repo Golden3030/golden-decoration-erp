@@ -16,6 +16,8 @@ interface ProductItem {
   product_name: string;
   unit: string;
   price: number;
+  amperage?: number;
+  recommended_use?: string;
 }
 
 interface SpecItem {
@@ -123,6 +125,8 @@ export default function ItemsMaterialsPage() {
   const [pName, setPName] = useState("");
   const [pUnit, setPUnit] = useState("بستلة");
   const [pPrice, setPPrice] = useState<number | "">("");
+  const [pAmperage, setPAmperage] = useState<number | "">("");
+  const [pRecommendedUse, setPRecommendedUse] = useState("");
 
   const [sName, setSName] = useState("");
   const [sDesc, setSDesc] = useState("");
@@ -137,6 +141,8 @@ export default function ItemsMaterialsPage() {
     setPCompany("");
     setPName("");
     setPPrice("");
+    setPAmperage("");
+    setPRecommendedUse("");
     setSName("");
     setSDesc("");
     setSCategory("plaster");
@@ -267,6 +273,8 @@ export default function ItemsMaterialsPage() {
     setPName(p.product_name || "");
     setPUnit(p.unit || "بستلة");
     setPPrice(p.price || "");
+    setPAmperage(p.amperage ?? "");
+    setPRecommendedUse(p.recommended_use ?? "");
   }
 
   function selectSpecCard(s: SpecItem) {
@@ -296,7 +304,9 @@ export default function ItemsMaterialsPage() {
       company: pCompany || null,
       product_name: pName,
       unit: pUnit,
-      price: Number(pPrice)
+      price: Number(pPrice),
+      amperage: pAmperage === "" ? null : Number(pAmperage),
+      recommended_use: pRecommendedUse || null
     };
 
     try {
@@ -342,7 +352,9 @@ export default function ItemsMaterialsPage() {
       company: pCompany || null,
       product_name: pName,
       unit: pUnit,
-      price: Number(pPrice)
+      price: Number(pPrice),
+      amperage: pAmperage === "" ? null : Number(pAmperage),
+      recommended_use: pRecommendedUse || null
     };
 
     try {
@@ -713,6 +725,38 @@ export default function ItemsMaterialsPage() {
                       )}
                     </select>
                   </div>
+
+                  {pSubcategory === "قواطع" && (
+                    <>
+                      <div>
+                        <label className="block text-[#D4AF37] px-2 mb-1.5 font-bold text-[12px] select-none">الحمل (أمبير) *</label>
+                        <input
+                          type="number"
+                          placeholder="مثال: 16, 20, 32, 63"
+                          value={pAmperage}
+                          onChange={(e) => setPAmperage(e.target.value !== "" ? Number(e.target.value) : "")}
+                          className="w-32 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-bold px-2 outline-none focus:border-[#D4AF37] font-mono text-[11px]"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[#D4AF37] px-2 mb-1.5 font-bold text-[12px] select-none">الاستخدام الموصى به *</label>
+                        <select
+                          value={pRecommendedUse}
+                          onChange={(e) => setPRecommendedUse(e.target.value)}
+                          className="w-40 h-9 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-black px-2 outline-none focus:border-[#D4AF37] cursor-pointer text-[11px]"
+                        >
+                          <option value="">— اختر —</option>
+                          <option value="lighting">دوائر إضاءة</option>
+                          <option value="sockets">دوائر بريزات عادية</option>
+                          <option value="ac">تكييف</option>
+                          <option value="water_heater">سخان مياه</option>
+                          <option value="kitchen">مطبخ / أفران كهربائية</option>
+                          <option value="main">قاطع رئيسي</option>
+                          <option value="bell">جرس / تيار خفيف</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
 
                   <div>
                     <label className="block text-[#D4AF37] px-2 mb-1.5 font-bold text-[12px] select-none">الشركة المصنعة</label>

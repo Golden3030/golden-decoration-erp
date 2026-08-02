@@ -403,7 +403,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       const current = flooring.items[row.key];
       if (current && current.qty > 0) {
         const prod = dbMaterials.find(p => p.id === current.product_id);
-        const pName = prod ? prod.product_name : `${row.label} (${current.company})`;
+        const pName = prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}` : `${row.label} (${current.company})`;
         
         generated.push({
           id: `gen-flooring-${row.key}`,
@@ -780,7 +780,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         generated.push({
           id: "gen-elec-main-panel",
           category: "electricity",
-          name: prod ? prod.product_name : "لوحة كهرباء رئيسية",
+          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}` : "لوحة كهرباء رئيسية",
           unit: "علبة",
           quantity: 1,
           unitPrice: rates.mainPanelRate ?? 1800,
@@ -794,7 +794,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         generated.push({
           id: "gen-elec-low-panel",
           category: "electricity",
-          name: prod ? prod.product_name : "لوحة تيار خفيف وداتا ووايفاي بالوحدة ",
+          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}` : "لوحة تيار خفيف وداتا ووايفاي بالوحدة ",
           unit: "علبة",
           quantity: 1,
           unitPrice: rates.lowCurrentPanelRate ?? 1200,
@@ -813,6 +813,66 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           unitPrice: rates.automaticBreakerRate ?? 180,
           laborCost: 0,
           description: "مفاتيح أوتوماتيك عمومية لحماية أجهزة التكييف والإنارة والقوى."
+        });
+      }
+
+      // ✅ إصلاح: البنود الأربعة دي (لقم قواطع الإضاءة/البريزات، قاطع التكييف، قاطع السخان،
+      // قاطع الجرس) كانت موجودة كحقول فى شاشة الكهرباء والمهندس بيملاها فعلاً، لكن محدش
+      // كان بيحولها لبند حقيقي فى المقايسة النهائية — يعني كانت بتتملى وتضيع من غير أي
+      // تأثير على السعر اللي بيوصل للعميل. دلوقتي بقت بنود حقيقية زي باقي عناصر الكهرباء.
+      if (Number(electricity.breakerFinishingCount) > 0) {
+        const prod = dbMaterials.find(m => m.id === electricity.selectedBreakerId);
+        generated.push({
+          id: "gen-elec-breaker-finishing",
+          category: "electricity",
+          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "لقم قواطع إضاءة وبريزات عادية",
+          unit: "قاطع",
+          quantity: Number(electricity.breakerFinishingCount),
+          unitPrice: rates.rateBreakerFinishing ?? 120,
+          laborCost: 0,
+          description: "قواطع دوائر الإضاءة والبريزات العادية بالوحدة."
+        });
+      }
+
+      if (Number(electricity.acSwitchCount) > 0) {
+        const prod = dbMaterials.find(m => m.id === electricity.selectedAcBreakerId);
+        generated.push({
+          id: "gen-elec-ac-breaker",
+          category: "electricity",
+          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "مفتاح تكييف",
+          unit: "قاطع",
+          quantity: Number(electricity.acSwitchCount),
+          unitPrice: rates.rateAcSwitch ?? 120,
+          laborCost: 0,
+          description: "قواطع مخصصة لدوائر تغذية أجهزة التكييف."
+        });
+      }
+
+      if (Number(electricity.heaterSwitchCount) > 0) {
+        const prod = dbMaterials.find(m => m.id === electricity.selectedHeaterBreakerId);
+        generated.push({
+          id: "gen-elec-heater-breaker",
+          category: "electricity",
+          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "مفتاح سخان ثنائي مضيء",
+          unit: "قاطع",
+          quantity: Number(electricity.heaterSwitchCount),
+          unitPrice: rates.rateHeaterSwitch ?? 120,
+          laborCost: 0,
+          description: "قاطع مخصص لدائرة تغذية سخان المياه."
+        });
+      }
+
+      if (Number(electricity.bellSwitchCount) > 0) {
+        const prod = dbMaterials.find(m => m.id === electricity.selectedBellBreakerId);
+        generated.push({
+          id: "gen-elec-bell-breaker",
+          category: "electricity",
+          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "مفتاح جرس",
+          unit: "قاطع",
+          quantity: Number(electricity.bellSwitchCount),
+          unitPrice: rates.rateBellSwitch ?? 55,
+          laborCost: 0,
+          description: "قاطع مخصص لدائرة الجرس والتيار الخفيف."
         });
       }
 
