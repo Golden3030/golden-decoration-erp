@@ -1361,48 +1361,54 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ breakerFinishingCount: Math.max(0, prev.breakerFinishingCount - 1) }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
-
-                    {/* أنواع القواطع الإضافية المخصصة — كل نوع بسعره وكميته الخاصة، بنفس ستايل عدادات الكارت الأساسي */}
-                    {state.customBreakersList.length > 0 && (
-                      <div className="space-y-3 pt-3 border-t border-[#1f2d4d]/30">
-                        {state.customBreakersList.map(item => (
-                          <div key={item.id} className="p-3 rounded-2xl bg-[#020B1C] border border-[#1f2d4d] space-y-3">
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="text"
-                                value={item.name}
-                                onChange={(e) => handleCustomBreakerEdit(item.id, { name: e.target.value })}
-                                placeholder="نوع القاطع..."
-                                className="flex-1 h-9 px-2 rounded-lg bg-[#07132a] border border-[#1f2d4d] text-xs text-white font-bold outline-none focus:border-[#D4AF37]"
-                              />
-                              <button type="button" onClick={() => handleRemoveCustomBreaker(item.id)} className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer shrink-0"><Trash2 className="w-4 h-4" /></button>
-                            </div>
-                            {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
-                            <div className="flex items-center justify-between text-right">
-                              <span className="text-xs text-white font-bold">السعر :</span>
-                              <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { rate: (item.rate ?? 0) + 10 })} className="w-6 h-6 rounded-full bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
-                                <span className="text-sm font-black text-[#D4AF37] font-mono">{item.rate} <span className="text-[8px] text-gray-500">ج.م</span></span>
-                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 10) })} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
-                              </div>
-                            </div>
-                            {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
-                            <div className="flex items-center justify-between text-right">
-                              <span className="text-xs text-white font-bold">الكمية:</span>
-                              <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
-                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { quantity: (item.quantity ?? 1) + 1 })} className="w-6 h-6 rounded-full bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
-                                <span className="text-sm font-black text-white font-mono">{item.quantity}</span>
-                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { quantity: Math.max(1, (item.quantity ?? 1) - 1) })} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 </div>
 
               </div>
+
+              {/* أنواع القواطع الإضافية المخصصة — قسم مستقل بعرض كامل بيتوسع بشبكة بدل ما يطوّل كارت "لقم قواطع" مهما زاد عدد الأنواع */}
+              {state.customBreakersList.length > 0 && (
+                <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-4">
+                  <span className="text-sm font-bold text-[#D4AF37] block border-b border-[#D4AF37] pb-3"> أنواع القواطع الإضافية المخصصة:</span>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {state.customBreakersList.map(item => (
+                      <div key={item.id} className="p-4 rounded-2xl border border-[#1f2d4d] bg-[#020B1C]/60 hover:border-[#D4AF37]/50 shadow-md hover:shadow-[0_0_25px_rgba(212,175,55,0.06)] transition-all duration-300 flex flex-col gap-3 text-right">
+                        <div className="flex justify-between items-center">
+                          <span className="px-2 py-0.5 rounded text-[10px] bg-[#D4AF37]/10 text-[#D4AF37] font-semibold border border-[#D4AF37]/20">قاطع مخصص</span>
+                          <button type="button" onClick={() => handleRemoveCustomBreaker(item.id)} className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                        <input
+                          type="text"
+                          value={item.name}
+                          onChange={(e) => handleCustomBreakerEdit(item.id, { name: e.target.value })}
+                          placeholder="نوع القاطع..."
+                          className="w-full h-10 px-3 rounded-xl bg-[#07132a] border border-[#1f2d4d] text-sm text-white font-bold outline-none focus:border-[#D4AF37]"
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-gray-500 font-bold block">السعر:</span>
+                            {/* العداد h-10 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                            <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none">
+                              <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { rate: (item.rate ?? 0) + 10 })} className="w-6 h-6 rounded-full bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
+                              <span className="text-xs font-black text-[#D4AF37] font-mono">{item.rate}</span>
+                              <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 10) })} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
+                            </div>
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[10px] text-gray-500 font-bold block">الكمية:</span>
+                            {/* العداد h-10 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                            <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-10 px-2 hover:border-[#D4AF37]/50 transition-all select-none">
+                              <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { quantity: (item.quantity ?? 1) + 1 })} className="w-6 h-6 rounded-full bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
+                              <span className="text-xs font-black text-white font-mono">{item.quantity}</span>
+                              <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { quantity: Math.max(1, (item.quantity ?? 1) - 1) })} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
 
               {/* مفاتيح القوى الثقيلة بالتشطيب */}
