@@ -91,7 +91,7 @@ function PaintProductCombobox({
   const selected = products.find(p => p.id === value);
 
   return (
-    <div className="relative min-w-[180px] max-w-[260px]" ref={wrapperRef}>
+    <div className="relative min-w-45 max-w-45" ref={wrapperRef}>
       <div
         onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}
         className="w-full h-9 bg-[#020B1C] border border-[#1f2d4d] rounded-lg px-2 flex items-center gap-1.5 text-xs text-[#F0E6D2] font-bold cursor-pointer focus-within:border-[#D4AF37]"
@@ -557,7 +557,7 @@ export default function Paint({ projectId }: PaintProps) {
           onClick={() => updateStateAndSave(prev => ({ finishActive: !prev.finishActive }))}
           className={`p-6 rounded-3xl border transition-all duration-500 flex flex-col lg:flex-row items-center justify-between gap-6 cursor-pointer ${
             state.finishActive 
-              ? 'border-[#D4AF37] bg-gradient-to-r from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
+              ? 'border-[#D4AF37] bg-linear-to-r from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
               : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-50 hover:opacity-100'
           }`}
         >
@@ -651,7 +651,7 @@ export default function Paint({ projectId }: PaintProps) {
               </div>
 
               <div className="h-11 w-px bg-[#1f2d4d] hidden sm:block" />
-              <div className="text-right border-r border-[#1f2d4d]/60 pr-4 min-w-[120px]">
+              <div className="text-right border-r border-[#1f2d4d]/60 pr-4 min-w-30">
                 <span className="text-[10px] text-[#D4AF37] block font-bold mb-1 opacity-75">اجمالى المصنعيات:</span>
                 <span className="text-lg font-black text-[#D4AF37] font-mono leading-none">{totalLaborCost.toLocaleString()} <span className="text-xs font-normal text-white">ج.م</span></span>
               </div>
@@ -745,11 +745,11 @@ export default function Paint({ projectId }: PaintProps) {
               e.stopPropagation();
               updateStateAndSave(prev => ({ decorActive: !prev.decorActive }));
             }}
-            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all min-w-[145px] flex items-center justify-center gap-2 cursor-pointer ${
+            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all min-w-36.25 flex items-center justify-center gap-2 cursor-pointer ${
               state.decorActive ? 'bg-[#D4AF37] text-[#020B1C]' : 'bg-[#1f2d4d] text-gray-500'
             }`}
           >
-            {state.decorActive && <Check className="w-4 h-4 stroke-[3]" />}
+            {state.decorActive && <Check className="w-4 h-4 stroke-3" />}
             {state.decorActive ? 'البند مفعل' : ' غير مفعل'}
           </button>
         </div>
@@ -856,7 +856,7 @@ export default function Paint({ projectId }: PaintProps) {
           </div>
 
           <div className="overflow-x-auto rounded-xl border border-[#D4AF37] bg-[#020B1C]/60">
-            <table className="w-full text-right text-xs text-white min-w-[700px] border-collapse">
+            <table className="w-full text-right text-xs text-white min-w-175 border-collapse">
               <thead className="bg-[#0b1b3d] text-[#D4AF37] border-b border-[#D4AF37] font-bold">
                 <tr>
                   <th className="p-3">نوع الخامة </th>
@@ -884,7 +884,7 @@ export default function Paint({ projectId }: PaintProps) {
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ sealerQtyOverride: (sealerQty ?? 0) + 1 }))} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] flex items-center justify-center hover:border-[#D4AF37] font-bold text-[#D4AF37] cursor-pointer">+</button>
-                        <span className="font-mono font-bold text-sm min-w-[20px] text-center">{sealerQty}</span>
+                        <span className="font-mono font-bold text-sm min-w-5 text-center">{sealerQty}</span>
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ sealerQtyOverride: Math.max(0, (sealerQty ?? 0) - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center font-bold cursor-pointer">-</button>
                       </div>
                     </td>
@@ -911,7 +911,7 @@ export default function Paint({ projectId }: PaintProps) {
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ thermalSealerQtyOverride: (thermalSealerQty ?? 0) + 1 }))} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] flex items-center justify-center hover:border-[#D4AF37] font-bold text-[#D4AF37] cursor-pointer">+</button>
-                        <span className="font-mono font-bold text-sm min-w-[20px] text-center">{thermalSealerQty}</span>
+                        <span className="font-mono font-bold text-sm min-w-5 text-center">{thermalSealerQty}</span>
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ thermalSealerQtyOverride: Math.max(0, (thermalSealerQty ?? 0) - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center font-bold cursor-pointer">-</button>
                       </div>
                     </td>
@@ -938,7 +938,7 @@ export default function Paint({ projectId }: PaintProps) {
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ puttyQtyOverride: (puttyQty ?? 0) + 1 }))} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] flex items-center justify-center hover:border-[#D4AF37] font-bold text-[#D4AF37] cursor-pointer">+</button>
-                        <span className="font-mono font-bold text-sm min-w-[20px] text-center">{puttyQty}</span>
+                        <span className="font-mono font-bold text-sm min-w-5 text-center">{puttyQty}</span>
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ puttyQtyOverride: Math.max(0, (puttyQty ?? 0) - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center font-bold cursor-pointer">-</button>
                       </div>
                     </td>
@@ -965,7 +965,7 @@ export default function Paint({ projectId }: PaintProps) {
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ primerQtyOverride: (primerQty ?? 0) + 1 }))} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] flex items-center justify-center hover:border-[#D4AF37] font-bold text-[#D4AF37] cursor-pointer">+</button>
-                        <span className="font-mono font-bold text-sm min-w-[20px] text-center">{primerQty}</span>
+                        <span className="font-mono font-bold text-sm min-w-5 text-center">{primerQty}</span>
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ primerQtyOverride: Math.max(0, (primerQty ?? 0) - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center font-bold cursor-pointer">-</button>
                       </div>
                     </td>
@@ -991,13 +991,13 @@ export default function Paint({ projectId }: PaintProps) {
                           onSelectCustom={() => handleSwitchCustomToManual(item.id, 'prep')}
                         />
                       ) : (
-                        <input type="text" value={item.name} onChange={(e) => handleEditCustomProductField(item.id, 'name', e.target.value, 'prep')} placeholder="اسم البند اليدوي..." className="bg-[#020B1C] border border-[#1f2d4d] p-1.5 rounded text-xs text-white font-bold outline-none focus:border-[#D4AF37] w-full max-w-[280px]" />
+                        <input type="text" value={item.name} onChange={(e) => handleEditCustomProductField(item.id, 'name', e.target.value, 'prep')} placeholder="اسم البند اليدوي..." className="bg-[#020B1C] border border-[#1f2d4d] p-1.5 rounded text-xs text-white font-bold outline-none focus:border-[#D4AF37] w-full max-w-70" />
                       )}
                     </td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
                         <button type="button" onClick={() => handleEditCustomProductField(item.id, 'quantity', Math.max(0, (item.quantity || 1) + 1), 'prep')} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] flex items-center justify-center hover:border-[#D4AF37] font-bold text-[#D4AF37] cursor-pointer">+</button>
-                        <span className="font-mono font-bold text-sm min-w-[20px] text-center">{item.quantity}</span>
+                        <span className="font-mono font-bold text-sm min-w-5 text-center">{item.quantity}</span>
                         <button type="button" onClick={() => handleEditCustomProductField(item.id, 'quantity', Math.max(0, (item.quantity || 1) - 1), 'prep')} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm flex items-center justify-center cursor-pointer">-</button>
                       </div>
                     </td>
@@ -1055,7 +1055,7 @@ export default function Paint({ projectId }: PaintProps) {
           </div>
 
           <div className="overflow-x-auto rounded-xl border border-[#D4AF37] bg-[#020B1C]/60">
-            <table className="w-full text-right text-xs text-white min-w-[700px] border-collapse">
+            <table className="w-full text-right text-xs text-white min-w-175 border-collapse">
               <thead className="bg-[#0b1b3d] text-[#D4AF37] border-b border-[#D4AF37] font-bold">
                 <tr>
                   <th className="p-3">نوع الخامة</th>
@@ -1083,7 +1083,7 @@ export default function Paint({ projectId }: PaintProps) {
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ finishPaintQtyOverride: (finishPaintQty ?? 0) + 1 }))} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] flex items-center justify-center hover:border-[#D4AF37] font-bold text-[#D4AF37] cursor-pointer">+</button>
-                        <span className="font-mono font-bold text-sm min-w-[20px] text-center">{finishPaintQty}</span>
+                        <span className="font-mono font-bold text-sm min-w-5 text-center">{finishPaintQty}</span>
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ finishPaintQtyOverride: Math.max(0, (finishPaintQty ?? 0) - 1) }))} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 flex items-center justify-center font-bold cursor-pointer transition-all-none">-</button>
                       </div>
                     </td>
@@ -1110,7 +1110,7 @@ export default function Paint({ projectId }: PaintProps) {
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ ceilingPaintQtyOverride: (ceilingPaintQty ?? 0) + 1 }))} className="w-7 h-7 rounded bg-[#07132a] border border-[#1f2d4d] flex items-center justify-center hover:border-[#D4AF37] font-bold text-[#D4AF37] cursor-pointer">+</button>
-                        <span className="font-mono font-bold text-sm min-w-[30px] text-center">{ceilingPaintQty}</span>
+                        <span className="font-mono font-bold text-sm min-w-7.5 text-center">{ceilingPaintQty}</span>
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ ceilingPaintQtyOverride: Math.max(0, (ceilingPaintQty ?? 0) - 1) }))} className="w-7 h-7 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none">-</button>
                       </div>
                     </td>
@@ -1141,14 +1141,14 @@ export default function Paint({ projectId }: PaintProps) {
                           value={item.name} 
                           onChange={(e) => handleEditCustomProductField(item.id, 'name', e.target.value, 'finish')}
                           placeholder="اسم البند اليدوي..."
-                          className="bg-[#020B1C] border border-[#1f2d4d] p-1.5 rounded text-xs text-white font-bold outline-none focus:border-[#D4AF37] w-full max-w-[280px]"
+                          className="bg-[#020B1C] border border-[#1f2d4d] p-1.5 rounded text-xs text-white font-bold outline-none focus:border-[#D4AF37] w-full max-w-70"
                         />
                       )}
                     </td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
                         <button type="button" onClick={() => handleEditCustomProductField(item.id, 'quantity', Math.max(0, (item.quantity || 1) + 1), 'finish')} className="w-6 h-6 rounded bg-[#07132a] border border-[#1f2d4d] flex items-center justify-center hover:border-[#D4AF37] font-bold text-[#D4AF37] cursor-pointer">+</button>
-                        <span className="font-mono font-bold text-sm min-w-[20px] text-center">{item.quantity}</span>
+                        <span className="font-mono font-bold text-sm min-w-5 text-center">{item.quantity}</span>
                         <button type="button" onClick={() => handleEditCustomProductField(item.id, 'quantity', Math.max(0, (item.quantity || 1) - 1), 'finish')} className="w-6 h-6 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm cursor-pointer flex items-center justify-center select-none">-</button>
                       </div>
                     </td>
@@ -1201,7 +1201,7 @@ export default function Paint({ projectId }: PaintProps) {
           onChange={(e) => setNotesInput(e.target.value)}
           onBlur={handleNotesBlur}
           placeholder="اكتب هنا أي تفاصيل، درجات ألوان مخصصة، أو شروط تأسيس معجون تم الاتفاق عليها مع العميل لحفظها مباشرة بالعقد..."
-          className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-lg text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none text-base leading-relaxed text-right font-semibold"
+          className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none text-base leading-relaxed text-right font-semibold"
         />
         <div className="flex justify-between items-center text-xs text-gray-500 px-1 select-none">
           <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
