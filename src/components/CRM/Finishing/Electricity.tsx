@@ -534,7 +534,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
 
   // ✅ القواطع المسجلة فعلياً فى مكتبة المنتجات (تصنيف "قواطع") — نفس القائمة تُستخدم فى
   // كومبوبوكس "لقم قواطع" الأساسي وفى كل نوع قاطع مخصص يضيفه المهندس
-  const breakerProducts = dbProducts.filter(p => p.subcategory === 'قواطع');
+  const breakerProducts = dbProducts.filter(p => p.subcategory === 'breakers');
 
   // اختيار قاطع "لقم قواطع" الأساسي من مكتبة المنتجات: بيحدّث السعر تلقائياً بسعر المنتج المختار
   const handleBreakerChange = (product: ElectricalProductItem) => {
