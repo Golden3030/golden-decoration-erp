@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -64,6 +63,14 @@ interface CustomFinishingItem {
   name: string;
   quantity: number;
   unit: string;
+  rate: number;
+}
+
+// واجهة أنواع القواطع المخصصة (لقم قواطع) — بيضيفها المهندس يدوياً حسب نوع القاطع الفعلي بدل الربط بمنتج واحد من المخزن
+interface CustomBreakerItem {
+  id: string;
+  name: string;
+  quantity: number;
   rate: number;
 }
 
@@ -134,6 +141,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
     heaterSwitchCount: 2,
     bellSwitchCount: 1,
     customFinishingList: [] as CustomFinishingItem[],
+    customBreakersList: [] as CustomBreakerItem[],
     finishingLaborCost: 5000,
     accessoriesRates: {
       backboxRate: 8,
@@ -263,6 +271,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
         heaterSwitchCount: elecContext.heaterSwitchCount ?? 2,
         bellSwitchCount: elecContext.bellSwitchCount ?? 1,
         customFinishingList: elecContext.customFinishingList || [],
+        customBreakersList: elecContext.customBreakersList || [],
         finishingLaborCost: elecContext.finishingLaborCost ?? 5000,
         accessoriesRates: {
           backboxRate: elecContext.accessoriesRates?.backboxRate ?? 8,
@@ -436,59 +445,31 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
   // ✅ إصلاح: القواطع كانت بسعر ثابت مكتوب فى الكود (120 ج.م) من غير أي ربط بقاعدة
   // البيانات، رغم وجود أنواع قواطع حقيقية بأسعار مختلفة مسجلة فعلاً فى شاشة المنتجات.
   // دلوقتي بنفس منطق اللوحات بالظبط: اختيار القاطع بيحدث السعر الفعلي المستخدم فى الحساب.
-  const handleBreakerChange = (id: string) => {
-    const selectedProd = dbProducts.find(p => p.id === id);
-    updateStateAndSave(prev => {
-      const updatedRates = {
-        ...prev.accessoriesRates,
-        rateBreakerFinishing: selectedProd ? selectedProd.price : prev.accessoriesRates.rateBreakerFinishing
-      };
-      return {
-        selectedBreakerId: id,
-        accessoriesRates: updatedRates
-      };
-    });
-  };
-
-  const handleAcBreakerChange = (id: string) => {
-    const selectedProd = dbProducts.find(p => p.id === id);
+  // ✅ لقم القواطع بقت بنود مخصصة يضيفها المهندس بنفسه بدل الربط التلقائي بمنتج واحد من المخزن —
+  // لأن الشركة بتستخدم أكثر من نوع قاطع مختلف فى نفس الوحدة
+  const handleAddCustomBreaker = () => {
+    const newItem: CustomBreakerItem = {
+      id: `brk-${Date.now()}`,
+      name: "نوع قاطع جديد",
+      quantity: 1,
+      rate: 120
+    };
     updateStateAndSave(prev => ({
-      selectedAcBreakerId: id,
-      accessoriesRates: { ...prev.accessoriesRates, rateAcSwitch: selectedProd ? selectedProd.price : prev.accessoriesRates.rateAcSwitch }
+      customBreakersList: [...prev.customBreakersList, newItem]
     }));
   };
 
-  const handleHeaterBreakerChange = (id: string) => {
-    const selectedProd = dbProducts.find(p => p.id === id);
+  const handleCustomBreakerEdit = (id: string, fields: Partial<CustomBreakerItem>) => {
     updateStateAndSave(prev => ({
-      selectedHeaterBreakerId: id,
-      accessoriesRates: { ...prev.accessoriesRates, rateHeaterSwitch: selectedProd ? selectedProd.price : prev.accessoriesRates.rateHeaterSwitch }
+      customBreakersList: prev.customBreakersList.map(item => item.id === id ? { ...item, ...fields } : item)
     }));
   };
 
-  const handleBellBreakerChange = (id: string) => {
-    const selectedProd = dbProducts.find(p => p.id === id);
+  const handleRemoveCustomBreaker = (id: string) => {
     updateStateAndSave(prev => ({
-      selectedBellBreakerId: id,
-      accessoriesRates: { ...prev.accessoriesRates, rateBellSwitch: selectedProd ? selectedProd.price : prev.accessoriesRates.rateBellSwitch }
+      customBreakersList: prev.customBreakersList.filter(item => item.id !== id)
     }));
   };
-
-  // ✅ القواطع المتاحة مفلترة حسب الاستخدام الموصى به المسجل فى شاشة المنتجات لكل قاطع
-  const generalBreakers = dbProducts.filter(p => p.subcategory === 'قواطع' && ['lighting', 'sockets'].includes(p.recommended_use || ''));
-  const acBreakers = dbProducts.filter(p => p.subcategory === 'قواطع' && p.recommended_use === 'ac');
-  const heaterBreakers = dbProducts.filter(p => p.subcategory === 'قواطع' && p.recommended_use === 'water_heater');
-  const bellBreakers = dbProducts.filter(p => p.subcategory === 'قواطع' && p.recommended_use === 'bell');
-
-  // ✅ اقتراح تلقائي: أول ما قواطع الاستخدام المناسب تتسجل فعلياً فى قاعدة البيانات، لو
-  // المهندس لسه ما اختارش حاجة، النظام بيقترح أول قاطع مطابق تلقائياً بدل ما يفضل فاضي
-  useEffect(() => {
-    if (!state.selectedBreakerId && generalBreakers.length > 0) handleBreakerChange(generalBreakers[0].id);
-    if (!state.selectedAcBreakerId && acBreakers.length > 0) handleAcBreakerChange(acBreakers[0].id);
-    if (!state.selectedHeaterBreakerId && heaterBreakers.length > 0) handleHeaterBreakerChange(heaterBreakers[0].id);
-    if (!state.selectedBellBreakerId && bellBreakers.length > 0) handleBellBreakerChange(bellBreakers[0].id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dbProducts]);
 
   // دالة حفظ الملاحظات بحدث الـ Blur
   const handleNotesBlur = async () => {
@@ -547,9 +528,10 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
   const totalBellSwitchCost = state.bellSwitchCount * rateBellSwitch;
 
   const totalCustomFinishingCost = state.customFinishingList.reduce((sum, item) => sum + ((item.quantity ?? 0) * (item.rate ?? 0)), 0);
+  const totalCustomBreakersCost = state.customBreakersList.reduce((sum, item) => sum + ((item.quantity ?? 0) * (item.rate ?? 0)), 0);
 
   const calculatedFinishingCost = state.finishingActive
-    ? (totalSwitchCost + totalPlugCost + totalPlateCost + totalFrameCost + totalBlankCost + totalBreakerFinishingCost + totalAcSwitchCost + totalHeaterSwitchCost + totalBellSwitchCost + totalCustomFinishingCost + state.finishingLaborCost)
+    ? (totalSwitchCost + totalPlugCost + totalPlateCost + totalFrameCost + totalBlankCost + totalBreakerFinishingCost + totalAcSwitchCost + totalHeaterSwitchCost + totalBellSwitchCost + totalCustomFinishingCost + totalCustomBreakersCost + state.finishingLaborCost)
     : 0;
 
   const calculatedSmartHomeCost = state.smartActive ? (state.accessoriesRates.smartHomeFlatRate ?? 15000) : 0;
@@ -1350,20 +1332,17 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-35 hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                     <span className="text-sm font-black text-[#D4AF37] block">لقم قواطع </span>
+                    <button
+                      type="button"
+                      onClick={handleAddCustomBreaker}
+                      title="إضافة نوع قاطع آخر"
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/20 text-[#D4AF37] text-[10px] font-bold transition-all cursor-pointer"
+                    >
+                      <PlusCircle className="w-3.5 h-3.5" />
+                      <span>إضافة قاطع</span>
+                    </button>
                   </div>
                   <div className="space-y-3 mt-1">
-                    <select
-                      value={state.selectedBreakerId}
-                      onChange={(e) => handleBreakerChange(e.target.value)}
-                      className="w-full h-10 px-2 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-xs text-[#B48C34] outline-none focus:border-[#D4AF37] cursor-pointer"
-                    >
-                      <option value="">— اختر القاطع (إضاءة/بريزات) —</option>
-                      {generalBreakers.map(prod => (
-                        <option key={prod.id} value={prod.id} className="bg-[#020B1C] text-white">
-                          {prod.company ? `${prod.company} - ` : ''}{prod.product_name} ({prod.amperage}A)
-                        </option>
-                      ))}
-                    </select>
                     {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                     <div className="flex items-center justify-between text-right">
                       <span className="text-xs text-white font-bold">السعر :</span>
@@ -1382,10 +1361,43 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ breakerFinishingCount: Math.max(0, prev.breakerFinishingCount - 1) }))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
+
+                    {/* أنواع القواطع الإضافية المخصصة — كل نوع بسعره وكميته الخاصة */}
+                    {state.customBreakersList.length > 0 && (
+                      <div className="space-y-2 pt-2 border-t border-[#1f2d4d]/30">
+                        {state.customBreakersList.map(item => (
+                          <div key={item.id} className="p-2.5 rounded-xl bg-[#020B1C] border border-[#1f2d4d] space-y-2">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={item.name}
+                                onChange={(e) => handleCustomBreakerEdit(item.id, { name: e.target.value })}
+                                placeholder="نوع القاطع..."
+                                className="flex-1 h-8 px-2 rounded-lg bg-[#07132a] border border-[#1f2d4d] text-xs text-white font-bold outline-none focus:border-[#D4AF37]"
+                              />
+                              <button type="button" onClick={() => handleRemoveCustomBreaker(item.id)} className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer shrink-0"><Trash2 className="w-4 h-4" /></button>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-lg h-9 px-2">
+                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { rate: (item.rate ?? 0) + 10 })} className="text-[#D4AF37] font-bold text-xs cursor-pointer font-sans">+</button>
+                                <span className="text-[11px] font-black text-[#D4AF37] font-mono">{item.rate} ج.م</span>
+                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 10) })} className="text-red-400 font-bold text-xs cursor-pointer font-sans">-</button>
+                              </div>
+                              <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-lg h-9 px-2">
+                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { quantity: (item.quantity ?? 1) + 1 })} className="text-[#D4AF37] font-bold text-xs cursor-pointer font-sans">+</button>
+                                <span className="text-[11px] font-black text-white">{item.quantity}</span>
+                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { quantity: Math.max(1, (item.quantity ?? 1) - 1) })} className="text-red-400 font-bold text-xs cursor-pointer font-sans">-</button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
               </div>
+
 
               {/* مفاتيح القوى الثقيلة بالتشطيب */}
               <div className="p-6 rounded-2xl bg-[#07132a] border border-[#D4AF37] space-y-4">
@@ -1398,18 +1410,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <span className="text-sm font-black text-[#D4AF37] block">مفتاح تكييف </span>
                     </div>
                     <div className="space-y-3 mt-1">
-                      <select
-                        value={state.selectedAcBreakerId}
-                        onChange={(e) => handleAcBreakerChange(e.target.value)}
-                        className="w-full h-10 px-2 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-xs text-[#B48C34] outline-none focus:border-[#D4AF37] cursor-pointer"
-                      >
-                        <option value="">— اختر قاطع التكييف —</option>
-                        {acBreakers.map(prod => (
-                          <option key={prod.id} value={prod.id} className="bg-[#020B1C] text-white">
-                            {prod.company ? `${prod.company} - ` : ''}{prod.product_name} ({prod.amperage}A)
-                          </option>
-                        ))}
-                      </select>
+
                       {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between text-right">
                         <span className="text-xs text-white font-bold">السعر :</span>
@@ -1437,18 +1438,6 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <span className="text-sm font-black text-[#D4AF37] block">مفتاح سخان ثنائي مضيء</span>
                     </div>
                     <div className="space-y-3 mt-1">
-                      <select
-                        value={state.selectedHeaterBreakerId}
-                        onChange={(e) => handleHeaterBreakerChange(e.target.value)}
-                        className="w-full h-10 px-2 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-xs text-[#B48C34] outline-none focus:border-[#D4AF37] cursor-pointer"
-                      >
-                        <option value="">— اختر قاطع السخان —</option>
-                        {heaterBreakers.map(prod => (
-                          <option key={prod.id} value={prod.id} className="bg-[#020B1C] text-white">
-                            {prod.company ? `${prod.company} - ` : ''}{prod.product_name} ({prod.amperage}A)
-                          </option>
-                        ))}
-                      </select>
                       {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between text-right">
                         <span className="text-xs text-white font-bold">السعر :</span>
@@ -1476,18 +1465,6 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <span className="text-sm font-black text-[#D4AF37] block">مفتاح جرس   </span>
                     </div>
                     <div className="space-y-3 mt-1">
-                      <select
-                        value={state.selectedBellBreakerId}
-                        onChange={(e) => handleBellBreakerChange(e.target.value)}
-                        className="w-full h-10 px-2 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-xs text-[#B48C34] outline-none focus:border-[#D4AF37] cursor-pointer"
-                      >
-                        <option value="">— اختر قاطع الجرس —</option>
-                        {bellBreakers.map(prod => (
-                          <option key={prod.id} value={prod.id} className="bg-[#020B1C] text-white">
-                            {prod.company ? `${prod.company} - ` : ''}{prod.product_name} ({prod.amperage}A)
-                          </option>
-                        ))}
-                      </select>
                       {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between text-right">
                         <span className="text-xs text-white font-bold">السعر :</span>
