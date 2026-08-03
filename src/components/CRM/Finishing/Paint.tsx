@@ -20,7 +20,8 @@ import {
   CheckCircle2, 
   Lock,
   Palette,
-  ClipboardList
+  ClipboardList,
+  Search
 } from 'lucide-react';
 
 interface PaintProps {
@@ -44,6 +45,103 @@ interface DBSpecification {
   spec_name: string;
   category: string;
   base_rate: number;
+}
+
+// 🔍 كومبوبوكس بحث فوري لاختيار خامة الدهانات مباشرة من مكتبة المنتجات — بنفس فلسفة شاشة السباكة،
+// بدل القوائم المنسدلة الطويلة العادية. لو allowCustom مفعّلة، بيظهر خيار "بند يدوي" لكتابة اسم حر.
+function PaintProductCombobox({
+  products,
+  value,
+  onSelect,
+  placeholder = "— اختر المنتج —",
+  allowCustom = false,
+  onSelectCustom,
+}: {
+  products: DBProduct[];
+  value: string;
+  onSelect: (p: DBProduct) => void;
+  placeholder?: string;
+  allowCustom?: boolean;
+  onSelectCustom?: () => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setSearchTerm('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filtered = products.filter(p => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.trim().toLowerCase();
+    return (
+      p.product_name?.toLowerCase().includes(q) ||
+      p.company?.toLowerCase().includes(q)
+    );
+  });
+
+  const selected = products.find(p => p.id === value);
+
+  return (
+    <div className="relative min-w-[180px] max-w-[260px]" ref={wrapperRef}>
+      <div
+        onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}
+        className="w-full h-9 bg-[#020B1C] border border-[#1f2d4d] rounded-lg px-2 flex items-center gap-1.5 text-xs text-[#F0E6D2] font-bold cursor-pointer focus-within:border-[#D4AF37]"
+      >
+        <Search className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+        {isOpen ? (
+          <input
+            autoFocus
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="ابحث عن الخامة..."
+            className="w-full bg-transparent outline-none text-xs text-[#F0E6D2] placeholder:text-gray-500"
+          />
+        ) : (
+          <span className="truncate flex-1">{selected ? selected.product_name : placeholder}</span>
+        )}
+      </div>
+
+      {isOpen && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="absolute z-30 mt-1 w-full max-h-56 overflow-y-auto bg-[#020B1C] border border-[#D4AF37]/60 rounded-xl shadow-2xl"
+        >
+          {allowCustom && (
+            <div
+              onClick={() => { onSelectCustom?.(); setIsOpen(false); setSearchTerm(''); }}
+              className="px-3 py-2 text-xs text-[#D4AF37] font-bold hover:bg-[#07132a] cursor-pointer border-b border-[#1f2d4d]/60"
+            >
+              ✍️ كتابة بند يدوي مخصص...
+            </div>
+          )}
+          {filtered.length === 0 && (
+            <div className="px-3 py-3 text-xs text-gray-500 text-center">لا توجد خامات مطابقة فى المخزن</div>
+          )}
+          {filtered.map(p => (
+            <div
+              key={p.id}
+              onClick={() => { onSelect(p); setIsOpen(false); setSearchTerm(''); }}
+              className={`px-3 py-2 text-xs text-[#F0E6D2] hover:bg-[#07132a] cursor-pointer flex items-center justify-between gap-2 ${p.id === value ? 'bg-[#07132a]' : ''}`}
+            >
+              <span className="truncate">{p.product_name}{p.company ? ` (${p.company})` : ''}</span>
+              <span className="shrink-0 text-[#D4AF37] font-mono">{p.price} ج</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 const DEFAULT_PAINT_STATE = {
@@ -266,6 +364,30 @@ export default function Paint({ projectId }: PaintProps) {
         ? prev.disabledStandardItems
         : [...prev.disabledStandardItems, key];
       return { disabledStandardItems: updatedDisabled };
+    });
+  };
+
+  // اختيار منتج حقيقي من المخزن لبند مخصص (بدل الاسم الحر) — بيحدث الاسم والشركة والسعر تلقائياً
+  const handleSelectCustomProductItem = (itemId: string, product: DBProduct, subType: 'prep' | 'finish') => {
+    updateStateAndSave(prev => {
+      const arrayKey = subType === 'prep' ? 'customPrepProducts' : 'customProducts';
+      const updatedCustom = (prev[arrayKey] || []).map((item: any) => {
+        if (item.id === itemId) return { ...item, product_id: product.id, name: product.product_name, company: product.company, price: Number(product.price || 0) };
+        return item;
+      });
+      return { [arrayKey]: updatedCustom };
+    });
+  };
+
+  // التحول لوضع الكتابة اليدوية الحرة لبند مخصص (بدل الربط بمنتج فعلي من المخزن)
+  const handleSwitchCustomToManual = (itemId: string, subType: 'prep' | 'finish') => {
+    updateStateAndSave(prev => {
+      const arrayKey = subType === 'prep' ? 'customPrepProducts' : 'customProducts';
+      const updatedCustom = (prev[arrayKey] || []).map((item: any) => {
+        if (item.id === itemId) return { ...item, product_id: '', name: '' };
+        return item;
+      });
+      return { [arrayKey]: updatedCustom };
     });
   };
 
@@ -723,12 +845,12 @@ export default function Paint({ projectId }: PaintProps) {
             </div>
             
             <div className="flex items-center gap-2 w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
-              <select value={quickAddPrepProductId} onChange={(e) => setQuickAddPrepProductId(e.target.value)} className="p-2.5 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-xs text-[#F0E6D2] font-bold outline-none cursor-pointer focus:border-[#D4AF37] min-w-[200px]">
-                <option value="">-- أضف منتج  --</option>
-                {dbProducts.filter(p => p.subcategory !== 'wallPaint' && p.subcategory !== 'ceilingPaint').map(p => (
-                  <option key={p.id} value={p.id}>{p.product_name} ({p.company})</option>
-                ))}
-              </select>
+              <PaintProductCombobox
+                products={dbProducts.filter(p => p.subcategory !== 'wallPaint' && p.subcategory !== 'ceilingPaint')}
+                value={quickAddPrepProductId}
+                onSelect={(p) => setQuickAddPrepProductId(p.id)}
+                placeholder="— أضف منتج —"
+              />
               <button type="button" onClick={() => handleAddCustomProduct(quickAddPrepProductId, 'prep')} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/20 text-xs font-bold text-[#D4AF37] transition-all cursor-pointer"><PlusCircle className="w-4 h-4" /><span>إضافة منتج</span></button>
             </div>
           </div>
@@ -752,10 +874,12 @@ export default function Paint({ projectId }: PaintProps) {
                   <tr className="border-b border-[#1f2d4d]/40">
                     <td className="p-3 font-bold">سيلر مائي عازل جدران وأسقف</td>
                     <td className="p-3 font-bold text-[#D4AF37]">
-                      <select value={state.selectedSealerId ?? ''} onChange={(e) => handleTableMaterialSave('sealer', e.target.value)} className="p-2 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] text-xs font-bold outline-none focus:border-[#D4AF37] cursor-pointer max-w-[250px]">
-                        <option value="">-- اختر السيلر لـ {state.selectedUndercoatCompany ?? 'GLC'} --</option>
-                        {availableSealers.map((p) => <option key={p.id} value={p.id}>{p.product_name}</option>)}
-                      </select>
+                      <PaintProductCombobox
+                        products={availableSealers}
+                        value={state.selectedSealerId ?? ''}
+                        onSelect={(p) => handleTableMaterialSave('sealer', p.id)}
+                        placeholder={`— اختر السيلر لـ ${state.selectedUndercoatCompany ?? 'GLC'} —`}
+                      />
                     </td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
@@ -777,10 +901,12 @@ export default function Paint({ projectId }: PaintProps) {
                   <tr className="border-b border-[#1f2d4d]/40">
                     <td className="p-3 font-bold">سيلر حراري عازل</td>
                     <td className="p-3 font-bold text-[#D4AF37]">
-                      <select value={state.selectedThermalSealerId ?? ''} onChange={(e) => handleTableMaterialSave('thermal_sealer', e.target.value)} className="p-2 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] text-xs font-bold outline-none focus:border-[#D4AF37] cursor-pointer max-w-[250px]">
-                        <option value="">-- اختر السيلر لـ {state.selectedUndercoatCompany ?? 'GLC'} --</option>
-                        {availableThermalSealers.map((p) => <option key={p.id} value={p.id}>{p.product_name}</option>)}
-                      </select>
+                      <PaintProductCombobox
+                        products={availableThermalSealers}
+                        value={state.selectedThermalSealerId ?? ''}
+                        onSelect={(p) => handleTableMaterialSave('thermal_sealer', p.id)}
+                        placeholder={`— اختر السيلر لـ ${state.selectedUndercoatCompany ?? 'GLC'} —`}
+                      />
                     </td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
@@ -802,10 +928,12 @@ export default function Paint({ projectId }: PaintProps) {
                   <tr className="border-b border-[#1f2d4d]/40">
                     <td className="p-3 font-bold">معجون حوائط داخلي </td>
                     <td className="p-3 font-bold text-[#D4AF37]">
-                      <select value={state.selectedPuttyId ?? ''} onChange={(e) => handleTableMaterialSave('putty', e.target.value)} className="p-2 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] text-xs font-bold outline-none focus:border-[#D4AF37] cursor-pointer max-w-[250px]">
-                        <option value="">-- اختر المعجون لـ {state.selectedUndercoatCompany ?? 'GLC'} --</option>
-                        {availablePutties.map((p) => <option key={p.id} value={p.id}>{p.product_name}</option>)}
-                      </select>
+                      <PaintProductCombobox
+                        products={availablePutties}
+                        value={state.selectedPuttyId ?? ''}
+                        onSelect={(p) => handleTableMaterialSave('putty', p.id)}
+                        placeholder={`— اختر المعجون لـ ${state.selectedUndercoatCompany ?? 'GLC'} —`}
+                      />
                     </td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
@@ -827,10 +955,12 @@ export default function Paint({ projectId }: PaintProps) {
                   <tr className="border-b border-[#1f2d4d]/40">
                     <td className="p-3 font-bold"> بطانة التأسيس </td>
                     <td className="p-3 font-bold text-[#D4AF37]">
-                      <select value={state.selectedPrimerId ?? ''} onChange={(e) => handleTableMaterialSave('primer', e.target.value)} className="p-2 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] text-xs font-bold outline-none focus:border-[#D4AF37] cursor-pointer max-w-[250px]">
-                        <option value="">-- اختر مادة البطانة لـ {state.selectedUndercoatCompany ?? 'GLC'} --</option>
-                        {availablePrimers.map((p) => <option key={p.id} value={p.id}>{p.product_name}</option>)}
-                      </select>
+                      <PaintProductCombobox
+                        products={availablePrimers}
+                        value={state.selectedPrimerId ?? ''}
+                        onSelect={(p) => handleTableMaterialSave('primer', p.id)}
+                        placeholder={`— اختر مادة البطانة لـ ${state.selectedUndercoatCompany ?? 'GLC'} —`}
+                      />
                     </td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
@@ -852,7 +982,17 @@ export default function Paint({ projectId }: PaintProps) {
                   <tr key={item.id} className="border-b border-[#1f2d4d]/40 bg-[#07132a]/20">
                     <td className="p-3 font-bold text-gray-400">بند مخصص مضاف</td>
                     <td className="p-3 font-bold">
-                      <input type="text" value={item.name} onChange={(e) => handleEditCustomProductField(item.id, 'name', e.target.value, 'prep')} className="bg-[#020B1C] border border-[#1f2d4d] p-1.5 rounded text-xs text-white font-bold outline-none focus:border-[#D4AF37] w-full max-w-[280px]" />
+                      {item.product_id ? (
+                        <PaintProductCombobox
+                          products={dbProducts.filter(p => p.subcategory !== 'wallPaint' && p.subcategory !== 'ceilingPaint')}
+                          value={item.product_id}
+                          onSelect={(p) => handleSelectCustomProductItem(item.id, p, 'prep')}
+                          allowCustom
+                          onSelectCustom={() => handleSwitchCustomToManual(item.id, 'prep')}
+                        />
+                      ) : (
+                        <input type="text" value={item.name} onChange={(e) => handleEditCustomProductField(item.id, 'name', e.target.value, 'prep')} placeholder="اسم البند اليدوي..." className="bg-[#020B1C] border border-[#1f2d4d] p-1.5 rounded text-xs text-white font-bold outline-none focus:border-[#D4AF37] w-full max-w-[280px]" />
+                      )}
                     </td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
@@ -903,12 +1043,12 @@ export default function Paint({ projectId }: PaintProps) {
             </div>
             
             <div className="flex items-center gap-2 w-full sm:w-auto" onClick={(e) => e.stopPropagation()}>
-              <select value={quickAddProductId} onChange={(e) => setQuickAddProductId(e.target.value)} className="p-2.5 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-xs text-[#F0E6D2] font-bold outline-none cursor-pointer focus:border-[#D4AF37] min-w-[200px]">
-                <option value="">-- اختر منتج --</option>
-                {dbProducts.filter(p => p.subcategory === 'wallPaint' || p.subcategory === 'ceilingPaint').map(p => (
-                  <option key={p.id} value={p.id}>{p.product_name} ({p.company})</option>
-                ))}
-              </select>
+              <PaintProductCombobox
+                products={dbProducts.filter(p => p.subcategory === 'wallPaint' || p.subcategory === 'ceilingPaint')}
+                value={quickAddProductId}
+                onSelect={(p) => setQuickAddProductId(p.id)}
+                placeholder="— اختر منتج —"
+              />
               <button type="button" onClick={() => handleAddCustomProduct(quickAddProductId, 'finish')} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/20 text-xs font-bold text-[#D4AF37] transition-all cursor-pointer"><PlusCircle className="w-4 h-4" /><span>إضافة منتج</span></button>
               
             </div>
@@ -933,10 +1073,12 @@ export default function Paint({ projectId }: PaintProps) {
                   <tr className="border-b border-[#1f2d4d]/40">
                     <td className="p-3 font-bold">دهان حوائط نهائي وجهين ملون</td>
                     <td className="p-3 font-bold text-[#D4AF37]">
-                      <select value={state.selectedWallPaintId ?? ''} onChange={(e) => handleTableMaterialSave('wallPaint', e.target.value)} className="p-2 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] text-xs font-bold outline-none focus:border-[#D4AF37] cursor-pointer max-w-[250px]">
-                        <option value="">-- اختر دهان تشطيب لـ {state.selectedFinishingCompany ?? 'جوتن'} --</option>
-                        {availableWallPaints.map((p) => <option key={p.id} value={p.id}>{p.product_name}</option>)}
-                      </select>
+                      <PaintProductCombobox
+                        products={availableWallPaints}
+                        value={state.selectedWallPaintId ?? ''}
+                        onSelect={(p) => handleTableMaterialSave('wallPaint', p.id)}
+                        placeholder={`— اختر دهان تشطيب لـ ${state.selectedFinishingCompany ?? 'جوتن'} —`}
+                      />
                     </td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
@@ -958,10 +1100,12 @@ export default function Paint({ projectId }: PaintProps) {
                   <tr className="border-b border-[#1f2d4d]/40">
                     <td className="p-3 font-bold">دهان تشطيب الأسقف وجهين ملون</td>
                     <td className="p-3 font-bold text-[#D4AF37]">
-                      <select value={state.selectedCeilingPaintId ?? ''} onChange={(e) => handleTableMaterialSave('ceilingPaint', e.target.value)} className="p-2 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-[#D4AF37] text-xs font-bold outline-none focus:border-[#D4AF37] cursor-pointer max-w-[250px]">
-                        <option value="">-- اختر دهان أسقف لـ {state.selectedUndercoatCompany ?? 'GLC'} --</option>
-                        {availableCeilingPaints.map((p) => <option key={p.id} value={p.id}>{p.product_name}</option>)}
-                      </select>
+                      <PaintProductCombobox
+                        products={availableCeilingPaints}
+                        value={state.selectedCeilingPaintId ?? ''}
+                        onSelect={(p) => handleTableMaterialSave('ceilingPaint', p.id)}
+                        placeholder={`— اختر دهان أسقف لـ ${state.selectedUndercoatCompany ?? 'GLC'} —`}
+                      />
                     </td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
@@ -983,12 +1127,23 @@ export default function Paint({ projectId }: PaintProps) {
                   <tr key={item.id} className="border-b border-[#1f2d4d]/40 bg-[#07132a]/30 hover:bg-[#07132a]/50 transition-colors">
                     <td className="p-3 font-bold text-gray-400">بند تشطيب إضافي مخصص</td>
                     <td className="p-3 font-bold">
-                      <input 
-                        type="text" 
-                        value={item.name} 
-                        onChange={(e) => handleEditCustomProductField(item.id, 'name', e.target.value, 'finish')}
-                        className="bg-[#020B1C] border border-[#1f2d4d] p-1.5 rounded text-xs text-white font-bold outline-none focus:border-[#D4AF37] w-full max-w-[280px]"
-                      />
+                      {item.product_id ? (
+                        <PaintProductCombobox
+                          products={dbProducts.filter(p => p.subcategory === 'wallPaint' || p.subcategory === 'ceilingPaint')}
+                          value={item.product_id}
+                          onSelect={(p) => handleSelectCustomProductItem(item.id, p, 'finish')}
+                          allowCustom
+                          onSelectCustom={() => handleSwitchCustomToManual(item.id, 'finish')}
+                        />
+                      ) : (
+                        <input 
+                          type="text" 
+                          value={item.name} 
+                          onChange={(e) => handleEditCustomProductField(item.id, 'name', e.target.value, 'finish')}
+                          placeholder="اسم البند اليدوي..."
+                          className="bg-[#020B1C] border border-[#1f2d4d] p-1.5 rounded text-xs text-white font-bold outline-none focus:border-[#D4AF37] w-full max-w-[280px]"
+                        />
+                      )}
                     </td>
                     <td className="p-3">
                       <div className="flex items-center justify-center gap-2">
