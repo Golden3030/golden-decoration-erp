@@ -20,7 +20,8 @@ import {
   CheckCircle2, 
   Lock,
   Package,
-  Check
+  Check,
+  Search
 } from 'lucide-react';
 
 interface ElectricityTabProps {
@@ -66,9 +67,10 @@ interface CustomFinishingItem {
   rate: number;
 }
 
-// واجهة أنواع القواطع المخصصة (لقم قواطع) — بيضيفها المهندس يدوياً حسب نوع القاطع الفعلي بدل الربط بمنتج واحد من المخزن
+// واجهة أنواع القواطع المخصصة (لقم قواطع) — كل نوع مرتبط بمنتج حقيقي من مكتبة القواطع بشاشة المنتجات
 interface CustomBreakerItem {
   id: string;
+  productId: string;
   name: string;
   quantity: number;
   rate: number;
@@ -83,6 +85,94 @@ const FALLBACK_OUTLETS: ElectricalProductItem[] = [
   { id: "vn-01", code: "OT-01", product_name: "لقمة مفتاح إنارة عادي بيانو", category: "electricity", company: "فينوس", price: 35 },
   { id: "vn-02", code: "OT-02", product_name: "لقمة مأخذ شاحن قوى", category: "electricity", company: "فينوس", price: 45 }
 ];
+
+// 🔍 كومبوبوكس بحث فوري لاختيار نوع القاطع مباشرة من مكتبة القواطع المسجلة بشاشة المنتجات
+// بدل كتابة الاسم يدوياً — يظهر السعر جنب كل قاطع فى القائمة لسهولة المقارنة أثناء الاختيار
+function BreakerCombobox({
+  products,
+  value,
+  onSelect,
+  placeholder = "— اختر القاطع —",
+}: {
+  products: ElectricalProductItem[];
+  value: string;
+  onSelect: (p: ElectricalProductItem) => void;
+  placeholder?: string;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setSearchTerm('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filtered = products.filter(p => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.trim().toLowerCase();
+    return (
+      p.product_name?.toLowerCase().includes(q) ||
+      p.company?.toLowerCase().includes(q) ||
+      String(p.amperage ?? '').includes(q)
+    );
+  });
+
+  const selected = products.find(p => p.id === value);
+
+  return (
+    <div className="relative flex-1 min-w-0" ref={wrapperRef}>
+      <div
+        onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}
+        className="w-full h-9 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 flex items-center gap-1.5 text-xs text-[#F0E6D2] font-bold cursor-pointer focus-within:border-[#D4AF37]"
+      >
+        <Search className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+        {isOpen ? (
+          <input
+            autoFocus
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
+            placeholder="ابحث عن القاطع..."
+            className="w-full bg-transparent outline-none text-xs text-[#F0E6D2] placeholder:text-gray-500"
+          />
+        ) : (
+          <span className="truncate flex-1">
+            {selected ? `${selected.product_name}${selected.amperage ? ` (${selected.amperage}A)` : ''}` : placeholder}
+          </span>
+        )}
+      </div>
+
+      {isOpen && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="absolute z-30 mt-1 w-full max-h-56 overflow-y-auto bg-[#020B1C] border border-[#D4AF37]/60 rounded-xl shadow-2xl"
+        >
+          {filtered.length === 0 && (
+            <div className="px-3 py-3 text-xs text-gray-500 text-center">لا توجد قواطع مسجلة مطابقة فى المخزن</div>
+          )}
+          {filtered.map(p => (
+            <div
+              key={p.id}
+              onClick={() => { onSelect(p); setIsOpen(false); setSearchTerm(''); }}
+              className={`px-3 py-2 text-xs text-[#F0E6D2] hover:bg-[#07132a] cursor-pointer flex items-center justify-between gap-2 ${p.id === value ? 'bg-[#07132a]' : ''}`}
+            >
+              <span className="truncate">{p.product_name}{p.company ? ` (${p.company})` : ''}{p.amperage ? ` - ${p.amperage}A` : ''}</span>
+              <span className="shrink-0 text-[#D4AF37] font-mono">{p.price} ج</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ElectricityTab({ projectId }: ElectricityTabProps) {
   const { crmData, updateBulkFinishingSection } = useCRM();
@@ -442,21 +532,36 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
     });
   };
 
-  // ✅ إصلاح: القواطع كانت بسعر ثابت مكتوب فى الكود (120 ج.م) من غير أي ربط بقاعدة
-  // البيانات، رغم وجود أنواع قواطع حقيقية بأسعار مختلفة مسجلة فعلاً فى شاشة المنتجات.
-  // دلوقتي بنفس منطق اللوحات بالظبط: اختيار القاطع بيحدث السعر الفعلي المستخدم فى الحساب.
-  // ✅ لقم القواطع بقت بنود مخصصة يضيفها المهندس بنفسه بدل الربط التلقائي بمنتج واحد من المخزن —
-  // لأن الشركة بتستخدم أكثر من نوع قاطع مختلف فى نفس الوحدة
+  // ✅ القواطع المسجلة فعلياً فى مكتبة المنتجات (تصنيف "قواطع") — نفس القائمة تُستخدم فى
+  // كومبوبوكس "لقم قواطع" الأساسي وفى كل نوع قاطع مخصص يضيفه المهندس
+  const breakerProducts = dbProducts.filter(p => p.subcategory === 'قواطع');
+
+  // اختيار قاطع "لقم قواطع" الأساسي من مكتبة المنتجات: بيحدّث السعر تلقائياً بسعر المنتج المختار
+  const handleBreakerChange = (product: ElectricalProductItem) => {
+    updateStateAndSave(prev => ({
+      selectedBreakerId: product.id,
+      accessoriesRates: { ...prev.accessoriesRates, rateBreakerFinishing: product.price }
+    }));
+  };
+
+  // ✅ كل نوع قاطع إضافي بيتضاف فاضي لحد ما المهندس يختار المنتج الفعلي من الكومبوبوكس،
+  // فيتحدث اسمه وسعره تلقائياً بسعر المنتج المختار من شاشة المنتجات
   const handleAddCustomBreaker = () => {
     const newItem: CustomBreakerItem = {
       id: `brk-${Date.now()}`,
-      name: "نوع قاطع جديد",
+      productId: '',
+      name: '',
       quantity: 1,
-      rate: 120
+      rate: 0
     };
     updateStateAndSave(prev => ({
       customBreakersList: [...prev.customBreakersList, newItem]
     }));
+  };
+
+  // اختيار منتج قاطع لبند مخصص معين: بيحدث الاسم والسعر تلقائياً، وتفضل الكمية والسعر قابلين للتعديل بعدين
+  const handleSelectCustomBreakerProduct = (id: string, product: ElectricalProductItem) => {
+    handleCustomBreakerEdit(id, { productId: product.id, name: product.product_name, rate: product.price });
   };
 
   const handleCustomBreakerEdit = (id: string, fields: Partial<CustomBreakerItem>) => {
@@ -1330,16 +1435,20 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
 
                 {/* لقم قواطع فرعية */}
                 <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-35 hover:border-[#D4AF37]/40 transition-all select-none">
-                  <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
-                    <span className="text-sm font-black text-[#D4AF37] block">لقم قواطع </span>
+                  <div className="flex items-center gap-2 border-b border-[#1f2d4d]/30 pb-2" onClick={(e) => e.stopPropagation()}>
+                    <BreakerCombobox
+                      products={breakerProducts}
+                      value={state.selectedBreakerId}
+                      onSelect={handleBreakerChange}
+                      placeholder="— اختر القاطع —"
+                    />
                     <button
                       type="button"
                       onClick={handleAddCustomBreaker}
                       title="إضافة نوع قاطع آخر"
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/20 text-[#D4AF37] text-[10px] font-bold transition-all cursor-pointer"
+                      className="p-2 rounded-lg bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/20 text-[#D4AF37] transition-all cursor-pointer shrink-0"
                     >
-                      <PlusCircle className="w-3.5 h-3.5" />
-                      <span>إضافة قاطع</span>
+                      <PlusCircle className="w-4 h-4" />
                     </button>
                   </div>
                   <div className="space-y-3 mt-1">
@@ -1377,12 +1486,11 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                           <span className="px-2 py-0.5 rounded text-[10px] bg-[#D4AF37]/10 text-[#D4AF37] font-semibold border border-[#D4AF37]/20">قاطع مخصص</span>
                           <button type="button" onClick={() => handleRemoveCustomBreaker(item.id)} className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer"><Trash2 className="w-4 h-4" /></button>
                         </div>
-                        <input
-                          type="text"
-                          value={item.name}
-                          onChange={(e) => handleCustomBreakerEdit(item.id, { name: e.target.value })}
-                          placeholder="نوع القاطع..."
-                          className="w-full h-10 px-3 rounded-xl bg-[#07132a] border border-[#1f2d4d] text-sm text-white font-bold outline-none focus:border-[#D4AF37]"
+                        <BreakerCombobox
+                          products={breakerProducts}
+                          value={item.productId}
+                          onSelect={(p) => handleSelectCustomBreakerProduct(item.id, p)}
+                          placeholder="— اختر نوع القاطع —"
                         />
                         <div className="grid grid-cols-2 gap-2">
                           <div className="space-y-1">
