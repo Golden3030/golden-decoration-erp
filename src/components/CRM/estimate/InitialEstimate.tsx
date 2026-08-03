@@ -209,12 +209,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "plaster-labor-struct",
         category: "plaster",
-        name: `أعمال ومصنعيات بياض محارة (${specName})`,
+        name: ` مصنعيات أعمال محارة (${specName})`,
         unit: "م²",
         quantity: totalPlasterArea,
         unitPrice: 0,
         laborCost: totalPlasterArea * activeLaborRate,
-        description: `بياض محارة بمواصفة ${specName} بسعر متر متغير (${activeLaborRate} ج.م).`
+        description: `اعمال محارة بمواصفة ${specName} بسعر متر (${activeLaborRate} ج.م).`
       });
     }
 
@@ -233,7 +233,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: requiredCement,
         unitPrice: cementProd ? Number(cementProd.price) : 200,
         laborCost: 0,
-        description: "توريد أسمنت رمادي ممتاز لأعمال اللياسة والبطانة الإنشائية للغرف."
+        description: "توريد أسمنت لأعمال المحارة الإنشائية للوحدة."
       });
     }
 
@@ -246,12 +246,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: requiredSand,
         unitPrice: sandProd ? Number(sandProd.price) : 250,
         laborCost: 0,
-        description: "توريد رمل مصفى خالي من الأملاح والشوائب لأعمال المحارة."
+        description: "توريد رمل خشن لأعمال المحارة."
       });
     }
 
     const accessories = [
-      { id: 'mesh-metal', name: 'شبك سلك تمديد مجلفن', qty: plaster.meshMetalQty, price: plaster.meshMetalPrice, unit: 'لفة' },
+      { id: 'mesh-metal', name: 'شبك سلك مجلفن', qty: plaster.meshMetalQty, price: plaster.meshMetalPrice, unit: 'لفة' },
       { id: 'mesh-fiber', name: 'شبك فايبر معالجة شروخ', qty: plaster.meshFiberQty, price: plaster.meshFiberPrice, unit: 'بكرة' },
       { id: 'nails', name: 'مسامير وورد تثبيت الشبك', qty: plaster.nailsBoxesQty, price: plaster.nailsBoxPrice, unit: 'علبة' }
     ];
@@ -266,7 +266,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: Number(acc.qty),
           unitPrice: Number(acc.price),
           laborCost: 0,
-          description: "توريد مستلزمات وإكسسوارات تدعيم أعمال المحارة للحوائط والأسقف الميدانية."
+          description: "توريد مستلزمات تدعيم أعمال المحارة للحوائط والأسقف ."
         });
       }
     });
@@ -276,7 +276,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "plaster-logistics-main",
         category: "plaster",
-        name: "تكاليف لوجستية (مياه خلط + رفع وتشوين المون بالدور)",
+        name: "تكاليف لوجستية ( نقل + تشوين الخامات )",
         unit: "مقطوعية",
         quantity: 1,
         unitPrice: 0,
@@ -1700,7 +1700,7 @@ export function PrintReportLayout({
       )}
 
       {/* شعار وهوية العميل */}
-      <div className="text-center py-2 my-3 border-y-2 border-[#C9A45D]/25 bg-gradient-to-r from-transparent via-gray-50 to-transparent">
+      <div className="text-center py-2 my-3 border-y-2 border-[#C9A45D]/25 bg-linear-to-r from-transparent via-gray-50 to-transparent">
         <p className="text-[#C9A45D] font-black text-xs">
           الشقة بالكامل - Golden Decoration Excellence
         </p>
@@ -1708,7 +1708,7 @@ export function PrintReportLayout({
 
       {/* جدول عرض السعر الفاخر - تم تسييل حظر التداخل وتفعيل الـ Gilded Scrollbar للأجهزة المحمولة */}
       <div className="border border-gray-200 rounded-2xl overflow-x-auto mb-8 shadow-sm">
-        <table className="w-full border-collapse text-[10px] text-right min-w-[850px] premium-public-estimate-table">
+        <table className="w-full border-collapse text-[10px] text-right min-w-212.5 premium-public-estimate-table">
           <thead>
             <tr className="bg-[#0B1B38] text-white select-none whitespace-nowrap">
               <th className="p-3.5 text-center w-8 font-black">م</th>
@@ -1776,7 +1776,7 @@ export function PrintReportLayout({
       </div>
 
       {/* رحلة التنفيذ الإنشائية المتناظرة والأيام المقدرة للبنود النشطة */}
-      <div className="border border-gray-200 rounded-2xl p-5 bg-gradient-to-br from-white to-gray-50/60 mb-6 relative overflow-hidden">
+      <div className="border border-gray-200 rounded-2xl p-5 bg-linear-to-br from-white to-gray-50/60 mb-6 relative overflow-hidden">
         <h3 className="text-xs font-black text-[#0B1B38] border-b border-gray-200 pb-2 mb-3 flex items-center gap-1.5">
           <Layers size={14} className="text-[#C9A45D]" />
           <span>رحلة وجدول التنفيذ الإنشائي المخطط للمشروع (Stages Timeline Map):</span>
