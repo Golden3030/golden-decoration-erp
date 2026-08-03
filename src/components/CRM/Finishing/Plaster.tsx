@@ -392,82 +392,72 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
 
       <div className={`space-y-8 transition-opacity duration-300 ${isSectionActive ? 'opacity-100' : 'opacity-25 pointer-events-none filter grayscale'}`}>
 
-        {/* 2. المبدل الحصري: محارة إنشائية / مرمات وترميم */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 select-none">
-          
-          {/* المحارة الإنشائية */}
+        {/* 2. المبدل الحصري: محارة إنشائية / مرمات وترميم — بنفس التصميم البصري المعتمد لكروت اختيار النظام */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 font-alexandria select-none">
+
+          {/* كارت أعمال المحارة والمصيص */}
           <div
             onClick={() => togglePlasterMode(!state.enabled)}
-            className={`p-6 rounded-3xl border-2 transition-all duration-300 cursor-pointer flex items-center justify-between shadow-xl ${
-              state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_15px_rgba(212,175,55,0.08)]' : 'border-[#1f2d4d] bg-[#07132a] opacity-50 hover:opacity-100'
+            className={`p-6 rounded-[2rem] border-2 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[140px] select-none ${
+              state.enabled
+                ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_25px_rgba(212,175,55,0.15)]'
+                : 'border-[#1f2d4d] bg-[#07132a] opacity-60 hover:opacity-100 hover:border-[#D4AF37]/35'
             }`}
           >
-            <div className="flex items-center gap-4">
-              <div className={`p-4 rounded-2xl ${state.enabled ? 'bg-[#D4AF37] text-[#020B1C]' : 'bg-[#1f2d4d] text-gray-500'}`}>
-                <Layers className="w-7 h-7" />
+            <div className="flex justify-between items-start">
+              <div className="text-right pl-4">
+                <h5 className={`text-md font-black ${state.enabled ? 'text-[#D4AF37]' : 'text-[#F0E6D2]'}`}>
+                  أعمال المحارة والمصيص
+                </h5>
+                <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">
+                  حساب تلقائي متكامل بالمساحات، الكماليات، المون، واللوجستيات لأعمال المحارة الإنشائية.
+                </p>
               </div>
-              <div className="text-right">
-                <h4 className="text-lg font-bold text-[#D4AF37]">أعمال المحارة والمصيص</h4>
-                <p className="text-xs text-white mt-1">حساب تلقائي متكامل بالمساحات، الكماليات، المون، واللوجستيات</p>
+              <div className={`p-2.5 rounded-xl transition-colors ${state.enabled ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-[#020B1C] text-gray-500'}`}>
+                <Layers className="w-5 h-5" />
               </div>
             </div>
-            
-            {/* مجرى السحب المنزلق المذهب المصقول التفاعلي الموحد */}
-            <div className="flex items-center gap-3 shrink-0 select-none" onClick={(e) => e.stopPropagation()}>
-              <div 
-                onClick={() => togglePlasterMode(!state.enabled)}
-                className={`w-12 h-6 rounded-full relative p-0.5 transition-all duration-300 cursor-pointer ${
-                  state.enabled 
-                    ? 'bg-[#020B1C] border border-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.15)]' 
-                    : 'bg-[#020B1C]/80 border border-[#1f2d4d]'
-                }`}
-              >
-                <div 
-                  className={`w-4.5 h-4.5 rounded-full absolute top-[3px] transition-all duration-300 ${
-                    state.enabled 
-                      ? 'right-[25px] bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] shadow-[0_0_10px_#D4AF37]' 
-                      : 'right-[3px] bg-gray-600'
-                  }`}
-                />
-              </div>
+            <div className="flex justify-end items-center mt-4">
+              <span className={`text-[10px] font-bold px-4 py-1 rounded-full border transition-all ${
+                state.enabled
+                  ? 'border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_10px_rgba(212,175,55,0.1)]'
+                  : 'border-[#1f2d4d] text-gray-500 bg-transparent'
+              }`}>
+                {state.enabled ? 'تم اختيار النظام' : 'اضغط للتفعيل'}
+              </span>
             </div>
           </div>
 
-          {/* المرمات والترميم */}
+          {/* كارت المرمات وترميم التكسير */}
           <div
             onClick={() => toggleRepairsMode(!state.isRepairsEnabled)}
-            className={`p-6 rounded-3xl border-2 transition-all duration-300 cursor-pointer flex items-center justify-between shadow-xl ${
-              state.isRepairsEnabled ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_15px_rgba(212,175,55,0.08)]' : 'border-[#1f2d4d] bg-[#07132a] opacity-50 hover:opacity-100'
+            className={`p-6 rounded-[2rem] border-2 transition-all duration-300 cursor-pointer flex flex-col justify-between min-h-[140px] select-none ${
+              state.isRepairsEnabled
+                ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-[0_0_25px_rgba(212,175,55,0.15)]'
+                : 'border-[#1f2d4d] bg-[#07132a] opacity-60 hover:opacity-100 hover:border-[#D4AF37]/35'
             }`}
           >
-            <div className="flex items-center gap-4">
-              <div className={`p-4 rounded-2xl ${state.isRepairsEnabled ? 'bg-[#D4AF37] text-[#020B1C]' : 'bg-[#1f2d4d] text-gray-400'}`}>
-                <Notebook className="w-7 h-7" />
+            <div className="flex justify-between items-start">
+              <div className="text-right pl-4">
+                <h5 className={`text-md font-black ${state.isRepairsEnabled ? 'text-[#D4AF37]' : 'text-[#F0E6D2]'}`}>
+                  ترميم التكسير (المرمات)
+                </h5>
+                <p className="text-[11px] text-gray-400 mt-2 leading-relaxed">
+                  مقطوعات مصنعية الفنيين مع حصر خامات المونة والجبس للمرمات وتسكير فتحات الكهرباء والسباكة.
+                </p>
               </div>
-              <div className="text-right">
-                <h4 className="text-lg font-bold text-[#D4AF37]"> ترميم التكسير (المرمات) </h4>
-                <p className="text-xs text-white mt-1"> مقطوعات مصنعية الفنيين مع حصر خامات المونة والجبس للمرمات</p>
+              <div className={`p-2.5 rounded-xl transition-colors ${state.isRepairsEnabled ? 'bg-[#D4AF37]/20 text-[#D4AF37]' : 'bg-[#020B1C] text-gray-500'}`}>
+                <Notebook className="w-5 h-5" />
               </div>
             </div>
-            
-            {/* مجرى السحب المنزلق المذهب المصقول التفاعلي الموحد */}
-            <div className="flex items-center gap-3 shrink-0 select-none" onClick={(e) => e.stopPropagation()}>
-              <div 
-                onClick={() => toggleRepairsMode(!state.isRepairsEnabled)}
-                className={`w-12 h-6 rounded-full relative p-0.5 transition-all duration-300 cursor-pointer ${
-                  state.isRepairsEnabled 
-                    ? 'bg-[#020B1C] border border-[#D4AF37] shadow-[0_0_10px_rgba(212,175,55,0.15)]' 
-                    : 'bg-[#020B1C]/80 border border-[#1f2d4d]'
-                }`}
-              >
-                <div 
-                  className={`w-4.5 h-4.5 rounded-full absolute top-[3px] transition-all duration-300 ${
-                    state.isRepairsEnabled 
-                      ? 'right-[25px] bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] shadow-[0_0_10px_#D4AF37]' 
-                      : 'right-[3px] bg-gray-600'
-                  }`}
-                />
-              </div>
+            <div className="flex justify-end items-center mt-4">
+              <span className={`text-[10px] font-bold px-4 py-1 rounded-full border transition-all ${
+                state.isRepairsEnabled
+                  ? 'border-[#D4AF37] text-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_10px_rgba(212,175,55,0.1)]'
+                  : 'border-[#1f2d4d] text-gray-500 bg-transparent'
+              }`}>
+                {state.isRepairsEnabled ? 'تم اختيار النظام' : 'اضغط للتفعيل'}
+              </span>
             </div>
           </div>
         </div>

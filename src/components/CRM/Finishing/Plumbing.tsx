@@ -11,10 +11,11 @@ import {
   Trash2, 
   Truck,
   HardHat,
-  ChevronDown,
   DollarSign,
   CheckCircle2,
-  Settings2
+  Settings2,
+  Search,
+  X
 } from 'lucide-react';
 
 interface DBProduct {
@@ -23,6 +24,7 @@ interface DBProduct {
   company?: string;
   unit: string;
   price: number;
+  subcategory?: string;
 }
 
 interface PlumbingLineItem {
@@ -36,6 +38,112 @@ interface PlumbingLineItem {
 }
 
 type ListKey = 'concealedRoughIn' | 'concealedFinishing' | 'regularRoughIn' | 'regularFinishing';
+
+// 🔍 كومبوبوكس بحث فوري لاختيار الخامة بدل القائمة الطويلة العادية
+// بيفلتر المنتجات وانت بتكتب (بالاسم أو الشركة أو النوع الفرعي) بدل ما تسكرول في كل منتجات السباكة
+function ProductCombobox({
+  products,
+  value,
+  displayName,
+  onSelectProduct,
+  onSelectCustom,
+}: {
+  products: DBProduct[];
+  value: string;
+  displayName: string;
+  onSelectProduct: (p: DBProduct) => void;
+  onSelectCustom: () => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // إغلاق القائمة عند الضغط خارجها
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setSearchTerm('');
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filtered = products.filter(p => {
+    if (!searchTerm.trim()) return true;
+    const q = searchTerm.trim().toLowerCase();
+    return (
+      p.product_name?.toLowerCase().includes(q) ||
+      p.company?.toLowerCase().includes(q) ||
+      p.subcategory?.toLowerCase().includes(q)
+    );
+  });
+
+  const selectedProduct = products.find(p => p.id === value);
+
+  return (
+    <div className="relative" ref={wrapperRef}>
+      <div
+        onClick={() => setIsOpen(true)}
+        className="w-full h-9 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-3 flex items-center gap-2 text-xs text-[#F0E6D2] font-bold cursor-pointer focus-within:border-[#D4AF37]"
+      >
+        <Search className="w-3.5 h-3.5 text-[#D4AF37] shrink-0" />
+        {isOpen ? (
+          <input
+            autoFocus
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="اكتب اسم الخامة أو الشركة للبحث..."
+            className="w-full bg-transparent outline-none text-xs text-[#F0E6D2] placeholder:text-gray-500"
+          />
+        ) : (
+          <span className="truncate flex-1">
+            {selectedProduct
+              ? `${selectedProduct.product_name}${selectedProduct.company ? ` (${selectedProduct.company})` : ''}`
+              : (value === '' && displayName ? '✍️ بند يدوي' : '-- اختر الخامة --')}
+          </span>
+        )}
+        {isOpen && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setIsOpen(false); setSearchTerm(''); }}
+            className="shrink-0 text-gray-500 hover:text-[#D4AF37]"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-30 mt-1 w-full max-h-64 overflow-y-auto bg-[#020B1C] border border-[#D4AF37]/60 rounded-xl shadow-2xl">
+          <div
+            onClick={() => { onSelectCustom(); setIsOpen(false); setSearchTerm(''); }}
+            className="px-3 py-2 text-xs text-[#D4AF37] font-bold hover:bg-[#07132a] cursor-pointer border-b border-[#1f2d4d]/60"
+          >
+            ✍️ كتابة بند يدوي مخصص...
+          </div>
+
+          {filtered.length === 0 && (
+            <div className="px-3 py-3 text-xs text-gray-500 text-center">لا توجد نتائج مطابقة</div>
+          )}
+
+          {filtered.map(p => (
+            <div
+              key={p.id}
+              onClick={() => { onSelectProduct(p); setIsOpen(false); setSearchTerm(''); }}
+              className={`px-3 py-2 text-xs text-[#F0E6D2] hover:bg-[#07132a] cursor-pointer flex items-center justify-between gap-2 ${p.id === value ? 'bg-[#07132a]' : ''}`}
+            >
+              <span className="truncate">{p.product_name} {p.company ? `(${p.company})` : ''}</span>
+              <span className="shrink-0 text-[#D4AF37] font-mono">{p.price?.toLocaleString?.() ?? p.price} ج</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function PlumbingTab({ projectId }: { projectId: string }) {
   const { crmData, updateBulkFinishingSection } = useCRM();
@@ -205,38 +313,25 @@ export default function PlumbingTab({ projectId }: { projectId: string }) {
         {items.map((item) => (
           <div key={item.id} className="grid grid-cols-12 p-3.5 items-center text-center text-white bg-[#07132a] hover:bg-[#020B1C]/40 transition-all duration-200">
             
-            {/* اسم البند: كومبوبوكس كامل من المخزن */}
+            {/* اسم البند: كومبوبوكس بحث فوري من المخزن بدل القائمة الطويلة */}
             <div className="col-span-4 text-right pr-4 flex flex-col gap-1.5 w-full">
-              <div className="relative">
-                <select
-                  value={item.product_id}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === "custom") {
-                      editItem(key, item.id, { product_id: "", name: "", company: "", rate: 0 });
-                    } else {
-                      const p = dbProducts.find(x => x.id === val);
-                      editItem(key, item.id, { 
-                        product_id: val, 
-                        name: p?.product_name || '', 
-                        rate: p?.price || 0, 
-                        company: p?.company || '' 
-                      });
-                    }
-                  }}
-                  className="w-full h-9 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-3 text-xs text-[#F0E6D2] font-bold appearance-none outline-none focus:border-[#D4AF37] cursor-pointer"
-                >
-                  <option value="">-- اختر الخامة --</option>
-                  {dbProducts.map(p => (
-                    <option key={p.id} value={p.id}>
-                      {p.product_name} {p.company ? `(${p.company})` : ''}
-                    </option>
-                  ))}
-                  <option value="custom">✍️ كتابة بند يدوي مخصص...</option>
-                </select>
-                <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#D4AF37] pointer-events-none" />
-              </div>
-              
+              <ProductCombobox
+                products={dbProducts}
+                value={item.product_id}
+                displayName={item.name}
+                onSelectProduct={(p) => {
+                  editItem(key, item.id, {
+                    product_id: p.id,
+                    name: p.product_name || '',
+                    rate: p.price || 0,
+                    company: p.company || ''
+                  });
+                }}
+                onSelectCustom={() => {
+                  editItem(key, item.id, { product_id: "", name: "", company: "", rate: 0 });
+                }}
+              />
+
               {!item.product_id && (
                 <input 
                   type="text" 
