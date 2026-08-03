@@ -605,10 +605,10 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-70 hover:opacity-100'
             }`}
           >
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               {state.roughInActive ? (
                 <div className="py-3 px-6 rounded-2xl bg-[#D4AF37] text-[#020B1C] text-base flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
-                  <Check className="w-5 h-5 stroke-[3]" />
+                  <Check className="w-5 h-5 stroke-3" />
                   <span>تفعيل التأسيس</span>
                 </div>
               ) : (
@@ -623,7 +623,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               <p className="text-sm text-white leading-relaxed">تشمل الخراطيم والعلب الماجيك، وأسلاك السويدي المعتمدة وكل ما يخص تأسيس الكهرباء والتشوين وشاملة المصنعية</p>
             </div>
 
-            <div className={`p-4 rounded-full flex-shrink-0 transition-all duration-300 ${state.roughInActive ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'bg-[#1f2d4d]/30 text-gray-500'}`}>
+            <div className={`p-4 rounded-full shrink-0 transition-all duration-300 ${state.roughInActive ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'bg-[#1f2d4d]/30 text-gray-500'}`}>
               <Layers className="w-8 h-8" />
             </div>
           </div>
@@ -636,7 +636,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* العلب الماجيك */}
-                <div className="p-5 rounded-[2rem] bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[190px] space-y-4 hover:border-[#D4AF37]/40 transition-all shadow-md">
+                <div className="p-5 rounded-4xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-47.5 space-y-4 hover:border-[#D4AF37]/40 transition-all shadow-md">
                   <div className="text-right">
                     <span className="text-sm font-black text-[#D4AF37] block">العلب الماجيك</span>
                     <span className="text-xs text-white mt-1 block">علب تأسيس مفاتيح وبرايز الإنارة</span>
@@ -648,7 +648,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية (قطعة)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ backboxCount: prev.backboxCount + 5 }))} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
-                        <span className="text-xs font-bold text-white font-mono min-w-[20px] text-center">{state.backboxCount}</span>
+                        <span className="text-xs font-bold text-white font-mono min-w-5 text-center">{state.backboxCount}</span>
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ backboxCount: Math.max(0, prev.backboxCount - 5) }))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans">-</button>
                       </div>
                     </div>
@@ -657,7 +657,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج.م)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
                         <button type="button" onClick={() => handleRateChange('backboxRate', (state.accessoriesRates.backboxRate ?? 8) + 1)} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
-                        <span className="text-xs font-bold text-white font-mono min-w-[20px] text-center">{state.accessoriesRates.backboxRate}</span>
+                        <span className="text-xs font-bold text-white font-mono min-w-5 text-center">{state.accessoriesRates.backboxRate}</span>
                         <button type="button" onClick={() => handleRateChange('backboxRate', Math.max(0, (state.accessoriesRates.backboxRate ?? 8) - 1))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans">-</button>
                       </div>
                     </div>
@@ -670,7 +670,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 </div>
 
                 {/* خراطيم الأرضيات */}
-                <div className="p-5 rounded-[2rem] bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[190px] space-y-4 hover:border-[#D4AF37]/40 transition-all shadow-md">
+                <div className="p-5 rounded-4xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-47.5 space-y-4 hover:border-[#D4AF37]/40 transition-all shadow-md">
                   <div className="text-right">
                     <span className="text-sm font-black text-[#D4AF37] block">خراطيم أرضيات </span>
                     <span className="text-xs text-white mt-1 block ">خراطيم تمديد أرضية مرنة</span>
@@ -682,7 +682,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية (لفة)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ floorConduitCount: prev.floorConduitCount + 1 }))} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
-                        <span className="text-xs font-bold text-white font-mono min-w-[20px] text-center">{state.floorConduitCount}</span>
+                        <span className="text-xs font-bold text-white font-mono min-w-5 text-center">{state.floorConduitCount}</span>
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ floorConduitCount: Math.max(0, prev.floorConduitCount - 1) }))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans">-</button>
                       </div>
                     </div>
@@ -691,7 +691,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج.م)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
                         <button type="button" onClick={() => handleRateChange('floorConduitRate', (state.accessoriesRates.floorConduitRate ?? 180) + 10)} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer font-sans">+</button>
-                        <span className="text-xs font-bold text-white font-mono min-w-[20px] text-center">{state.accessoriesRates.floorConduitRate}</span>
+                        <span className="text-xs font-bold text-white font-mono min-w-5 text-center">{state.accessoriesRates.floorConduitRate}</span>
                         <button type="button" onClick={() => handleRateChange('floorConduitRate', Math.max(0, (state.accessoriesRates.floorConduitRate ?? 180) - 10))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans">-</button>
                       </div>
                     </div>
@@ -704,7 +704,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 </div>
 
                 {/* خراطيم الحوائط */}
-                <div className="p-5 rounded-[2rem] bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[190px] space-y-4 hover:border-[#D4AF37]/40 transition-all shadow-md">
+                <div className="p-5 rounded-4xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-47.5 space-y-4 hover:border-[#D4AF37]/40 transition-all shadow-md">
                   <div className="text-right">
                     <span className="text-sm font-black text-[#D4AF37] block">خراطيم حوائط </span>
                     <span className="text-xs text-white mt-1 block ">خراطيم حوائط وجدران مرنة</span>
@@ -716,7 +716,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية (لفة)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ wallConduitCount: prev.wallConduitCount + 1 }))} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer font-sans">+</button>
-                        <span className="text-xs font-bold text-white font-mono min-w-[20px] text-center">{state.wallConduitCount}</span>
+                        <span className="text-xs font-bold text-white font-mono min-w-5 text-center">{state.wallConduitCount}</span>
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ wallConduitCount: Math.max(0, prev.wallConduitCount - 1) }))} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 font-sans">-</button>
                       </div>
                     </div>
@@ -725,7 +725,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج.م)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
                         <button type="button" onClick={() => handleRateChange('wallConduitRate', (state.accessoriesRates.wallConduitRate ?? 220) + 10)} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer font-sans">+</button>
-                        <span className="text-xs font-bold text-white font-mono min-w-[20px] text-center">{state.accessoriesRates.wallConduitRate}</span>
+                        <span className="text-xs font-bold text-white font-mono min-w-5 text-center">{state.accessoriesRates.wallConduitRate}</span>
                         <button type="button" onClick={() => handleRateChange('wallConduitRate', Math.max(0, (state.accessoriesRates.wallConduitRate ?? 220) - 10))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                       </div>
                     </div>
@@ -767,7 +767,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                     <tbody>
                       {state.wiresList.map((row) => (
                         <tr key={row.id} className="border-b border-[#1f2d4d]/40 hover:bg-[#020B1C]/25 transition-colors">
-                          <td className="py-3 font-semibold text-xs text-white w-[290px]">
+                          <td className="py-3 font-semibold text-xs text-white w-75.2">
                             <select
                               value={row.wireType}
                               onChange={(e) => handleWireRowEdit(row.id, { wireType: e.target.value })}
@@ -783,7 +783,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                           </td>
                           <td className="py-3 text-center">
                             {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
-                            <div className="flex items-center justify-between px-3 h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] px-2 select-none " dir="ltr">
+                            <div className="flex items-center justify-between h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] px-2 select-none " dir="ltr">
                               <button type="button" onClick={() => handleWireRowEdit(row.id, { quantity: row.quantity + 1 })} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] font-bold text-xs flex items-center justify-center cursor-pointer font-sans">+</button>
                               <span className="text-xs font-bold text-white font-mono">{row.quantity}</span>
                               <button type="button" onClick={() => handleWireRowEdit(row.id, { quantity: Math.max(1, row.quantity - 1) })} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
@@ -791,7 +791,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                           </td>
                           <td className="py-3 text-center font-mono font-bold text-slate-300">
                             {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
-                            <div className="flex items-center justify-between px-3 h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] px-2 select-none w-36 mx-auto" dir="ltr">
+                            <div className="flex items-center justify-between h-11 rounded-xl bg-[#020B1C] border border-[#1f2d4d] px-2 select-none w-36 mx-auto" dir="ltr">
                               <button type="button" onClick={() => handleWireRowEdit(row.id, { rate: row.rate + 50 })} className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] font-bold text-xs flex items-center justify-center cursor-pointer font-sans">+</button>
                               <span className="text-xs font-bold text-white font-mono">{row.rate}</span>
                               <button type="button" onClick={() => handleWireRowEdit(row.id, { rate: Math.max(0, row.rate - 50) })} className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer font-sans">-</button>
@@ -814,7 +814,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* كارت اللوحة الرئيسية حركياً بتكبير خط وتلوينه بالبني */}
                 <div 
                   onClick={() => { const nextVal = !state.hasMainPanel; updateStateAndSave(prev => ({ hasMainPanel: nextVal })); }}
-                  className={`p-5 rounded-[2rem] border transition-all duration-500 flex flex-col justify-between min-h-[160px] select-none ${
+                  className={`p-5 rounded-4x1 border transition-all duration-500 flex flex-col justify-between min-h-40 select-none ${
                     state.hasMainPanel
                       ? 'border-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
                       : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-40 hover:opacity-75'
@@ -823,7 +823,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                     <span className="text-sm font-black text-white block">لوحة الكهرباء الرئيسية</span>
                     <div className={`p-1 rounded ${state.hasMainPanel ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
-                      {state.hasMainPanel ? <Check className="w-4 h-4 stroke-[3]" /> : <Minus className="w-4 h-4" />}
+                      {state.hasMainPanel ? <Check className="w-4 h-4 stroke-3" /> : <Minus className="w-4 h-4" />}
                     </div>
                   </div>
                   
@@ -855,7 +855,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 {/* كارت لوحة التيار الخفيف حركياً بتكبير خط وتلوينه بالبني */}
                 <div 
                   onClick={() => { const nextVal = !state.hasLowCurrentPanel; updateStateAndSave(prev => ({ hasLowCurrentPanel: nextVal })); }}
-                  className={`p-5 rounded-[2rem] border transition-all duration-300 flex flex-col justify-between min-h-[160px] select-none ${
+                  className={`p-5 rounded-4x1 border transition-all duration-300 flex flex-col justify-between min-h-40 select-none ${
                     state.hasLowCurrentPanel
                       ? 'border-[#D4AF37] bg-[#D4AF37]/10 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
                       : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-40 hover:opacity-75'
@@ -864,7 +864,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                     <span className="text-sm font-black text-white block">لوحة تيار خفيف وداتا</span>
                     <div className={`p-1 rounded ${state.hasLowCurrentPanel ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
-                      {state.hasLowCurrentPanel ? <Check className="w-4 h-4 stroke-[3]" /> : <Minus className="w-4 h-4" />}
+                      {state.hasLowCurrentPanel ? <Check className="w-4 h-4 stroke-3" /> : <Minus className="w-4 h-4" />}
                     </div>
                   </div>
                   
@@ -894,7 +894,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 </div>
 
                 {/* مفاتيح اتوماتيك عمومية مع تكبير السعر ووضع عداد فخم */}
-                <div className="p-5 rounded-[2rem] bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[160px] select-none hover:border-[#D4AF37]/40 transition-all shadow-md">
+                <div className="p-5 rounded-4x1 bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-40 select-none hover:border-[#D4AF37]/40 transition-all shadow-md">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                     <span className="text-sm font-black text-white block">مفاتيح أوتوماتيك رئيسية</span>
                   </div>
@@ -931,7 +931,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   
                   {/* شريط شكرتون عازل مع عداد السعر */}
-                  <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[170px] space-y-3 hover:border-[#D4AF37]/30 transition-all shadow-sm">
+                  <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-42.5 space-y-3 hover:border-[#D4AF37]/30 transition-all shadow-sm">
                     <div className="text-right">
                       <span className="text-xs text-[#D4AF37] block">شريط شكرتون عازل</span>
                       <span className="text-[10px] text-white mt-1 block">شريط عازل للأسلاك</span>
@@ -943,7 +943,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
                           <button type="button" onClick={() => { const val = state.insulationTapeCount + 1; updateStateAndSave(prev => ({ insulationTapeCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
-                          <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.insulationTapeCount}</span>
+                          <span className="text-xs font-bold text-white font-mono min-w-3 text-center">{state.insulationTapeCount}</span>
                           <button type="button" onClick={() => { const val = Math.max(0, state.insulationTapeCount - 1); updateStateAndSave(prev => ({ insulationTapeCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
@@ -952,7 +952,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج)</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
                           <button type="button" onClick={() => handleRateChange('insulationTapeRate', (state.accessoriesRates.insulationTapeRate ?? 15) + 2)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
-                          <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.accessoriesRates.insulationTapeRate}</span>
+                          <span className="text-xs font-bold text-white font-mono min-w-3 text-center">{state.accessoriesRates.insulationTapeRate}</span>
                           <button type="button" onClick={() => handleRateChange('insulationTapeRate', Math.max(0, (state.accessoriesRates.insulationTapeRate ?? 15) - 2))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
@@ -965,7 +965,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                   </div>
 
                   {/* لمبات تجريبية مع تفعيل عداد السعر */}
-                  <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[170px] space-y-3 hover:border-[#D4AF37]/30 transition-all shadow-sm">
+                  <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-42.5 space-y-3 hover:border-[#D4AF37]/30 transition-all shadow-sm">
                     <div className="text-right">
                       <span className="text-xs text-[#D4AF37] block">لمبات ليد</span>
                       <span className="text-[10px] text-white mt-1 block">لمبات ليد لتجريب خطوط الإنارة</span>
@@ -977,7 +977,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
                           <button type="button" onClick={() => { const val = state.temporaryBulbCount + 1; updateStateAndSave(prev => ({ temporaryBulbCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
-                          <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.temporaryBulbCount}</span>
+                          <span className="text-xs font-bold text-white font-mono min-w-3 text-center">{state.temporaryBulbCount}</span>
                           <button type="button" onClick={() => { const val = Math.max(0, state.temporaryBulbCount - 1); updateStateAndSave(prev => ({ temporaryBulbCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
@@ -986,7 +986,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج)</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
                           <button type="button" onClick={() => handleRateChange('temporaryBulbRate', (state.accessoriesRates.temporaryBulbRate ?? 25) + 5)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
-                          <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.accessoriesRates.temporaryBulbRate}</span>
+                          <span className="text-xs font-bold text-white font-mono min-w-3 text-center">{state.accessoriesRates.temporaryBulbRate}</span>
                           <button type="button" onClick={() => handleRateChange('temporaryBulbRate', Math.max(0, (state.accessoriesRates.temporaryBulbRate ?? 25) - 5))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
@@ -999,7 +999,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                   </div>
 
                   {/* دوايات اختبار مع تفعيل عداد السعر */}
-                  <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[170px] space-y-3 hover:border-[#D4AF37]/30 transition-all shadow-sm">
+                  <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-42.5 space-y-3 hover:border-[#D4AF37]/30 transition-all shadow-sm">
                     <div className="text-right">
                       <span className="text-xs font-bold text-[#D4AF37] block">دواية لمبات</span>
                       <span className="text-[10px] text-white mt-1 block">دوايات مؤقتة</span>
@@ -1011,7 +1011,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
                           <button type="button" onClick={() => { const val = state.socketTestCount + 1; updateStateAndSave(prev => ({ socketTestCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
-                          <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.socketTestCount}</span>
+                          <span className="text-xs font-bold text-white font-mono min-w-3 text-center">{state.socketTestCount}</span>
                           <button type="button" onClick={() => { const val = Math.max(0, state.socketTestCount - 1); updateStateAndSave(prev => ({ socketTestCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
@@ -1020,7 +1020,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج)</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
                           <button type="button" onClick={() => handleRateChange('socketTestRate', (state.accessoriesRates.socketTestRate ?? 12) + 2)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
-                          <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.accessoriesRates.socketTestRate}</span>
+                          <span className="text-xs font-bold text-white font-mono min-w-3 text-center">{state.accessoriesRates.socketTestRate}</span>
                           <button type="button" onClick={() => handleRateChange('socketTestRate', Math.max(0, (state.accessoriesRates.socketTestRate ?? 12) - 2))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
@@ -1033,7 +1033,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                   </div>
 
                   {/* أسمنت ورمل للتثبيت مع عداد السعر الفردي للشكارة */}
-                  <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-[170px] space-y-3 hover:border-[#D4AF37]/30 transition-all shadow-sm">
+                  <div className="p-5 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col justify-between min-h-42.5 space-y-3 hover:border-[#D4AF37]/30 transition-all shadow-sm">
                     <div className="text-right">
                       <span className="text-xs text-[#D4AF37] block">أسمنت ورمل </span>
                       <span className="text-[10px] text-white mt-1 block">أسمنت ورمل للتثبيت   </span>
@@ -1045,7 +1045,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
                           <button type="button" onClick={() => { const val = state.cementSandBagCount + 1; updateStateAndSave(prev => ({ cementSandBagCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
-                          <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.cementSandBagCount}</span>
+                          <span className="text-xs font-bold text-white font-mono min-w-3 text-center">{state.cementSandBagCount}</span>
                           <button type="button" onClick={() => { const val = Math.max(0, state.cementSandBagCount - 1); updateStateAndSave(prev => ({ cementSandBagCount: val })); }} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
@@ -1054,7 +1054,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                         <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج)</span>
                         <div className="flex items-center gap-1.5" dir="ltr">
                           <button type="button" onClick={() => handleRateChange('cementSandRate', (state.accessoriesRates.cementSandRate ?? 450) + 50)} className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
-                          <span className="text-xs font-bold text-white font-mono min-w-[12px] text-center">{state.accessoriesRates.cementSandRate}</span>
+                          <span className="text-xs font-bold text-white font-mono min-w-3 text-center">{state.accessoriesRates.cementSandRate}</span>
                           <button type="button" onClick={() => handleRateChange('cementSandRate', Math.max(0, (state.accessoriesRates.cementSandRate ?? 450) - 50))} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs flex items-center justify-center cursor-pointer font-sans">-</button>
                         </div>
                       </div>
@@ -1151,14 +1151,14 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
             }}
             className={`p-6 rounded-3xl border transition-all duration-300 cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-6 ${
               state.finishingActive 
-                ? 'border-[#D4AF37] bg-gradient-to-r from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
+                ? 'border-[#D4AF37] bg-linear-to-r from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
                 : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-70 hover:opacity-100'
             }`}
           >
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               {state.finishingActive ? (
                 <div className="py-3 px-6 rounded-2xl bg-[#D4AF37] text-[#020B1C]  text-base flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
-                  <Check className="w-5 h-5 stroke-[3]" />
+                  <Check className="w-5 h-5 stroke-3" />
                   <span>تفعيل التشطيب</span>
                 </div>
               ) : (
@@ -1173,7 +1173,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               <p className="text-sm text-white leading-relaxed">تشمل المفاتيح واللقم والشاسيهات والوشوش الخارجية والليد والمصنعية</p>
             </div>
 
-            <div className={`p-4 rounded-full flex-shrink-0 transition-all duration-300 ${state.finishingActive ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'bg-[#1f2d4d]/30 text-gray-500'}`}>
+            <div className={`p-4 rounded-full shrink-0 transition-all duration-300 ${state.finishingActive ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'bg-[#1f2d4d]/30 text-gray-500'}`}>
               <Zap className="w-8 h-8" />
             </div>
           </div>
@@ -1212,7 +1212,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
                 {/* مفاتيح إنارة عادية */}
-                <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
+                <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-35 hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                     <span className="text-sm font-black text-[#D4AF37] block">مفاتيح إنارة</span>
                   </div>
@@ -1239,7 +1239,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 </div>
 
                 {/* برايز ومآخذ شواحن */}
-                <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
+                <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-35 hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                     <span className="text-sm font-black text-[#D4AF37] block">برايز</span>
                   </div>
@@ -1266,7 +1266,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 </div>
 
                 {/* وشوش خارجية فاخرة */}
-                <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
+                <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-35 hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                     <span className="text-sm font-black text-[#D4AF37] block">وشوش خارجية</span>
                   </div>
@@ -1293,7 +1293,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 </div>
 
                 {/* شاسيهات معدنية */}
-                <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
+                <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-35 hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                     <span className="text-sm font-black text-[#D4AF37] block">شاسيهات اللقم</span>
                   </div>
@@ -1320,7 +1320,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 </div>
 
                 {/* سدادات وشوش فارغة */}
-                <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
+                <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-35 hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                     <span className="text-sm font-black text-[#D4AF37] block">سدادات وشوش </span>
                   </div>
@@ -1347,7 +1347,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 </div>
 
                 {/* لقم قواطع فرعية */}
-                <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/40 transition-all select-none">
+                <div className="p-5 rounded-3xl bg-[#07132a] border border-[#1f2d4d] flex flex-col justify-between min-h-35 hover:border-[#D4AF37]/40 transition-all select-none">
                   <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                     <span className="text-sm font-black text-[#D4AF37] block">لقم قواطع </span>
                   </div>
@@ -1393,7 +1393,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   
                   {/* مفتاح تكييف */}
-                  <div className="p-5 rounded-3xl bg-[#020B1C]/50 border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/30 transition-all">
+                  <div className="p-5 rounded-3xl bg-[#020B1C]/50 border border-[#1f2d4d] flex flex-col justify-between min-h-35 hover:border-[#D4AF37]/30 transition-all">
                     <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                       <span className="text-sm font-black text-[#D4AF37] block">مفتاح تكييف </span>
                     </div>
@@ -1432,7 +1432,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                   </div>
 
                   {/* مفتاح سخان */}
-                  <div className="p-5 rounded-3xl bg-[#020B1C]/50 border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/30 transition-all">
+                  <div className="p-5 rounded-3xl bg-[#020B1C]/50 border border-[#1f2d4d] flex flex-col justify-between min-h-35 hover:border-[#D4AF37]/30 transition-all">
                     <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                       <span className="text-sm font-black text-[#D4AF37] block">مفتاح سخان ثنائي مضيء</span>
                     </div>
@@ -1471,7 +1471,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                   </div>
 
                   {/* مفتاح جرس */}
-                  <div className="p-5 rounded-3xl bg-[#020B1C]/50 border border-[#1f2d4d] flex flex-col justify-between min-h-[140px] hover:border-[#D4AF37]/30 transition-all">
+                  <div className="p-5 rounded-3xl bg-[#020B1C]/50 border border-[#1f2d4d] flex flex-col justify-between min-h-35 hover:border-[#D4AF37]/30 transition-all">
                     <div className="flex items-center justify-between border-b border-[#1f2d4d]/30 pb-2">
                       <span className="text-sm font-black text-[#D4AF37] block">مفتاح جرس   </span>
                     </div>
@@ -1594,14 +1594,14 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
             }}
             className={`p-6 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-6 ${
               state.smartActive 
-                ? 'border-[#D4AF37] bg-gradient-to-r from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
+                ? 'border-[#D4AF37] bg-linear-to-r from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
                 : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-70 hover:opacity-100'
             }`}
           >
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               {state.smartActive ? (
                 <button type="button" className="py-3 px-6 rounded-2xl bg-[#D4AF37] text-[#020B1C] text-base flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
-                  <Check className="w-5 h-5 stroke-[3]" />
+                  <Check className="w-5 h-5 stroke-3" />
                   <span>تفعيل البند </span>
                 </button>
               ) : (
@@ -1626,7 +1626,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               </div>
             </div>
 
-            <div className={`p-4 rounded-full flex-shrink-0 transition-all duration-300 ${state.smartActive ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'bg-[#1f2d4d]/30 text-gray-500'}`}>
+            <div className={`p-4 rounded-full shrink-0 transition-all duration-300 ${state.smartActive ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'bg-[#1f2d4d]/30 text-gray-500'}`}>
               <Star className="w-8 h-8 animate-pulse" />
             </div>
           </div>
@@ -1639,14 +1639,14 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
             }}
             className={`p-6 rounded-2xl border transition-all duration-300 cursor-pointer flex flex-col sm:flex-row items-center justify-between gap-6 ${
               state.soundActive 
-                ? 'border-[#D4AF37] bg-gradient-to-r from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
+                ? 'border-[#D4AF37] bg-linear-to-r from-[#07132a] to-[#D4AF37]/5 shadow-[0_0_20px_rgba(212,175,55,0.08)] opacity-100' 
                 : 'border-[#1f2d4d] bg-[#020B1C]/40 opacity-70 hover:opacity-100'
             }`}
           >
-            <div className="flex-shrink-0">
+            <div className="shrink-0">
               {state.soundActive ? (
                 <div className="py-3 px-6 rounded-2xl bg-[#D4AF37] text-[#020B1C] text-base flex items-center gap-2 shadow-[0_0_15px_rgba(212,175,55,0.2)]">
-                  <Check className="w-5 h-5 stroke-[3]" />
+                  <Check className="w-5 h-5 stroke-3" />
                   <span>تفعيل البند</span>
                 </div>
               ) : (
@@ -1671,7 +1671,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
               </div>
             </div>
 
-            <div className={`p-4 rounded-full flex-shrink-0 transition-all duration-300 ${state.soundActive ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'bg-[#1f2d4d]/30 text-gray-500'}`}>
+            <div className={`p-4 rounded-full shrink-0 transition-all duration-300 ${state.soundActive ? 'bg-[#D4AF37]/10 text-[#D4AF37]' : 'bg-[#1f2d4d]/30 text-gray-500'}`}>
               <Volume2 className="w-8 h-8 animate-pulse" />
             </div>
           </div>
@@ -1679,7 +1679,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
         </div>
 
         {/* كارت حصر وتقدير النقاط التفاعلي */}
-        <div className="p-8 rounded-3xl bg-gradient-to-br from-[#07132a] via-[#020B1C] to-[#07132a] border border-[#D4AF37] space-y-6">
+        <div className="p-8 rounded-3xl bg-linear-to-br from-[#07132a] via-[#020B1C] to-[#07132a] border border-[#D4AF37] space-y-6">
           
           <div className="border-b border-[#D4AF37] pb-4 flex items-center gap-3">
             <div className="p-2 rounded-lg bg-[#D4AF37]/10 text-[#D4AF37]">
@@ -1712,7 +1712,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 >
                   <Plus className="w-4 h-4" />
                 </button>
-                <span className="text-3xl font-black text-[#D4AF37] min-w-[40px] text-center tracking-wider font-mono">
+                <span className="text-3xl font-black text-[#D4AF37] min-w-10 text-center tracking-wider font-mono">
                   {state.lightPoints ?? 0}
                 </span>
                 <button 
@@ -1748,7 +1748,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                 >
                   <Plus className="w-4 h-4" />
                 </button>
-                <span className="text-3xl font-black text-[#D4AF37] min-w-[40px] text-center tracking-wider font-mono">
+                <span className="text-3xl font-black text-[#D4AF37] min-w-10 text-center tracking-wider font-mono">
                   {state.powerPoints ?? 0}
                 </span>
                 <button 
@@ -1782,7 +1782,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
           onChange={(e) => setNotesInput(e.target.value)}
           onBlur={handleNotesBlur}
           placeholder="اكتب هنا أي تفاصيل، ماركات مستثناة، أو شروط مخصصة تم الاتفاق عليها مع العميل لحفظها مباشرة بالعقد..."
-          className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-lg text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none text-base leading-relaxed text-right"
+          className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none text-base leading-relaxed text-right"
         />
         <div className="flex justify-between items-center text-xs text-gray-500 px-1">
           <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
