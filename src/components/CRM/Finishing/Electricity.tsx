@@ -1362,31 +1362,37 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       </div>
                     </div>
 
-                    {/* أنواع القواطع الإضافية المخصصة — كل نوع بسعره وكميته الخاصة */}
+                    {/* أنواع القواطع الإضافية المخصصة — كل نوع بسعره وكميته الخاصة، بنفس ستايل عدادات الكارت الأساسي */}
                     {state.customBreakersList.length > 0 && (
-                      <div className="space-y-2 pt-2 border-t border-[#1f2d4d]/30">
+                      <div className="space-y-3 pt-3 border-t border-[#1f2d4d]/30">
                         {state.customBreakersList.map(item => (
-                          <div key={item.id} className="p-2.5 rounded-xl bg-[#020B1C] border border-[#1f2d4d] space-y-2">
+                          <div key={item.id} className="p-3 rounded-2xl bg-[#020B1C] border border-[#1f2d4d] space-y-3">
                             <div className="flex items-center gap-2">
                               <input
                                 type="text"
                                 value={item.name}
                                 onChange={(e) => handleCustomBreakerEdit(item.id, { name: e.target.value })}
                                 placeholder="نوع القاطع..."
-                                className="flex-1 h-8 px-2 rounded-lg bg-[#07132a] border border-[#1f2d4d] text-xs text-white font-bold outline-none focus:border-[#D4AF37]"
+                                className="flex-1 h-9 px-2 rounded-lg bg-[#07132a] border border-[#1f2d4d] text-xs text-white font-bold outline-none focus:border-[#D4AF37]"
                               />
-                              <button type="button" onClick={() => handleRemoveCustomBreaker(item.id)} className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer shrink-0"><Trash2 className="w-4 h-4" /></button>
+                              <button type="button" onClick={() => handleRemoveCustomBreaker(item.id)} className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer shrink-0"><Trash2 className="w-4 h-4" /></button>
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-lg h-9 px-2">
-                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { rate: (item.rate ?? 0) + 10 })} className="text-[#D4AF37] font-bold text-xs cursor-pointer font-sans">+</button>
-                                <span className="text-[11px] font-black text-[#D4AF37] font-mono">{item.rate} ج.م</span>
-                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 10) })} className="text-red-400 font-bold text-xs cursor-pointer font-sans">-</button>
+                            {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                            <div className="flex items-center justify-between text-right">
+                              <span className="text-xs text-white font-bold">السعر :</span>
+                              <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { rate: (item.rate ?? 0) + 10 })} className="w-6 h-6 rounded-full bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
+                                <span className="text-sm font-black text-[#D4AF37] font-mono">{item.rate} <span className="text-[8px] text-gray-500">ج.م</span></span>
+                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { rate: Math.max(0, (item.rate ?? 0) - 10) })} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                               </div>
-                              <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-lg h-9 px-2">
-                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { quantity: (item.quantity ?? 1) + 1 })} className="text-[#D4AF37] font-bold text-xs cursor-pointer font-sans">+</button>
-                                <span className="text-[11px] font-black text-white">{item.quantity}</span>
-                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { quantity: Math.max(1, (item.quantity ?? 1) - 1) })} className="text-red-400 font-bold text-xs cursor-pointer font-sans">-</button>
+                            </div>
+                            {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
+                            <div className="flex items-center justify-between text-right">
+                              <span className="text-xs text-white font-bold">الكمية:</span>
+                              <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none w-36" onClick={(e) => e.stopPropagation()}>
+                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { quantity: (item.quantity ?? 1) + 1 })} className="w-6 h-6 rounded-full bg-[#020B1C] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
+                                <span className="text-sm font-black text-white font-mono">{item.quantity}</span>
+                                <button type="button" onClick={() => handleCustomBreakerEdit(item.id, { quantity: Math.max(1, (item.quantity ?? 1) - 1) })} className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-xs transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                               </div>
                             </div>
                           </div>
