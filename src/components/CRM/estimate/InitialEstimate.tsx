@@ -209,12 +209,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "plaster-labor-struct",
         category: "plaster",
-        name: ` مصنعيات أعمال محارة (${specName})`,
+        name: `أعمال ومصنعيات بياض محارة (${specName})`,
         unit: "م²",
         quantity: totalPlasterArea,
         unitPrice: 0,
         laborCost: totalPlasterArea * activeLaborRate,
-        description: `اعمال محارة بمواصفة ${specName} بسعر متر (${activeLaborRate} ج.م).`
+        description: `بياض محارة بمواصفة ${specName} بسعر متر متغير (${activeLaborRate} ج.م).`
       });
     }
 
@@ -233,7 +233,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: requiredCement,
         unitPrice: cementProd ? Number(cementProd.price) : 200,
         laborCost: 0,
-        description: "توريد أسمنت لأعمال المحارة الإنشائية للوحدة."
+        description: "توريد أسمنت رمادي ممتاز لأعمال اللياسة والبطانة الإنشائية للغرف."
       });
     }
 
@@ -246,12 +246,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: requiredSand,
         unitPrice: sandProd ? Number(sandProd.price) : 250,
         laborCost: 0,
-        description: "توريد رمل خشن لأعمال المحارة."
+        description: "توريد رمل مصفى خالي من الأملاح والشوائب لأعمال المحارة."
       });
     }
 
     const accessories = [
-      { id: 'mesh-metal', name: 'شبك سلك مجلفن', qty: plaster.meshMetalQty, price: plaster.meshMetalPrice, unit: 'لفة' },
+      { id: 'mesh-metal', name: 'شبك سلك تمديد مجلفن', qty: plaster.meshMetalQty, price: plaster.meshMetalPrice, unit: 'لفة' },
       { id: 'mesh-fiber', name: 'شبك فايبر معالجة شروخ', qty: plaster.meshFiberQty, price: plaster.meshFiberPrice, unit: 'بكرة' },
       { id: 'nails', name: 'مسامير وورد تثبيت الشبك', qty: plaster.nailsBoxesQty, price: plaster.nailsBoxPrice, unit: 'علبة' }
     ];
@@ -266,7 +266,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: Number(acc.qty),
           unitPrice: Number(acc.price),
           laborCost: 0,
-          description: "توريد مستلزمات تدعيم أعمال المحارة للحوائط والأسقف ."
+          description: "توريد مستلزمات وإكسسوارات تدعيم أعمال المحارة للحوائط والأسقف الميدانية."
         });
       }
     });
@@ -276,7 +276,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "plaster-logistics-main",
         category: "plaster",
-        name: "تكاليف لوجستية ( نقل + تشوين الخامات )",
+        name: "تكاليف لوجستية (مياه خلط + رفع وتشوين المون بالدور)",
         unit: "مقطوعية",
         quantity: 1,
         unitPrice: 0,
@@ -323,7 +323,124 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
   const paint = finishing.paint || {};
   if (paint.enabled) {
     const wallArea = Number(paint.wallArea || area * 3);
-    
+    const ceilingArea = Number(paint.ceilingArea ?? 150);
+    const includeCeilings = paint.includeCeilings !== false;
+    const prepCompany = paint.selectedUndercoatCompany ?? 'GLC';
+    const finishCompany = paint.selectedFinishingCompany ?? 'جوتن';
+    const disabledPaintItems: string[] = paint.disabledStandardItems || [];
+
+    // ✅ إصلاح: البنود الأساسية المحسوبة تلقائياً بالمساحة (سيلر/سيلر حراري/معجون/بطانة/دهان حوائط/دهان أسقف)
+    // كانت مفقودة تماماً من المقايسة، وكان بيظهر بس البنود الإضافية اليدوية. دلوقتي بنولّد نفس
+    // البنود الأساسية اللي شاشة الدهانات نفسها بتحسبها، بنفس البراند والكمية والسعر الفعلي المختار.
+    const availableSealers = dbMaterials.filter(p => p.company === prepCompany && p.subcategory === 'sealer');
+    const availableThermalSealers = dbMaterials.filter(p => p.company === prepCompany && (p.subcategory === 'thermal_sealer' || p.subcategory === 'sealer_thermal'));
+    const availablePutties = dbMaterials.filter(p => p.company === prepCompany && p.subcategory === 'putty');
+    const availablePrimers = dbMaterials.filter(p => p.company === prepCompany && p.subcategory === 'primer');
+    const availableWallPaints = dbMaterials.filter(p => p.company === finishCompany && p.subcategory === 'wallPaint');
+    const availableCeilingPaints = dbMaterials.filter(p => p.company === prepCompany && p.subcategory === 'primer');
+
+    const activeSealer = availableSealers.find(p => p.id === paint.selectedSealerId) || availableSealers[0];
+    const activeThermalSealer = availableThermalSealers.find(p => p.id === paint.selectedThermalSealerId) || availableThermalSealers[0];
+    const activePutty = availablePutties.find(p => p.id === paint.selectedPuttyId) || availablePutties[0];
+    const activePrimer = availablePrimers.find(p => p.id === paint.selectedPrimerId) || availablePrimers[0];
+    const activeWallPaint = availableWallPaints.find(p => p.id === paint.selectedWallPaintId) || availableWallPaints[0];
+    const activeCeilingPaint = availableCeilingPaints.find(p => p.id === paint.selectedCeilingPaintId) || activePrimer;
+
+    const totalPrepArea = wallArea + (includeCeilings ? ceilingArea : 0);
+    const defaultSealerQty = Math.ceil(totalPrepArea * 0.0033);
+    const defaultThermalSealerQty = Math.ceil(totalPrepArea * 0.0033);
+    const defaultPuttyQty = Math.ceil(totalPrepArea * 0.05);
+    const defaultPrimerQty = Math.ceil(totalPrepArea * 0.0033);
+    const defaultFinishPaintQty = Math.ceil(wallArea * 0.009);
+    const defaultCeilingPaintQty = (paint.finishActive !== false && includeCeilings) ? Math.ceil(ceilingArea * 0.0133) : 0;
+
+    const sealerQty = paint.sealerQtyOverride ?? defaultSealerQty;
+    const thermalSealerQty = paint.thermalSealerQtyOverride ?? defaultThermalSealerQty;
+    const puttyQty = paint.puttyQtyOverride ?? defaultPuttyQty;
+    const primerQty = paint.primerQtyOverride ?? defaultPrimerQty;
+    const finishPaintQty = paint.finishPaintQtyOverride ?? defaultFinishPaintQty;
+    const ceilingPaintQty = paint.ceilingPaintQtyOverride ?? defaultCeilingPaintQty;
+
+    if (paint.prepActive !== false) {
+      if (!disabledPaintItems.includes('sealer') && sealerQty > 0) {
+        generated.push({
+          id: "paint-std-sealer",
+          category: "paint",
+          name: `سيلر مائي عازل جدران وأسقف - (تأسيس: ${prepCompany})`,
+          unit: activeSealer?.unit || "بستلة",
+          quantity: sealerQty,
+          unitPrice: Number(activeSealer?.price || 350),
+          laborCost: 0,
+          description: `توريد خامة السيلر المائي العازل المعتمدة فنياً من براند ${prepCompany} لعزل حوائط وأسقف الوحدة.`
+        });
+      }
+      if (!disabledPaintItems.includes('thermal_sealer') && thermalSealerQty > 0) {
+        generated.push({
+          id: "paint-std-thermal-sealer",
+          category: "paint",
+          name: `سيلر حراري عازل - (تأسيس: ${prepCompany})`,
+          unit: activeThermalSealer?.unit || "بستلة",
+          quantity: thermalSealerQty,
+          unitPrice: Number(activeThermalSealer?.price || 450),
+          laborCost: 0,
+          description: `توريد خامة السيلر الحراري العازل المعتمدة فنياً من براند ${prepCompany}.`
+        });
+      }
+      if (!disabledPaintItems.includes('putty') && puttyQty > 0) {
+        generated.push({
+          id: "paint-std-putty",
+          category: "paint",
+          name: `معجون حوائط داخلي - (تأسيس: ${prepCompany})`,
+          unit: activePutty?.unit || "بستلة",
+          quantity: puttyQty,
+          unitPrice: Number(activePutty?.price || 180),
+          laborCost: 0,
+          description: `توريد معجون تأسيس الحوائط الداخلية المعتمد فنياً من براند ${prepCompany}.`
+        });
+      }
+      if (!disabledPaintItems.includes('primer') && primerQty > 0) {
+        generated.push({
+          id: "paint-std-primer",
+          category: "paint",
+          name: `بطانة التأسيس - (تأسيس: ${prepCompany})`,
+          unit: activePrimer?.unit || "بستلة",
+          quantity: primerQty,
+          unitPrice: Number(activePrimer?.price || 400),
+          laborCost: 0,
+          description: `توريد خامة البطانة المعتمدة فنياً من براند ${prepCompany} لتشطيب الجدران.`
+        });
+      }
+    }
+
+    if (paint.finishActive !== false) {
+      if (!disabledPaintItems.includes('wallPaint') && finishPaintQty > 0) {
+        generated.push({
+          id: "paint-std-wallpaint",
+          category: "paint",
+          name: `دهان حوائط نهائي وجهين ملون - (تشطيب: ${finishCompany})`,
+          unit: activeWallPaint?.unit || "بستلة",
+          quantity: finishPaintQty,
+          white: true,
+          unitPrice: Number(activeWallPaint?.price || 2200),
+          laborCost: 0,
+          description: `توريد دهانات الوجه النهائي والألوان المعتمدة من شركة ${finishCompany} للشقة بالكامل.`
+        });
+      }
+      if (!disabledPaintItems.includes('ceilingPaint') && includeCeilings && ceilingPaintQty > 0) {
+        generated.push({
+          id: "paint-std-ceilingpaint",
+          category: "paint",
+          name: `دهان تشطيب الأسقف وجهين ملون - (تشطيب: ${prepCompany})`,
+          unit: activeCeilingPaint?.unit || "بستلة",
+          quantity: ceilingPaintQty,
+          white: true,
+          unitPrice: Number(activeCeilingPaint?.price || 400),
+          laborCost: 0,
+          description: `توريد دهانات تشطيب الأسقف النهائي المعتمدة من براند ${prepCompany} للشقة بالكامل.`
+        });
+      }
+    }
+
     const prepMaterials = paint.customPrepProducts || [];
     prepMaterials.forEach((item: any) => {
       if (item.quantity > 0) {
@@ -1700,7 +1817,7 @@ export function PrintReportLayout({
       )}
 
       {/* شعار وهوية العميل */}
-      <div className="text-center py-2 my-3 border-y-2 border-[#C9A45D]/25 bg-linear-to-r from-transparent via-gray-50 to-transparent">
+      <div className="text-center py-2 my-3 border-y-2 border-[#C9A45D]/25 bg-gradient-to-r from-transparent via-gray-50 to-transparent">
         <p className="text-[#C9A45D] font-black text-xs">
           الشقة بالكامل - Golden Decoration Excellence
         </p>
@@ -1708,7 +1825,7 @@ export function PrintReportLayout({
 
       {/* جدول عرض السعر الفاخر - تم تسييل حظر التداخل وتفعيل الـ Gilded Scrollbar للأجهزة المحمولة */}
       <div className="border border-gray-200 rounded-2xl overflow-x-auto mb-8 shadow-sm">
-        <table className="w-full border-collapse text-[10px] text-right min-w-212.5 premium-public-estimate-table">
+        <table className="w-full border-collapse text-[10px] text-right min-w-[850px] premium-public-estimate-table">
           <thead>
             <tr className="bg-[#0B1B38] text-white select-none whitespace-nowrap">
               <th className="p-3.5 text-center w-8 font-black">م</th>
@@ -1776,7 +1893,7 @@ export function PrintReportLayout({
       </div>
 
       {/* رحلة التنفيذ الإنشائية المتناظرة والأيام المقدرة للبنود النشطة */}
-      <div className="border border-gray-200 rounded-2xl p-5 bg-linear-to-br from-white to-gray-50/60 mb-6 relative overflow-hidden">
+      <div className="border border-gray-200 rounded-2xl p-5 bg-gradient-to-br from-white to-gray-50/60 mb-6 relative overflow-hidden">
         <h3 className="text-xs font-black text-[#0B1B38] border-b border-gray-200 pb-2 mb-3 flex items-center gap-1.5">
           <Layers size={14} className="text-[#C9A45D]" />
           <span>رحلة وجدول التنفيذ الإنشائي المخطط للمشروع (Stages Timeline Map):</span>
