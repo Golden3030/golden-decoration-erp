@@ -481,8 +481,17 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       }
     });
 
-    const activeLaborRate = Number(paint.laborRate || 45);
-    if (activeLaborRate > 0) {
+    // ✅ إصلاح: كان بيحسب مصنعية الحوائط بس وبيتجاهل مصنعية الأسقف تماماً، رغم إن شاشة الدهانات
+    // نفسها بتحسبهم كسعرين منفصلين (م.ط الحوائط + م.ط الأسقف) وتجمعهم مع بعض.
+    const matchedFinishSpec = dbSpecs.find((s: any) => s.spec_name?.includes(finishCompany)) || dbSpecs.find((s: any) => s.code?.includes(finishCompany));
+    const specBaseRate = matchedFinishSpec?.base_rate || (finishCompany === 'جوتن' ? 60 : 45);
+    const activeWallLaborRate = Number(paint.laborRate) > 0 ? Number(paint.laborRate) : specBaseRate;
+    const activeCeilingLaborRate = Number(paint.ceilingLaborRate) > 0 ? Number(paint.ceilingLaborRate) : 35;
+
+    const wallLaborCost = wallArea * activeWallLaborRate;
+    const ceilingLaborCost = includeCeilings ? (ceilingArea * activeCeilingLaborRate) : 0;
+
+    if (wallLaborCost > 0) {
       generated.push({
         id: "gen-paint-labor-main",
         category: "paint",
@@ -490,7 +499,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         unit: "م²",
         quantity: wallArea,
         unitPrice: 0,
-        laborCost: wallArea * activeLaborRate,
+        laborCost: wallLaborCost + ceilingLaborCost,
         description: " مصنعية الفنيين تشمل العزل والصنفرة والتلقيط والبطانة والدهان ."
       });
     }
