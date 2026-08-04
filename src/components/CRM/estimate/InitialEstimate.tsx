@@ -495,8 +495,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       });
     }
 
+    // ✅ إصلاح: البند ده كان بيظهر فى المقايسة حتى لو مرحلة الديكورات متوقفة فى شاشة الدهانات
+    // (decorActive) لأنه كان بيتجاهل الفلاج ده، وكمان كان بياخد سعر مصنعية ثابت 1500 بدل القيمة
+    // الفعلية القابلة للتعديل من شاشة الدهانات.
     const decorCount = Number(paint.decorWallsCount || 0);
-    if (decorCount > 0) {
+    if (paint.decorActive && decorCount > 0) {
+      const decorLaborRate = Number(paint.decorWallsLaborRate ?? 1500);
       generated.push({
         id: "gen-paint-decor-walls",
         category: "paint",
@@ -504,7 +508,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         unit: "جدار",
         quantity: decorCount,
         unitPrice: DECOR_WALL_FLAT_RATE,
-        laborCost: decorCount * 1500, 
+        laborCost: decorCount * decorLaborRate, 
         description: "توريد وتركيب حوائط تميز (Accent Walls) بخامات ديكورية خاصة شاملة المصنعية الميدانية الفنية."
       });
     }
@@ -581,6 +585,31 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         description: "مادة ترويب فواصل الأرضيات والحوائط تمنع تسريبات المياه بالحمامات والمطابخ."
       });
     }
+
+    // ✅ إصلاح: مستلزمات الموقع (كلبسات وأسافين، أصباغ، صوف صلب، مقشة، ممسحة) كانت جزء من
+    // إجمالي شاشة الأرضيات لكن كانت غائبة تماماً عن المقايسة
+    const flooringAccessoryPrices = flooring.accessoryPrices || {};
+    const flooringAccessoriesList = [
+      { key: 'clips_wedges', name: 'كلبسات وأسافين تسوية بلاط', fallback: 150 },
+      { key: 'pigments', name: 'أصباغ ألوان فواصل السيراميك', fallback: 80 },
+      { key: 'steel_wool', name: 'صوف صلب لتنظيف الفواصل', fallback: 50 },
+      { key: 'broom', name: 'مقشة تشطيب نهائي', fallback: 60 },
+      { key: 'mop', name: 'ممسحة تشطيب نهائي', fallback: 90 },
+    ];
+    flooringAccessoriesList.forEach(acc => {
+      if (flooring.accessories?.[acc.key]) {
+        generated.push({
+          id: `gen-flooring-acc-${acc.key}`,
+          category: "flooring",
+          name: acc.name,
+          unit: "مقطوعية",
+          quantity: 1,
+          unitPrice: flooringAccessoryPrices[acc.key] ?? acc.fallback,
+          laborCost: 0,
+          description: "مستلزمات موقع لازمة لإتمام تركيب الأرضيات والسيراميك بجودة عالية."
+        });
+      }
+    });
 
     const floorArea = (Number(flooring.items.reception?.qty) || 0) + 
                       (Number(flooring.items.rooms?.qty) || 0) + 
@@ -777,6 +806,76 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         }
       });
     }
+
+    // ✅ إصلاح: كماليات الأبواب (الحلق، التجليد، المفصلات، المقابض، الكالونات) كانت بتتحسب فى
+    // إجمالي شاشة الأبواب لكن كانت غائبة تماماً عن المقايسة — دلوقتي بتتولد كبنود مجمّعة
+    const doorsRates = doors.accessoriesRates || {};
+    const totalActiveDoorsCount = doors.doorSpecs.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
+
+    if (doors.hasFrames && totalActiveDoorsCount > 0) {
+      generated.push({
+        id: "gen-doors-frames",
+        category: "doors",
+        name: "حلق أبواب عمق 2 بوصة",
+        unit: "باب",
+        quantity: totalActiveDoorsCount,
+        unitPrice: doorsRates.framePrice ?? 800,
+        laborCost: 0,
+        description: `توريد حلق الأبواب المعتمد لـ ${totalActiveDoorsCount} أبواب بالمشروع.`
+      });
+    }
+
+    if (doors.hasArchitraves && totalActiveDoorsCount > 0) {
+      generated.push({
+        id: "gen-doors-architraves",
+        category: "doors",
+        name: "تجليد محيط حلق الباب (أرشيتريف)",
+        unit: "باب",
+        quantity: totalActiveDoorsCount,
+        unitPrice: doorsRates.architravePrice ?? 450,
+        laborCost: 0,
+        description: `تجليد محيط حلق الباب لـ ${totalActiveDoorsCount} أبواب.`
+      });
+    }
+
+    if (doors.hasHinges && totalActiveDoorsCount > 0) {
+      generated.push({
+        id: "gen-doors-hinges",
+        category: "doors",
+        name: "مفصلات أبواب (3 مفصلات/باب)",
+        unit: "مفصلة",
+        quantity: totalActiveDoorsCount * 3,
+        unitPrice: doorsRates.hingePrice ?? 120,
+        laborCost: 0,
+        description: `مفصلات معتمدة لـ ${totalActiveDoorsCount} أبواب.`
+      });
+    }
+
+    if (doors.hasHandles && totalActiveDoorsCount > 0) {
+      generated.push({
+        id: "gen-doors-handles",
+        category: "doors",
+        name: "مقابض أبواب تركي مقاوم للصدأ",
+        unit: "باب",
+        quantity: totalActiveDoorsCount,
+        unitPrice: doorsRates.handlePrice ?? 500,
+        laborCost: 0,
+        description: `مقابض أبواب لـ ${totalActiveDoorsCount} أبواب.`
+      });
+    }
+
+    if (doors.hasLocks && totalActiveDoorsCount > 0) {
+      generated.push({
+        id: "gen-doors-locks",
+        category: "doors",
+        name: "كالونات أمان كمبيوتر إيطالي",
+        unit: "باب",
+        quantity: totalActiveDoorsCount,
+        unitPrice: doorsRates.lockPrice ?? 650,
+        laborCost: 0,
+        description: `كالونات أمان لـ ${totalActiveDoorsCount} أبواب.`
+      });
+    }
   }
 
   // 8. أعمال قطاعات الألوميتال والشبابيك
@@ -800,9 +899,14 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           description: "توريد وتركيب شباك قلاب صغير للحمام أو المطبخ بالقطاع ومواد التثبيت والزجاج المعتمدة."
         });
       } else if (areaSize > 0) {
-        const sectorPrice = rates.sectorOverrides?.[win.sectorUuid] !== undefined
-          ? rates.sectorOverrides[win.sectorUuid]
-          : 4500; 
+        // ✅ إصلاح: كان بيتجاهل السعر الفعلي للقطاع المسجل فى مكتبة المواصفات ويستخدم 4500 ثابتة
+        // دايماً إلا لو فيه Override يدوي، بينما شاشة الألوميتال نفسها بتدور على السعر الحقيقي للقطاع أولاً.
+        const ALUM_FALLBACK_SECTORS: Record<string, number> = { "al-01": 3000, "al-02": 4500, "al-03": 6500 };
+        let sectorPrice = rates.sectorOverrides?.[win.sectorUuid];
+        if (sectorPrice === undefined) {
+          const dbSec = dbSpecs.find((s: any) => s.uuid === win.sectorUuid && s.category === 'aluminum');
+          sectorPrice = dbSec ? Number(dbSec.base_rate) : (ALUM_FALLBACK_SECTORS[win.sectorUuid] ?? 4500);
+        }
 
         const glassPrice = win.glassType === 'double'
           ? (rates.glassDoubleRate ?? 1200)
@@ -1522,8 +1626,10 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
   // 15. أعمال التهوية والشفاطات (Ventilation)
   const ventilation = finishing.ventilation || {};
   if (ventilation.enabled && ventilation.items) {
+    let ventItemsSubtotal = 0;
     Object.entries(ventilation.items).forEach(([key, item]: [string, any]) => {
       if (item.qty > 0) {
+        ventItemsSubtotal += (item.qty || 0) * (item.price || 0);
         generated.push({
           id: `gen-ventilation-${key}`,
           category: "ventilation",
@@ -1536,6 +1642,109 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         });
       }
     });
+
+    // ✅ إصلاح: أجور المصنعية ونسبة الإشراف الهندسي (15%) وتكلفة النقل كانت كلها جزء من إجمالي
+    // شاشة الشفاطات والتهوية، لكن كانت غائبة تماماً عن المقايسة
+    const ventLaborCost = Number(ventilation.laborCost ?? 4000);
+    if (ventLaborCost > 0) {
+      generated.push({
+        id: "gen-ventilation-labor",
+        category: "ventilation",
+        name: "أجور مصنعية تركيب أعمال التهوية والشفاطات",
+        unit: "مقطوعية",
+        quantity: 1,
+        unitPrice: 0,
+        laborCost: ventLaborCost,
+        description: "مصنعية تركيب واختبار كل وحدات ومسارات الشفاطات والتهوية بالوحدة."
+      });
+    }
+
+    const ventSubtotal = ventItemsSubtotal + ventLaborCost;
+    const ventSupervision = ventSubtotal * 0.15;
+    if (ventSupervision > 0) {
+      generated.push({
+        id: "gen-ventilation-supervision",
+        category: "ventilation",
+        name: "نسبة الإشراف الهندسي على أعمال التهوية (15%)",
+        unit: "مقطوعية",
+        quantity: 1,
+        unitPrice: 0,
+        laborCost: ventSupervision,
+        description: "نسبة إشراف هندسي فني على تنفيذ أعمال التهوية والشفاطات بالكامل."
+      });
+    }
+
+    if (ventilation.hasTransportation) {
+      const ventTransport = Number(ventilation.transportationPrice ?? 1000);
+      if (ventTransport > 0) {
+        generated.push({
+          id: "gen-ventilation-transport",
+          category: "ventilation",
+          name: "نقل وتوصيل خامات التهوية والشفاطات",
+          unit: "مقطوعية",
+          quantity: 1,
+          unitPrice: ventTransport,
+          laborCost: 0,
+          description: "تكلفة نقل وتوصيل خامات ومعدات التهوية والشفاطات لموقع الوحدة."
+        });
+      }
+    }
+  }
+
+  // ✅ إصلاح: بند السلم الداخلي كان غائباً بالكامل عن المقايسة (لم يكن مولّداً على الإطلاق)
+  // 16. أعمال السلم الداخلي وتكسية الدرج والدرابزين
+  const staircase = finishing.staircase || {};
+  if (staircase.enabled) {
+    const stairsCount = Number(staircase.stairsCount || 0);
+    const stairMatRate = Number(staircase.stairMatRate ?? 2500);
+    const stairLabRate = Number(staircase.stairLabRate ?? 1500);
+
+    if (stairsCount > 0) {
+      generated.push({
+        id: "gen-staircase-cladding",
+        category: "staircase",
+        name: `تكسية درجات السلم الداخلي (${staircase.claddingType || 'رخام إمبيرادور مستورد'})`,
+        unit: "درجة",
+        quantity: stairsCount,
+        unitPrice: stairMatRate,
+        laborCost: stairsCount * stairLabRate,
+        description: "توريد وتركيب خامة تكسية درجات السلم الداخلي المعتمدة شاملة مصنعية التركيب والتجليس."
+      });
+    }
+
+    if (staircase.hasHandrail) {
+      const handrailLength = Number(staircase.handrailLength || 0);
+      const handrailMatRate = Number(staircase.handrailMatRate ?? 1200);
+      const handrailLabRate = Number(staircase.handrailLabRate ?? 600);
+      if (handrailLength > 0) {
+        generated.push({
+          id: "gen-staircase-handrail",
+          category: "staircase",
+          name: `درابزين وسور السلم الداخلي (${staircase.handrailType || 'حديد فورجيه فاخر'})`,
+          unit: "م.ط",
+          quantity: handrailLength,
+          unitPrice: handrailMatRate,
+          laborCost: handrailLength * handrailLabRate,
+          description: "توريد وتركيب درابزين السلم الداخلي المعتمد شاملاً الحدادة والدهان والتركيب النهائي."
+        });
+      }
+    }
+
+    if (staircase.hasTransportation) {
+      const stairTransport = Number(staircase.transportationPrice ?? 1500);
+      if (stairTransport > 0) {
+        generated.push({
+          id: "gen-staircase-transport",
+          category: "staircase",
+          name: "نقل وتوصيل خامات السلم الداخلي (رخام ودرابزين)",
+          unit: "مقطوعية",
+          quantity: 1,
+          unitPrice: stairTransport,
+          laborCost: 0,
+          description: "تكلفة نقل وتوصيل خامات تكسية السلم والدرابزين لموقع الوحدة."
+        });
+      }
+    }
   }
 
   return generated;
