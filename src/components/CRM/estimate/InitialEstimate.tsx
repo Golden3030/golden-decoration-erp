@@ -218,8 +218,14 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       });
     }
 
-    const requiredCement = Math.ceil(totalPlasterArea * 0.25);
-    const requiredSand = Number((totalPlasterArea * 0.025).toFixed(2));
+    // ✅ إصلاح: نفس معادلة شاشة المحارة بالظبط (معدل فرد الأسمنت الفعلي وسمك طبقة المحارة) بدل
+    // النسبة الثابتة القديمة (0.25 شكارة/م² و0.025 م³/م²) اللي كانت بتدي أرقام مختلفة عن شاشة المحارة نفسها.
+    const coverageRate = Number(plaster.cementCoverageRate) > 0 ? Number(plaster.cementCoverageRate) : 5;
+    const thicknessMeters = Number(plaster.plasterThicknessCm || 2.5) / 100;
+    const SAND_BULKING_FACTOR = 4 / 3;
+
+    const requiredCement = Math.ceil(totalPlasterArea / coverageRate);
+    const requiredSand = Number((totalPlasterArea * thicknessMeters * SAND_BULKING_FACTOR).toFixed(2));
     
     const cementProd = dbMaterials.find(m => m.id === plaster.selectedCementId);
     const sandProd = dbMaterials.find(m => m.id === plaster.selectedSandId);
@@ -251,9 +257,10 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
     }
 
     const accessories = [
-      { id: 'mesh-metal', name: 'شبك سلك تمديد مجلفن', qty: plaster.meshMetalQty, price: plaster.meshMetalPrice, unit: 'لفة' },
-      { id: 'mesh-fiber', name: 'شبك فايبر معالجة شروخ', qty: plaster.meshFiberQty, price: plaster.meshFiberPrice, unit: 'بكرة' },
-      { id: 'nails', name: 'مسامير وورد تثبيت الشبك', qty: plaster.nailsBoxesQty, price: plaster.nailsBoxPrice, unit: 'علبة' }
+      { id: 'mesh-metal', name: 'شبك سلك تمديد مجلفن', qty: plaster.meshMetalQty, price: plaster.meshMetalPrice ?? 180, unit: 'لفة' },
+      { id: 'mesh-fiber', name: 'شبك فايبر معالجة شروخ', qty: plaster.meshFiberQty, price: plaster.meshFiberPrice ?? 90, unit: 'بكرة' },
+      { id: 'nails', name: 'مسامير وورد تثبيت الشبك', qty: plaster.nailsBoxesQty, price: plaster.nailsBoxPrice ?? 75, unit: 'علبة' },
+      { id: 'water-logistics', name: 'مياه خلط المونة', qty: plaster.waterLogisticsQty, price: plaster.waterLogisticsPrice ?? 150, unit: 'برميل' }
     ];
 
     accessories.forEach(acc => {
@@ -271,12 +278,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       }
     });
 
-    const logisticsTotal = Number(plaster.waterLogisticsFlat || 0) + Number(plaster.logisticsFlat || 0);
+    const logisticsTotal = Number(plaster.logisticsFlat || 0);
     if (logisticsTotal > 0) {
       generated.push({
         id: "plaster-logistics-main",
         category: "plaster",
-        name: "تكاليف لوجستية (مياه خلط + رفع وتشوين المون بالدور)",
+        name: "تكاليف لوجستية (رفع وتشوين المون بالدور)",
         unit: "مقطوعية",
         quantity: 1,
         unitPrice: 0,
@@ -677,7 +684,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           unit: "م²",
           quantity: config.area,
           unitPrice: price,
-          laborCost: config.area * 50, 
+          laborCost: 0,
           description: "توريد وتركيب ألواح جبس بورد كناوف سمك 12.5 مم بالقطاعات المعدنية المعتمدة صاج مجلفن."
         });
       }
@@ -834,6 +841,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
   const electricity = finishing.electricity || {};
   if (electricity.enabled) {
     const rates = electricity.accessoriesRates || {};
+    const brandMultipliers: Record<string, number> = {
+      venus: 1.0,
+      bticino: 1.5,
+      legrand: 2.2
+    };
+    const multiplier = brandMultipliers[electricity.selectedBrand] ?? 1.0;
 
     if (electricity.roughInActive) {
       if (Number(electricity.backboxCount) > 0) {
@@ -945,7 +958,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "لقم قواطع إضاءة وبريزات عادية",
           unit: "قاطع",
           quantity: Number(electricity.breakerFinishingCount),
-          unitPrice: rates.rateBreakerFinishing ?? 120,
+          unitPrice: (rates.rateBreakerFinishing ?? 120) * multiplier,
           laborCost: 0,
           description: "قواطع دوائر الإضاءة والبريزات العادية بالوحدة."
         });
@@ -959,7 +972,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "مفتاح تكييف",
           unit: "قاطع",
           quantity: Number(electricity.acSwitchCount),
-          unitPrice: rates.rateAcSwitch ?? 120,
+          unitPrice: (rates.rateAcSwitch ?? 120) * multiplier,
           laborCost: 0,
           description: "قواطع مخصصة لدوائر تغذية أجهزة التكييف."
         });
@@ -973,7 +986,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "مفتاح سخان ثنائي مضيء",
           unit: "قاطع",
           quantity: Number(electricity.heaterSwitchCount),
-          unitPrice: rates.rateHeaterSwitch ?? 120,
+          unitPrice: (rates.rateHeaterSwitch ?? 120) * multiplier,
           laborCost: 0,
           description: "قاطع مخصص لدائرة تغذية سخان المياه."
         });
@@ -987,9 +1000,97 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "مفتاح جرس",
           unit: "قاطع",
           quantity: Number(electricity.bellSwitchCount),
-          unitPrice: rates.rateBellSwitch ?? 55,
+          unitPrice: (rates.rateBellSwitch ?? 55) * multiplier,
           laborCost: 0,
           description: "قاطع مخصص لدائرة الجرس والتيار الخفيف."
+        });
+      }
+
+      // ✅ إصلاح: أنواع القواطع المخصصة الإضافية (يضيفها المهندس بنفسه حسب أنواع القواطع الفعلية)
+      // كانت بتتحسب فى إجمالي شاشة الكهرباء لكن كانت بتتفقد تماماً ومتوصلش للمقايسة
+      if (electricity.customBreakersList && Array.isArray(electricity.customBreakersList)) {
+        electricity.customBreakersList.forEach((item: any) => {
+          if (item.quantity > 0) {
+            generated.push({
+              id: `gen-elec-custom-breaker-${item.id}`,
+              category: "electricity",
+              name: item.name || "نوع قاطع مخصص",
+              unit: "قاطع",
+              quantity: Number(item.quantity),
+              unitPrice: Number(item.rate || 0),
+              laborCost: 0,
+              description: "نوع قاطع إضافي مخصص أضافه المهندس حسب نوعية القواطع الفعلية بالوحدة."
+            });
+          }
+        });
+      }
+
+      if (Number(electricity.insulationTapeCount) > 0) {
+        generated.push({
+          id: "gen-elec-insulation-tape",
+          category: "electricity",
+          name: "لفافات عزل كهربائي للتوصيلات",
+          unit: "لفافة",
+          quantity: Number(electricity.insulationTapeCount),
+          unitPrice: rates.insulationTapeRate ?? 15,
+          laborCost: 0,
+          description: "لفافات عزل كهربائي معتمدة لعزل توصيلات الأسلاك بالتأسيس."
+        });
+      }
+
+      if (Number(electricity.temporaryBulbCount) > 0) {
+        generated.push({
+          id: "gen-elec-temp-bulb",
+          category: "electricity",
+          name: "لمبات إنارة مؤقتة للموقع أثناء التنفيذ",
+          unit: "لمبة",
+          quantity: Number(electricity.temporaryBulbCount),
+          unitPrice: rates.temporaryBulbRate ?? 25,
+          laborCost: 0,
+          description: "إنارة مؤقتة لتسهيل أعمال التنفيذ الميدانية بالوحدة أثناء التأسيس."
+        });
+      }
+
+      if (Number(electricity.socketTestCount) > 0) {
+        generated.push({
+          id: "gen-elec-socket-test",
+          category: "electricity",
+          name: "اختبار وفحص دوائر التأسيس والتوصيلات",
+          unit: "نقطة",
+          quantity: Number(electricity.socketTestCount),
+          unitPrice: rates.socketTestRate ?? 12,
+          laborCost: 0,
+          description: "فحص واختبار كل نقاط التأسيس قبل التشطيب لضمان سلامة الدوائر."
+        });
+      }
+
+      if (Number(electricity.cementSandBagCount) > 0) {
+        generated.push({
+          id: "gen-elec-cement-sand",
+          category: "electricity",
+          name: "شكاير أسمنت ورمل لتقفيل مواسير التأسيس",
+          unit: "شكارة",
+          quantity: Number(electricity.cementSandBagCount),
+          unitPrice: rates.cementSandRate ?? 450,
+          laborCost: 0,
+          description: "خامات تقفيل وتشوين مسارات وخراطيم التأسيس بالحوائط والأرضيات."
+        });
+      }
+
+      if (electricity.customRoughInList && Array.isArray(electricity.customRoughInList)) {
+        electricity.customRoughInList.forEach((item: any) => {
+          if (item.quantity > 0) {
+            generated.push({
+              id: `gen-elec-custom-roughin-${item.id}`,
+              category: "electricity",
+              name: item.name,
+              unit: item.unit || "قطعة",
+              quantity: Number(item.quantity),
+              unitPrice: Number(item.rate || 0),
+              laborCost: 0,
+              description: "بند تأسيس كهرباء إضافي مخصص."
+            });
+          }
         });
       }
 
@@ -1007,13 +1108,6 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
     }
 
     if (electricity.finishingActive) {
-      const brandMultipliers: Record<string, number> = {
-        venus: 1.0,
-        bticino: 1.5,
-        legrand: 2.2
-      };
-      const multiplier = brandMultipliers[electricity.selectedBrand] ?? 1.0;
-
       const rateSwitch = (rates.rateSwitch ?? 35) * multiplier;
       const ratePlug = (rates.ratePlug ?? 45) * multiplier;
       const ratePlate = (rates.ratePlate ?? 25) * multiplier;
@@ -1071,6 +1165,25 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         });
       }
 
+      // ✅ إصلاح: إكسسوارات التشطيب الحرة المخصصة كانت بتتحسب فى إجمالي شاشة الكهرباء
+      // لكن كانت بتتفقد تماماً ومتوصلش للمقايسة
+      if (electricity.customFinishingList && Array.isArray(electricity.customFinishingList)) {
+        electricity.customFinishingList.forEach((item: any) => {
+          if (item.quantity > 0) {
+            generated.push({
+              id: `gen-elec-custom-finishing-${item.id}`,
+              category: "electricity",
+              name: item.name,
+              unit: item.unit || "قطعة",
+              quantity: Number(item.quantity),
+              unitPrice: Number(item.rate || 0),
+              laborCost: 0,
+              description: "بند تشطيب كهرباء إضافي مخصص."
+            });
+          }
+        });
+      }
+
       const totalFinishingLabor = Number(electricity.finishingLaborCost ?? 5000); 
       generated.push({
         id: "gen-elec-finish-labor",
@@ -1107,6 +1220,20 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         unitPrice: rates.soundSystemFlatRate ?? 8500,
         laborCost: 0,
         description: "تمديد مسارات الصوت وسماعات السقف الذكية مع وحدات تحكم لجميع الغرف والصالات."
+      });
+    }
+
+    // ✅ إصلاح: تكلفة النقل والتوصيل كانت بتتحسب فى إجمالي شاشة الكهرباء لكن كانت غائبة تماماً عن المقايسة
+    if (electricity.hasTransportation) {
+      generated.push({
+        id: "gen-elec-transportation",
+        category: "electricity",
+        name: "نقل وتوصيل خامات الكهرباء للموقع",
+        unit: "مقطوعية",
+        quantity: 1,
+        unitPrice: rates.transportationPrice ?? 1000,
+        laborCost: 0,
+        description: "تكلفة نقل وتوصيل خامات وتجهيزات الكهرباء من المخازن حتى موقع الوحدة."
       });
     }
   }
