@@ -234,6 +234,17 @@ export default function EstimateTable({ items, isEditable = false }: EstimateTab
                     </tr>
                   );
                 })}
+
+                {/* ✅ صف إجمالي المرحلة: مجموع كل بنود القسم دفعة واحدة، لسهولة مراجعة تكلفة كل مرحلة تنفيذية لوحدها */}
+                <tr className="bg-[#0C1A38] border-b-2 border-[#D4AF37]/60 text-[#D4AF37] font-black text-base select-none">
+                  <td colSpan={5} className="p-3 text-left">
+                    إجمالي {categoryNames[categoryKey] || "البند"}:
+                  </td>
+                  <td className="p-3 text-center">
+                    {categoryItems.reduce((sum: number, item: any) => sum + calculateRowTotal(item), 0).toLocaleString()} ج.م
+                  </td>
+                  {editable && <td className="p-3"></td>}
+                </tr>
               </React.Fragment>
             ))}
           </tbody>

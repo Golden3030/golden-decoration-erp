@@ -107,13 +107,14 @@ export default function PrintableEstimate({ customer = {}, project = {}, estimat
               <th className="p-3 text-center">الكمية</th>
               <th className="p-3 text-center">تكلفة الخامات (ج.م)</th>
               <th className="p-3 text-center">تكلفة التنفيذ (ج.م)</th>
+              <th className="p-3 text-center">إجمالي البند (ج.م)</th>
             </tr>
           </thead>
           <tbody>
             {orderedCategoryKeys.map((catKey, catIdx) => (
               <>
                 <tr key={`cat-${catKey}`} className="bg-[#D4AF37]/10">
-                  <td colSpan={6} className="p-2 font-black text-[#8b6f1f] flex items-center gap-2">
+                  <td colSpan={7} className="p-2 font-black text-[#8b6f1f] flex items-center gap-2">
                     <span>{categoryIcons[catKey] || "•"}</span> {catIdx + 1}. {categoryNames[catKey]}
                   </td>
                 </tr>
@@ -128,6 +129,9 @@ export default function PrintableEstimate({ customer = {}, project = {}, estimat
                     <td className="p-2 text-center">{item.quantity}</td>
                     <td className="p-2 text-center font-mono">{fmt(Number(item.quantity || 0) * Number(item.unitPrice ?? item.unit_price ?? 0))}</td>
                     <td className="p-2 text-center font-mono">{fmt(Number(item.laborCost ?? item.labor_cost ?? 0))}</td>
+                    <td className="p-2 text-center font-mono font-black text-[#8b6f1f]">
+                      {fmt(Number(item.quantity || 0) * Number(item.unitPrice ?? item.unit_price ?? 0) + Number(item.laborCost ?? item.labor_cost ?? 0))}
+                    </td>
                   </tr>
                 ))}
               </>
