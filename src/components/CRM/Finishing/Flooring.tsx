@@ -51,7 +51,9 @@ interface FlooringState {
   customLabels: { [key: string]: string }; // لحفظ المسميات المخصصة للبنود المضافة يدوياً
   skirting_type: 'normal' | 'concealed' | 'concealed_led';
   cement_bags: number;
+  cement_price: number;
   sand_m3: number;
+  sand_price: number;
   grout_product_id: string;
   grout_price: number;
   grout_qty: number;
@@ -69,6 +71,7 @@ interface FlooringState {
     broom: number;
     mop: number;
   };
+  customAccessories: { id: string; name: string; price: number }[];
   labor: {
     floor_rate: number;
     wall_rate: number;
@@ -104,7 +107,9 @@ const DEFAULT_FLOORING_STATE: FlooringState = {
   customLabels: {},
   skirting_type: 'normal',
   cement_bags: 0,
+  cement_price: 200,
   sand_m3: 0,
+  sand_price: 250,
   grout_product_id: '',
   grout_price: 0,
   grout_qty: 0,
@@ -122,6 +127,7 @@ const DEFAULT_FLOORING_STATE: FlooringState = {
     broom: 60,
     mop: 90
   },
+  customAccessories: [],
   labor: {
     floor_rate: 90,
     wall_rate: 110,
@@ -273,7 +279,9 @@ export default function Flooring() {
         customLabels: savedFlooring.customLabels || {},
         skirting_type: savedFlooring.skirting_type ?? 'normal',
         cement_bags: savedFlooring.cement_bags ?? 0,
+        cement_price: savedFlooring.cement_price ?? 200,
         sand_m3: savedFlooring.sand_m3 ?? 0,
+        sand_price: savedFlooring.sand_price ?? 250,
         grout_product_id: savedFlooring.grout_product_id ?? '',
         grout_price: savedFlooring.grout_price ?? 0,
         grout_qty: savedFlooring.grout_qty ?? 0,
@@ -291,6 +299,7 @@ export default function Flooring() {
           broom: 60,
           mop: 90
         },
+        customAccessories: savedFlooring.customAccessories || [],
         labor: {
           floor_rate: savedFlooring.labor?.floor_rate ?? 90,
           wall_rate: savedFlooring.labor?.wall_rate ?? 110,
@@ -396,10 +405,11 @@ export default function Flooring() {
 
   const handleQtyChange = (itemKey: string, numericValue: number) => {
     updateStateAndSave(prev => {
-      const updatedItems = { ...prev.items };
-      if (updatedItems[itemKey]) {
-        updatedItems[itemKey].qty = Math.max(0, numericValue);
-      }
+      const existingRow = prev.items[itemKey] || { qty: 0, company: '', product_id: '', price: 0 };
+      const updatedItems = {
+        ...prev.items,
+        [itemKey]: { ...existingRow, qty: Math.max(0, numericValue) }
+      };
       const updatedOverrides = prev.manual_overrides.includes(itemKey)
         ? prev.manual_overrides
         : [...prev.manual_overrides, itemKey];
@@ -442,6 +452,13 @@ export default function Flooring() {
         [field]: Math.max(0, val)
       };
     });
+  };
+
+  // ✅ سعر الأسمنت والرمل — كانا بدون أي عداد سعر خالص قبل كده
+  const handleStructuralPriceChange = (field: 'cement_price' | 'sand_price', val: number) => {
+    updateStateAndSave(() => ({
+      [field]: Math.max(0, val)
+    }));
   };
 
   // دوال العدادات الفاخرة المحدثة لبيانات مادة السقية
@@ -504,6 +521,26 @@ export default function Flooring() {
         ...prev.accessories,
         [key]: !prev.accessories[key]
       }
+    }));
+  };
+
+  // ✅ إضافة بند كماليات/تجهيز موقع حر مخصص إضافي بخلاف الخمس بنود الثابتة
+  const handleAddCustomAccessory = () => {
+    const newItem = { id: `acc-${Date.now()}`, name: '', price: 0 };
+    updateStateAndSave(prev => ({
+      customAccessories: [...(prev.customAccessories || []), newItem]
+    }));
+  };
+
+  const handleEditCustomAccessory = (id: string, fields: Partial<{ name: string; price: number }>) => {
+    updateStateAndSave(prev => ({
+      customAccessories: (prev.customAccessories || []).map(item => item.id === id ? { ...item, ...fields } : item)
+    }));
+  };
+
+  const handleRemoveCustomAccessory = (id: string) => {
+    updateStateAndSave(prev => ({
+      customAccessories: (prev.customAccessories || []).filter(item => item.id !== id)
     }));
   };
 
@@ -592,6 +629,10 @@ export default function Flooring() {
     const groutCost = (Number(state.grout_qty) || 0) * (Number(state.grout_price) || 0);
 
     // احتساب تكاليف مستلزمات الموقع بناءً على الأسعار المحررة يدوياً بالعدادات الفاخرة
+    // ✅ إصلاح: تكلفة الأسمنت والرمل كانت غير محسوبة أصلاً لعدم وجود سعر لهم، دلوقتي بيحسبوا بسعرهم الفعلي
+    const cementCost = (Number(state.cement_bags) || 0) * (Number(state.cement_price) || 200);
+    const sandCost = (Number(state.sand_m3) || 0) * (Number(state.sand_price) || 250);
+
     let accessoriesCost = 0;
     const currentPrices = state.accessoryPrices || DEFAULT_ACCESSORY_PRICES;
     if (state.accessories.clips_wedges) accessoriesCost += (currentPrices.clips_wedges ?? 150);
@@ -599,6 +640,10 @@ export default function Flooring() {
     if (state.accessories.steel_wool) accessoriesCost += (currentPrices.steel_wool ?? 50);
     if (state.accessories.broom) accessoriesCost += (currentPrices.broom ?? 60);
     if (state.accessories.mop) accessoriesCost += (currentPrices.mop ?? 90);
+    // ✅ بنود الكماليات الحرة المخصصة الإضافية
+    (state.customAccessories || []).forEach(acc => {
+      accessoriesCost += (Number(acc.price) || 0);
+    });
 
     // حساب المساحات الفعلية للأجور
     let floorArea = 0;
@@ -624,7 +669,7 @@ export default function Flooring() {
     const transportCost = Number(state.logistics.transport) || 1500;
     const cleaningCost = Number(state.logistics.cleaning) || 800;
 
-    const netGrandTotal = tilesCost + groutCost + accessoriesCost + totalLaborCost + transportCost + cleaningCost;
+    const netGrandTotal = tilesCost + groutCost + accessoriesCost + totalLaborCost + transportCost + cleaningCost + cementCost + sandCost;
 
     return {
       tilesCost,
@@ -634,6 +679,8 @@ export default function Flooring() {
       skirtingLaborCost,
       transportCost,
       cleaningCost,
+      cementCost,
+      sandCost,
       netGrandTotal
     };
   }, [state]);
@@ -860,52 +907,108 @@ export default function Flooring() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 select-none">
             
             {/* الأسمنت */}
-            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all duration-300">
-              <div className="text-right">
-                <span className="text-sm font-semibold text-[#D4AF37] block">شيكارة أسمنت ورمل </span>
-                <p className="text-xs text-white mt-1">مون الاسمنت والرمل للسيراميك</p>
+            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col gap-4 shadow-md hover:border-[#D4AF37]/30 transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div className="text-right">
+                  <span className="text-sm font-semibold text-[#D4AF37] block">شيكارة أسمنت ورمل </span>
+                  <p className="text-xs text-white mt-1">مون الاسمنت والرمل للسيراميك</p>
+                </div>
+                <span className="text-xs font-black text-[#D4AF37] font-mono shrink-0">
+                  {((Number(state.cement_bags) || 0) * (Number(state.cement_price) || 200)).toLocaleString('en-US')} ج.م
+                </span>
               </div>
-              <div className="flex items-center gap-3 h-11 bg-[#020B1C] border border-[#1f2d4d] px-2 rounded-xl select-none w-36 justify-between" dir="ltr">
-                <button 
-                  type="button" 
-                  onClick={() => handleStructuralFieldChange('cement_bags', (state.cement_bags || 0) + 1)}
-                  className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
-                >
-                  +
-                </button>
-                <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[30px] text-center">{state.cement_bags}</span>
-                <button 
-                  type="button" 
-                  onClick={() => handleStructuralFieldChange('cement_bags', Math.max(0, (state.cement_bags || 0) - 1))}
-                  className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
-                >
-                  -
-                </button>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-white font-bold">الكمية:</span>
+                <div className="flex items-center gap-3 h-11 bg-[#020B1C] border border-[#1f2d4d] px-2 rounded-xl select-none w-32 justify-between" dir="ltr">
+                  <button 
+                    type="button" 
+                    onClick={() => handleStructuralFieldChange('cement_bags', (state.cement_bags || 0) + 1)}
+                    className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
+                  >
+                    +
+                  </button>
+                  <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[30px] text-center">{state.cement_bags}</span>
+                  <button 
+                    type="button" 
+                    onClick={() => handleStructuralFieldChange('cement_bags', Math.max(0, (state.cement_bags || 0) - 1))}
+                    className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
+                  >
+                    -
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-white font-bold">سعر الشكارة:</span>
+                <div className="flex items-center gap-3 h-11 bg-[#020B1C] border border-[#1f2d4d] px-2 rounded-xl select-none w-32 justify-between" dir="ltr">
+                  <button 
+                    type="button" 
+                    onClick={() => handleStructuralPriceChange('cement_price', (state.cement_price || 200) + 10)}
+                    className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
+                  >
+                    +
+                  </button>
+                  <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[30px] text-center">{state.cement_price}</span>
+                  <button 
+                    type="button" 
+                    onClick={() => handleStructuralPriceChange('cement_price', Math.max(0, (state.cement_price || 200) - 10))}
+                    className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
+                  >
+                    -
+                  </button>
+                </div>
               </div>
             </div>
 
             {/* الرمل */}
-            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between shadow-md hover:border-[#D4AF37]/30 transition-all duration-300">
-              <div className="text-right">
-                <span className="text-sm font-semibold text-[#D4AF37] block">رمل التأسيس (م٣)</span>
-                <p className="text-xs text-white mt-1">رمل التسوية الموزع أسفل السيراميك بالوحدة</p>
+            <div className="p-6 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex flex-col gap-4 shadow-md hover:border-[#D4AF37]/30 transition-all duration-300">
+              <div className="flex items-center justify-between">
+                <div className="text-right">
+                  <span className="text-sm font-semibold text-[#D4AF37] block">رمل التأسيس (م٣)</span>
+                  <p className="text-xs text-white mt-1">رمل التسوية الموزع أسفل السيراميك بالوحدة</p>
+                </div>
+                <span className="text-xs font-black text-[#D4AF37] font-mono shrink-0">
+                  {((Number(state.sand_m3) || 0) * (Number(state.sand_price) || 250)).toLocaleString('en-US')} ج.م
+                </span>
               </div>
-              <div className="flex items-center gap-3 h-11 bg-[#020B1C] border border-[#1f2d4d] px-2 rounded-xl select-none w-36 justify-between animate-fade-in" dir="ltr">
-                <button 
-                  type="button" 
-                  onClick={() => handleStructuralFieldChange('sand_m3', Number(((state.sand_m3 || 0) + 0.50).toFixed(2)))}
-                  className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
-                >
-                  +
-                </button>
-                <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[50px] text-center">{state.sand_m3?.toFixed(2)}</span>
-                <button 
-                  type="button" 
-                  onClick={() => handleStructuralFieldChange('sand_m3', Math.max(0, Number(((state.sand_m3 || 0) - 0.50).toFixed(2))))}
-                  className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
-                >
-                  -
-                </button>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-white font-bold">الكمية:</span>
+                <div className="flex items-center gap-3 h-11 bg-[#020B1C] border border-[#1f2d4d] px-2 rounded-xl select-none w-32 justify-between animate-fade-in" dir="ltr">
+                  <button 
+                    type="button" 
+                    onClick={() => handleStructuralFieldChange('sand_m3', Number(((state.sand_m3 || 0) + 0.50).toFixed(2)))}
+                    className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
+                  >
+                    +
+                  </button>
+                  <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[50px] text-center">{state.sand_m3?.toFixed(2)}</span>
+                  <button 
+                    type="button" 
+                    onClick={() => handleStructuralFieldChange('sand_m3', Math.max(0, Number(((state.sand_m3 || 0) - 0.50).toFixed(2))))}
+                    className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
+                  >
+                    -
+                  </button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs text-white font-bold">سعر المتر:</span>
+                <div className="flex items-center gap-3 h-11 bg-[#020B1C] border border-[#1f2d4d] px-2 rounded-xl select-none w-32 justify-between" dir="ltr">
+                  <button 
+                    type="button" 
+                    onClick={() => handleStructuralPriceChange('sand_price', (state.sand_price || 250) + 10)}
+                    className="w-6 h-6 rounded-full bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
+                  >
+                    +
+                  </button>
+                  <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[30px] text-center">{state.sand_price}</span>
+                  <button 
+                    type="button" 
+                    onClick={() => handleStructuralPriceChange('sand_price', Math.max(0, (state.sand_price || 250) - 10))}
+                    className="w-6 h-6 rounded-full bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center font-sans"
+                  >
+                    -
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -985,7 +1088,18 @@ export default function Flooring() {
 
             {/* كارت كماليات وتجهيزات الموقع المشمولة */}
             <div className="lg:col-span-6 bg-[#020B1C] border border-[#1f2d4d] p-5 rounded-xl space-y-3">
-              <span className="text-sm text-[#D4AF37] block font-bold text-right select-none">كماليات وتجهيزات الموقع المشمولة:</span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-[#D4AF37] block font-bold text-right select-none">كماليات وتجهيزات الموقع المشمولة:</span>
+                <button
+                  type="button"
+                  onClick={handleAddCustomAccessory}
+                  title="إضافة بند كماليات جديد"
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg bg-[#D4AF37]/10 hover:bg-[#D4AF37]/20 border border-[#D4AF37]/20 text-[#D4AF37] text-[10px] font-bold transition-all cursor-pointer"
+                >
+                  <PlusCircle className="w-3.5 h-3.5" />
+                  <span>إضافة بند</span>
+                </button>
+              </div>
               <div className="space-y-3">
                 {[
                   { key: 'clips_wedges', label: 'كليبسات وصلايب تسوية', defaultPrice: 150 },
@@ -1033,6 +1147,33 @@ export default function Flooring() {
                     </div>
                   );
                 })}
+
+                {/* البنود الحرة المخصصة الإضافية */}
+                {(state.customAccessories || []).map(item => (
+                  <div key={item.id} className="flex items-center gap-2 p-2 rounded-xl bg-[#07132a]/60 border border-[#1f2d4d]">
+                    <input
+                      type="text"
+                      value={item.name}
+                      onChange={(e) => handleEditCustomAccessory(item.id, { name: e.target.value })}
+                      placeholder="اسم البند..."
+                      className="flex-1 h-9 px-2 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-xs text-white font-bold outline-none focus:border-[#D4AF37]"
+                    />
+                    <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-lg h-9 px-1.5 w-28 select-none shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => handleEditCustomAccessory(item.id, { price: (item.price || 0) + 10 })}
+                        className="w-5 h-5 rounded bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black flex items-center justify-center font-bold text-xs cursor-pointer font-sans"
+                      >+</button>
+                      <span className="text-xs font-mono font-bold text-[#D4AF37]">{item.price} <span className="text-[8px] text-gray-500 font-normal">ج</span></span>
+                      <button
+                        type="button"
+                        onClick={() => handleEditCustomAccessory(item.id, { price: Math.max(0, (item.price || 0) - 10) })}
+                        className="w-5 h-5 rounded bg-[#020B1C] border border-red-500/20 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer font-sans"
+                      >-</button>
+                    </div>
+                    <button type="button" onClick={() => handleRemoveCustomAccessory(item.id)} className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-all cursor-pointer shrink-0"><Trash2 className="w-4 h-4" /></button>
+                  </div>
+                ))}
               </div>
             </div>
 
