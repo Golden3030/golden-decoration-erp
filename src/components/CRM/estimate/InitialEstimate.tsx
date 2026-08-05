@@ -59,10 +59,11 @@ const localCategoryNames: Record<string, string> = {
   waterproofing: "عزل رطوبة وحرارة",
   metalWorks: "أعمال كريتال ومعادن",
   decorations: "ديكورات وجماليات",
-  ventilation: "تهوية وشفاطات"
+  ventilation: "تهوية وشفاطات",
+  staircase: "أعمال السلالم الداخلية"
 };
 
-// محرك التفريد الهندسي والمالي التلقائي الشامل لكافة مدخلات وأمتار التبويبات الـ 15 بالمقايسة
+// محرك التفريد الهندسي والمالي التلقائي الشامل لكافة مدخلات وأمتار التبويبات الـ 16 بالمقايسة
 export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: any[]) {
   const area = Number(crmData.project?.area || 0);
   const rooms = Number(crmData.project?.roomsCount || 0);
@@ -218,8 +219,6 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       });
     }
 
-    // ✅ إصلاح: نفس معادلة شاشة المحارة بالظبط (معدل فرد الأسمنت الفعلي وسمك طبقة المحارة) بدل
-    // النسبة الثابتة القديمة (0.25 شكارة/م² و0.025 م³/م²) اللي كانت بتدي أرقام مختلفة عن شاشة المحارة نفسها.
     const coverageRate = Number(plaster.cementCoverageRate) > 0 ? Number(plaster.cementCoverageRate) : 5;
     const thicknessMeters = Number(plaster.plasterThicknessCm || 2.5) / 100;
     const SAND_BULKING_FACTOR = 4 / 3;
@@ -336,9 +335,6 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
     const finishCompany = paint.selectedFinishingCompany ?? 'جوتن';
     const disabledPaintItems: string[] = paint.disabledStandardItems || [];
 
-    // ✅ إصلاح: البنود الأساسية المحسوبة تلقائياً بالمساحة (سيلر/سيلر حراري/معجون/بطانة/دهان حوائط/دهان أسقف)
-    // كانت مفقودة تماماً من المقايسة، وكان بيظهر بس البنود الإضافية اليدوية. دلوقتي بنولّد نفس
-    // البنود الأساسية اللي شاشة الدهانات نفسها بتحسبها، بنفس البراند والكمية والسعر الفعلي المختار.
     const availableSealers = dbMaterials.filter(p => p.company === prepCompany && p.subcategory === 'sealer');
     const availableThermalSealers = dbMaterials.filter(p => p.company === prepCompany && (p.subcategory === 'thermal_sealer' || p.subcategory === 'sealer_thermal'));
     const availablePutties = dbMaterials.filter(p => p.company === prepCompany && p.subcategory === 'putty');
@@ -481,8 +477,6 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       }
     });
 
-    // ✅ إصلاح: كان بيحسب مصنعية الحوائط بس وبيتجاهل مصنعية الأسقف تماماً، رغم إن شاشة الدهانات
-    // نفسها بتحسبهم كسعرين منفصلين (م.ط الحوائط + م.ط الأسقف) وتجمعهم مع بعض.
     const matchedFinishSpec = dbSpecs.find((s: any) => s.spec_name?.includes(finishCompany)) || dbSpecs.find((s: any) => s.code?.includes(finishCompany));
     const specBaseRate = matchedFinishSpec?.base_rate || (finishCompany === 'جوتن' ? 60 : 45);
     const activeWallLaborRate = Number(paint.laborRate) > 0 ? Number(paint.laborRate) : specBaseRate;
@@ -504,9 +498,6 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       });
     }
 
-    // ✅ إصلاح: البند ده كان بيظهر فى المقايسة حتى لو مرحلة الديكورات متوقفة فى شاشة الدهانات
-    // (decorActive) لأنه كان بيتجاهل الفلاج ده، وكمان كان بياخد سعر مصنعية ثابت 1500 بدل القيمة
-    // الفعلية القابلة للتعديل من شاشة الدهانات.
     const decorCount = Number(paint.decorWallsCount || 0);
     if (paint.decorActive && decorCount > 0) {
       const decorLaborRate = Number(paint.decorWallsLaborRate ?? 1500);
@@ -595,8 +586,6 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       });
     }
 
-    // ✅ إصلاح: مستلزمات الموقع (كلبسات وأسافين، أصباغ، صوف صلب، مقشة، ممسحة) كانت جزء من
-    // إجمالي شاشة الأرضيات لكن كانت غائبة تماماً عن المقايسة
     const flooringAccessoryPrices = flooring.accessoryPrices || {};
     const flooringAccessoriesList = [
       { key: 'clips_wedges', name: 'كلبسات وأسافين تسوية بلاط', fallback: 150 },
@@ -816,8 +805,6 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       });
     }
 
-    // ✅ إصلاح: كماليات الأبواب (الحلق، التجليد، المفصلات، المقابض، الكالونات) كانت بتتحسب فى
-    // إجمالي شاشة الأبواب لكن كانت غائبة تماماً عن المقايسة — دلوقتي بتتولد كبنود مجمّعة
     const doorsRates = doors.accessoriesRates || {};
     const totalActiveDoorsCount = doors.doorSpecs.reduce((sum: number, item: any) => sum + (item.quantity || 0), 0);
 
@@ -908,8 +895,6 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           description: "توريد وتركيب شباك قلاب صغير للحمام أو المطبخ بالقطاع ومواد التثبيت والزجاج المعتمدة."
         });
       } else if (areaSize > 0) {
-        // ✅ إصلاح: كان بيتجاهل السعر الفعلي للقطاع المسجل فى مكتبة المواصفات ويستخدم 4500 ثابتة
-        // دايماً إلا لو فيه Override يدوي، بينما شاشة الألوميتال نفسها بتدور على السعر الحقيقي للقطاع أولاً.
         const ALUM_FALLBACK_SECTORS: Record<string, number> = { "al-01": 3000, "al-02": 4500, "al-03": 6500 };
         let sectorPrice = rates.sectorOverrides?.[win.sectorUuid];
         if (sectorPrice === undefined) {
@@ -1059,85 +1044,6 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         });
       }
 
-      // ✅ إصلاح: البنود الأربعة دي (لقم قواطع الإضاءة/البريزات، قاطع التكييف، قاطع السخان،
-      // قاطع الجرس) كانت موجودة كحقول فى شاشة الكهرباء والمهندس بيملاها فعلاً، لكن محدش
-      // كان بيحولها لبند حقيقي فى المقايسة النهائية — يعني كانت بتتملى وتضيع من غير أي
-      // تأثير على السعر اللي بيوصل للعميل. دلوقتي بقت بنود حقيقية زي باقي عناصر الكهرباء.
-      if (Number(electricity.breakerFinishingCount) > 0) {
-        const prod = dbMaterials.find(m => m.id === electricity.selectedBreakerId);
-        generated.push({
-          id: "gen-elec-breaker-finishing",
-          category: "electricity",
-          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "لقم قواطع إضاءة وبريزات عادية",
-          unit: "قاطع",
-          quantity: Number(electricity.breakerFinishingCount),
-          unitPrice: (rates.rateBreakerFinishing ?? 120) * multiplier,
-          laborCost: 0,
-          description: "قواطع دوائر الإضاءة والبريزات العادية بالوحدة."
-        });
-      }
-
-      if (Number(electricity.acSwitchCount) > 0) {
-        const prod = dbMaterials.find(m => m.id === electricity.selectedAcBreakerId);
-        generated.push({
-          id: "gen-elec-ac-breaker",
-          category: "electricity",
-          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "مفتاح تكييف",
-          unit: "قاطع",
-          quantity: Number(electricity.acSwitchCount),
-          unitPrice: (rates.rateAcSwitch ?? 120) * multiplier,
-          laborCost: 0,
-          description: "قواطع مخصصة لدوائر تغذية أجهزة التكييف."
-        });
-      }
-
-      if (Number(electricity.heaterSwitchCount) > 0) {
-        const prod = dbMaterials.find(m => m.id === electricity.selectedHeaterBreakerId);
-        generated.push({
-          id: "gen-elec-heater-breaker",
-          category: "electricity",
-          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "مفتاح سخان ثنائي مضيء",
-          unit: "قاطع",
-          quantity: Number(electricity.heaterSwitchCount),
-          unitPrice: (rates.rateHeaterSwitch ?? 120) * multiplier,
-          laborCost: 0,
-          description: "قاطع مخصص لدائرة تغذية سخان المياه."
-        });
-      }
-
-      if (Number(electricity.bellSwitchCount) > 0) {
-        const prod = dbMaterials.find(m => m.id === electricity.selectedBellBreakerId);
-        generated.push({
-          id: "gen-elec-bell-breaker",
-          category: "electricity",
-          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "مفتاح جرس",
-          unit: "قاطع",
-          quantity: Number(electricity.bellSwitchCount),
-          unitPrice: (rates.rateBellSwitch ?? 55) * multiplier,
-          laborCost: 0,
-          description: "قاطع مخصص لدائرة الجرس والتيار الخفيف."
-        });
-      }
-
-      // ✅ إصلاح: أنواع القواطع المخصصة الإضافية (يضيفها المهندس بنفسه حسب أنواع القواطع الفعلية)
-      // كانت بتتحسب فى إجمالي شاشة الكهرباء لكن كانت بتتفقد تماماً ومتوصلش للمقايسة
-      if (electricity.customBreakersList && Array.isArray(electricity.customBreakersList)) {
-        electricity.customBreakersList.forEach((item: any) => {
-          if (item.quantity > 0) {
-            generated.push({
-              id: `gen-elec-custom-breaker-${item.id}`,
-              category: "electricity",
-              name: item.name || "نوع قاطع مخصص",
-              unit: "قاطع",
-              quantity: Number(item.quantity),
-              unitPrice: Number(item.rate || 0),
-              laborCost: 0,
-              description: "نوع قاطع إضافي مخصص أضافه المهندس حسب نوعية القواطع الفعلية بالوحدة."
-            });
-          }
-        });
-      }
-
       if (Number(electricity.insulationTapeCount) > 0) {
         generated.push({
           id: "gen-elec-insulation-tape",
@@ -1278,8 +1184,94 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         });
       }
 
-      // ✅ إصلاح: إكسسوارات التشطيب الحرة المخصصة كانت بتتحسب فى إجمالي شاشة الكهرباء
-      // لكن كانت بتتفقد تماماً ومتوصلش للمقايسة
+      // ✅ إصلاح حرج ومحاسبي: دمج بند سدادات الوشوش الفارغة لمنع الفارق المالي التقديري نهائياً
+      if (Number(electricity.blankInsertCount) > 0) {
+        generated.push({
+          id: "gen-elec-blank-inserts",
+          category: "electricity",
+          name: `سدادات وشوش فارغة براند (${electricity.selectedBrand})`,
+          unit: "قطعة",
+          quantity: Number(electricity.blankInsertCount),
+          unitPrice: (rates.rateBlank ?? 8) * multiplier,
+          laborCost: 0,
+          description: "سدادات معزولة لتغطية الفراغات غير المستخدمة في وشوش الكهرباء لضمان الأمان البصري والفني."
+        });
+      }
+
+      // ✅ نقل جراحي: القواطع المخصصة والفرعية من مرحلة التأسيس إلى مرحلة تشطيب الكهرباء لمطابقة معادلات التبويب
+      if (Number(electricity.breakerFinishingCount) > 0) {
+        const prod = dbMaterials.find(m => m.id === electricity.selectedBreakerId);
+        generated.push({
+          id: "gen-elec-breaker-finishing",
+          category: "electricity",
+          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "لقم قواطع إضاءة وبريزات عادية",
+          unit: "قاطع",
+          quantity: Number(electricity.breakerFinishingCount),
+          unitPrice: (rates.rateBreakerFinishing ?? 120) * multiplier,
+          laborCost: 0,
+          description: "قواطع دوائر الإضاءة والبريزات العادية بالوحدة السكنية."
+        });
+      }
+
+      if (Number(electricity.acSwitchCount) > 0) {
+        const prod = dbMaterials.find(m => m.id === electricity.selectedAcBreakerId);
+        generated.push({
+          id: "gen-elec-ac-breaker",
+          category: "electricity",
+          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "مفتاح تكييف",
+          unit: "قاطع",
+          quantity: Number(electricity.acSwitchCount),
+          unitPrice: (rates.rateAcSwitch ?? 120) * multiplier,
+          laborCost: 0,
+          description: "قواطع مخصصة لحماية وتغذية دوائر أجهزة التكييف الموزعة بالوحدة."
+        });
+      }
+
+      if (Number(electricity.heaterSwitchCount) > 0) {
+        const prod = dbMaterials.find(m => m.id === electricity.selectedHeaterBreakerId);
+        generated.push({
+          id: "gen-elec-heater-breaker",
+          category: "electricity",
+          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "مفتاح سخان ثنائي مضيء",
+          unit: "قاطع",
+          quantity: Number(electricity.heaterSwitchCount),
+          unitPrice: (rates.rateHeaterSwitch ?? 120) * multiplier,
+          laborCost: 0,
+          description: "قاطع مخصص لحماية وتغذية دائرة سخان المياه بالمطبخ أو الحمام."
+        });
+      }
+
+      if (Number(electricity.bellSwitchCount) > 0) {
+        const prod = dbMaterials.find(m => m.id === electricity.selectedBellBreakerId);
+        generated.push({
+          id: "gen-elec-bell-breaker",
+          category: "electricity",
+          name: prod ? `${prod.company ? prod.company + " - " : ""}${prod.product_name}${prod.amperage ? ` (${prod.amperage}A)` : ""}` : "مفتاح جرس",
+          unit: "قاطع",
+          quantity: Number(electricity.bellSwitchCount),
+          unitPrice: (rates.rateBellSwitch ?? 55) * multiplier,
+          laborCost: 0,
+          description: "قاطع مخصص لتأمين دائرة الجرس والتيار الخفيف الخارجي."
+        });
+      }
+
+      if (electricity.customBreakersList && Array.isArray(electricity.customBreakersList)) {
+        electricity.customBreakersList.forEach((item: any) => {
+          if (item.quantity > 0) {
+            generated.push({
+              id: `gen-elec-custom-breaker-${item.id}`,
+              category: "electricity",
+              name: item.name || "نوع قاطع مخصص",
+              unit: "قاطع",
+              quantity: Number(item.quantity),
+              unitPrice: Number(item.rate || 0),
+              laborCost: 0,
+              description: "نوع قاطع إضافي مخصص أضافه المهندس حسب نوعية القواطع الفعلية بالوحدة."
+            });
+          }
+        });
+      }
+
       if (electricity.customFinishingList && Array.isArray(electricity.customFinishingList)) {
         electricity.customFinishingList.forEach((item: any) => {
           if (item.quantity > 0) {
@@ -1336,7 +1328,6 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       });
     }
 
-    // ✅ إصلاح: تكلفة النقل والتوصيل كانت بتتحسب فى إجمالي شاشة الكهرباء لكن كانت غائبة تماماً عن المقايسة
     if (electricity.hasTransportation) {
       generated.push({
         id: "gen-elec-transportation",
@@ -1429,7 +1420,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "pl-logistics",
         category: "plumbing",
-        name: "تكاليف نقل وتشوين وتنزيل خامات السباكة بالدور الميداني الفني",
+        name: "تكاليف نقل وتتشوين وتنزيل خامات السباكة بالدور الميداني الفني",
         unit: "مقطوعية",
         quantity: 1,
         unitPrice: Number(plumbing.transportationRate),
@@ -1652,8 +1643,6 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       }
     });
 
-    // ✅ إصلاح: أجور المصنعية ونسبة الإشراف الهندسي (15%) وتكلفة النقل كانت كلها جزء من إجمالي
-    // شاشة الشفاطات والتهوية، لكن كانت غائبة تماماً عن المقايسة
     const ventLaborCost = Number(ventilation.laborCost ?? 4000);
     if (ventLaborCost > 0) {
       generated.push({
@@ -1700,8 +1689,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
     }
   }
 
-  // ✅ إصلاح: بند السلم الداخلي كان غائباً بالكامل عن المقايسة (لم يكن مولّداً على الإطلاق)
-  // 16. أعمال السلم الداخلي وتكسية الدرج والدرابزين
+  // 16. أعمال السلم الداخلي وتكسية الدرج والدرابزين (staircase)
   const staircase = finishing.staircase || {};
   if (staircase.enabled) {
     const stairsCount = Number(staircase.stairsCount || 0);
@@ -1717,7 +1705,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: stairsCount,
         unitPrice: stairMatRate,
         laborCost: stairsCount * stairLabRate,
-        description: "توريد وتركيب خامة تكسية درجات السلم الداخلي المعتمدة شاملة مصنعية التركيب والتجليس."
+        description: "توريد وتركيب خامة تكسية درجات السلم الداخلي المعتمدة شاملة مصنعية التركيب والتجليس الفني."
       });
     }
 
@@ -1734,7 +1722,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: handrailLength,
           unitPrice: handrailMatRate,
           laborCost: handrailLength * handrailLabRate,
-          description: "توريد وتركيب درابزين السلم الداخلي المعتمد شاملاً الحدادة والدهان والتركيب النهائي."
+          description: "توريد وتركيب درابزين السلم الداخلي المعتمد شاملاً الحدادة والدهان والتركيب النهائي بالموقع."
         });
       }
     }
@@ -1750,7 +1738,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: 1,
           unitPrice: stairTransport,
           laborCost: 0,
-          description: "تكلفة نقل وتوصيل خامات تكسية السلم والدرابزين لموقع الوحدة."
+          description: "تكلفة نقل وتوصيل خامات تكسية السلم والدرابزين لضمان سلامة القطع عند التشوين."
         });
       }
     }
@@ -1819,9 +1807,6 @@ export default function InitialEstimate() {
       const matTotal = items.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0);
       const labTotal = items.reduce((sum, item) => sum + Number(item.laborCost || 0), 0);
 
-      // ✅ إصلاح حرج: كان بيولّد رقم مقايسة عشوائي جديد ويكتب فوق الرقم الأصلي في *كل* عملية حفظ تلقائي،
-      // حتى لو المقايسة موجودة بالفعل من قبل! دلوقتي بيعيد استخدام نفس الرقم المحفوظ فعلياً،
-      // وبيولّد رقم جديد بس أول مرة (لما تتنشأ المقايسة فعلاً)
       const finalEstimateNumber = existingHeader?.estimate_number
         || project.estimateNumber
         || await generateSequentialCode("estimate_headers", "estimate_number", "EST");
@@ -1886,10 +1871,6 @@ export default function InitialEstimate() {
     if (detailedBOQ.length > 0 && calculatedTotal > 0 && !loading && !isHydrating) {
       const percentage = crmData.estimate?.engineeringPercentage ?? 15;
 
-      // ✅ إصلاح: البنود المحسوبة هنا (detailedBOQ) كانت بتتحفظ فى قاعدة البيانات مباشرة
-      // من غير ما تتمرر أبداً على crmData.estimate.items — فكروت الملخص (إجمالي الخامات/
-      // المصنعيات/الإجمالي النهائي) كانت بتفضل صفر للأبد لأنها بتقرا من مكان محدش بيحدثه.
-      // دلوقتي بنزامن البنود مع الحالة المشتركة، واللي بدورها بتعيد حساب الإجماليات تلقائياً.
       updateEstimate({ items: detailedBOQ });
 
       // 🌟 تفعيل بروتوكول صمام الأمان لمنع تجميد الشاشة حيوياً وتوجيه الحفظ
@@ -1957,7 +1938,8 @@ const getCategoryIconSvg = (category: string) => {
     ac: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m9-9H3m12-4l-6 8m0-8l6 8"></path></svg>`,
     waterproofing: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`,
     metalWorks: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>`,
-    ventilation: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path></svg>`
+    ventilation: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path></svg>`,
+    staircase: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2"></path></svg>`
   };
   return icons[category] || `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>`;
 };
@@ -2042,6 +2024,7 @@ export function PrintReportLayout({
     { name: "أعمال ألوميتال وتركيب شبابيك", days: "3 أيام", active: hasCategory("aluminum") },
     { name: "أعمال كريتال ومعادن", days: "4 أيام", active: hasCategory("metalWorks") },
     { name: "أعمال ديكورات وتجاليد", days: "5 أيام", active: hasCategory("decorations") },
+    { name: "أعمال السلالم الداخيلة", days: "5 أيام", active: hasCategory("staircase") },
     { name: "تشطيب نهائي كهرباء", days: "3 يوم", active: hasCategory("electricity") },
     { name: "تشطيب نهائي سباكة", days: "3 يوم", active: hasCategory("plumbing") },
     { name: "أعمال دهانات وتسليم", days: "10 أيام", active: hasCategory("paint") }
@@ -2244,7 +2227,7 @@ export function PrintReportLayout({
           <span>رحلة وجدول التنفيذ الإنشائي المخطط للمشروع (Stages Timeline Map):</span>
         </h3>
         
-        {/* شبكة المراحل الـ 20 */}
+        {/* شبكة المراحل الـ 21 */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-[9px] font-bold text-gray-500">
           {executionJourney.map((step, idx) => (
             <div 
