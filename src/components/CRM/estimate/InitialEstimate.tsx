@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
@@ -472,7 +473,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           white: true,
           unitPrice: Number(item.price || 0),
           laborCost: 0,
-          description: `توريد دهانات الوجه النهائي والألوان المعتمدة من شركة ${item.company} للشقة بالكامل.`
+          description: `توريد دهانات الوجه النهائي والألوان المعتمدة من شركة ${finishCompany} للشقة بالكامل.`
         });
       }
     });
@@ -925,7 +926,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
       generated.push({
         id: "gen-aluminum-transport",
         category: "aluminum",
-        name: "تكاليف نقل وتشوين قطاعات الألوميتال والزجاج بالدور يدوياً",
+        name: "تكاليف نقل وتتشوين قطاعات الألوميتال والزجاج بالدور يدوياً",
         unit: "مقطوعية",
         quantity: 1,
         unitPrice: rates.transportationPrice,
@@ -1430,66 +1431,133 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
     }
   }
 
-  // 11. أعمال تجهيزات التكييف وأنظمة الـ HVAC (ac)
+  // 11. أعمال تأسيس ومواسير التكييف (ac)
   const ac = finishing.ac || {};
   if (ac.enabled) {
-    const copperQty = Number(ac.copperQty || 0);
-    const copperPrice = Number(ac.copperPrice ?? 1500);
-    if (copperQty > 0) {
-      generated.push({
-        id: "gen-ac-copper",
-        category: "ac",
-        name: "توريد وتمديد مواسير نحاس جنوب أفريقي معتمد للتكييف",
-        unit: "م.ط",
-        quantity: copperQty,
-        unitPrice: copperPrice,
-        laborCost: 0,
-        description: "توريد وتمديد كابلات ومواسير النحاس الجنوب أفريقي الأصلي بالأقطار المناسبة شامل العزل والتركيب."
-      });
-    }
+    const spacesConfig = ac.spacesConfig || {};
+    const rates = ac.rates || {};
+    
+    const hasDrain = ac.hasDrain !== false;
+    const hasBracket = ac.hasBracket !== false;
+    const hasChiseling = ac.hasChiseling !== false;
 
-    const drainQty = Number(ac.drainQty || 0);
-    const drainPrice = Number(ac.drainPrice ?? 300);
-    if (drainQty > 0) {
-      generated.push({
-        id: "gen-ac-drain",
-        category: "ac",
-        name: "تأسيس خطوط صرف التكييف المدفونة ومستلزماتها",
-        unit: "نقطة",
-        quantity: drainQty,
-        unitPrice: drainPrice,
-        laborCost: 0,
-        description: "تأسيس مواسير صرف التكييف البلاستيكية ذات الضغط العالي وربطها مع أقرب نقطة صرف عمومية."
-      });
-    }
+    // حساب عدد النقاط النشطة (الغرف المفعل فيها التكييف)
+    const activeSpaces = Object.entries(spacesConfig).filter(([id, config]: [string, any]) => config && config.enabled);
+    const totalActivePoints = activeSpaces.length;
 
-    const bracketQty = Number(ac.bracketQty || 0);
-    const bracketPrice = Number(ac.bracketPrice ?? 450);
-    if (bracketQty > 0) {
-      generated.push({
-        id: "gen-ac-bracket",
-        category: "ac",
-        name: "كوابيل وحوامل حديدية معالجة ضد الصدأ للوحدات الخارجية",
-        unit: "كابولي",
-        quantity: bracketQty,
-        unitPrice: bracketPrice,
-        laborCost: 0,
-        description: "توريد وتركيب كوابيل حديدية ثقيلة مجلفنة ومدهونة إلكتروستاتيك لحمل الوحدات الخارجية للتكييف."
-      });
-    }
+    // 1. توليد بنود تمديد النحاس لكل فراغ مفعل على حدة
+    activeSpaces.forEach(([spaceId, config]: [string, any]) => {
+      const areaMeters = Number(config.area || 15);
+      const specCode = config.type;
+      const rate = Number(rates[specCode] || 0);
 
-    const acLabor = Number(ac.laborLumpSum || 0);
-    if (acLabor > 0) {
-      generated.push({
-        id: "gen-ac-labor",
-        category: "ac",
-        name: "مصنعيات تأسيس وتمديد شبكات التكييف بالموقع",
-        unit: "مقطوعية",
-        quantity: 1,
-        unitPrice: 0,
-        laborCost: acLabor,
-        description: "مصنعيات دفن وتثبيت مواسير النحاس بداخل الحوائط وحفر المسارات واختبار الضغط الميداني للشبكة."
-      });
+      if (areaMeters > 0) {
+        // استخلاص الاسم الودي للفراغ من الـ ID (فك تشفير الـ ID مثل ac_area_الريسبشن_الرئيسى)
+        let spaceFriendlyName = spaceId
+          .replace("ac_area_", "")
+          .replace(/_/g, " ");
+
+        // تحسين المسمى العربي ليظهر بشكل احترافي
+        if (spaceFriendlyName === "ac_garden") {
+          spaceFriendlyName = "الحديقة / الجاردن المفتوحة";
+        }
+
+        // البحث عن الاسم الأصلي للمواصفة الفنية في قاعدة البيانات أو التوصيف المعتمد
+        const specDb = dbSpecs.find((s: any) => s.code === specCode && s.category === 'ac');
+        const specName = specDb ? specDb.spec_name : `تأسيس مواسير تكييف (${specCode})`;
+
+        generated.push({
+          id: `gen-ac-space-${spaceId}`,
+          category: "ac",
+          name: `${specName} - لـ ${spaceFriendlyName}`,
+          unit: "م.ط",
+          quantity: areaMeters,
+          unitPrice: rate,
+          laborCost: 0,
+          description: `توريد وتأسيس وتمديد مواسير النحاس المعتمدة مع العازل لـ ${spaceFriendlyName} بطول تقديري ${areaMeters} متر طولي شامل فتح الحوائط والتنفيذ.`
+        });
+      }
+    });
+
+    // 2. توليد خدمات التأسيس التكميلية (صرف، كابولي، ترميم مسارات) مفرقة بالتفصيل كما في الشاشة الفاخرة!
+    if (totalActivePoints > 0) {
+      // أ. صرف مياه التكييف
+      if (hasDrain) {
+        const drainMat = Number(rates.drain_materials ?? 500);
+        const drainLab = Number(rates.drain_labor ?? 300);
+        generated.push({
+          id: "gen-ac-drain-mats",
+          category: "ac",
+          name: `خامات تأسيس شبكة صرف مياه التكييف لعدد (${totalActivePoints}) نقاط`,
+          unit: "نقطة",
+          quantity: totalActivePoints,
+          unitPrice: drainMat,
+          laborCost: 0,
+          description: `توريد خامات ومواسير الصرف الأبيض المعتمدة (الشريف/المنياوي) لعدد ${totalActivePoints} نقاط تكييف نشطة بالوحدة السكنية.`
+        });
+        generated.push({
+          id: "gen-ac-drain-labor",
+          category: "ac",
+          name: `أجور ومصنعيات تأسيس صرف التكييف لعدد (${totalActivePoints}) نقاط`,
+          unit: "نقطة",
+          quantity: totalActivePoints,
+          unitPrice: 0,
+          laborCost: totalActivePoints * drainLab,
+          description: `مصنعية تركيب واختبار شبكة صرف مياه التكييف وضبط الميول الهندسية لعدد ${totalActivePoints} نقاط.`
+        });
+      }
+
+      // ب. حامل خارجي للوحدات (كابولي)
+      if (hasBracket) {
+        const bracketMat = Number(rates.bracket_materials ?? 400);
+        const bracketLab = Number(rates.bracket_labor ?? 200);
+        generated.push({
+          id: "gen-ac-bracket-mats",
+          category: "ac",
+          name: `توريد كوابيل وحوامل حديدية ثقيلة لعدد (${totalActivePoints}) وحدات خارجية`,
+          unit: "كابولي",
+          quantity: totalActivePoints,
+          unitPrice: bracketMat,
+          laborCost: 0,
+          description: `توريد كوابيل وحوامل حديدية ثقيلة معالجة ومدهونة ضد الصدأ والظروف الجوية.`
+        });
+        generated.push({
+          id: "gen-ac-bracket-labor",
+          category: "ac",
+          name: `مصنعيات تركيب كوابيل الوحدات الخارجية لعدد (${totalActivePoints}) وحدات`,
+          unit: "كابولي",
+          quantity: totalActivePoints,
+          unitPrice: 0,
+          laborCost: totalActivePoints * bracketLab,
+          description: `مصنعيات تركيب وتثبيت الكوابيل على الواجهات الخارجية أو الأسطح لعدد ${totalActivePoints} تكييفات.`
+        });
+      }
+
+      // ج. أعمال الشق والترميم للمسارات (chiseling)
+      if (hasChiseling) {
+        const chiselMat = Number(rates.chiseling_materials ?? 100);
+        const chiselLab = Number(rates.chiseling_labor ?? 400);
+        generated.push({
+          id: "gen-ac-chiseling-mats",
+          category: "ac",
+          name: `خامات تقفيل وترميم مسارات تكييف لعدد (${totalActivePoints}) فراغات`,
+          unit: "مقطوعية",
+          quantity: totalActivePoints,
+          unitPrice: chiselMat,
+          laborCost: 0,
+          description: `مون أسمنتية ورمل ومواد ربط إنشائي لتقفيل المسارات المشقوقة بجدران الوحدة.`
+        });
+        generated.push({
+          id: "gen-ac-chiseling-labor",
+          category: "ac",
+          name: `مصنعيات شق الحوائط وترميم الفراغات لعدد (${totalActivePoints}) مسارات`,
+          unit: "مقطوعية",
+          quantity: totalActivePoints,
+          unitPrice: 0,
+          laborCost: totalActivePoints * chiselLab,
+          description: `مصنعية فتح الحوائط بالصاروخ لتمرير مواسير النحاس وصرف التكييف ثم الترميم بالكامل بميزان ليزر.`
+        });
+      }
     }
   }
 
@@ -1551,7 +1619,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: 1,
         unitPrice: 0,
         laborCost: wpLabor,
-        description: "أعمال تنظيف السطح، وعمل رقبة زجاجة، وتركيب العزل المائي واختباره بالغمر بالماء لمدة 48 ساعة."
+        description: "أعمال تنظيف السطح, وعمل رقبة زجاجة، وتركيب العزل المائي واختباره بالغمر بالماء لمدة 48 ساعة."
       });
     }
   }
@@ -2214,7 +2282,7 @@ export function PrintReportLayout({
         </div>
 
         <div className="p-4 bg-[#0B1B38] text-white rounded-xl text-center flex flex-col justify-center shadow-md">
-          <span className="text-[10px] text-[#C9A45D] font-black block mb-0.5">الإجمالي النهائي الكلي للتعاقد:</span>
+          <span className="text-[10px] text-[#C9A45D] font-black block mb-0.5">إجمالي النهائي الكلي للتعاقد:</span>
           <span className="font-mono font-black text-base text-[#D4AF37]">{grandTotal.toLocaleString('en-US')} ج.م</span>
         </div>
 
