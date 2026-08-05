@@ -860,12 +860,16 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                               onChange={(e) => handleWireRowEdit(row.id, { wireType: e.target.value })}
                               className="bg-[#020B1C] border border-[#1f2d4d] p-1 rounded-md text-white outline-none cursor-pointer focus:border-[#D4AF37]"
                             >
-                              <option>سلك السويدي معتمد م مقطع 1.5 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 2 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 3 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 4 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 6 مم</option>
-                              <option>سلك السويدي معتمد م مقطع 10 مم</option>
+                              <option>سلك السويدي معتمد مقطع 1.5 ملم</option>
+                              <option>سلك السويدي معتمد مقطع 2 ملم</option>
+                              <option>سلك السويدي معتمد مقطع 3 ملم</option>
+                              <option>سلك السويدي معتمد مقطع 4 ملم</option>
+                              <option>سلك السويدي معتمد مقطع 6 ملم</option>
+                              <option>سلك السويدي معتمد مقطع 10 ملم</option>
+                              <option>سلك سماعة 1 ملم السويدى</option>
+                              <option>سلك تليفون السويدى</option>
+                              <option>سلك نت كات 6 سويدى</option>
+                              <option>سلك دش</option>
                             </select>
                           </td>
                           <td className="py-3 text-center">
