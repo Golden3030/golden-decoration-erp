@@ -913,7 +913,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         const ALUM_FALLBACK_SECTORS: Record<string, number> = { "al-01": 3000, "al-02": 4500, "al-03": 6500 };
         let sectorPrice = rates.sectorOverrides?.[win.sectorUuid];
         if (sectorPrice === undefined) {
-          const dbSec = dbSpecs.find((s: any) => s.uuid === win.sectorUuid && s.category === 'aluminum');
+          const dbSec = dbSpecs.find((s: any) => (s.uuid || s.id) === win.sectorUuid && s.category === 'aluminum');
           sectorPrice = dbSec ? Number(dbSec.base_rate) : (ALUM_FALLBACK_SECTORS[win.sectorUuid] ?? 4500);
         }
 
@@ -928,7 +928,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           category: "aluminum",
           name: `${win.roomName} (${win.openingStyle === 'sliding' ? 'جرار فتح مزدوج' : 'مفصلي'})`,
           unit: "م²",
-          quantity: areaSize,
+          quantity: Number(areaSize.toFixed(2)),
           unitPrice: sectorPrice + glassPrice,
           laborCost: screenPrice, 
           description: `شباك ألوميتال دبل عازل تماماً للأتربة والضوضاء، باللون المختار من العميل: ${win.paintColor || 'أسود مطفي'}.`
