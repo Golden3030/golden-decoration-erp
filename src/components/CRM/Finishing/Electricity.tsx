@@ -731,7 +731,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
 
                   <div className="grid grid-cols-2 gap-3 pt-2">
                     {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
-                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-11 flex flex-col items-center justify-between gap-1 select-none">
+                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-16 flex flex-col items-center justify-between gap-1 select-none py-1.5">
                       <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية (قطعة)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ backboxCount: prev.backboxCount + 5 }))} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
@@ -740,7 +740,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       </div>
                     </div>
                     {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
-                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-11 flex flex-col items-center justify-between gap-1 select-none">
+                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-16 flex flex-col items-center justify-between gap-1 select-none py-1.5">
                       <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج.م)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
                         <button type="button" onClick={() => handleRateChange('backboxRate', (state.accessoriesRates.backboxRate ?? 8) + 1)} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
@@ -765,7 +765,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
 
                   <div className="grid grid-cols-2 gap-3 pt-2">
                     {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
-                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-11 flex flex-col items-center justify-between gap-1 select-none">
+                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-16 flex flex-col items-center justify-between gap-1 select-none py-1.5">
                       <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية (لفة)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ floorConduitCount: prev.floorConduitCount + 1 }))} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] transition-all cursor-pointer font-sans">+</button>
@@ -774,7 +774,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       </div>
                     </div>
                     {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
-                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-11 flex flex-col items-center justify-between gap-1 select-none">
+                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-16 flex flex-col items-center justify-between gap-1 select-none py-1.5">
                       <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج.م)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
                         <button type="button" onClick={() => handleRateChange('floorConduitRate', (state.accessoriesRates.floorConduitRate ?? 180) + 10)} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer font-sans">+</button>
@@ -799,7 +799,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
 
                   <div className="grid grid-cols-2 gap-3 pt-2">
                     {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
-                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-11 flex flex-col items-center justify-between gap-1 select-none">
+                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-16 flex flex-col items-center justify-between gap-1 select-none py-1.5">
                       <span className="text-[9px] text-gray-400 font-bold leading-none">الكمية (لفة)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
                         <button type="button" onClick={() => updateStateAndSave(prev => ({ wallConduitCount: prev.wallConduitCount + 1 }))} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer font-sans">+</button>
@@ -808,7 +808,7 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       </div>
                     </div>
                     {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
-                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-11 flex flex-col items-center justify-between gap-1 select-none">
+                    <div className="bg-[#020B1C] p-2 rounded-xl border border-[#1f2d4d] h-16 flex flex-col items-center justify-between gap-1 select-none py-1.5">
                       <span className="text-[9px] text-gray-400 font-bold leading-none">السعر (ج.م)</span>
                       <div className="flex items-center gap-1.5" dir="ltr">
                         <button type="button" onClick={() => handleRateChange('wallConduitRate', (state.accessoriesRates.wallConduitRate ?? 220) + 10)} className="w-6 h-6 rounded-full bg-[#07132a] border border-[#1f2d4d] text-xs font-bold flex items-center justify-center text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black transition-all cursor-pointer font-sans">+</button>
@@ -860,16 +860,12 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                               onChange={(e) => handleWireRowEdit(row.id, { wireType: e.target.value })}
                               className="bg-[#020B1C] border border-[#1f2d4d] p-1 rounded-md text-white outline-none cursor-pointer focus:border-[#D4AF37]"
                             >
-                              <option>سلك السويدي معتمد مقطع 1.5 ملم</option>
-                              <option>سلك السويدي معتمد مقطع 2 ملم</option>
-                              <option>سلك السويدي معتمد مقطع 3 ملم</option>
-                              <option>سلك السويدي معتمد مقطع 4 ملم</option>
-                              <option>سلك السويدي معتمد مقطع 6 ملم</option>
-                              <option>سلك السويدي معتمد مقطع 10 ملم</option>
-                              <option>سلك سماعة 1 ملم السويدى</option>
-                              <option>سلك تليفون السويدى</option>
-                              <option>سلك نت كات 6 سويدى</option>
-                              <option>سلك دش</option>
+                              <option>سلك السويدي معتمد م مقطع 1.5 مم</option>
+                              <option>سلك السويدي معتمد م مقطع 2 مم</option>
+                              <option>سلك السويدي معتمد م مقطع 3 مم</option>
+                              <option>سلك السويدي معتمد م مقطع 4 مم</option>
+                              <option>سلك السويدي معتمد م مقطع 6 مم</option>
+                              <option>سلك السويدي معتمد م مقطع 10 مم</option>
                             </select>
                           </td>
                           <td className="py-3 text-center">
@@ -976,9 +972,9 @@ export default function ElectricityTab({ projectId }: ElectricityTabProps) {
                       
                       {/* العداد h-11 مع الدواير w-6 h-6 بكسلياً طبقا للدستور */}
                       <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none">
-                        <button type="button" onClick={() => handleLowCurrentPanelChange(state.selectedLowCurrentPanelId)} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
+                        <button type="button" onClick={() => handleRateChange('lowCurrentPanelRate', (state.accessoriesRates.lowCurrentPanelRate ?? 1200) + 50)} className="w-7 h-7 rounded-lg bg-[#07132a] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-black font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">+</button>
                         <span className="text-base font-black text-[#D4AF37] font-mono">{(state.accessoriesRates.lowCurrentPanelRate ?? 1200).toLocaleString()} <span className="text-[10px] text-gray-500 font-normal">ج.م</span></span>
-                        <button type="button" onClick={() => handleLowCurrentPanelChange(state.selectedLowCurrentPanelId)} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
+                        <button type="button" onClick={() => handleRateChange('lowCurrentPanelRate', Math.max(0, (state.accessoriesRates.lowCurrentPanelRate ?? 1200) - 50))} className="w-7 h-7 rounded-lg bg-[#020B1C] border border-[#1f2d4d] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 font-bold text-sm transition-all cursor-pointer flex items-center justify-center select-none font-sans">-</button>
                       </div>
                     </div>
                   )}
