@@ -245,7 +245,7 @@ export default function Masonry({ projectId }: MasonryProps) {
             onChange={(e) => setNotesInput(e.target.value)}
             onBlur={handleNotesBlur}
             placeholder="اكتب مواصفات الطوب المستخدم (طفلي أو أسمنتي)، مواصفات تسليح المباني بالكانات الحديدية، ونسب خلط الأسمنت لكل متر رمل بالمونة..."
-            className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-lg text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none text-base leading-relaxed text-right font-semibold"
+            className="w-full h-24 p-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] hover:border-[#D4AF37]/50 focus:border-[#D4AF37] text-[#F0E6D2] placeholder-gray-500 outline-none transition-all resize-none text-base leading-relaxed text-right font-semibold"
           />
           <div className="flex justify-between items-center text-xs text-gray-500 px-1">
             <span>يتم الحفظ تلقائياً بمجرد الخروج من حقل الكتابة</span>
@@ -298,14 +298,14 @@ function MasonryCard({ title, icon, unit, value, onPlus, onMinus, priceValue, on
       </div>
       
       {/* 🎯 تعديل لعدادات الكميات ليتطابق بكسلياً بالدواير الرشيقة w-6 h-6 وارتفاع h-11 مع دستور الـ ERP */}
-      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none hover:border-[#D4AF37]/50 transition-all select-none" dir="ltr">
+      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none" dir="ltr">
         <button 
           type="button"
           disabled={!enabled}
           onClick={onMinus}
           className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
         >
-          <Minus size={12} className="stroke-[3]" />
+          <Minus size={12} className="stroke-3" />
         </button>
         <div className="text-center font-bold">
            <span className="text-sm font-black text-[#D4AF37] font-mono leading-none">{value.toLocaleString()}</span>
@@ -317,7 +317,7 @@ function MasonryCard({ title, icon, unit, value, onPlus, onMinus, priceValue, on
           onClick={onPlus}
           className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
         >
-          <Plus size={12} className="stroke-[3]" />
+          <Plus size={12} className="stroke-3" />
         </button>
       </div>
 
@@ -332,7 +332,7 @@ function MasonryCard({ title, icon, unit, value, onPlus, onMinus, priceValue, on
                 onClick={onPriceMinus}
                 className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
               >
-                <Minus size={12} className="stroke-[3]" />
+                <Minus size={12} className="stroke-3" />
               </button>
               <span className="text-xs font-bold text-[#D4AF37] font-mono">{priceValue} <span className="text-[8px] text-gray-500">ج</span></span>
               <button 
@@ -341,7 +341,7 @@ function MasonryCard({ title, icon, unit, value, onPlus, onMinus, priceValue, on
                 onClick={onPricePlus}
                 className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
               >
-                <Plus size={12} className="stroke-[3]" />
+                <Plus size={12} className="stroke-3" />
               </button>
            </div>
         </div>
