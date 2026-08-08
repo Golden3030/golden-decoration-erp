@@ -116,6 +116,15 @@ export const DEFAULT_FINISHING_SCHEMA = {
     distribution: "",
     notes: ""
   },
+  // ✅ إصلاح جوهري: التصنيفات دي كانت غائبة تماماً من المخطط الافتراضي، فكانت بيانات هذه
+  // الأقسام المحفوظة فعلياً في قاعدة البيانات بتتفقد بالكامل عند أي تحديث/إعادة تحميل للصفحة
+  // (loadProjectData كانت بتتجاهلها لأنها مش موجودة كمفتاح ابتدائي)، رغم إنها متسجلة صح فعلياً.
+  staircase: {},
+  masonry: {},
+  archMod: {},
+  ventilation: {},
+  waterproofing: {},
+  metalWorks: {},
 };
 
 export function CRMProvider({

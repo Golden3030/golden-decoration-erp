@@ -340,7 +340,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                             onClick={() => handlePriceOverride(item.uuid, Math.max(0, activeRate - 100))}
                             className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                           >
-                            <Minus size={12} className="stroke-[3]" />
+                            <Minus size={12} className="stroke-3" />
                           </button>
                           <div className="flex items-center justify-center font-mono">
                             <input 
@@ -358,16 +358,16 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                             onClick={() => handlePriceOverride(item.uuid, activeRate + 100)}
                             className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                           >
-                            <Plus size={12} className="stroke-[3]" />
+                            <Plus size={12} className="stroke-3" />
                           </button>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-center gap-3 border-t md:border-t-0 md:border-r border-[#1f2d4d]/60 pt-3 md:pt-0 md:pr-6 min-w-[140px] w-full md:w-auto">
+                    <div className="flex flex-col items-center gap-3 border-t md:border-t-0 md:border-r border-[#1f2d4d]/60 pt-3 md:pt-0 md:pr-6 min-w-35 w-full md:w-auto">
                       {/* عداد الكمية للباب الرئيسي */}
                        <span className="text-[10px] text-white block font-bold mt-1.5"> الكمية:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none min-w-[120px]" dir="ltr" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none min-w-30" dir="ltr" onClick={(e) => e.stopPropagation()}>
                         <button 
                           type="button" 
                           disabled={!state.enabled}
@@ -375,7 +375,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                           className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                         >
                           
-                          <Minus size={12} className="stroke-[3]" />
+                          <Minus size={12} className="stroke-3" />
                         </button>
                         
                         <span className="text-sm font-black text-white font-mono">{item.quantity || 0}</span>
@@ -385,7 +385,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                           onClick={() => handleQuantityChange(item.uuid, 'increment')}
                           className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                         >
-                          <Plus size={12} className="stroke-[3]" />
+                          <Plus size={12} className="stroke-3" />
                         </button>
                       </div>
                       <div className="text-center select-none">
@@ -439,7 +439,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                             onClick={() => handlePriceOverride(item.uuid, Math.max(0, activeRate - 500))}
                             className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                           >
-                            <Minus size={12} className="stroke-[3]" />
+                            <Minus size={12} className="stroke-3" />
                           </button>
                           <div className="flex items-center justify-center font-mono">
                             <input 
@@ -457,23 +457,23 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                             onClick={() => handlePriceOverride(item.uuid, activeRate + 500)}
                             className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                           >
-                            <Plus size={12} className="stroke-[3]" />
+                            <Plus size={12} className="stroke-3" />
                           </button>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-center gap-3 border-t md:border-t-0 md:border-r border-[#1f2d4d]/60 pt-3 md:pt-0 md:pr-6 min-w-[140px] w-full md:w-auto">
+                    <div className="flex flex-col items-center gap-3 border-t md:border-t-0 md:border-r border-[#1f2d4d]/60 pt-3 md:pt-0 md:pr-6 min-w-35 w-full md:w-auto">
                       {/* عداد الكمية للغرف */}
                       <span className="text-[10px] text-white block font-bold mt-1.5"> الكمية:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none min-w-[120px]" dir="ltr" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl h-11 px-2 hover:border-[#D4AF37]/50 transition-all select-none min-w-30" dir="ltr" onClick={(e) => e.stopPropagation()}>
                         <button 
                           type="button" 
                           disabled={!state.enabled}
                           onClick={() => handleQuantityChange(item.uuid, 'decrement')}
                           className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                         >
-                          <Minus size={12} className="stroke-[3]" />
+                          <Minus size={12} className="stroke-3" />
                         </button>
                         <span className="text-sm font-black text-white font-mono">{item.quantity || 0}</span>
                         <button 
@@ -482,7 +482,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                           onClick={() => handleQuantityChange(item.uuid, 'increment')}
                           className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                         >
-                          <Plus size={12} className="stroke-[3]" />
+                          <Plus size={12} className="stroke-3" />
                         </button>
                       </div>
                       <div className="text-center select-none">
@@ -527,10 +527,10 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
               }`}
             >
               <div className="flex items-center gap-3 text-right">
-                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
                   state.hasInstallationLabor && state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-500'
                 }`}>
-                  {state.hasInstallationLabor && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-[3]" />}
+                  {state.hasInstallationLabor && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-3" />}
                 </div>
                 <div className="text-right">
                   <span className="text-sm font-bold text-[#F0E6D2] block ">مصنعية تركيب الأبواب والنجارة</span>
@@ -546,7 +546,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     onClick={() => handleAccessoryRateChange('installationLaborPrice', Math.max(0, (state.accessoriesRates.installationLaborPrice ?? 600) - 50))}
                     className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                   >
-                    <Minus size={12} className="stroke-[3]" />
+                    <Minus size={12} className="stroke-3" />
                   </button>
                   <span className="text-xs font-bold text-white font-mono">{(state.accessoriesRates.installationLaborPrice ?? 600)} <span className="text-[8px] text-gray-500">ج.م</span></span>
                   <button 
@@ -555,11 +555,11 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     onClick={() => handleAccessoryRateChange('installationLaborPrice', (state.accessoriesRates.installationLaborPrice ?? 600) + 50)}
                     className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                   >
-                    <Plus size={12} className="stroke-[3]" />
+                    <Plus size={12} className="stroke-3" />
                   </button>
                 </div>
 
-                <div className="text-left min-w-[100px] border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
+                <div className="text-left min-w-25 border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
                   <span className="text-[9px] text-gray-500 block">التكلفة:</span>
                   <span className="text-sm font-black text-[#D4AF37] font-mono">{totalInstallationLaborCost.toLocaleString('en-US')} ج.م</span>
                 </div>
@@ -580,10 +580,10 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
               }`}
             >
               <div className="flex items-center gap-3 text-right">
-                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
                   state.hasHinges && state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-500'
                 }`}>
-                  {state.hasHinges && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-[3]" />}
+                  {state.hasHinges && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-3" />}
                 </div>
                 <div className="text-right">
                   <span className="text-sm font-bold text-[#F0E6D2] block">المفصلات</span>
@@ -599,7 +599,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     onClick={() => handleAccessoryRateChange('hingePrice', Math.max(0, (state.accessoriesRates.hingePrice ?? 120) - 10))}
                     className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                   >
-                    <Minus size={12} className="stroke-[3]" />
+                    <Minus size={12} className="stroke-3" />
                   </button>
                   <span className="text-xs font-bold text-white font-mono">{(state.accessoriesRates.hingePrice ?? 120)} <span className="text-[8px] text-gray-500">ج.م</span></span>
                   <button 
@@ -608,11 +608,11 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     onClick={() => handleAccessoryRateChange('hingePrice', (state.accessoriesRates.hingePrice ?? 120) + 10)}
                     className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                   >
-                    <Plus size={12} className="stroke-[3]" />
+                    <Plus size={12} className="stroke-3" />
                   </button>
                 </div>
 
-                <div className="text-left min-w-[100px] border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
+                <div className="text-left min-w-25 border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
                   <span className="text-[9px] text-gray-500 block">التكلفة:</span>
                   <span className="text-sm font-black text-[#D4AF37] font-mono">{totalHingesCost.toLocaleString('en-US')} ج.م</span>
                 </div>
@@ -633,10 +633,10 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
               }`}
             >
               <div className="flex items-center gap-3 text-right">
-                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
                   state.hasFrames && state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-500'
                 }`}>
-                  {state.hasFrames && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-[3]" />}
+                  {state.hasFrames && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-3" />}
                 </div>
                 <div className="text-right">
                   <span className="text-sm font-bold text-[#F0E6D2] block">حلوق خشب  </span>
@@ -652,7 +652,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     onClick={() => handleAccessoryRateChange('framePrice', Math.max(0, (state.accessoriesRates.framePrice ?? 800) - 50))}
                     className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                   >
-                    <Minus size={12} className="stroke-[3]" />
+                    <Minus size={12} className="stroke-3" />
                   </button>
                   <span className="text-xs font-bold text-white font-mono">{(state.accessoriesRates.framePrice ?? 800)} <span className="text-[8px] text-gray-500">ج.م</span></span>
                   <button 
@@ -661,11 +661,11 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     onClick={() => handleAccessoryRateChange('framePrice', (state.accessoriesRates.framePrice ?? 800) + 50)}
                     className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                   >
-                    <Plus size={12} className="stroke-[3]" />
+                    <Plus size={12} className="stroke-3" />
                   </button>
                 </div>
 
-                <div className="text-left min-w-[100px] border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
+                <div className="text-left min-w-25 border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
                   <span className="text-[9px] text-gray-500 block">التكلفة:</span>
                   <span className="text-sm font-black text-[#D4AF37] font-mono">{totalFramesCost.toLocaleString('en-US')} ج.م</span>
                 </div>
@@ -686,10 +686,10 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
               }`}
             >
               <div className="flex items-center gap-3 text-right">
-                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
                   state.hasArchitraves && state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-500'
                 }`}>
-                  {state.hasArchitraves && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-[3]" />}
+                  {state.hasArchitraves && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-3" />}
                 </div>
                 <div className="text-right">
                   <span className="text-sm font-bold text-[#F0E6D2] block">برور تغطية الحلوق للوجهين</span>
@@ -705,7 +705,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     onClick={() => handleAccessoryRateChange('architravePrice', Math.max(0, (state.accessoriesRates.architravePrice ?? 450) - 50))}
                     className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                   >
-                    <Minus size={12} className="stroke-[3]" />
+                    <Minus size={12} className="stroke-3" />
                   </button>
                   <span className="text-xs font-bold text-white font-mono">{(state.accessoriesRates.architravePrice ?? 450)} <span className="text-[8px] text-gray-500">ج.م</span></span>
                   <button 
@@ -714,11 +714,11 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     onClick={() => handleAccessoryRateChange('architravePrice', (state.accessoriesRates.architravePrice ?? 450) + 50)}
                     className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                   >
-                    <Plus size={12} className="stroke-[3]" />
+                    <Plus size={12} className="stroke-3" />
                   </button>
                 </div>
 
-                <div className="text-left min-w-[100px] border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
+                <div className="text-left min-w-25 border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
                   <span className="text-[9px] text-gray-500 block">التكلفة:</span>
                   <span className="text-sm font-black text-[#D4AF37] font-mono">{totalArchitravesCost.toLocaleString('en-US')} ج.م</span>
                 </div>
@@ -739,10 +739,10 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
               }`}
             >
               <div className="flex items-center gap-3 text-right">
-                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
                   state.hasHandles && state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-500'
                 }`}>
-                  {state.hasHandles && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-[3]" />}
+                  {state.hasHandles && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-3" />}
                 </div>
                 <div className="text-right">
                   <span className="text-sm font-bold text-[#F0E6D2] block">أكر ومقابض </span>
@@ -758,7 +758,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     onClick={() => handleAccessoryRateChange('handlePrice', Math.max(0, (state.accessoriesRates.handlePrice ?? 500) - 50))}
                     className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                   >
-                    <Minus size={12} className="stroke-[3]" />
+                    <Minus size={12} className="stroke-3" />
                   </button>
                   <span className="text-xs font-bold text-white font-mono">{(state.accessoriesRates.handlePrice ?? 500)} <span className="text-[8px] text-gray-500">ج.م</span></span>
                   <button 
@@ -767,11 +767,11 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     onClick={() => handleAccessoryRateChange('handlePrice', (state.accessoriesRates.handlePrice ?? 500) + 50)}
                     className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                   >
-                    <Plus size={12} className="stroke-[3]" />
+                    <Plus size={12} className="stroke-3" />
                   </button>
                 </div>
 
-                <div className="text-left min-w-[100px] border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
+                <div className="text-left min-w-25 border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
                   <span className="text-[9px] text-gray-500 block">التكلفة:</span>
                   <span className="text-sm font-black text-[#D4AF37] font-mono">{totalHandlesCost.toLocaleString('en-US')} ج.م</span>
                 </div>
@@ -792,10 +792,10 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
               }`}
             >
               <div className="flex items-center gap-3 text-right">
-                <div className={`w-5 h-5 rounded-full border flex items-center justify-center flex-shrink-0 ${
+                <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${
                   state.hasLocks && state.enabled ? 'border-[#D4AF37] bg-[#D4AF37]' : 'border-gray-500'
                 }`}>
-                  {state.hasLocks && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-[3]" />}
+                  {state.hasLocks && state.enabled && <Check className="w-3 h-3 text-[#020B1C] stroke-3" />}
                 </div>
                 <div className="text-right">
                   <span className="text-sm font-bold text-[#F0E6D2] block">كوالين</span>
@@ -811,7 +811,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     onClick={() => handleAccessoryRateChange('lockPrice', Math.max(0, (state.accessoriesRates.lockPrice ?? 650) - 50))}
                     className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                   >
-                    <Minus size={12} className="stroke-[3]" />
+                    <Minus size={12} className="stroke-3" />
                   </button>
                   <span className="text-xs font-bold text-white font-mono">{(state.accessoriesRates.lockPrice ?? 650)} <span className="text-[8px] text-gray-500">ج.م</span></span>
                   <button 
@@ -820,11 +820,11 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     onClick={() => handleAccessoryRateChange('lockPrice', (state.accessoriesRates.lockPrice ?? 650) + 50)}
                     className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                   >
-                    <Plus size={12} className="stroke-[3]" />
+                    <Plus size={12} className="stroke-3" />
                   </button>
                 </div>
 
-                <div className="text-left min-w-[100px] border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
+                <div className="text-left min-w-25 border-r border-[#1f2d4d]/40 pr-4 hidden sm:block">
                   <span className="text-[9px] text-gray-500 block">التكلفة:</span>
                   <span className="text-sm font-black text-[#D4AF37] font-mono">{totalLocksCost.toLocaleString('en-US')} ج.م</span>
                 </div>
@@ -852,7 +852,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
           </button>
 
           {state.customWorks.length === 0 ? (
-            <div className="text-center p-6 bg-[#020B1C]/40 rounded-xl border border-[#1f2d4d]/40 text-right select-none">
+            <div className="text-center p-6 bg-[#020B1C]/40 rounded-xl border border-[#1f2d4d]/40 select-none">
               <p className="text-xs text-gray-500">لا توجد أعمال تجاليد أو غرف ملابس مخصصة مضافة حالياً بمقايسة هذا العميل</p>
             </div>
           ) : (
@@ -864,7 +864,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                 >
                   <div className="flex justify-between items-center border-b border-[#1f2d4d]/30 pb-3">
                     <div className="flex items-center gap-2 flex-1 pl-2 text-right">
-                      <span className="px-2 py-0.5 rounded text-[10px] bg-[#D4AF37]/10 text-[#D4AF37] font-semibold border border-[#D4AF37]/20 flex-shrink-0 font-mono">
+                      <span className="px-2 py-0.5 rounded text-[10px] bg-[#D4AF37]/10 text-[#D4AF37] font-semibold border border-[#D4AF37]/20 shrink-0 font-mono">
                         بند مخصص
                       </span>
                       <input 
@@ -879,7 +879,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                     <button
                       type="button"
                       onClick={() => handleRemoveCustomWork(work.id)}
-                      className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer flex-shrink-0"
+                      className="p-2 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-xl transition-all cursor-pointer shrink-0"
                     >
                       <Trash2 className="w-5 h-5" />
                     </button>
@@ -897,7 +897,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                           onClick={() => handleCustomWorkEdit(work.id, { quantity: Math.max(1, (work.quantity ?? 1) - 1) })}
                           className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                         >
-                          <Minus size={12} className="stroke-[3]" />
+                          <Minus size={12} className="stroke-3" />
                         </button>
                         <span className="text-xs font-black text-[#D4AF37] font-mono">{work.quantity ?? 1}</span>
                         <button
@@ -906,7 +906,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                           onClick={() => handleCustomWorkEdit(work.id, { quantity: (work.quantity ?? 1) + 1 })}
                           className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                         >
-                          <Plus size={12} className="stroke-[3]" />
+                          <Plus size={12} className="stroke-3" />
                         </button>
                       </div>
                     </div>
@@ -936,7 +936,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                           onClick={() => handleCustomWorkEdit(work.id, { rate: Math.max(0, (work.rate ?? 0) - 500) })}
                           className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                         >
-                          <Minus size={12} className="stroke-[3]" />
+                          <Minus size={12} className="stroke-3" />
                         </button>
                         <div className="flex items-center justify-center font-mono">
                           <input 
@@ -954,7 +954,7 @@ export default function DoorsTab({ projectId }: DoorsTabProps) {
                           onClick={() => handleCustomWorkEdit(work.id, { rate: (work.rate ?? 0) + 500 })}
                           className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                         >
-                          <Plus size={12} className="stroke-[3]" />
+                          <Plus size={12} className="stroke-3" />
                         </button>
                       </div>
                     </div>
