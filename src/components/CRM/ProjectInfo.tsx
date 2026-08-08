@@ -39,6 +39,10 @@ export default function ProjectInfo({
   // من غير ما المهندس يعمل التسعير الفعلي فعلاً. دلوقتي مقفولة على المهندس والإدارة بس.
   const canActAsEngineer = ["admin", "owner", "manager", "engineer"].includes(String(userRole || "").toLowerCase());
 
+  // ✅ إصلاح: إرسال المقايسة للعميل واتساب كان متاح لأي حد شايف الصفحة (حتى المهندس نفسه لحظة
+  // ما يصدر المقايسة)، رغم إن التواصل المباشر مع العميل من مسؤولية المبيعات مش المهندس.
+  const canSendToClient = ["admin", "owner", "manager", "sales", "sales_manager"].includes(String(userRole || "").toLowerCase());
+
   const project = crmData.project || {};
 
   // حالات الشاشة المنبثقة لتسجيل تعديلات العميل
@@ -353,15 +357,17 @@ export default function ProjectInfo({
               : "🔒 مركز مشاركة المقايسة (مغلق ريثما تصدر المقايسة المبدئية)"}
           </span>
           {!isShareActive && <span className="text-[8px] text-gray-500 font-bold">بانتظار إنهاء التسعير...</span>}
+          {isShareActive && !canSendToClient && <span className="text-[8px] text-amber-500 font-bold">الإرسال للعميل من مسؤولية المبيعات</span>}
         </div>
         
         <div className="flex gap-3 justify-end w-full">
-          {/* أ. زر إرسال المقايسة واتساب ذكي بتنسيق إمبراطوري رائع */}
+          {/* أ. زر إرسال المقايسة واتساب ذكي بتنسيق إمبراطوري رائع — مقفول على المبيعات/الإدارة فقط */}
           <button
             type="button" 
-            disabled={!isShareActive}
+            disabled={!isShareActive || !canSendToClient}
             onClick={(e) => handleSendWhatsApp(e)}
-            className="flex-1 h-10 rounded-xl bg-emerald-950/40 border border-emerald-500/50 hover:bg-emerald-500 hover:text-black text-emerald-400 text-xs font-black cursor-pointer transition flex items-center justify-center gap-1.5 disabled:opacity-40"
+            title={!canSendToClient ? "إرسال المقايسة للعميل من مسؤولية المبيعات وليس المهندس" : undefined}
+            className="flex-1 h-10 rounded-xl bg-emerald-950/40 border border-emerald-500/50 hover:bg-emerald-500 hover:text-black text-emerald-400 text-xs font-black cursor-pointer transition flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Share2 className="w-4 h-4 animate-bounce" />
             <span>إرسال واتساب للعميل</span>

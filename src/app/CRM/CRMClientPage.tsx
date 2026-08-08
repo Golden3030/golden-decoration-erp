@@ -403,7 +403,9 @@ export default function CRMPage() {
       // تحديث قائمة المشاريع المحلية فورياً
       setProjectsList(prev => prev.map(p => p.id === projectId ? { ...p, workflow_stage: newStage } : p));
 
-      await loadAllCRMData();
+      // ✅ إصلاح: كان بيستدعي loadAllCRMData() هنا، وده بيعمل شاشة تحميل كاملة بتخفي كل
+      // تفاصيل المشروع المفتوح مؤقتاً (زي ما الصفحة اتعملها ريفريش)، رغم إن التحديث المحلي
+      // فوق (setCRMData / setProjectsList) كافي تماماً وبيعكس التغيير فوراً من غير أي قطع بصري.
     } catch (err: any) {
       console.error("خطأ في تحديث مرحلة سير العمل والعميل الموحد:", err);
       alert("حدث خطأ أثناء تحديث حالة المقايسة: " + err.message);
@@ -985,7 +987,7 @@ export default function CRMPage() {
 
           {isSearchOpen && (
             <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in select-none">
-              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 md:p-8 w-full max-w-4xl shadow-2xl relative space-y-4">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-4xl p-6 md:p-8 w-full max-w-4xl shadow-2xl relative space-y-4">
                 <div className="flex justify-between items-center border-b border-[#243556] pb-3 mb-4 select-none">
                   <h3 className="text-[#D4AF37] font-bold text-lg flex items-center gap-1.5">
                     📂 أداة البحث الموحد للمشاريع والعملاء
@@ -1005,7 +1007,7 @@ export default function CRMPage() {
 
           {isAddCustomerOpen && (
             <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-fade-in select-none">
-              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 md:p-8 w-full max-w-lg shadow-2xl relative space-y-4 text-right text-white">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-4xl p-6 md:p-8 w-full max-w-lg shadow-2xl relative space-y-4 text-right text-white">
                 <div className="flex justify-between items-center border-b border-[#243556] pb-3 mb-4">
                   <h3 className="text-[#D4AF37] font-bold text-lg flex items-center gap-1.5">
                     ➕ نموذج إضافة عميل جديد للـ CRM
@@ -1121,10 +1123,10 @@ export default function CRMPage() {
                     type="button" 
                     onClick={(e) => { e.preventDefault(); handleInsertNewCustomer(); }}
                     disabled={saving}
-                    className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
+                    className="px-6 h-11 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
                   >
                     {saving ? "جاري الحفظ..." : "💾 تسجيل العميل بالـ CRM"}
-                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                   </button>
                 </div>
               </div>
@@ -1132,7 +1134,7 @@ export default function CRMPage() {
           )}
 
           {isManager && (
-            <div className="bg-[#07132a] border border-[#D4AF37]/20 p-4 rounded-[2rem] flex items-center gap-3">
+            <div className="bg-[#07132a] border border-[#D4AF37]/20 p-4 rounded-4xl flex items-center gap-3">
               <label className="text-gray-300 text-sm whitespace-nowrap">تصفية بحسب مسؤول المبيعات:</label>
               <select
                 value={selectedSalesFilter}
@@ -1170,7 +1172,7 @@ export default function CRMPage() {
                     <div
                       key={card.id}
                       onClick={() => setSelectedStatus(card.id)}
-                      className={`p-4 rounded-2xl bg-[#07132a] border transition-all duration-300 transform hover:translate-y-[-4px] hover:shadow-2xl flex flex-col justify-between cursor-pointer select-none ${
+                      className={`p-4 rounded-2xl bg-[#07132a] border transition-all duration-300 transform hover:translate-y-1 hover:shadow-2xl flex flex-col justify-between cursor-pointer select-none ${
                         isCurrent 
                           ? "border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.25)] bg-[#0b1b3d]" 
                           : "border-[#D4AF37]/15 hover:border-[#D4AF37]/45"
@@ -1190,7 +1192,7 @@ export default function CRMPage() {
                 })}
               </div>
 
-              <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-[2rem] overflow-hidden shadow-2xl transition duration-300">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37]/50 rounded-4xl overflow-hidden shadow-2xl transition duration-300">
                 <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d] flex justify-between items-center select-none">
                   <h3 className="text-[#D4AF37] text-md md:text-md font-bold">
                     نتائج التصفية والفرز الجاري للعملاء والمبيعات ({filteredCustomers.length})
@@ -1200,7 +1202,7 @@ export default function CRMPage() {
                     <button
                       type="button"
                       onClick={() => setIsAddCustomerOpen(true)}
-                      className="w-11 h-11 rounded-xl bg-black/60 border-2 border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] flex items-center justify-center cursor-pointer transition-all duration-300 hover:translate-y-[-2px] shadow-[0_0_10px_rgba(212,175,55,0.15)] hover:shadow-[0_0_20px_rgba(212,175,55,0.45)] shrink-0"
+                      className="w-11 h-11 rounded-xl bg-black/60 border-2 border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] flex items-center justify-center cursor-pointer transition-all duration-300 hover:translate-y-0.5 shadow-[0_0_10px_rgba(212,175,55,0.15)] hover:shadow-[0_0_20px_rgba(212,175,55,0.45)] shrink-0"
                       title="تسجيل عميل جديد بالـ CRM"
                     >
                       <UserPlus size={16} strokeWidth={2.2} />
@@ -1209,7 +1211,7 @@ export default function CRMPage() {
                     <button
                       type="button"
                       onClick={() => setIsSearchOpen(true)}
-                      className="w-11 h-11 rounded-xl bg-black/60 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-500 hover:text-black flex items-center justify-center cursor-pointer transition-all duration-300 hover:translate-y-[-2px] shadow-[0_0_10px_rgba(16,185,129,0.15)] hover:shadow-[0_0_20px_rgba(16,185,129,0.45)] shrink-0"
+                      className="w-11 h-11 rounded-xl bg-black/60 border border-emerald-500/50 text-emerald-400 hover:bg-emerald-500 hover:text-black flex items-center justify-center cursor-pointer transition-all duration-300 hover:translate-y-0.5 shadow-[0_0_10px_rgba(16,185,129,0.15)] hover:shadow-[0_0_20px_rgba(16,185,129,0.45)] shrink-0"
                       title="البحث الاستعلام الشامل"
                     >
                       <Search size={16} strokeWidth={2.2} />
@@ -1220,7 +1222,7 @@ export default function CRMPage() {
                 {/* تفعيل جدار التمرير المذهب وحظر التداخل بـ whitespace-nowrap و min-w-[850px] بالجدول لمنع القص والتقاطع كلياً */}
                 <div className="overflow-x-auto max-h-56 overflow-y-auto pr-1">
                   {filteredCustomers.length > 0 ? (
-                    <table className="w-full text-right table-auto min-w-[850px] premium-crm-table">
+                    <table className="w-full text-right table-auto min-w-212.5 premium-crm-table">
                       <thead>
                         <tr className="whitespace-nowrap select-none">
                           <th>كود العميل</th>
@@ -1367,9 +1369,9 @@ export default function CRMPage() {
               </div>
 
               {/* حاوية الحصر والمساحات الميدانية للغرف والريسبشن */}
-              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 shadow-2xl space-y-5">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-4xl p-6 shadow-2xl space-y-5">
                 <p className="text-[#D4AF37] font-bold flex items-center gap-2 text-xl border-b border-[#D4AF37]/20 pb-3 select-none">
-                  <svg className="w-6 h-6 stroke-current fill-none stroke-[2] animate-pulse" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <svg className="w-6 h-6 stroke-current fill-none stroke-2 animate-pulse" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <rect x="4" y="4" width="16" height="16" rx="2" />
                     <rect x="9" y="9" width="6" height="6" rx="1" />
                     <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 15h3M1 9h3M1 15h3" />
@@ -1396,9 +1398,9 @@ export default function CRMPage() {
                     
                     <div className="flex items-center justify-between relative mt-4 px-2">
                       {/* line connecting nodes */}
-                      <div className="absolute top-[18px] left-4 right-4 h-0.5 bg-[#1f2d4d] -z-0" />
+                      <div className="absolute top-4.5 left-4 right-4 h-0.5 bg-[#1f2d4d] z-0" />
                       <div 
-                        className="absolute top-[18px] right-4 h-0.5 bg-[#D4AF37] -z-0 transition-all duration-500" 
+                        className="absolute top-4.5 right-4 h-0.5 bg-[#D4AF37] z-0 transition-all duration-500" 
                         style={{ width: `${(currentActiveStageIndex / (workflowStages.length - 1)) * 100}%` }}
                       />
 
@@ -1417,7 +1419,7 @@ export default function CRMPage() {
                               }`}
                               title={stage.label}
                             >
-                              {isCompleted ? <Check size={14} className="stroke-[3]" /> : <span>{stage.icon}</span>}
+                              {isCompleted ? <Check size={14} className="stroke-3" /> : <span>{stage.icon}</span>}
                             </div>
                             <span className={`text-[9px] mt-2 font-black tracking-tighter transition-colors ${isActive ? 'text-[#D4AF37]' : 'text-gray-500'}`}>
                               {stage.label}
@@ -1436,7 +1438,7 @@ export default function CRMPage() {
                         <p className="text-gray-400 text-[10px] mt-1">تخصيص مساحة اللاندسكيب للوحدة الأرضية:</p>
                       </div>
                       <div className="w-8 h-8 rounded-lg bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] flex items-center justify-center shrink-0">
-                        <svg className="w-4 h-4 stroke-current fill-none stroke-[2]" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <svg className="w-4 h-4 stroke-current fill-none stroke-2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                           <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
                           <polyline points="9 22 9 12 15 12 15 22" />
                         </svg>
@@ -1462,10 +1464,10 @@ export default function CRMPage() {
                           }}
                           className="w-5 h-5 bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white rounded-full flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 disabled:opacity-40"
                         >
-                          <Minus size={10} className="stroke-[3]" />
+                          <Minus size={10} className="stroke-3" />
                         </button>
                         
-                        <span className="text-[#D4AF37] font-black font-mono text-xs min-w-[18px] text-center">
+                        <span className="text-[#D4AF37] font-black font-mono text-xs min-w-4.5 text-center">
                           {crmData.project?.gardenArea || 0}
                         </span>
                         
@@ -1486,7 +1488,7 @@ export default function CRMPage() {
                           }}
                           className="w-5 h-5 bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] rounded-full flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90 disabled:opacity-40"
                         >
-                          <Plus size={10} className="stroke-[3]" />
+                          <Plus size={10} className="stroke-3" />
                         </button>
                       </div>
                       <span className="text-[#00FF00] font-bold text-[10px] select-none text-left font-mono">المساحة م²</span>
@@ -1515,7 +1517,7 @@ export default function CRMPage() {
                     </button>
                   </div>
 
-                  <div className="space-y-4 max-h-[450px] overflow-y-auto pr-2">
+                  <div className="space-y-4 max-h-112.5 overflow-y-auto pr-2">
                     {loadingLogs ? (
                       <p className="text-center text-gray-500 text-sm animate-pulse">جاري سحب سجل المحادثات...</p>
                     ) : customerLogs.length > 0 ? (
@@ -1656,10 +1658,10 @@ export default function CRMPage() {
                     type="button" 
                     onClick={(e) => { e.preventDefault(); handleSaveFollowUp(); }}
                     disabled={saving}
-                    className="px-6 h-12 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50 w-full"
+                    className="px-6 h-12 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50 w-full"
                   >
                     {saving ? "جاري الحفظ والمزامنة..." : "💾 حفظ المتابعة التاريخية للعميل"}
-                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                   </button>
                 </div>
               </div>
@@ -1692,10 +1694,10 @@ export default function CRMPage() {
             }}
             className="w-6 h-6 flex items-center justify-center bg-[#9B1C1C]/25 border border-[#9B1C1C]/60 hover:bg-[#9B1C1C] text-[#ff6b6b] hover:text-white rounded-full transition cursor-pointer active:scale-90 font-bold select-none disabled:opacity-40"
           >
-            <Minus size={12} className="stroke-[3]" />
+            <Minus size={12} className="stroke-3" />
           </button>
           
-          <span className="text-sm font-black text-[#D4AF37] font-mono min-w-[16px] text-center select-none">
+          <span className="text-sm font-black text-[#D4AF37] font-mono min-w-4 text-center select-none">
             {value}
           </span>
           
@@ -1711,7 +1713,7 @@ export default function CRMPage() {
             }}
             className="w-6 h-6 flex items-center justify-center bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] rounded-full transition cursor-pointer active:scale-90 font-bold select-none disabled:opacity-40"
           >
-            <Plus size={12} className="stroke-[3]" />
+            <Plus size={12} className="stroke-3" />
           </button>
         </div>
 
