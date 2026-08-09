@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCRM } from "@/components/CRM/context/CRMContext";
 import { supabase } from "@/lib/supabaseClient"; 
+import PrintableEstimate from "@/components/CRM/estimate/PrintableEstimate";
+import { generateDetailedBOQ } from "@/components/CRM/estimate/InitialEstimate";
 import { 
   Loader2, 
   Home, 
@@ -42,6 +44,32 @@ export default function ProjectInfo({
   // ✅ إصلاح: إرسال المقايسة للعميل واتساب كان متاح لأي حد شايف الصفحة (حتى المهندس نفسه لحظة
   // ما يصدر المقايسة)، رغم إن التواصل المباشر مع العميل من مسؤولية المبيعات مش المهندس.
   const canSendToClient = ["admin", "owner", "manager", "sales", "sales_manager"].includes(String(userRole || "").toLowerCase());
+
+  // ✅ إصلاح: تصدير الـ PDF كان بيطبع الشاشة الحالية بتصميمها الغامق الداخلي (اللي بيطلع فاضي
+  // تماماً على الورق)، بدل المكون المخصص للطباعة PrintableEstimate. دلوقتي بنجهز نسخة حقيقية
+  // من بنود المقايسة (BOQ) عشان تتحط جوه عنصر #printable-estimate المخصص للطباعة فقط.
+  const [dbMaterials, setDbMaterials] = useState<any[]>([]);
+  const [dbSpecs, setDbSpecs] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchLibrariesForPrint = async () => {
+      try {
+        const [mRes, sRes] = await Promise.all([
+          supabase.from("products_library").select("*"),
+          supabase.from("specifications_library").select("*")
+        ]);
+        if (mRes.data) setDbMaterials(mRes.data);
+        if (sRes.data) setDbSpecs(sRes.data);
+      } catch (err) {
+        console.error("خطأ جلب بيانات مكتبات الطباعة:", err);
+      }
+    };
+    fetchLibrariesForPrint();
+  }, []);
+
+  const printableItems = (dbMaterials.length > 0 && dbSpecs.length > 0)
+    ? generateDetailedBOQ(crmData, dbMaterials, dbSpecs)
+    : [];
 
   const project = crmData.project || {};
 
@@ -126,7 +154,15 @@ export default function ProjectInfo({
   // دالة أمر الطباعة لنسخة الـ PDF المتناسقة مع A4
   const handlePrintPDF = (e: React.MouseEvent) => {
     e.preventDefault(); // 👈 منع السلوك الافتراضي لتعطيل الريفريش
+    // ✅ إصلاح: اسم ملف الـ PDF كان بياخد عنوان الصفحة العام (Golden Decoration ERP - الـ CRM...)
+    // بدل اسم يوضح العميل والمشروع ورقم المقايسة، لأن المتصفح بيستخدم document.title كاسم مقترح للملف.
+    const originalTitle = document.title;
+    const customerName = crmData.customer?.name || "عميل";
+    const projectName = project.projectName || "مشروع";
+    const estimateNumber = project.estimateNumber || "";
+    document.title = `مقايسة ${customerName} - ${projectName}${estimateNumber ? ` - ${estimateNumber}` : ""}`;
     window.print();
+    setTimeout(() => { document.title = originalTitle; }, 1000);
   };
 
   // معالجة حفظ وإرسال طلب التعديل الفني وسحبه بالـ CRM timeline تلقائياً
@@ -174,7 +210,7 @@ export default function ProjectInfo({
   };
 
   return (
-    <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 space-y-4 select-none text-right text-white font-alexandria h-full flex flex-col justify-between relative overflow-hidden" dir="rtl">
+    <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-4xl p-6 space-y-4 select-none text-right text-white font-alexandria h-full flex flex-col justify-between relative overflow-hidden" dir="rtl">
       
       <div className="space-y-4">
         {/* ترويسة الكارت مدمج بها أيقونة تعديلات المقايسة البرونزية الفاخرة على اليسار */}
@@ -201,7 +237,7 @@ export default function ProjectInfo({
         {/* مديول المبدل الذكي للمشاريع المتعددة للعميل الواحد */}
         {customerProjects && customerProjects.length > 1 && (
           <div className="p-3 bg-[#020B1C]/80 border border-[#D4AF37]/20 rounded-xl mb-2">
-            <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] flex items-center gap-1.5 select-none">
+            <label className="block text-[#D4AF37] mb-1.5 font-bold text-[10px] items-center gap-1.5 select-none">
               <ArrowRightLeft size={12} className="text-[#D4AF37]" />
               <span>المشاريع النشطة للعميل (تبديل):</span>
             </label>
@@ -474,10 +510,10 @@ export default function ProjectInfo({
             type="button" 
             onClick={(e) => { e.preventDefault(); handleSaveProject(); }}
             disabled={saving}
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 font-black cursor-pointer text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 font-black cursor-pointer text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
           >
             {saving ? <Loader2 className="animate-spin w-3.5 h-3.5" /> : "💾 حفظ المشروع"}
-            <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
           </button>
 
         </div>
@@ -485,8 +521,8 @@ export default function ProjectInfo({
 
       {/* شاشة تسجيل التعديلات المنبثقة الفاخرة */}
       {isAmendmentsOpen && (
-        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4 select-none animate-fade-in text-right">
-          <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 md:p-8 w-full max-w-lg shadow-[0_0_40px_rgba(212,175,55,0.25)] relative space-y-4">
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-100 flex items-center justify-center p-4 select-none animate-fade-in text-right">
+          <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-4xl p-6 md:p-8 w-full max-w-lg shadow-[0_0_40px_rgba(212,175,55,0.25)] relative space-y-4">
             
             <div className="flex justify-between items-center border-b border-[#243556] pb-3 mb-4 select-none">
               <h3 className="text-[#D4AF37] font-black text-base md:text-lg flex items-center gap-2">
@@ -518,16 +554,26 @@ export default function ProjectInfo({
                 type="button" 
                 onClick={(e) => { e.preventDefault(); handleConfirmAmendments(e); }}
                 disabled={isSubmitting}
-                className="px-6 py-3 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 font-black cursor-pointer text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
+                className="px-6 py-3 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 font-black cursor-pointer text-xs flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
               >
                 {isSubmitting ? <Loader2 className="animate-spin w-4 h-4" /> : "🚀 إرسال طلب التعديل للمهندس"}
-                <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
               </button>
             </div>
 
           </div>
         </div>
       )}
+
+      {/* نسخة الطباعة المخفية: بتظهر بس وقت الطباعة (window.print) بفضل قاعدة #printable-estimate
+          فى globals.css اللي بتخفي باقي الصفحة وتوريها هي بس على الورق */}
+      <div id="printable-estimate" className="fixed left-[9999px] top-0 w-198.5">
+        <PrintableEstimate
+          customer={crmData.customer}
+          project={crmData.project}
+          estimate={{ items: printableItems }}
+        />
+      </div>
 
     </div>
   );
