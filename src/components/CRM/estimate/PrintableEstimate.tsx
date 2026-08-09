@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { categoryNames } from "./EstimateTable";
 
 const categoryIcons: { [key: string]: string } = {
@@ -111,8 +112,10 @@ export default function PrintableEstimate({ customer = {}, project = {}, estimat
             </tr>
           </thead>
           <tbody>
-            {orderedCategoryKeys.map((catKey, catIdx) => (
-              <>
+            {orderedCategoryKeys.map((catKey, catIdx) => {
+              const catTotal = categoryTotals.find((c) => c.key === catKey);
+              return (
+              <React.Fragment key={`frag-${catKey}`}>
                 <tr key={`cat-${catKey}`} className="bg-[#D4AF37]/10" style={{ breakInside: "avoid", breakAfter: "avoid" }}>
                   <td colSpan={7} className="p-2 font-black text-[#8b6f1f]">
                     <span className="inline-flex items-center gap-2 whitespace-nowrap">
@@ -136,8 +139,18 @@ export default function PrintableEstimate({ customer = {}, project = {}, estimat
                     </td>
                   </tr>
                 ))}
-              </>
-            ))}
+                {/* ✅ صف إجمالي كل بند/مرحلة على حدة، بنفس فكرة الشاشة الداخلية للمقايسة */}
+                <tr style={{ breakInside: "avoid" }} className="bg-[#1a1a1a]/5 border-b-2 border-[#8b6f1f]">
+                  <td colSpan={6} className="p-2 text-left font-black text-[#1a1a1a] text-xs">
+                    إجمالي {categoryNames[catKey]}:
+                  </td>
+                  <td className="p-2 text-center font-mono font-black text-[#8b6f1f]">
+                    {fmt(catTotal?.total || 0)}
+                  </td>
+                </tr>
+              </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
