@@ -113,13 +113,15 @@ export default function PrintableEstimate({ customer = {}, project = {}, estimat
           <tbody>
             {orderedCategoryKeys.map((catKey, catIdx) => (
               <>
-                <tr key={`cat-${catKey}`} className="bg-[#D4AF37]/10">
-                  <td colSpan={7} className="p-2 font-black text-[#8b6f1f] flex items-center gap-2">
-                    <span>{categoryIcons[catKey] || "•"}</span> {catIdx + 1}. {categoryNames[catKey]}
+                <tr key={`cat-${catKey}`} className="bg-[#D4AF37]/10" style={{ breakInside: "avoid", breakAfter: "avoid" }}>
+                  <td colSpan={7} className="p-2 font-black text-[#8b6f1f]">
+                    <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                      <span>{categoryIcons[catKey] || "•"}</span> {catIdx + 1}. {categoryNames[catKey]}
+                    </span>
                   </td>
                 </tr>
                 {groupedItems[catKey].map((item: any, i: number) => (
-                  <tr key={item.id || i} className="border-b border-gray-200">
+                  <tr key={item.id || i} className="border-b border-gray-200" style={{ breakInside: "avoid" }}>
                     <td className="p-2 text-center text-gray-400 text-xs">{catIdx + 1}.{i + 1}</td>
                     <td className="p-2">
                       <div className="font-bold">{item.name}</div>

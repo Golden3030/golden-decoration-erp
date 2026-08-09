@@ -565,9 +565,10 @@ export default function ProjectInfo({
         </div>
       )}
 
-      {/* نسخة الطباعة المخفية: بتظهر بس وقت الطباعة (window.print) بفضل قاعدة #printable-estimate
-          فى globals.css اللي بتخفي باقي الصفحة وتوريها هي بس على الورق */}
-      <div id="printable-estimate" className="fixed left-[9999px] top-0 w-198.5">
+      {/* نسخة الطباعة المخفية: display:none فى العرض العادي (مفيهاش أي تأثير على الصفحة)،
+          وبتظهر بس وقت الطباعة (print:block) بالتوازي مع قاعدة #printable-estimate فى
+          globals.css اللي بتخفي باقي الصفحة وتوريها هي بس على الورق */}
+      <div id="printable-estimate" className="hidden print:block">
         <PrintableEstimate
           customer={crmData.customer}
           project={crmData.project}
