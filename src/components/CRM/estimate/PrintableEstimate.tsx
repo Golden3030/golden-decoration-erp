@@ -72,17 +72,17 @@ export default function PrintableEstimate({ customer = {}, project = {}, estimat
   return (
     <div dir="rtl" id="printable-estimate" className="bg-white text-[#1a1a1a] max-w-250 mx-auto font-sans" style={{ fontFamily: "var(--font-alexandria)" }}>
       {/* الهيدر */}
-      <div className="flex items-center justify-between p-8 bg-linear-to-l from-[#020B1C] via-[#0c1e3d] to-[#D4AF37]/20 border-b-4 border-[#D4AF37]">
-        <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Golden Decoration" className="h-16 w-auto" />
-          <div>
-            <p className="text-[#D4AF37] font-black text-lg tracking-wide">GOLDEN DECORATION</p>
-            <p className="text-white/60 text-[10px] tracking-widest">ART IN EVERY SPACE</p>
-          </div>
+      <div className="grid grid-cols-3 items-center p-8 bg-linear-to-l from-[#020B1C] via-[#0c1e3d] to-[#D4AF37]/20 border-b-4 border-[#D4AF37]">
+        <div className="text-right">
+          <p className="text-[#D4AF37] font-black text-lg tracking-wide">GOLDEN DECORATION</p>
+          <p className="text-white/60 text-[10px] tracking-widest">ART IN EVERY SPACE</p>
         </div>
-        <div className="text-left">
+        <div className="text-center">
           <h1 className="text-[#D4AF37] text-4xl font-black">مقايسة</h1>
           <p className="text-white text-lg font-bold">عرض أسعار</p>
+        </div>
+        <div className="flex items-center justify-end">
+          <img src="/logo.png" alt="Golden Decoration" className="h-24 w-auto" />
         </div>
       </div>
 
@@ -93,7 +93,7 @@ export default function PrintableEstimate({ customer = {}, project = {}, estimat
         <InfoCard icon="📅" label="تاريخ المقايسة" value={formattedDate} />
         <InfoCard icon="📏" label="المساحة" value={`${project.area || "—"} م²`} />
         <InfoCard icon="🎯" label="مستوى التشطيب" value={project.finishingLevel ?? project.finishing_level ?? "—"} />
-        <InfoCard icon="#" label="كود المقايسة" value={estimate.estimateNumber ?? estimate.estimate_number ?? project.estimateNumber ?? "—"} />
+        <InfoCard icon="#" label="رقم المقايسة" value={estimate.estimateNumber ?? estimate.estimate_number ?? project.estimateNumber ?? "—"} />
         <InfoCard icon="🏠" label="نوع الوحدة" value={project.unitType ?? project.unit_type ?? "شقة سكنية"} />
       </div>
 
