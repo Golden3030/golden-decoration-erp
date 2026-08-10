@@ -159,6 +159,52 @@ export default function PayrollPage() {
     }
   }
 
+  // ✅ تحويل مسير راتب من "تحت الاستحقاق" إلى "مدفوع" — بيسجل نفس قيد الصرف اللي كان بيتسجل
+  // وقت الإنشاء المباشر بحالة "مدفوع"، عشان الكشف مايفضلش عالق للأبد من غير طريقة لصرفه لاحقاً.
+  async function handleMarkAsPaid(sheet: PayrollSheet) {
+    const employeeName = sheet.users?.name || "الموظف المالي";
+    const confirmPay = window.confirm(`تأكيد صرف راتب (${employeeName}) لشهر (${sheet.salary_month}) بصافي (${Number(sheet.net_salary).toLocaleString()} ج.م) من الخزينة؟`);
+    if (!confirmPay) return;
+
+    setSaving(true);
+    try {
+      const { error: updateErr } = await supabase
+        .from("payroll_sheets")
+        .update({ payment_status: "paid" })
+        .eq("id", sheet.id);
+
+      if (updateErr) throw updateErr;
+
+      const { error: transErr } = await supabase
+        .from("transactions")
+        .insert([{
+          project_id: null,
+          amount: sheet.net_salary,
+          type: "outflow",
+          category: "administrative",
+          payment_method: "cash",
+          notes: `صرف مسير الراتب لشهر (${sheet.salary_month}) للموظف (${employeeName})`,
+          description: `صرف مسير الراتب الشهري لشهر (${sheet.salary_month}) للموظف (${employeeName}) [راتب أساسي: ${sheet.base_salary} ج.م + حوافز: ${sheet.allowances} ج.م - الخصم المطبق للغياب والجزاءات: ${sheet.deductions} ج.م] وصافي منصرف الخزينة: ${sheet.net_salary} ج.م.`
+        }]);
+
+      if (transErr) throw transErr;
+
+      await supabase.from("notifications").insert({
+        title: "تحويل مسير راتب إلى مدفوع",
+        message: `💵 تم صرف كشف راتب شهر (${sheet.salary_month}) للموظف (${employeeName}) بقيمة صافية (${Number(sheet.net_salary).toLocaleString()} ج.م) وخصمه من الخزينة.`,
+        type: "finance",
+        link: "/payroll"
+      });
+
+      alert("✅ تم تحويل الكشف إلى مدفوع وتسجيل قيد الصرف بالخزينة بنجاح!");
+      await loadPayrollData();
+    } catch (err: any) {
+      alert("حدث خطأ أثناء تحويل الكشف لمدفوع: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   const totalSalariesOutflow = useMemo(() => {
     return payrollList
       .filter(p => p.payment_status === "paid")
@@ -488,6 +534,15 @@ export default function PayrollPage() {
                               <span className={`px-2.5 py-1 rounded text-[10px] font-black ${
                                 p.payment_status === "paid" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 animate-pulse" : "bg-red-500/10 text-red-400 animate-pulse"
                               }`}>{p.payment_status === "paid" ? "تم الصرف" : "تحت الحساب"}</span>
+                              {p.payment_status === "unpaid" && (
+                                <button
+                                  onClick={() => handleMarkAsPaid(p)}
+                                  disabled={saving}
+                                  className="mr-2 px-2.5 py-1 rounded text-[10px] font-black bg-[#D4AF37]/10 text-[#D4AF37] border border-[#D4AF37]/30 hover:bg-[#D4AF37]/20 transition disabled:opacity-50"
+                                >
+                                  ✅ تحويل لمدفوع
+                                </button>
+                              )}
                             </td>
                           </tr>
                         ))}

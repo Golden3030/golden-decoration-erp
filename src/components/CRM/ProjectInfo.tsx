@@ -74,6 +74,32 @@ export default function ProjectInfo({
 
   const project = crmData.project || {};
 
+  // ✅ إصلاح: "رقم المقايسة" كان بيتقرا من عمود منفصل تمامًا (projects.estimate_number)
+  // بيتولد مرة واحدة بس وقت إنشاء المشروع، وممكن يختلف كليًا عن الكود الحقيقي المستخدم
+  // فعليًا في الطباعة وبوابة العميل (estimate_headers.estimate_number). دلوقتي بنجيبه لايف
+  // من نفس المصدر الحقيقي الوحيد عشان الرقم اللي شايفه هنا يبقى مطابق 100% لأي مكان تاني.
+  const [liveEstimateNumber, setLiveEstimateNumber] = useState<string>("");
+
+  useEffect(() => {
+    const fetchRealEstimateNumber = async () => {
+      if (!project.id) { setLiveEstimateNumber(""); return; }
+      try {
+        const { data, error } = await supabase
+          .from("estimate_headers")
+          .select("estimate_number, status")
+          .eq("project_id", project.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (error) throw error;
+        setLiveEstimateNumber(data?.estimate_number || "");
+      } catch (err) {
+        console.error("خطأ جلب رقم المقايسة الحقيقي:", err);
+      }
+    };
+    fetchRealEstimateNumber();
+  }, [project.id]);
+
   // حالات الشاشة المنبثقة لتسجيل تعديلات العميل
   const [isAmendmentsOpen, setIsAmendmentsOpen] = useState(false);
   const [amendmentsText, setAmendmentsText] = useState("");
@@ -260,7 +286,7 @@ export default function ProjectInfo({
             <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">رقم المقايسة </label>
             <input
               type="text"
-              value={project.estimateNumber || "EST-XXXX"}
+              value={liveEstimateNumber || "لسه ما اتصدرتش مقايسة"}
               disabled
               className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-gray-500 px-3 outline-none text-center font-mono font-bold text-xs"
             />

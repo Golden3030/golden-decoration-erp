@@ -154,6 +154,28 @@ export default function ReportsDashboard() {
     fetchDatabaseData();
   }, []);
 
+  // ✅ إصلاح: dbEstimates كانت بتتجاب من القاعدة ومتخزنة، بس مش مستخدمة في أي حساب في الصفحة
+  // كلها! كل تقارير الأرباح والمستحقات كانت شغالة على contract_value اليدوي المنفصل تمامًا عن
+  // الإجمالي المعتمد الحقيقي في المقايسة. دلوقتي بنبني خريطة قيمة العقد المعتمدة فعليًا لكل
+  // مشروع (بتفضيل أحدث مقايسة "نهائية"، وبعدين أحدث مقايسة بأي حالة، وبعدين contract_value
+  // اليدوي كملاذ أخير لو مفيش مقايسة خالص) ونستخدمها في كل تقرير مرتبط بعميل/مشروع.
+  const approvedContractByProject = useMemo(() => {
+    const anyTotal: Record<string, number> = {};
+    const finalTotal: Record<string, number> = {};
+    [...dbEstimates]
+      .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .forEach((row: any) => {
+        anyTotal[row.project_id] = Number(row.grand_total || 0);
+        if (row.status === "نهائية") {
+          finalTotal[row.project_id] = Number(row.grand_total || 0);
+        }
+      });
+    return { ...anyTotal, ...finalTotal };
+  }, [dbEstimates]);
+
+  const getApprovedContractValue = (proj: any) =>
+    approvedContractByProject[proj?.id] ?? Number(proj?.contract_value || 0);
+
   const filteredTransactions = useMemo(() => {
     return dbTransactions.filter((t: any) => {
       const paymentDate = t.payment_date || t.created_at?.split("T")[0];
@@ -172,7 +194,7 @@ export default function ReportsDashboard() {
       const proj = dbProjects.find((p: any) => p.customer_id === cust.id) || {};
       const txs = filteredTransactions.filter((t: any) => t.project_id === proj.id && t.type === "inflow");
       const totalPaid = txs.reduce((sum, t) => sum + Number(t.amount || 0), 0);
-      const contractVal = Number(proj.contract_value || 0);
+      const contractVal = getApprovedContractValue(proj);
 
       return {
         name: cust.name,
@@ -216,11 +238,11 @@ export default function ReportsDashboard() {
         txs
       };
     }
-  }, [selectedStatementPartnerId, selectedStatementType, dbCustomers, dbProjects, dbSubcontractors, filteredTransactions]);
+  }, [selectedStatementPartnerId, selectedStatementType, dbCustomers, dbProjects, dbSubcontractors, filteredTransactions, approvedContractByProject]);
 
   const projectProfitsReport = useMemo(() => {
     return dbProjects.map((proj: any) => {
-      const contractValue = Number(proj.contract_value || 0);
+      const contractValue = getApprovedContractValue(proj);
       const executionCosts = dbTransactions
         .filter((t: any) => t.project_id === proj.id && t.type === "outflow" && t.category !== "administrative")
         .reduce((sum, t) => sum + Number(t.amount || 0), 0);
@@ -241,7 +263,7 @@ export default function ReportsDashboard() {
         margin
       };
     }).filter((p: any) => p.contractValue > 0);
-  }, [dbProjects, dbTransactions]);
+  }, [dbProjects, dbTransactions, approvedContractByProject]);
 
   const cashFlowTimelineReport = useMemo(() => {
     // ✅ إصلاح: كان بيجمع المعاملات بالشهر بس (01-12) من غير ما يفرّق بين السنين،
@@ -345,7 +367,7 @@ export default function ReportsDashboard() {
   const clientReceivablesReport = useMemo(() => {
     return dbCustomers.map((cust: any) => {
       const proj = dbProjects.find((p: any) => p.customer_id === cust.id) || {};
-      const contractValue = Number(proj.contract_value || 0);
+      const contractValue = getApprovedContractValue(proj);
       const paid = dbTransactions
         .filter((t: any) => t.project_id === proj.id && t.type === "inflow")
         .reduce((sum, t) => sum + Number(t.amount || 0), 0);
@@ -357,15 +379,15 @@ export default function ReportsDashboard() {
         remaining: Math.max(0, contractValue - paid)
       };
     }).filter((c: any) => c.contractValue > 0 && c.remaining > 0);
-  }, [dbCustomers, dbProjects, dbTransactions]);
+  }, [dbCustomers, dbProjects, dbTransactions, approvedContractByProject]);
 
   const growthKPIs = useMemo(() => {
     const totalLeads = dbCustomers.length;
     const contractedClients = dbCustomers.filter((c: any) => c.status === "تم التعاقد").length;
     const conversionRate = totalLeads > 0 ? Math.round((contractedClients / totalLeads) * 100) : 0;
 
-    const totalContractsValue = dbProjects.reduce((sum: number, p: any) => sum + Number(p.contract_value || 0), 0);
-    const contractsCount = dbProjects.filter((p: any) => Number(p.contract_value || 0) > 0).length;
+    const totalContractsValue = dbProjects.reduce((sum: number, p: any) => sum + getApprovedContractValue(p), 0);
+    const contractsCount = dbProjects.filter((p: any) => getApprovedContractValue(p) > 0).length;
     const averageTicketSize = contractsCount > 0 ? Math.round(totalContractsValue / contractsCount) : 0;
 
     return {
@@ -376,7 +398,7 @@ export default function ReportsDashboard() {
       contractsCount,
       averageTicketSize
     };
-  }, [dbCustomers, dbProjects]);
+  }, [dbCustomers, dbProjects, approvedContractByProject]);
 
   if (isLoading) {
     return (

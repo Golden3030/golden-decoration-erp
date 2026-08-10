@@ -123,8 +123,6 @@ export const DEFAULT_FINISHING_SCHEMA = {
   masonry: {},
   archMod: {},
   ventilation: {},
-  waterproofing: {},
-  metalWorks: {},
 };
 
 export function CRMProvider({

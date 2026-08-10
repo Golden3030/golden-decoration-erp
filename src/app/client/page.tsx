@@ -31,7 +31,7 @@ export default function ClientDashboardPage() {
 
   const [contractTotal, setContractTotal] = useState<number>(0);
   const [totalPaid, setTotalPaid] = useState<number>(0);
-  const [estimateNumber, setEstimateNumber] = useState<string>("EST-1001");
+  const [estimateNumber, setEstimateNumber] = useState<string>("");
 
   useEffect(() => {
     loadClientPortalData();
@@ -59,11 +59,30 @@ export default function ClientDashboardPage() {
       if (projectData) {
         setProject(projectData);
 
-        const { data: estimateHeader } = await supabase
+        // ✅ إصلاح حرج: الاستعلام القديم كان بيجيب أي صف من estimate_headers للمشروع بـ
+        // .maybeSingle() من غير أي شرط على status أو ترتيب — لو المشروع عنده أكتر من مقايسة
+        // مسجلة (مبدئية + نهائية، وهو وضع طبيعي جدًا لأي مشروع ناضج)، Supabase بيرفض الطلب
+        // بالكامل (لازم صف واحد بالظبط)، فكان بيرمي استثناء بيتلقفه catch بالخطأ ويسيب قيمة
+        // العقد صفر ورقم المقايسة الوهمي الافتراضي "EST-1001" ظاهر للعميل وكأنه رقمه الحقيقي!
+        let { data: estimateHeader } = await supabase
           .from("estimate_headers")
           .select("id, estimate_number, grand_total")
           .eq("project_id", projectData.id)
+          .eq("status", "نهائية")
+          .order("created_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
+
+        if (!estimateHeader) {
+          const { data: anyHeader } = await supabase
+            .from("estimate_headers")
+            .select("id, estimate_number, grand_total")
+            .eq("project_id", projectData.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          estimateHeader = anyHeader;
+        }
 
         const contractValue = estimateHeader ? Number(estimateHeader.grand_total) : Number(projectData.contract_value || 0);
         setContractTotal(contractValue);
@@ -240,7 +259,7 @@ export default function ClientDashboardPage() {
                   <span className="text-base select-none">＃</span>
                   <div className="text-left flex-1">
                     <p className="text-[#F0E6D2]/60 text-[8px] font-bold">كود المقايسة التعاقدية</p>
-                    <p className="font-bold text-[#F0E6D2] text-[11px] font-mono">{estimateNumber}</p>
+                    <p className="font-bold text-[#F0E6D2] text-[11px] font-mono">{estimateNumber || "لسه ما اتحدد"}</p>
                   </div>
                 </div>
                 <div className="bg-[#020B1C] border border-[#D4AF37]/20 rounded-xl p-3 flex items-center justify-between gap-3 shadow-inner">
@@ -353,7 +372,7 @@ export default function ClientDashboardPage() {
                   <div className="bg-[#020B1C] border border-[#D4AF37]/15 rounded-xl p-4 flex justify-between items-center">
                     <div className="text-right">
                       <p className="text-white text-xs font-bold">مقايسة أعمال التشطيب الفنية الـ BOQ</p>
-                      <p className="text-gray-500 text-[10px] mt-1 font-mono">الرقم المرجعي: {estimateNumber}</p>
+                      <p className="text-gray-500 text-[10px] mt-1 font-mono">الرقم المرجعي: {estimateNumber || "لسه ما اتحدد"}</p>
                     </div>
                     {/* 🌟 ترقية وتنسيق زر تحميل المقايسة الـ PDF للدستور البصري الحركي الموحد */}
                     <button

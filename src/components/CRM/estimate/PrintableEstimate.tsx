@@ -1,14 +1,8 @@
 "use client";
 
 import React from "react";
-import { categoryNames } from "./EstimateTable";
+import { categoryNames, categoryIconsEmoji as categoryIcons } from "@/lib/categoryMeta";
 
-const categoryIcons: { [key: string]: string } = {
-  archMod: "🔨", masonry: "🧱", plaster: "🖌️", paint: "🎨",
-  flooring: "▦", ceiling: "🔲", ac: "❄️", ventilation: "💨",
-  doors: "🚪", aluminum: "🪟", staircase: "🪜", electricity: "⚡",
-  plumbing: "🚿", decorations: "✨",
-};
 
 const DONUT_COLORS = [
   "#1e3a5f", "#2e8b8b", "#D4AF37", "#8b6f47", "#4a6741",

@@ -3,23 +3,9 @@
 import React from "react";
 import { useCRM } from "@/components/CRM/context/CRMContext";
 import { Trash2, Layers } from "lucide-react";
+import { categoryNames } from "@/lib/categoryMeta";
 
-export const categoryNames: Record<string, string> = {
-  archMod: "تعديل معماري وتكسير",
-  masonry: "أعمال المباني والطوب",
-  plaster: "أعمال المصيص والمحارة",
-  paint: "أعمال الدهانات والنقاشة",
-  flooring: "أعمال الأرضيات والتكسيات",
-  ceiling: "الأسقف المعلقة والجبس بورد",
-  ac: "أعمال تكييف الهواء وتأسيس النحاس",
-  ventilation: "أعمال تهوية وشفاطات",
-  doors: "أعمال الأبواب والنجارة",
-  aluminum: "الشبابيك وقطاعات الألوميتال",
-  staircase: "تكسية وتجليد السلالم",
-  electricity: "تأسيس وتمديد الكهرباء",
-  plumbing: "تأسيس سباكة وتغذية مائية",
-  decorations: "أعمال الديكورات والتجاليد الجمالية"
-};
+export { categoryNames };
 
 interface EstimateTableProps {
   items: any[];

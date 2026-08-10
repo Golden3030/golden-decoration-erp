@@ -109,7 +109,7 @@ export default function MaterialDisbursementsPage() {
       if (header) {
         const { data: items } = await supabase
           .from("estimate_items")
-          .select("item_name, quantity, unit")
+          .select("item_name, quantity, unit, product_id")
           .eq("estimate_id", header.id);
         
         setBudgetItems(items || []);
@@ -128,10 +128,16 @@ export default function MaterialDisbursementsPage() {
     const productUnit = selectedProduct ? selectedProduct.unit : "وحدة";
 
     // جلب الكمية المعتمدة في المقايسة بمطابقة مسمى المادة المقارب
-    const matchedBudgetItem = budgetItems.find(item => 
-      String(item.item_name || "").includes(productName) || 
-      productName.includes(String(item.item_name || ""))
-    );
+    // ✅ إصلاح: بعد ما بقى كل بند مقايسة جديد بيتسجل ومعاه product_id حقيقي، بقينا نقدر نطابق
+    // بدقة بالـ ID بدل الاعتماد على تشابه الأسماء النصي بس (اللي كان ممكن يدّي تطابق غلط أو
+    // مفيش تطابق خالص). المطابقة النصية اتسابت كـ fallback بس للمقايسات القديمة اللي اتسجلت
+    // قبل الإصلاح ومفيهاش product_id محفوظ.
+    const matchedBudgetItem =
+      budgetItems.find(item => item.product_id === selectedProductId) ||
+      budgetItems.find(item =>
+        String(item.item_name || "").includes(productName) ||
+        productName.includes(String(item.item_name || ""))
+      );
     const budgetedQty = matchedBudgetItem ? Number(matchedBudgetItem.quantity) : 0;
 
     // حساب إجمالي ما تم صرفه لهذا المنتج في هذا الموقع من كشوف الصرف السابقة

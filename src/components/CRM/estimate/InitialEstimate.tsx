@@ -7,7 +7,7 @@ import { generateSequentialCode } from "@/lib/generateSequentialCode";
 import EstimateHeader from "./EstimateHeader";
 import EstimateTable from "./EstimateTable";
 import EstimateTotals from "./EstimateTotals";
-import { categoryNames } from "./EstimateTable";
+import { categoryNames, getCategoryIconSvg } from "@/lib/categoryMeta";
 import { 
   Calculator, 
   ShieldAlert, 
@@ -43,24 +43,8 @@ interface VentLineItem {
   isCustom?: boolean;
 }
 
-// مصفوفة تعريب الفئات الهندسية المعتمدة محلياً
-const localCategoryNames: Record<string, string> = {
-  archMod: "تعديل معماري وتكسير",
-  masonry: "أعمال مباني وطوب",
-  plaster: "بياض محارة وترميم",
-  paint: "دهانات ونقاشة",
-  flooring: "أرضيات وتكسيات",
-  ceiling: "أسقف معلقة وجبس بورد",
-  doors: "أبواب ونجارة",
-  aluminum: "قطاعات ألوميتال",
-  electricity: "تأسيس وتشطيب كهرباء",
-  plumbing: "تأسيس وتشطيب سباكة",
-  ac: "تجهيزات تكييف وHVAC",
-  waterproofing: "عزل رطوبة وحرارة",
-  metalWorks: "أعمال كريتال ومعادن",
-  decorations: "ديكورات وجماليات",
-  ventilation: "تهوية وشفاطات"
-};
+// ملحوظة: أسماء وأيقونات التصنيفات بقت مستوردة من مصدر موحّد @/lib/categoryMeta.ts
+// بدل ما تتكرر هنا محليًا (كانت قبل كده منسوخة بشكل منفصل عن EstimateTable.tsx وممكن تنحرف عنها).
 
 // محرك التفريد الهندسي والمالي التلقائي الشامل لكافة مدخلات وأمتار التبويبات الـ 15 بالمقايسة
 export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: any[]) {
@@ -254,6 +238,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: requiredCement,
         unitPrice: cementProd ? Number(cementProd.price) : 200,
         laborCost: 0,
+        product_id: cementProd?.id || null,
         description: "توريد أسمنت رمادي ممتاز لأعمال اللياسة والبطانة الإنشائية للغرف."
       });
     }
@@ -267,6 +252,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: requiredSand,
         unitPrice: sandProd ? Number(sandProd.price) : 250,
         laborCost: 0,
+        product_id: sandProd?.id || null,
         description: "توريد رمل مصفى خالي من الأملاح والشوائب لأعمال المحارة."
       });
     }
@@ -393,6 +379,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: sealerQty,
           unitPrice: Number(activeSealer?.price || 350),
           laborCost: 0,
+          product_id: activeSealer?.id || null,
           description: `توريد خامة السيلر المائي العازل المعتمدة فنياً من براند ${prepCompany} لعزل حوائط وأسقف الوحدة.`
         });
       }
@@ -405,6 +392,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: thermalSealerQty,
           unitPrice: Number(activeThermalSealer?.price || 450),
           laborCost: 0,
+          product_id: activeThermalSealer?.id || null,
           description: `توريد خامة السيلر الحراري العازل المعتمدة فنياً من براند ${prepCompany}.`
         });
       }
@@ -417,6 +405,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: puttyQty,
           unitPrice: Number(activePutty?.price || 180),
           laborCost: 0,
+          product_id: activePutty?.id || null,
           description: `توريد معجون تأسيس الحوائط الداخلية المعتمد فنياً من براند ${prepCompany}.`
         });
       }
@@ -429,6 +418,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: primerQty,
           unitPrice: Number(activePrimer?.price || 400),
           laborCost: 0,
+          product_id: activePrimer?.id || null,
           description: `توريد خامة البطانة المعتمدة فنياً من براند ${prepCompany} لتشطيب الجدران.`
         });
       }
@@ -442,9 +432,9 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           name: `دهان حوائط نهائي وجهين ملون - (تشطيب: ${finishCompany})`,
           unit: activeWallPaint?.unit || "بستلة",
           quantity: finishPaintQty,
-          white: true,
           unitPrice: Number(activeWallPaint?.price || 2200),
           laborCost: 0,
+          product_id: activeWallPaint?.id || null,
           description: `توريد دهانات الوجه النهائي والألوان المعتمدة من شركة ${finishCompany} للشقة بالكامل.`
         });
       }
@@ -455,9 +445,9 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           name: `دهان تشطيب الأسقف وجهين ملون - (تشطيب: ${prepCompany})`,
           unit: activeCeilingPaint?.unit || "بستلة",
           quantity: ceilingPaintQty,
-          white: true,
           unitPrice: Number(activeCeilingPaint?.price || 400),
           laborCost: 0,
+          product_id: activeCeilingPaint?.id || null,
           description: `توريد دهانات تشطيب الأسقف النهائي المعتمدة من براند ${prepCompany} للشقة بالكامل.`
         });
       }
@@ -488,7 +478,6 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           name: `${item.name} - (تشطيب: ${item.company})`,
           unit: item.unit || "بستلة",
           quantity: Number(item.quantity),
-          white: true,
           unitPrice: Number(item.price || 0),
           laborCost: 0,
           description: `توريد دهانات الوجه النهائي والألوان المعتمدة من شركة ${item.company} للشقة بالكامل.`
@@ -565,6 +554,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: current.qty,
           unitPrice: current.price || 0,
           laborCost: 0,
+          product_id: current.product_id || null,
           description: `توريد خامات السيراميك والبورسلين المعتمدة لموقع العميل شامل الشحن والتوصيل.`
         });
       }
@@ -606,6 +596,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
         quantity: flooring.grout_qty,
         unitPrice: flooring.grout_price || 0,
         laborCost: 0,
+        product_id: groutProd?.id || null,
         description: "مادة ترويب فواصل الأرضيات والحوائط تمنع تسريبات المياه بالحمامات والمطابخ."
       });
     }
@@ -1043,6 +1034,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: 1,
           unitPrice: rates.mainPanelRate ?? 1800,
           laborCost: 0,
+          product_id: prod?.id || null,
           description: "لوحة توزيع كهرباء رئيسية معتمدة  لحماية الوحدة بالكامل وأمان المطبخ."
         });
       }
@@ -1057,6 +1049,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: 1,
           unitPrice: rates.lowCurrentPanelRate ?? 1200,
           laborCost: 0,
+          product_id: prod?.id || null,
           description: "لوحة مخصصة للراوتر ووايفاي والسنترال وشبكة الداتا بالوحدة لمنع التشوه البصري للكابلات."
         });
       }
@@ -1088,6 +1081,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: Number(electricity.breakerFinishingCount),
           unitPrice: (rates.rateBreakerFinishing ?? 120) * multiplier,
           laborCost: 0,
+          product_id: prod?.id || null,
           description: "قواطع دوائر الإضاءة والبريزات العادية بالوحدة."
         });
       }
@@ -1102,6 +1096,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: Number(electricity.acSwitchCount),
           unitPrice: (rates.rateAcSwitch ?? 120) * multiplier,
           laborCost: 0,
+          product_id: prod?.id || null,
           description: "قواطع مخصصة لدوائر تغذية أجهزة التكييف."
         });
       }
@@ -1116,6 +1111,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: Number(electricity.heaterSwitchCount),
           unitPrice: (rates.rateHeaterSwitch ?? 120) * multiplier,
           laborCost: 0,
+          product_id: prod?.id || null,
           description: "قاطع مخصص لدائرة تغذية سخان المياه."
         });
       }
@@ -1130,6 +1126,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
           quantity: Number(electricity.bellSwitchCount),
           unitPrice: (rates.rateBellSwitch ?? 55) * multiplier,
           laborCost: 0,
+          product_id: prod?.id || null,
           description: "قاطع مخصص لدائرة الجرس والتيار الخفيف."
         });
       }
@@ -1454,181 +1451,80 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
     }
   }
 
-  // 11. أعمال تجهيزات التكييف وأنظمة الـ HVAC (ac)
+  // 11. أعمال تجهيزات التكييف وأنظمة الـ HVAC (ac) — محدّث ليطابق نموذج spacesConfig الفعلي في AC.tsx
   const ac = finishing.ac || {};
-  if (ac.enabled) {
-    const copperQty = Number(ac.copperQty || 0);
-    const copperPrice = Number(ac.copperPrice ?? 1500);
-    if (copperQty > 0) {
+  if (ac.enabled && ac.spacesConfig) {
+    const acRates = ac.rates || {};
+    const acSpecsLib = (dbSpecs || []).filter((s: any) => s.category === "ac");
+
+    const enabledAcSpaces = Object.entries(ac.spacesConfig).filter(
+      ([, cfg]: [string, any]) => cfg.enabled
+    );
+
+    enabledAcSpaces.forEach(([spaceId, cfg]: [string, any]) => {
+      const rate = Number(acRates[cfg.type] ?? 0);
+      const area = Number(cfg.area || 0);
+      const specInfo = acSpecsLib.find((s: any) => s.code === cfg.type);
+      if (area > 0 && rate > 0) {
+        generated.push({
+          id: `gen-ac-space-${spaceId}`,
+          category: "ac",
+          name: `تجهيزات تكييف (${specInfo?.spec_name || cfg.type})`,
+          unit: "م²",
+          quantity: area,
+          unitPrice: rate,
+          laborCost: 0,
+          description: "توريد وتأسيس مواسير نحاس وتجهيزات التكييف للمساحة المحددة."
+        });
+      }
+    });
+
+    const totalAcPoints = enabledAcSpaces.length;
+    const AC_DEFAULT_ACCESSORY_SPLIT: Record<string, { materials: number; labor: number }> = {
+      drain: { materials: 500, labor: 300 },
+      bracket: { materials: 400, labor: 200 },
+      chiseling: { materials: 100, labor: 400 }
+    };
+
+    if (ac.hasDrain && totalAcPoints > 0) {
+      const mat = Number(acRates.drain_materials ?? AC_DEFAULT_ACCESSORY_SPLIT.drain.materials);
+      const lab = Number(acRates.drain_labor ?? AC_DEFAULT_ACCESSORY_SPLIT.drain.labor);
       generated.push({
-        id: "gen-ac-copper",
-        category: "ac",
-        name: "توريد وتمديد مواسير نحاس جنوب أفريقي معتمد للتكييف",
-        unit: "م.ط",
-        quantity: copperQty,
-        unitPrice: copperPrice,
-        laborCost: 0,
-        description: "توريد وتمديد كابلات ومواسير النحاس الجنوب أفريقي الأصلي بالأقطار المناسبة شامل العزل والتركيب."
+        id: "gen-ac-drain", category: "ac",
+        name: "تأسيس خطوط صرف التكييف المدفونة ومستلزماتها", unit: "نقطة",
+        quantity: totalAcPoints, unitPrice: mat, laborCost: totalAcPoints * lab,
+        description: "تأسيس مواسير صرف التكييف البلاستيكية ذات الضغط العالي وربطها مع أقرب نقطة صرف عمومية لكل نقطة تكييف مفعّلة."
       });
     }
 
-    const drainQty = Number(ac.drainQty || 0);
-    const drainPrice = Number(ac.drainPrice ?? 300);
-    if (drainQty > 0) {
+    if (ac.hasBracket && totalAcPoints > 0) {
+      const mat = Number(acRates.bracket_materials ?? AC_DEFAULT_ACCESSORY_SPLIT.bracket.materials);
+      const lab = Number(acRates.bracket_labor ?? AC_DEFAULT_ACCESSORY_SPLIT.bracket.labor);
       generated.push({
-        id: "gen-ac-drain",
-        category: "ac",
-        name: "تأسيس خطوط صرف التكييف المدفونة ومستلزماتها",
-        unit: "نقطة",
-        quantity: drainQty,
-        unitPrice: drainPrice,
-        laborCost: 0,
-        description: "تأسيس مواسير صرف التكييف البلاستيكية ذات الضغط العالي وربطها مع أقرب نقطة صرف عمومية."
+        id: "gen-ac-bracket", category: "ac",
+        name: "كوابيل وحوامل حديدية معالجة ضد الصدأ للوحدات الخارجية", unit: "كابولي",
+        quantity: totalAcPoints, unitPrice: mat, laborCost: totalAcPoints * lab,
+        description: "توريد وتركيب كوابيل حديدية ثقيلة مجلفنة ومدهونة إلكتروستاتيك لحمل الوحدات الخارجية لكل نقطة تكييف مفعّلة."
       });
     }
 
-    const bracketQty = Number(ac.bracketQty || 0);
-    const bracketPrice = Number(ac.bracketPrice ?? 450);
-    if (bracketQty > 0) {
+    if (ac.hasChiseling && totalAcPoints > 0) {
+      const mat = Number(acRates.chiseling_materials ?? AC_DEFAULT_ACCESSORY_SPLIT.chiseling.materials);
+      const lab = Number(acRates.chiseling_labor ?? AC_DEFAULT_ACCESSORY_SPLIT.chiseling.labor);
       generated.push({
-        id: "gen-ac-bracket",
-        category: "ac",
-        name: "كوابيل وحوامل حديدية معالجة ضد الصدأ للوحدات الخارجية",
-        unit: "كابولي",
-        quantity: bracketQty,
-        unitPrice: bracketPrice,
-        laborCost: 0,
-        description: "توريد وتركيب كوابيل حديدية ثقيلة مجلفنة ومدهونة إلكتروستاتيك لحمل الوحدات الخارجية للتكييف."
-      });
-    }
-
-    const acLabor = Number(ac.laborLumpSum || 0);
-    if (acLabor > 0) {
-      generated.push({
-        id: "gen-ac-labor",
-        category: "ac",
-        name: "مصنعيات تأسيس وتمديد شبكات التكييف بالموقع",
-        unit: "مقطوعية",
-        quantity: 1,
-        unitPrice: 0,
-        laborCost: acLabor,
-        description: "مصنعيات دفن وتثبيت مواسير النحاس بداخل الحوائط وحفر المسارات واختبار الضغط الميداني للشبكة."
-      });
-    }
-  }
-
-  // 12. أعمال عزل الرطوبة والحرارة للحمامات والأسطح (waterproofing)
-  const waterproofing = finishing.waterproofing || {};
-  if (waterproofing.enabled) {
-    const bitumenQty = Number(waterproofing.bitumenQty || 0);
-    const bitumenPrice = Number(waterproofing.bitumenPrice ?? 1200);
-    if (bitumenQty > 0) {
-      generated.push({
-        id: "gen-wp-bitumen",
-        category: "waterproofing",
-        name: "توريد دهان عزل بيتومين مطاطي عازل للرطوبة على البارد",
-        unit: "بستلة",
-        quantity: bitumenQty,
-        unitPrice: bitumenPrice,
-        laborCost: 0,
-        description: "دهان بيتومين معتمد لعزل أرضيات الحمامات والمطابخ لحماية الهياكل الإنشائية من تسربات المياه."
-      });
-    }
-
-    const membraneQty = Number(waterproofing.membraneQty || 0);
-    const membranePrice = Number(waterproofing.membranePrice ?? 2500);
-    if (membraneQty > 0) {
-      generated.push({
-        id: "gen-wp-membrane",
-        category: "waterproofing",
-        name: "توريد لفائف ممبرين عزل مائي سمك 4 مم معتمد",
-        unit: "رول",
-        quantity: membraneQty,
-        unitPrice: membranePrice,
-        laborCost: 0,
-        description: "توريد لفائف عزل ممبرين مسلحة بالبوليستر لحماية أرضيات الحمامات والأسطح من تسريبات المياه تماماً."
-      });
-    }
-
-    const cementInsulationQty = Number(waterproofing.cementInsulationQty || 0);
-    const cementInsulationPrice = Number(waterproofing.cementInsulationPrice ?? 450);
-    if (cementInsulationQty > 0) {
-      generated.push({
-        id: "gen-wp-cement",
-        category: "waterproofing",
-        name: "توريد مواد عزل أسمنتي كيميائي مرن (سيكا / أديبوند)",
-        unit: "شكارة",
-        quantity: cementInsulationQty,
-        unitPrice: cementInsulationPrice,
-        laborCost: 0,
-        description: "عزل أسمنتي معالج ذو مرونة عالية ومقاومة فائقة لضغط المياه المباشر بالحمامات والمطابخ."
-      });
-    }
-
-    const wpLabor = Number(waterproofing.laborLumpSum || 0);
-    if (wpLabor > 0) {
-      generated.push({
-        id: "gen-wp-labor",
-        category: "waterproofing",
-        name: "مصنعية أعمال عزل رطوبة وحرارة واختبار الغمر بالماء",
-        unit: "مقطوعية",
-        quantity: 1,
-        unitPrice: 0,
-        laborCost: wpLabor,
-        description: "أعمال تنظيف السطح، وعمل رقبة زجاجة، وتركيب العزل المائي واختباره بالغمر بالماء لمدة 48 ساعة."
+        id: "gen-ac-chiseling", category: "ac",
+        name: "أعمال شق ومحارة مسارات التكييف بالحوائط", unit: "نقطة",
+        quantity: totalAcPoints, unitPrice: mat, laborCost: totalAcPoints * lab,
+        description: "شق الحوائط ومحارة مسارات مواسير التكييف المدفونة لكل نقطة تكييف مفعّلة."
       });
     }
   }
 
-  // 13. أعمال الكريتال والمعادن والدرابزينات (metalWorks)
-  const metalWorks = finishing.metalWorks || {};
-  if (metalWorks.enabled) {
-    const wroughtIronQty = Number(metalWorks.wroughtIronQty || 0);
-    const wroughtIronPrice = Number(metalWorks.wroughtIronPrice ?? 3500);
-    if (wroughtIronQty > 0) {
-      generated.push({
-        id: "gen-mw-wrought",
-        category: "metalWorks",
-        name: "تصنيع وتركيب درابزين حديد كريتال (سلالم وبلكونات)",
-        unit: "م.ط",
-        quantity: wroughtIronQty,
-        unitPrice: wroughtIronPrice,
-        laborCost: 0,
-        description: "حديد كريتال بتصاميم هندسية معتمدة شامل الحام والتهيئة والدهان التأسيسي ضد الصدأ والوجه النهائي."
-      });
-    }
+  // ✅ إصلاح: تصنيفا "عزل الرطوبة والحرارة" و"الكريتال والمعادن" اتشالوا نهائيًا من هنا لأنهم
+  // مش بنود مطلوبة أصلاً في نطاق عمل الشركة، وكان الكود القديم بتاعهم "ميت" فعليًا (مفيش أي
+  // تاب/واجهة تسمح للمهندس يدخل بياناتهم من الأساس، فمكانوش هيتفعّلوا في أي مقايسة حقيقية).
 
-    const windowProtectionQty = Number(metalWorks.windowProtectionQty || 0);
-    const windowProtectionPrice = Number(metalWorks.windowProtectionPrice ?? 1200);
-    if (windowProtectionQty > 0) {
-      generated.push({
-        id: "gen-mw-window",
-        category: "metalWorks",
-        name: "شبكات حماية حديدية مصفحة للنوافذ والأبواب المعرضة للمناور",
-        unit: "م²",
-        quantity: windowProtectionQty,
-        unitPrice: windowProtectionPrice,
-        laborCost: 0,
-        description: "شبك حماية حديدي ثقيل للنوافذ المطلة على مناور أو الشوارع لزيادة الأمان والسلامة بالوحدة السكنية."
-      });
-    }
-
-    const mwLabor = Number(metalWorks.laborLumpSum || 0);
-    if (mwLabor > 0) {
-      generated.push({
-        id: "gen-mw-labor",
-        category: "metalWorks",
-        name: "مصنعيات تركيب وأعمال لحام ودهان المعادن بالموقع",
-        unit: "مقطوعية",
-        quantity: 1,
-        unitPrice: 0,
-        laborCost: mwLabor,
-        description: "مصنعيات تركيب الدرابزينات والحمايات الحديدية وصب القواعد وتعديل الفتحات ودهان الأوجه النهائية."
-      });
-    }
-  }
-
-  // 14. أعمال الديكورات والملحقات والجماليات
+  // 12. أعمال الديكورات والملحقات والجماليات
   const decorations = finishing.decorations || {};
   if (decorations.enabled && decorations.items) {
     decorations.items.forEach((item: any) => {
@@ -1647,7 +1543,7 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
     });
   }
 
-  // 15. أعمال التهوية والشفاطات (Ventilation)
+  // 13. أعمال التهوية والشفاطات (Ventilation)
   const ventilation = finishing.ventilation || {};
   if (ventilation.enabled && ventilation.items) {
     let ventItemsSubtotal = 0;
@@ -1716,13 +1612,12 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
   }
 
   // ✅ إصلاح: بند السلم الداخلي كان غائباً بالكامل عن المقايسة (لم يكن مولّداً على الإطلاق)
-  // 16. أعمال السلم الداخلي وتكسية الدرج والدرابزين
+  // 14. أعمال السلم الداخلي وتكسية الدرج والدرابزين
   const staircase = finishing.staircase || {};
   if (staircase.enabled) {
     const stairsCount = Number(staircase.stairsCount || 0);
-    const stairRates = staircase.rates || {};
-    const stairMatRate = Number(stairRates.stairMatRate ?? 2500);
-    const stairLabRate = Number(stairRates.stairLabRate ?? 1500);
+    const stairMatRate = Number(staircase.stairMatRate ?? 2500);
+    const stairLabRate = Number(staircase.stairLabRate ?? 1500);
 
     if (stairsCount > 0) {
       generated.push({
@@ -1838,8 +1733,11 @@ export default function InitialEstimate() {
       // ✅ إصلاح حرج: كان بيولّد رقم مقايسة عشوائي جديد ويكتب فوق الرقم الأصلي في *كل* عملية حفظ تلقائي،
       // حتى لو المقايسة موجودة بالفعل من قبل! دلوقتي بيعيد استخدام نفس الرقم المحفوظ فعلياً،
       // وبيولّد رقم جديد بس أول مرة (لما تتنشأ المقايسة فعلاً)
+      // ✅ إصلاح: تم حذف الاعتماد على project.estimateNumber هنا لأنه عدّاد منفصل تمامًا
+      // على جدول مختلف (projects بدل estimate_headers)، وكان ممكن يدّي رقمًا مستخدمًا
+      // بالفعل لمشروع آخر بجدول estimate_headers نفسه. المصدر الوحيد المعتمد دلوقتي
+      // هو نفس الجدول اللي بيتسجل فيه الرقم فعليًا.
       const finalEstimateNumber = existingHeader?.estimate_number
-        || project.estimateNumber
         || await generateSequentialCode("estimate_headers", "estimate_number", "EST");
 
       const payloadHeader = {
@@ -1956,27 +1854,7 @@ export default function InitialEstimate() {
   );
 }
 
-// دالة داخلية لجلب أيقونات حية لجدول المقايسة
-const getCategoryIconSvg = (category: string) => {
-  const icons: Record<string, string> = {
-    plumbing: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>`,
-    electricity: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>`,
-    plaster: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>`,
-    paint: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>`,
-    ceiling: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>`,
-    flooring: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path></svg>`,
-    doors: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>`,
-    aluminum: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v14a1 1 0 01-1 1H5a1 1 0 01-1-1V5z"></path></svg>`,
-    archMod: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a2 2 0 01-2 2h-1M4 11V5a2 2 0 012-2h4v8m-1 1v8m0 0H4a2 2 0 01-2-2v-4a2 2 0 012-2h4z"></path></svg>`,
-    decorations: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>`,
-    masonry: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2"></path></svg>`,
-    ac: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v18m9-9H3m12-4l-6 8m0-8l6 8"></path></svg>`,
-    waterproofing: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>`,
-    metalWorks: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>`,
-    ventilation: `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0 -18 0"></path></svg>`
-  };
-  return icons[category] || `<svg class="w-5 h-5 text-[#C9A45D]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>`;
-};
+// ملحوظة: getCategoryIconSvg بقت مستوردة من @/lib/categoryMeta.ts في أعلى الملف.
 
 // 🌟 إعادة الهيكلة والتصميم الإمبراطوري الشامل لورقة المقايسة المطبوعة وبوابة العميل الخارجية
 export function PrintReportLayout({
@@ -2039,7 +1917,7 @@ export function PrintReportLayout({
   const activeUnitAddress = project.unitAddress || project.unit_address || project.location || "الكرامة";
   const activeCustomerCode = customer.customerCode || customer.customer_code || "CUST-XXXX";
 
-  // مديول رحلة التنفيذ الـ 17 مرحلة مع دمج التواريخ وحساب وجود البند
+  // مديول رحلة التنفيذ الـ 15 مرحلة مع دمج التواريخ وحساب وجود البند
   const executionJourney = [
     { name: "اعتماد المقايسة", days: "1 يوم", active: true },
     { name: "المعاينة الهندسية", days: "3 أيام", active: true },
@@ -2050,13 +1928,11 @@ export function PrintReportLayout({
     { name: "تأسيس أعمال سباكة", days: "7 أيام", active: hasCategory("plumbing") },
     { name: "تأسيس أعمال تكييف", days: "2 يوم", active: hasCategory("ac") },
     { name: "تأسيس شفاطات وتهوية", days: "2 يوم", active: hasCategory("ventilation") },
-    { name: "عزل رطوبة وحرارة", days: "3 أيام", active: hasCategory("waterproofing") },
     { name: "أعمال بياض محارة", days: "10 أيام", active: hasCategory("plaster") },
     { name: "أعمال جبس بورد وأسقف", days: "5 أيام", active: hasCategory("ceiling") },
     { name: "أعمال الأرضيات والسيراميك", days: "10 أيام", active: hasCategory("flooring") },
     { name: "أعمال نجارة وتركيب أبواب", days: "3 أيام", active: hasCategory("doors") },
     { name: "أعمال ألوميتال وتركيب شبابيك", days: "3 أيام", active: hasCategory("aluminum") },
-    { name: "أعمال كريتال ومعادن", days: "4 أيام", active: hasCategory("metalWorks") },
     { name: "أعمال ديكورات وتجاليد", days: "5 أيام", active: hasCategory("decorations") },
     { name: "تشطيب نهائي كهرباء", days: "3 يوم", active: hasCategory("electricity") },
     { name: "تشطيب نهائي سباكة", days: "3 يوم", active: hasCategory("plumbing") },
@@ -2211,7 +2087,7 @@ export function PrintReportLayout({
                   <td className="p-3 font-black text-[#0B1B38] whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
                       <span dangerouslySetInnerHTML={{ __html: getCategoryIconSvg(item.category) }} />
-                      <span>{localCategoryNames[item.category] || categoryNames[item.category] || item.category || "—"}</span>
+                      <span>{categoryNames[item.category] || item.category || "—"}</span>
                     </div>
                   </td>
                   <td className="p-3 text-gray-600 font-bold leading-relaxed whitespace-pre-wrap">{item.description || item.name}</td>

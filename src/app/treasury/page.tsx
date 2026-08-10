@@ -129,6 +129,8 @@ export default function TreasuryPage() {
   const [subcontractors, setSubcontractors] = useState<any[]>([]); 
   const [engineers, setEngineers] = useState<any[]>([]); 
   const [installments, setInstallments] = useState<any[]>([]); 
+  const [estimateNumbersByProject, setEstimateNumbersByProject] = useState<Record<string, string>>({});
+  const [approvedContractByProject, setApprovedContractByProject] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -204,12 +206,17 @@ export default function TreasuryPage() {
   async function loadTreasuryData() {
     setLoading(true);
     try {
-      const [transRes, projRes, subsRes, custRes, usersRes] = await Promise.all([
+      const [transRes, projRes, subsRes, custRes, usersRes, estRes] = await Promise.all([
         supabase.from("transactions").select("*, projects(project_name), subcontractors(name, specialty, contract_value), users(name)").order("created_at", { ascending: false }),
         supabase.from("projects").select("*, customers(name, customer_code)").order("project_name", { ascending: true }),
         supabase.from("subcontractors").select("*").order("name", { ascending: true }),
         supabase.from("customers").select("*").order("name", { ascending: true }),
-        supabase.from("users").select("id, name, role")
+        supabase.from("users").select("id, name, role"),
+        // ✅ إصلاح: جلب رقم المقايسة الحقيقي من مصدره الوحيد (estimate_headers) بدل اختلاق
+        // رقم وهمي من كود المشروع (project_code) كان بيدّي رقمًا غير موجود فعليًا بأي مكان.
+        // زودنا grand_total وstatus كمان عشان نستخدمهم كمصدر أساسي لقيمة العقد الحقيقية
+        // (بدل الاعتماد على projects.contract_value المكتوب يدويًا والمنفصل تمامًا عن المقايسة المعتمدة).
+        supabase.from("estimate_headers").select("project_id, estimate_number, grand_total, status, created_at").order("created_at", { ascending: false })
       ]);
 
       if (transRes.error) throw transRes.error;
@@ -217,11 +224,31 @@ export default function TreasuryPage() {
       if (subsRes.error) throw subsRes.error;
       if (custRes.error) throw custRes.error;
       if (usersRes.error) throw usersRes.error;
+      if (estRes.error) throw estRes.error;
 
       setTransactions(transRes.data || []);
       setProjects(projRes.data || []);
       setSubcontractors(subsRes.data || []);
       setCustomers(custRes.data || []);
+      // أحدث estimate_number مسجل فعليًا لكل مشروع (الأحدث created_at أولاً بعد الترتيب فوق)
+      const latestEstimateByProject: Record<string, string> = {};
+      // ✅ قيمة العقد الحقيقية المعتمدة لكل مشروع: بنفضّل أحدث مقايسة "نهائية"، ولو مفيش
+      // نرجع لأحدث مقايسة بأي حالة، ولو مفيش مقايسة خالص هنرجع لاحقًا لـ contract_value اليدوي.
+      const finalTotalByProject: Record<string, number> = {};
+      const anyTotalByProject: Record<string, number> = {};
+      (estRes.data || []).forEach((row: any) => {
+        if (!latestEstimateByProject[row.project_id]) {
+          latestEstimateByProject[row.project_id] = row.estimate_number;
+        }
+        if (!anyTotalByProject[row.project_id]) {
+          anyTotalByProject[row.project_id] = Number(row.grand_total || 0);
+        }
+        if (row.status === "نهائية" && !finalTotalByProject[row.project_id]) {
+          finalTotalByProject[row.project_id] = Number(row.grand_total || 0);
+        }
+      });
+      setEstimateNumbersByProject(latestEstimateByProject);
+      setApprovedContractByProject({ ...anyTotalByProject, ...finalTotalByProject });
       
       const filteredEngineers = (usersRes.data || []).filter((u: any) => String(u.role).toLowerCase() === "engineer");
       setEngineers(filteredEngineers);
@@ -265,7 +292,12 @@ export default function TreasuryPage() {
       }
     });
 
-    const totalContractValues = projects.reduce((sum, p) => sum + Number(p.contract_value || 0), 0);
+    // ✅ إصلاح: قيمة العقد بقت بتفضّل الإجمالي المعتمد فعليًا من المقايسة (estimate_headers.grand_total)
+    // بدل الاعتماد المباشر على contract_value اليدوي المنفصل تمامًا عن حسابات المقايسة الحقيقية.
+    const totalContractValues = projects.reduce(
+      (sum, p) => sum + (approvedContractByProject[p.id] ?? Number(p.contract_value || 0)),
+      0
+    );
     const clientReceivables = Math.max(0, totalContractValues - receipts);
 
     const suppliersList = subcontractors.filter(s => s.status === "supplier");
@@ -293,7 +325,7 @@ export default function TreasuryPage() {
       supplierPayables,
       subcontractorPayables
     };
-  }, [transactions, projects, subcontractors]);
+  }, [transactions, projects, subcontractors, approvedContractByProject]);
 
   const liquidityChannels = useMemo(() => {
     let mainCashIn = 0;
@@ -331,7 +363,8 @@ export default function TreasuryPage() {
   const partnersLedgers = useMemo(() => {
     const clients = customers.map(cust => {
       const matchedProj = projects.find(p => p.customer_id === cust.id) || {};
-      const contractValue = Number(matchedProj.contract_value || 0);
+      // ✅ نفس إصلاح المصدر: قيمة العقد بتفضّل إجمالي المقايسة المعتمد الحقيقي.
+      const contractValue = approvedContractByProject[matchedProj.id] ?? Number(matchedProj.contract_value || 0);
       const paid = transactions
         .filter(t => t.project_id === matchedProj.id && t.type === "inflow")
         .reduce((sum, t) => sum + Number(t.amount || 0), 0);
@@ -345,7 +378,7 @@ export default function TreasuryPage() {
         id: cust.id,
         code: cust.customer_code || "CUST-XXXX",
         projCode: matchedProj.project_code || "PROJ-XXXX",
-        estimateNum: matchedProj.project_code ? `EST-${matchedProj.project_code.split("-")[1]}` : "EST-XXXX",
+        estimateNum: estimateNumbersByProject[matchedProj.id] || "لسه ما اتصدرتش مقايسة",
         name: cust.name,
         contractValue,
         paid,
@@ -393,7 +426,7 @@ export default function TreasuryPage() {
     });
 
     return { clients, suppliers, subcontractorsList };
-  }, [customers, projects, subcontractors, transactions]);
+  }, [customers, projects, subcontractors, transactions, approvedContractByProject]);
 
   const filteredLedgers = useMemo(() => {
     const q = ledgerSearchQuery.toLowerCase().trim();
@@ -443,7 +476,8 @@ export default function TreasuryPage() {
 
   const projectProfitsList = useMemo(() => {
     return projects.map(proj => {
-      const totalContract = Number(proj.contract_value || 0);
+      // ✅ نفس إصلاح المصدر: الربحية لازم تتحسب على أساس الإجمالي المعتمد الحقيقي من المقايسة.
+      const totalContract = approvedContractByProject[proj.id] ?? Number(proj.contract_value || 0);
       const totalOutflows = transactions
         .filter(t => t.project_id === proj.id && t.type === "outflow")
         .reduce((sum, t) => sum + Number(t.amount || 0), 0);
@@ -460,7 +494,7 @@ export default function TreasuryPage() {
         profitMargin
       };
     }).filter(p => p.totalContract > 0);
-  }, [projects, transactions]);
+  }, [projects, transactions, approvedContractByProject]);
 
   const currentYear = new Date().getFullYear();
 
