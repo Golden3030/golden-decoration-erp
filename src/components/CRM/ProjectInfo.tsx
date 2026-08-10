@@ -78,20 +78,39 @@ export default function ProjectInfo({
   // بيتولد مرة واحدة بس وقت إنشاء المشروع، وممكن يختلف كليًا عن الكود الحقيقي المستخدم
   // فعليًا في الطباعة وبوابة العميل (estimate_headers.estimate_number). دلوقتي بنجيبه لايف
   // من نفس المصدر الحقيقي الوحيد عشان الرقم اللي شايفه هنا يبقى مطابق 100% لأي مكان تاني.
+  //
+  // ✅ إصلاح إضافي: كان بيجيب آخر صف مسجل بأي حالة (status)، بينما بوابة العميل (client/page.tsx)
+  // بتفضّل آخر مقايسة "نهائية" تحديدًا. لو اتعملت نسخة "مبدئية" جديدة بعد النهائية (لمراجعة تعديل
+  // مثلاً)، كان الرقم هنا هيختلف عن اللي شايفه العميل فعليًا. دلوقتي بنفس منطق بوابة العميل بالظبط:
+  // نفضّل آخر "نهائية"، ولو مفيش نرجع لآخر مقايسة بأي حالة.
   const [liveEstimateNumber, setLiveEstimateNumber] = useState<string>("");
 
   useEffect(() => {
     const fetchRealEstimateNumber = async () => {
       if (!project.id) { setLiveEstimateNumber(""); return; }
       try {
-        const { data, error } = await supabase
+        let { data, error } = await supabase
           .from("estimate_headers")
           .select("estimate_number, status")
           .eq("project_id", project.id)
+          .eq("status", "نهائية")
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
         if (error) throw error;
+
+        if (!data) {
+          const fallback = await supabase
+            .from("estimate_headers")
+            .select("estimate_number, status")
+            .eq("project_id", project.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          if (fallback.error) throw fallback.error;
+          data = fallback.data;
+        }
+
         setLiveEstimateNumber(data?.estimate_number || "");
       } catch (err) {
         console.error("خطأ جلب رقم المقايسة الحقيقي:", err);

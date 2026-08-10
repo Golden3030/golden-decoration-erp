@@ -34,7 +34,7 @@ export default function AdminClientPreview() {
   const [error, setError] = useState<string | null>(null);
 
   const [isPublished, setIsPublished] = useState<boolean>(false);
-  const [estimateNumber, setEstimateNumber] = useState<string>("EST-M2.5");
+  const [estimateNumber, setEstimateNumber] = useState<string>("");
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
 
   useEffect(() => {
@@ -56,18 +56,31 @@ export default function AdminClientPreview() {
         
         setIsPublished(projData?.status === "Completed" || projData?.is_published === true);
 
-        // جلب كود المقايسة الفعلي لتوجيه العميل الرقمي
-        const { data: estHeader } = await supabase
+        // ✅ إصلاح: نفس باج بوابة العميل وبيانات المشروع بالظبط — الاستعلام كان من غير فلتر
+        // حالة ولا ترتيب (بيفشل لو المشروع عنده أكتر من مقايسة)، والفولباك كان بيخترع رقم من
+        // كود المشروع (project_code) مش موجود فعليًا في estimate_headers خالص. دلوقتي بنفس
+        // منطق بوابة العميل تمامًا: نفضّل آخر مقايسة "نهائية"، ولو مفيش نرجع لآخر مقايسة بأي حالة.
+        let { data: estHeader } = await supabase
           .from("estimate_headers")
           .select("estimate_number")
           .eq("project_id", projectId)
+          .eq("status", "نهائية")
+          .order("created_at", { ascending: false })
+          .limit(1)
           .maybeSingle();
-        
-        if (estHeader) {
-          setEstimateNumber(estHeader.estimate_number);
-        } else {
-          setEstimateNumber(projData.project_code ? `EST-${projData.project_code.split("-")[1]}` : "EST-XXXX");
+
+        if (!estHeader) {
+          const fallback = await supabase
+            .from("estimate_headers")
+            .select("estimate_number")
+            .eq("project_id", projectId)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+          estHeader = fallback.data;
         }
+
+        setEstimateNumber(estHeader?.estimate_number || "");
 
         if (projData?.customer_id) {
           const { data: custData, error: custErr } = await supabase
@@ -160,7 +173,7 @@ export default function AdminClientPreview() {
           <button 
             type="button"
             onClick={() => router.back()}
-            className="mt-6 bg-gradient-to-r from-[#D4AF37] to-[#F0E6D2] text-[#020B1C] text-xs font-black py-3 px-6 rounded-xl hover:scale-105 active:scale-95 transition cursor-pointer"
+            className="mt-6 bg-linear-to-r from-[#D4AF37] to-[#F0E6D2] text-[#020B1C] text-xs font-black py-3 px-6 rounded-xl hover:scale-105 active:scale-95 transition cursor-pointer"
           >
             العودة للوحة الرئيسية
           </button>
@@ -235,7 +248,7 @@ export default function AdminClientPreview() {
               type="button"
               onClick={handleTogglePublish}
               disabled={isUpdating}
-              className={`flex items-center gap-2 text-[10px] font-black py-2.5 px-4 rounded-xl shadow-sm text-[#020B1C] transition-all cursor-pointer hover:scale-103 active:scale-97 ${isPublished ? "bg-gradient-to-r from-red-500 to-rose-400 hover:shadow-[0_0_15px_rgba(244,63,94,0.4)]" : "bg-gradient-to-r from-emerald-500 to-teal-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.4)]"}`}
+              className={`flex items-center gap-2 text-[10px] font-black py-2.5 px-4 rounded-xl shadow-sm text-[#020B1C] transition-all cursor-pointer hover:scale-103 active:scale-97 ${isPublished ? "bg-linear-to-r from-red-500 to-rose-400 hover:shadow-[0_0_15px_rgba(244,63,94,0.4)]" : "bg-linear-to-r from-emerald-500 to-teal-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.4)]"}`}
             >
               {isUpdating ? <Loader2 size={12} className="animate-spin" /> : (isPublished ? <EyeOff size={14} /> : <Eye size={14} />)}
               {isPublished ? "حجب الملف المالي والفني" : "إتاحة ونشر للمستخدم النهائي"}
@@ -252,8 +265,9 @@ export default function AdminClientPreview() {
           <div className="relative group">
             <button
               type="button"
-              onClick={() => window.open(`/public-estimate?code=${estimateNumber}`, "_blank")}
-              className="flex items-center gap-2 text-[10px] font-black bg-gradient-to-r from-[#D4AF37] to-[#F0E6D2] text-black px-5 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 hover:scale-105 active:scale-95 transition cursor-pointer"
+              disabled={!estimateNumber}
+              onClick={() => estimateNumber && window.open(`/public-estimate?code=${estimateNumber}`, "_blank")}
+              className="flex items-center gap-2 text-[10px] font-black bg-linear-to-r from-[#D4AF37] to-[#F0E6D2] text-black px-5 py-2.5 rounded-xl shadow-lg shadow-[#D4AF37]/15 hover:scale-105 active:scale-95 transition cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
             >
               <UserCheck size={14} />
               <span>👁️ معاينة بوابة العميل</span>
@@ -271,7 +285,7 @@ export default function AdminClientPreview() {
             <button 
               type="button"
               onClick={() => router.push("/dashboard")}
-              className="flex items-center gap-2 text-[10px] font-black text-[#D4AF37] hover:text-[#020B1C] hover:bg-gradient-to-r hover:from-[#D4AF37] hover:to-[#C9A45D] bg-[#07132a] border border-[#D4AF37]/40 hover:border-transparent px-4 py-2.5 rounded-xl transition-all duration-300 cursor-pointer hover:shadow-[0_0_15px_rgba(212,175,55,0.45)] hover:scale-103 active:scale-97"
+              className="flex items-center gap-2 text-[10px] font-black text-[#D4AF37] hover:text-[#020B1C] hover:bg-linear-to-r hover:from-[#D4AF37] hover:to-[#C9A45D] bg-[#07132a] border border-[#D4AF37]/40 hover:border-transparent px-4 py-2.5 rounded-xl transition-all duration-300 cursor-pointer hover:shadow-[0_0_15px_rgba(212,175,55,0.45)] hover:scale-103 active:scale-97"
             >
               <ArrowRight size={14} />
               العودة للخلف
@@ -291,8 +305,8 @@ export default function AdminClientPreview() {
         
         {/* العمود الأيمن مدمج بالإطارات الرفيعة الشفافة الفاخرة بالمقياس الإمبراطوري المتين بالمنصة */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 shadow-xl space-y-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4xl p-6 shadow-xl space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-1.5 h-full bg-linear-to-b from-[#C9A45D] to-transparent opacity-40" />
             <h2 className="text-sm font-black text-[#D4AF37] border-b border-[#D4AF37]/20 pb-3 flex items-center gap-2">
               <Layout size={18} className="text-[#D4AF37]" />
               بيانات العميل والموقع الفنية
@@ -328,8 +342,8 @@ export default function AdminClientPreview() {
           </div>
 
           {/* مديول مشاركة الرابط السريع للعميل عبر واتساب بالمقياس الإمبراطوري المتين بالمنصة */}
-          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 shadow-xl space-y-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4xl p-6 shadow-xl space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-1.5 h-full bg-linear-to-b from-[#C9A45D] to-transparent opacity-40" />
             <h2 className="text-sm font-black text-[#D4AF37] border-b border-[#D4AF37]/20 pb-3 flex items-center gap-2">
               <Share2 size={18} className="text-[#D4AF37]" />
               مشاركة بوابة العميل والمقايسة
@@ -346,7 +360,7 @@ export default function AdminClientPreview() {
                   onClick={handleCopyLink}
                   className="w-full py-3 px-4 rounded-xl bg-[#020B1C] border border-[#1f2d4d] text-[#F0E6D2] hover:border-[#D4AF37] transition text-xs font-black flex items-center justify-between cursor-pointer hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  <span className="truncate max-w-[180px]">{publicClientLink}</span>
+                  <span className="truncate max-w-45">{publicClientLink}</span>
                   <span className="text-[#D4AF37] text-[10px] font-bold flex items-center gap-1">
                     {copySuccess ? "تم النسخ ✓" : <Copy size={12} />}
                   </span>
@@ -364,7 +378,7 @@ export default function AdminClientPreview() {
                 <button
                   type="button"
                   onClick={handleWhatsAppShare}
-                  className="w-full py-3 bg-gradient-to-r from-emerald-600 to-teal-500 hover:shadow-[0_4px_15px_rgba(16,185,129,0.35)] text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 cursor-pointer transition hover:scale-[1.02] active:scale-[0.98]"
+                  className="w-full py-3 bg-linear-to-r from-emerald-600 to-teal-500 hover:shadow-[0_4px_15px_rgba(16,185,129,0.35)] text-white rounded-xl text-xs font-black flex items-center justify-center gap-2 cursor-pointer transition hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <span>🟢 مشاركة ملف العميل عبر واتساب</span>
                 </button>
@@ -387,7 +401,7 @@ export default function AdminClientPreview() {
             <div className="space-y-3 text-xs spec-item">
               <div className="flex justify-between items-center p-3 bg-[#020B1C]/50 rounded-xl border border-[#1f2d4d]">
                 <span className="font-semibold text-gray-300">شيت المقايسة التفصيلية المعتمد</span>
-                <button type="button" onClick={() => window.open(`/public-estimate?code=${estimateNumber}`, "_blank")} className="text-[#D4AF37] hover:text-[#F0E6D2] font-black flex items-center gap-1 cursor-pointer">
+                <button type="button" disabled={!estimateNumber} onClick={() => estimateNumber && window.open(`/public-estimate?code=${estimateNumber}`, "_blank")} className="text-[#D4AF37] hover:text-[#F0E6D2] font-black flex items-center gap-1 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed">
                   معاينة المخطط الرقمي <ExternalLink size={10} />
                 </button>
               </div>
@@ -414,8 +428,8 @@ export default function AdminClientPreview() {
 
         {/* العمود الأيسر - نافذة العرض ثلاثية الأبعاد الفخمة بالمقياس الإمبراطوري المتين بالمنصة */}
         <div className="lg:col-span-2">
-          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 shadow-2xl h-full flex flex-col space-y-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+          <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4xl p-6 shadow-2xl h-full flex flex-col space-y-4 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-1.5 h-full bg-linear-to-b from-[#C9A45D] to-transparent opacity-40" />
             <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
               <h2 className="text-sm font-black text-[#D4AF37] flex items-center gap-2">
                 <Compass size={18} className="text-[#D4AF37]" />
@@ -424,7 +438,7 @@ export default function AdminClientPreview() {
               <span className="text-[10px] bg-[#020B1C] border border-[#D4AF37]/30 text-[#D4AF37] px-3 py-1.5 rounded-full font-bold">تفاعلي عبر المتصفح</span>
             </div>
             
-            <div className="relative bg-black rounded-2xl border border-[#1f2d4d] flex-grow min-h-[450px] overflow-hidden flex items-center justify-center shadow-[inset_0_4px_20px_rgba(212,175,55,0.08)]">
+            <div className="relative bg-black rounded-2xl border border-[#1f2d4d] grow min-h-112.5 overflow-hidden flex items-center justify-center shadow-[inset_0_4px_20px_rgba(212,175,55,0.08)]">
               {project?.design_embed_url ? (
                 <iframe 
                   src={project.design_embed_url}

@@ -150,7 +150,7 @@ export default function ClientDashboardPage() {
   return (
     <main className="min-h-screen bg-[#020B1C] text-white p-4 md:p-8 font-alexandria" dir="rtl">
       <div className="max-w-6xl mx-auto space-y-8 text-right relative overflow-hidden">
-        <div className="absolute top-1/3 left-1/3 w-[600px] h-[600px] rounded-full bg-[#D4AF37]/5 blur-[140px] pointer-events-none z-0" />
+        <div className="absolute top-1/3 left-1/3 w-150 h-150 rounded-full bg-[#D4AF37]/5 blur-[140px] pointer-events-none z-0" />
         
         {/* 🛠️ جدار الحماية البصري الموحد وتنسيق شريط التمرير المذهب ومنع التداخل نهائياً */}
         <style dangerouslySetInnerHTML={{ __html: `
@@ -238,8 +238,8 @@ export default function ClientDashboardPage() {
               </div>
 
               {/* 🌟 تم التحديث وتعديل الكارت الأوسط للنسق الداكن المذهب والزوايا الإمبراطورية المتينة */}
-              <div className="bg-[#020B1C] border-2 border-[#D4AF37]/20 rounded-[2rem] p-5 flex flex-col items-center justify-center text-center space-y-2 shadow-2xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-16 h-16 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-xl pointer-events-none" />
+              <div className="bg-[#020B1C] border-2 border-[#D4AF37]/20 rounded-4xl p-5 flex flex-col items-center justify-center text-center space-y-2 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-16 h-16 bg-linear-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-xl pointer-events-none" />
                 <span className="text-2xl select-none z-10">🏢</span>
                 <p className="text-[#D4AF37] font-bold text-[9px] uppercase z-10">بيانات وموقع المشروع</p>
                 <p className="font-black text-white text-xs z-10">{project.project_name || "مشروع العميل السكني"}</p>
@@ -279,7 +279,7 @@ export default function ClientDashboardPage() {
               </div>
             </div>
 
-            <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 shadow-xl space-y-3 select-none">
+            <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4xl p-6 shadow-xl space-y-3 select-none">
               <p className="text-[#D4AF37] text-xs font-bold flex items-center gap-1.5">📈 نسبة الإنجاز الهندسي والإداري الفعلي بالموقع حالياً</p>
               <div className="flex items-center gap-4">
                 <div className="w-full bg-black h-4 rounded-full overflow-hidden p-0.5 border border-[#243556]">
@@ -293,13 +293,13 @@ export default function ClientDashboardPage() {
             </div>
 
             {/* ترقية زوايا كارت النموذج ثلاثي الأبعاد */}
-            <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 shadow-2xl space-y-4">
+            <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4xl p-6 shadow-2xl space-y-4">
               <h3 className="text-[#F0E6D2] text-sm md:text-base font-black flex items-center gap-2 select-none border-b border-[#D4AF37]/15 pb-3">
                 <Compass className="text-[#D4AF37]" size={20} />
                 استعراض النموذج ثلاثي الأبعاد وتوزيع الفراغات والأثاث (3D View Panel)
               </h3>
               {project.design_embed_url ? (
-                <div className="relative w-full h-[450px] rounded-2xl overflow-hidden border border-[#1f2d4d] bg-black shadow-2xl">
+                <div className="relative w-full h-112.5 rounded-2xl overflow-hidden border border-[#1f2d4d] bg-black shadow-2xl">
                   <iframe
                     src={project.design_embed_url}
                     title="3D Design View"
@@ -308,7 +308,7 @@ export default function ClientDashboardPage() {
                   />
                 </div>
               ) : (
-                <div className="h-[380px] bg-[#020B1C]/50 border-2 border-dashed border-[#243556] rounded-2xl flex flex-col items-center justify-center text-center p-6 space-y-3 select-none">
+                <div className="h-95 bg-[#020B1C]/50 border-2 border-dashed border-[#243556] rounded-2xl flex flex-col items-center justify-center text-center p-6 space-y-3 select-none">
                   <Compass className="text-gray-600 animate-spin" size={40} />
                   <h4 className="text-[#F0E6D2] font-extrabold text-base">جاري مراجعة وإخراج مجسم وحدتك التفاعلي</h4>
                   <p className="text-gray-500 text-xs max-w-md leading-relaxed">يعمل مهندسو الديكور لدينا حالياً على معالجة الرفع المساحي وإخراج لوحة التوزيع التفاعلية الخاصة بك حركياً. سيظهر هنا فور اعتماده وتأكيده هندسياً.</p>
@@ -318,7 +318,7 @@ export default function ClientDashboardPage() {
 
             {/* الأرصدة المالية الكبرى للبوابة */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 select-none font-semibold text-xs md:text-sm">
-              <div className="p-5 rounded-[2rem] bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between shadow-xl">
+              <div className="p-5 rounded-4xl bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between shadow-xl">
                 <div className="flex justify-between items-start">
                   <span className="text-2xl">📜</span>
                   <span className="bg-blue-500/10 text-blue-400 text-[10px] px-2.5 py-0.5 rounded-full font-bold border border-blue-500/25">قيمة العقد</span>
@@ -329,7 +329,7 @@ export default function ClientDashboardPage() {
                 </div>
               </div>
 
-              <div className="p-5 rounded-[2rem] bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between shadow-xl">
+              <div className="p-5 rounded-4xl bg-[#07132a] border border-[#D4AF37]/20 flex flex-col justify-between shadow-xl">
                 <div className="flex justify-between items-start">
                   <span className="text-2xl">💵</span>
                   <span className="bg-emerald-500/10 text-emerald-400 text-[10px] px-2.5 py-0.5 rounded-full font-bold border border-emerald-500/25">المسدد لشركتنا</span>
@@ -340,7 +340,7 @@ export default function ClientDashboardPage() {
                 </div>
               </div>
 
-              <div className="p-5 rounded-[2rem] bg-[#07132a] border-2 border-[#D4AF37] flex flex-col justify-between shadow-xl">
+              <div className="p-5 rounded-4xl bg-[#07132a] border-2 border-[#D4AF37] flex flex-col justify-between shadow-xl">
                 <div className="flex justify-between items-start">
                   <span className="text-2xl">💰</span>
                   <span className="bg-[#D4AF37]/10 text-[#D4AF37] text-[10px] px-2.5 py-0.5 rounded-full font-bold border border-[#D4AF37]/20">متبقي عليك</span>
@@ -355,7 +355,7 @@ export default function ClientDashboardPage() {
             {/* صف التفاعل الثنائي بين المستندات ورفع الكروكي الفوري لربط السيلز */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               
-              <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 shadow-xl space-y-4 select-none">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4xl p-6 shadow-xl space-y-4 select-none">
                 <h3 className="text-[#F0E6D2] text-sm md:text-base font-black border-b border-[#D4AF37]/15 pb-3 flex items-center gap-2">
                   <FileText className="text-[#D4AF37]" size={18} />
                   <span>📁 خزانة المستندات والتعاقدات المعتمدة للموقع</span>
@@ -378,17 +378,17 @@ export default function ClientDashboardPage() {
                     <button
                       type="button" 
                       onClick={() => router.push("/estimates")} 
-                      className="px-4 py-2 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.15)] hover:shadow-[0_0_20px_rgba(212,175,55,0.35)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black relative overflow-hidden"
+                      className="px-4 py-2 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border border-[#D4AF37] shadow-[0_0_12px_rgba(212,175,55,0.15)] hover:shadow-[0_0_20px_rgba(212,175,55,0.35)] hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black relative overflow-hidden"
                     >
                       <span>📥 تحميل المقايسة PDF</span>
-                      <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_4px_rgba(212,175,55,0.8)]" />
+                      <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-linear-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_4px_rgba(212,175,55,0.8)]" />
                     </button>
                   </div>
                 </div>
               </div>
 
               {/* بطاقة رفع الكروكي ومزامنته للـ CRM وموظفي المبيعات */}
-              <div className="bg-[#07132a] border-2 border-dashed border-[#D4AF37]/30 rounded-[2rem] p-6 shadow-xl space-y-4">
+              <div className="bg-[#07132a] border-2 border-dashed border-[#D4AF37]/30 rounded-4xl p-6 shadow-xl space-y-4">
                 <h3 className="text-[#F0E6D2] text-sm md:text-base font-black border-b border-[#243556]/50 pb-3 flex items-center gap-2 select-none">
                   <Upload className="text-[#D4AF37]" size={18} />
                   <span>📐 إرسال وإرفاق كروكي / مخطط الشقة الفوري</span>
@@ -424,7 +424,7 @@ export default function ClientDashboardPage() {
 
           </div>
         ) : (
-          <div className="mt-12 p-12 border-2 border-dashed border-[#D4AF37]/25 rounded-[2rem] text-center select-none bg-[#07132a]">
+          <div className="mt-12 p-12 border-2 border-dashed border-[#D4AF37]/25 rounded-4xl text-center select-none bg-[#07132a]">
             <p className="text-[#D4AF37] text-lg font-bold mb-2">مرحباً بك في بوابة جولدن ديكوريشن </p>
             <p className="text-gray-400 text-sm">عذراً، لا توجد مشاريع تشطيب نشطة مرتبطة بحسابك حالياً في قاعدة البيانات. يرجى التواصل مع إدارة الشركة للتفعيل.</p>
           </div>

@@ -1,493 +1,457 @@
 "use client";
 
-import { useEffect, useState } from "react"; 
-import { useRouter } from "next/navigation"; 
+import { useEffect, useState, useMemo } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
-
-import ProjectsTable from "@/components/dashboard/ProjectsTable";
-import Notifications from "@/components/dashboard/Notifications";
-
-import Tasks from "@/components/dashboard/Tasks";
-import PerformanceChart from "@/components/dashboard/PerformanceChart";
-import PerformanceIndicators from "@/components/dashboard/PerformanceIndicators";
-
-import RecentActivities from "@/components/dashboard/RecentActivities";
-import UpcomingProjects from "@/components/dashboard/UpcomingProjects";
-
 import { supabase } from "@/lib/supabaseClient";
-import { 
-  Users, 
-  Activity, 
-  ClipboardList, 
-  ShieldCheck, 
-  TrendingUp, 
-  TrendingDown, 
-  RefreshCw,
-  Clock,
-  Target,       
-  Bell,         
-  FileSignature,
-  Sparkles,
-  Wallet,
-  Loader2 // 👈 أضف هذه الأيقونة المفقودة في الاستيراد لحل المشكلة البرمجية رقم 5
-} from "lucide-react";
+import { isOnline, addToOfflineQueue } from "@/lib/offline-sync";
+import { Plus, Minus, Clipboard, Info, CheckCircle2, Lock, Loader2, Package } from "lucide-react";
 
-interface DashboardStatsState {
-  customers: number;
-  activeProjects: number;
-  pendingEstimates: number;
-  contracted: number;
-  revenue: number;
-  costs: number;
+interface Disbursement {
+  id: string;
+  project_id: string;
+  product_id: string;
+  quantity_disbursed: number;
+  received_by: string;
+  disbursed_date: string;
+  notes: string;
+  projects?: { project_name: string };
+  products_library?: { product_name: string; unit: string };
 }
 
-// 📅 مكون التقويم التفاعلي المطور لدعم المواعيد المتعددة والمزامنة الحية - ديناميكي بالكامل لأي شهر وسنة
-const ARABIC_MONTH_NAMES = [
-  "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو",
-  "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"
-];
+export default function MaterialDisbursementsPage() {
+  const [disbursements, setDisbursements] = useState<Disbursement[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [products, setProducts] = useState<any[]>([]);
+  const [budgetItems, setBudgetItems] = useState<any[]>([]); // كميات المقايسة للمشروع المختار
+  const [projectPurchases, setProjectPurchases] = useState<any[]>([]); // مشتريات مخصصة لمشاريع (من أوامر الشراء المستلمة)
+  const [disburseFrom, setDisburseFrom] = useState<"project" | "general">("project");
+  
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-const MiniCalendar = () => {
-  // ✅ إصلاح: كان الشهر/السنة/اليوم الحالي كلهم ثابتين يدوياً على يوليو 2026
-  // فكان التقويم هيتعطل تماماً (صفر مواعيد، تاريخ غلط) بمجرد ما يعدي الشهر ده
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentMonth = now.getMonth(); // 0-11
-  const todayDate = now.getDate();
+  // حقول نموذج صرف خامة جديد
+  const [selectedProjectId, setSelectedProjectId] = useState("");
+  const [selectedProductId, setSelectedProductId] = useState("");
+  const [qtyDisbursed, setQtyDisbursed] = useState<number | "">("");
+  const [receivedBy, setReceivedBy] = useState("");
+  const [disbursedDate, setDisbursedDate] = useState(new Date().toISOString().split("T")[0]);
+  const [notes, setNotes] = useState("");
 
-  const [selectedDay, setSelectedDay] = useState<number>(todayDate);
-  const [events, setEvents] = useState<Record<number, string[]>>({}); 
-  const [loadingEvents, setLoadingEvents] = useState(true);
-
-  // جلب المواعيد النشطة للشهر الحالي حيوياً من قاعدة البيانات
   useEffect(() => {
-    async function fetchLiveCalendarEvents() {
-      try {
-        setLoadingEvents(true);
+    document.title = "صرف الخامات للمواقع | Golden Decoration";
+    loadInitialData();
+  }, []);
 
-        const monthStart = new Date(currentYear, currentMonth, 1, 0, 0, 0);
-        const monthEnd = new Date(currentYear, currentMonth + 1, 0, 23, 59, 59, 999);
+  // الاستعلام التلقائي عن ميزانية الخامات فور اختيار المشروع لـحساب الهدر والانحراف
+  useEffect(() => {
+    if (!selectedProjectId) {
+      setBudgetItems([]);
+      return;
+    }
+    loadProjectBudgetQuantities(selectedProjectId);
+  }, [selectedProjectId]);
 
-        const { data, error } = await supabase
-          .from("appointments")
-          .select("title, start_time")
-          .eq("status", "scheduled")
-          .gte("start_time", monthStart.toISOString())
-          .lte("start_time", monthEnd.toISOString());
+  async function loadInitialData() {
+    setLoading(true);
+    try {
+      // 1. جلب سندات الصرف مع دمج أسماء المشاريع والمنتجات المسحوبة
+      const { data: disbData, error: disbError } = await supabase
+        .from("material_disbursements")
+        .select(`
+          *,
+          projects (project_name),
+          products_library (product_name, unit)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (disbError) throw disbError;
+      setDisbursements(disbData || []);
+
+      // 2. جلب المشاريع النشطة
+      const { data: projData } = await supabase
+        .from("projects")
+        .select("id, project_name");
+      setProjects(projData || []);
+
+      // 3. جلب منتجات مكتبة الخامات المعتمدة
+      const { data: prodData } = await supabase
+        .from("products_library")
+        .select("id, product_name, unit, quantity_in_stock, reorder_level");
+      setProducts(prodData || []);
+
+      // 4. جلب المشتريات المخصصة لمشاريع معينة (عشان نحسب "رصيد كل مشروع" لوحده منفصل عن المخزون العام)
+      const { data: poItemsData } = await supabase
+        .from("purchase_order_items")
+        .select("product_id, quantity, purchase_orders!inner(project_id, status)")
+        .eq("purchase_orders.status", "received")
+        .not("purchase_orders.project_id", "is", null);
+      setProjectPurchases(poItemsData || []);
+
+    } catch (err: any) {
+      console.error("Error loading disbursements data:", err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // جلب كميات البنود المعتمدة في المقايسة لمقارنتها بالمنصرف الفعلي من المخزن
+  async function loadProjectBudgetQuantities(projectId: string) {
+    try {
+      // جلب ترويسة المقايسة المعتمدة أولاً للمشروع
+      const { data: header } = await supabase
+        .from("estimate_headers")
+        .select("id")
+        .eq("project_id", projectId)
+        .eq("status", "نهائية")
+        .maybeSingle();
+
+      if (header) {
+        const { data: items } = await supabase
+          .from("estimate_items")
+          .select("item_name, quantity, unit, product_id")
+          .eq("estimate_id", header.id);
+        
+        setBudgetItems(items || []);
+      }
+    } catch (e) {
+      console.error("Error fetching project budget quantities:", e);
+    }
+  }
+
+  // حساب تراكمي لإجمالي المنصرف الفعلي لكل منتج داخل المشروع المختار للتحذير من التجاوز
+  const currentProductStatistics = useMemo(() => {
+    if (!selectedProjectId || !selectedProductId) return { budgeted: 0, actualDisbursed: 0, unit: "متر", projectAllocated: 0, projectRemaining: 0, generalStock: 0 };
+
+    const selectedProduct = products.find(p => p.id === selectedProductId);
+    const productName = selectedProduct ? selectedProduct.product_name : "";
+    const productUnit = selectedProduct ? selectedProduct.unit : "وحدة";
+
+    // جلب الكمية المعتمدة في المقايسة بمطابقة مسمى المادة المقارب
+    // ✅ إصلاح: بعد ما بقى كل بند مقايسة جديد بيتسجل ومعاه product_id حقيقي، بقينا نقدر نطابق
+    // بدقة بالـ ID بدل الاعتماد على تشابه الأسماء النصي بس (اللي كان ممكن يدّي تطابق غلط أو
+    // مفيش تطابق خالص). المطابقة النصية اتسابت كـ fallback بس للمقايسات القديمة اللي اتسجلت
+    // قبل الإصلاح ومفيهاش product_id محفوظ.
+    const matchedBudgetItem =
+      budgetItems.find(item => item.product_id === selectedProductId) ||
+      budgetItems.find(item =>
+        String(item.item_name || "").includes(productName) ||
+        productName.includes(String(item.item_name || ""))
+      );
+    const budgetedQty = matchedBudgetItem ? Number(matchedBudgetItem.quantity) : 0;
+
+    // حساب إجمالي ما تم صرفه لهذا المنتج في هذا الموقع من كشوف الصرف السابقة
+    const totalDisbursedInProject = disbursements
+      .filter(d => d.project_id === selectedProjectId && d.product_id === selectedProductId)
+      .reduce((sum, d) => sum + Number(d.quantity_disbursed || 0), 0);
+
+    // ✅ الرصيد المخصص فعلياً لهذا المشروع = (اللي اتشترى خصيصاً له) - (اللي اتصرف منه فعلياً)
+    // منفصل تماماً عن المخزون العام المشترك، عشان مايتلخبطش الرصيد بين المشاريع
+    const purchasedForThisProject = projectPurchases
+      .filter((it: any) => it.purchase_orders?.project_id === selectedProjectId && it.product_id === selectedProductId)
+      .reduce((sum: number, it: any) => sum + Number(it.quantity || 0), 0);
+    const projectRemaining = Math.max(0, purchasedForThisProject - totalDisbursedInProject);
+
+    return {
+      budgeted: budgetedQty,
+      actualDisbursed: totalDisbursedInProject,
+      unit: productUnit,
+      projectAllocated: purchasedForThisProject,
+      projectRemaining,
+      generalStock: Number(selectedProduct?.quantity_in_stock || 0),
+    };
+  }, [selectedProjectId, selectedProductId, budgetItems, disbursements, products, projectPurchases]);
+
+  // إرسال وحفظ سند الصرف للموقع مع جدار حماية الأوفلاين التلقائي
+  async function handleCreateDisbursement() {
+    if (!selectedProjectId || !selectedProductId || qtyDisbursed === "") {
+      alert("الرجاء ملء الحقول الإجبارية (تحديد الموقع، الخامة، الكمية المنصرفة) لحفظ السند.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      const payload = {
+        project_id: selectedProjectId,
+        product_id: selectedProductId,
+        quantity_disbursed: Number(qtyDisbursed),
+        disbursed_by: user?.id || null,
+        received_by: receivedBy || null,
+        disbursed_date: disbursedDate,
+        notes: notes || null
+      };
+
+      if (isOnline()) {
+        const { error } = await supabase
+          .from("material_disbursements")
+          .insert([payload]);
 
         if (error) throw error;
 
-        const mappedEvents: Record<number, string[]> = {};
-        (data || []).forEach((app: any) => {
-          const dateObj = new Date(app.start_time);
-          const day = dateObj.getDate(); // استخراج رقم اليوم الفعلي
-          
-          if (!mappedEvents[day]) {
-            mappedEvents[day] = [];
-          }
-          mappedEvents[day].push(app.title);
+        // ✅ نحدّث المخزون العام بس لو الصرف اختار "من المخزون العام" — لو من "رصيد المشروع"،
+        // الرصيد بيتحدث تلقائياً لأنه محسوب لحظياً (مشتريات المشروع - مصروفاته) مش رقم مخزّن
+        const matchedProd = products.find(p => p.id === selectedProductId);
+        let newStock = Number(matchedProd?.quantity_in_stock || 0);
+        if (disburseFrom === "general") {
+          newStock = Math.max(0, newStock - Number(qtyDisbursed));
+          await supabase.from("products_library").update({ quantity_in_stock: newStock }).eq("id", selectedProductId);
+        }
+
+        // إرسال إشعار فوري وتلقائي للخزينة والمخازن بحدوث سحب مواد للموقع
+        const matchedProj = projects.find(p => p.id === selectedProjectId);
+
+        await supabase.from("notifications").insert({
+          title: "صرف خامات ومواد لموقع",
+          message: `📦 تم صرف كمية (${qtyDisbursed} ${matchedProd?.unit || "وحدة"}) من خامة (${matchedProd?.product_name || "غير معروف"}) وتوجيهها فوراً لموقع (${matchedProj?.project_name || "موقع غير محدد"}) المستلم بالموقع (${receivedBy || "فني الموقع"}).`,
+          type: "procurement",
+          link: "/disbursements"
         });
 
-        setEvents(mappedEvents);
-      } catch (err) {
-        console.error("Error loading live calendar events:", err);
-      } finally {
-        setLoadingEvents(false);
-      }
-    }
+        // ✅ تنبيه فوري حسب مصدر الصرف: نقص فى المخزون العام، أو نفاذ الرصيد المخصص للمشروع
+        if (disburseFrom === "general" && matchedProd && newStock <= Number(matchedProd.reorder_level || 0)) {
+          await supabase.from("notifications").insert({
+            title: "⚠️ تنبيه نقص مخزون عام",
+            message: `الكمية المتبقية من (${matchedProd.product_name}) فى المخزون العام بقت ${newStock} ${matchedProd.unit || "وحدة"} بس — تحت حد إعادة الطلب (${matchedProd.reorder_level}). محتاج أمر شراء جديد.`,
+            type: "procurement",
+            link: "/products"
+          });
+        }
+        if (disburseFrom === "project" && currentProductStatistics.projectRemaining - Number(qtyDisbursed) <= 0) {
+          await supabase.from("notifications").insert({
+            title: "⚠️ نفاذ رصيد خامة مخصص لمشروع",
+            message: `رصيد (${matchedProd?.product_name || "الخامة"}) المخصص لمشروع (${matchedProj?.project_name || "المشروع"}) خلص أو قارب على الخلاص. محتاج أمر شراء جديد لنفس المشروع.`,
+            type: "procurement",
+            link: "/purchase-orders"
+          });
+        }
 
-    fetchLiveCalendarEvents();
-  }, [currentYear, currentMonth]);
-
-  // ✅ حساب عدد أيام الشهر الحالي فعلياً (بدل الرقم الثابت 31)
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-  // ✅ حساب يوم بداية الشهر الفعلي في الأسبوع (0 = أحد) بدل الأوفست الثابت
-  const startOffset = new Date(currentYear, currentMonth, 1).getDay();
-
-  const daysArray = [];
-  for (let i = 0; i < startOffset; i++) {
-    daysArray.push(null);
-  }
-  for (let i = 1; i <= daysInMonth; i++) {
-    daysArray.push(i);
-  }
-
-  return (
-    <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl p-5 space-y-4 shadow-xl text-right ai-chat-scroll">
-      {/* تحويل لون ترويسة العنوان للون البني البرونزي المعتمد `#A17A4C` */}
-      <h3 className="text-[#D4AF37] font-black text-xs md:text-sm border-b border-[#D4AF37] pb-2 select-none flex items-center justify-between">
-        <span>📅 جدول المواعيد والمعاينات</span>
-        <span className="text-[10px] bg-[#020B1C] px-2.5 py-1 rounded-md text-gray-400 font-mono font-bold">{ARABIC_MONTH_NAMES[currentMonth]} {currentYear}</span>
-      </h3>
-
-      {/* أسماء الأيام */}
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-[#FCE7F3] select-none pb-1">
-        <span>أحد</span>
-        <span>إثن</span>
-        <span>ثلا</span>
-        <span>أرب</span>
-        <span>خميس</span>
-        <span>جمع</span>
-        <span>سبت</span>
-      </div>
-
-      {/* شبكة الأيام */}
-      <div className="grid grid-cols-7 gap-1.5 text-center">
-        {daysArray.map((day, idx) => {
-          if (day === null) {
-            return <div key={`empty-${idx}`} />;
-          }
-
-          const hasEvent = !!events[day] && events[day].length > 0;
-          const isSelected = selectedDay === day;
-          const isCurrentToday = todayDate === day;
-
-          return (
-            <button
-              key={`day-${day}`}
-              type="button"
-              onClick={() => setSelectedDay(day)}
-              className={`w-8 h-8 rounded-lg text-[10px] font-bold transition-all duration-200 cursor-pointer flex flex-col items-center justify-center relative ${
-                isSelected
-                  ? "border-2 border-[#D4AF37] text-white bg-[#020B1C]/30 shadow-[0_0_12px_rgba(212,175,55,0.15)]" 
-                  : isCurrentToday
-                  ? "bg-[#D4AF37] text-[#020B1C]" 
-                  : "bg-[#FCE7F3] text-bold hover:border-slate-600 border border-transparent"
-              }`}
-            >
-              <span>{day}</span>
-              {hasEvent && (
-                <span className={`w-1.5 h-1.5 rounded-full absolute bottom-1 ${isSelected ? "bg-[#D4AF37]" : "bg-[#D4AF37]"}`} />
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="bg-[#020B1C]/80 border border-[#D4AF37]/20 rounded-2xl p-4 text-right animate-fade-in space-y-2.5">
-        <p className="text-[#D4AF37] text-xs font-black select-none">
-          📍 تفاصيل يوم {selectedDay} {ARABIC_MONTH_NAMES[currentMonth]}:
-        </p>
-        
-        {loadingEvents ? (
-          <span className="text-gray-500 animate-pulse font-bold block text-center text-[10px]">جاري استرجاع المواعيد من قاعدة البيانات...</span>
-        ) : events[selectedDay] && events[selectedDay].length > 0 ? (
-          <div className="space-y-2">
-            {events[selectedDay].map((eventTitle, index) => (
-              <div key={index} className="flex items-start gap-2 text-white text-xs font-black leading-relaxed">
-                <span className="text-[#D4AF37] select-none text-[9px] mt-0.5">◀</span>
-                <span className="flex-1">{eventTitle}</span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-slate-400 text-[10px] font-bold leading-relaxed">لا توجد مواعيد أو معاينات مجدولة لهذا اليوم بالسيستم.</p>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default function DashboardPage() {
-  const router = useRouter();
-
-  const [userRole, setUserRole] = useState<string>("sales");
-  const [loadingRole, setLoadingRole] = useState<boolean>(true);
-
-  const [stats, setStats] = useState<DashboardStatsState>({
-    customers: 0,
-    activeProjects: 0,
-    pendingEstimates: 0,
-    contracted: 0,
-    revenue: 0,
-    costs: 0
-  });
-  const [pendingEstimateProjectIds, setPendingEstimateProjectIds] = useState<string[]>([]);
-
-  useEffect(() => {
-    document.title = "لوحة التحكم الإدارية | Golden Decoration";
-    loadUserRoleAndStats();
-  }, []);
-
-  async function loadUserRoleAndStats() {
-    setLoadingRole(true);
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.push("/");
-        return;
+        alert("✅ تم تسجيل سند صرف المواد وتحديث جرد المخزن السحابي للموقع بنجاح!");
+      } else {
+        addToOfflineQueue("material_disbursements", "INSERT", payload);
+        alert("⚠️ تم حفظ سند الصرف محلياً لعدم توفر إنترنت؛ وسيتم مزامنته وتحديث الجرد تلقائياً فور عودة الشبكة.");
       }
 
-      const { data: profile } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-      const roleKey = String(profile?.role || "sales").toLowerCase();
-      setUserRole(roleKey);
-
-      const [custCount, projCount, estCount, contractedCount, financialData, pendingProjectsData] = await Promise.all([
-        supabase.from("customers").select("id", { count: "exact", head: true }),
-        supabase.from("projects").select("id", { count: "exact", head: true }).eq("unit_status", "جاري التنفيذ الميداني"),
-        supabase.from("projects").select("id", { count: "exact", head: true }).eq("workflow_stage", "needs_estimate"),
-        supabase.from("customers").select("id", { count: "exact", head: true }).eq("status", "تم التعاقد"),
-        supabase.from("estimate_headers").select("grand_total, materials_total, labor_total").eq("status", "نهائية"),
-        supabase.from("projects").select("id").eq("workflow_stage", "needs_estimate")
-      ]);
-
-      setPendingEstimateProjectIds((pendingProjectsData.data || []).map((p: any) => p.id));
-
-      const totalRevenue = (financialData.data || []).reduce((sum, h) => sum + Number(h.grand_total || 0), 0);
-      const totalCosts = (financialData.data || []).reduce((sum, h) => sum + Number(h.materials_total || 0) + Number(h.labor_total || 0), 0);
-
-      setStats({
-        customers: custCount.count || 0,
-        activeProjects: projCount.count || 0,
-        pendingEstimates: estCount.count || 0,
-        contracted: contractedCount.count || 0,
-        revenue: totalRevenue,
-        costs: totalCosts
-      });
-
-    } catch (err) {
-      console.error("خطأ أثناء جلب وتحليل البيانات:", err);
-    } finally {
-      setLoadingRole(false);
-    }
-  }
-
-  const isFinancialStaff = ["admin", "owner", "manager", "accountant"].includes(userRole);
-  const isOperationalStaff = ["admin", "owner", "manager", "sales_manager", "sales", "procurement", "accountant", "engineer"].includes(userRole);
-  const isSalesStaff = ["admin", "owner", "manager", "sales_manager", "sales"].includes(userRole);
-  const isEngineeringStaff = ["admin", "owner", "manager", "engineer", "procurement"].includes(userRole);
-
-  if (loadingRole) {
-    return (
-      <div className="min-h-screen bg-[#020B1C] flex items-center justify-center text-[#D4AF37] font-black select-none">
-        <div className="text-center">
-          <Loader2 className="animate-spin text-[#D4AF37] mx-auto mb-4" size={40} />
-          <p className="text-[#D4AF37] text-lg font-bold select-none animate-pulse">جاري تحميل لوحة التحكم Golden Decoration ERP</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <main className="min-h-screen bg-[#020B1C] relative overflow-hidden" dir="rtl">
+      // تصفير خانات الإدخال
+      setSelectedProductId("");
+      setQtyDisbursed("");
+      setReceivedBy("");
+      setNotes("");
       
-      {/* 🛠️ جدار الحماية البصري الموحد لتوحيد شريط التمرير الفاخر 8px بأسهم التحكم */}
-      <style dangerouslySetInnerHTML={{__html: `
-        ::-webkit-scrollbar { width: 4px !important; height: 4px !important; }
-        ::-webkit-scrollbar-track { background: #020B1C !important; }
-        ::-webkit-scrollbar-thumb { background: #D4AF37 !important; border-radius: 9999px !important; }
-        ::-webkit-scrollbar-thumb:hover { background: #C9A45D !important; }
+      await loadInitialData();
+    } catch (err: any) {
+      alert("حدث خطأ أثناء تسجيل السند: " + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
 
-        /* تلوين أزرار أسهم الصعود والهبوط يدوياً لشريط التمرير */
-        ::-webkit-scrollbar-button {
-          display: block !important;
-          background-color: #020B1C !important;
-          height: 10px !important;
-          width: 10px !important;
-        }
-        ::-webkit-scrollbar-button:vertical:decrement {
-          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23D4AF37'><polygon points='50,20 15,80 85,80'/></svg>") !important;
-          background-size: 6px !important;
-          background-repeat: no-repeat !important;
-          background-position: center !important;
-        }
-        ::-webkit-scrollbar-button:vertical:increment {
-          background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%23D4AF37'><polygon points='15,20 85,20 50,80'/></svg>") !important;
-          background-size: 6px !important;
-          background-repeat: no-repeat !important;
-          background-position: center !important;
-        }
-        
-        th, .table-header {
-          font-size: 0.7rem !important;
-          font-weight: 900 !important;
-          color: #D4AF37 !important;
-          text-align: right !important;
-          padding: 12px 14px !important;
-          border-bottom: 2px solid rgba(212, 175, 55, 0.2) !important;
-          background-color: #0b1b3d !important;
-        }
-
-        td, .table-cell {
-          font-size: 0.75rem !important;
-          font-weight: 700 !important;
-          color: #F0E6D2 !important;
-          text-align: right !important;
-          padding: 12px 14px !important;
-          border-bottom: 1px solid rgba(212, 231, 144, 0.1) !important;
-        }
-      `}} />
-
+  return (
+    <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       <Sidebar />
-
-      <section className="w-full lg:pr-56 min-h-screen flex flex-col z-10 relative">
+      <section className="flex-1 flex flex-col lg:pr-56 m-0 min-h-screen">
         <Header />
-
-        <div className="p-4 md:p-8 space-y-8 text-right font-sans animate-fade-in">
-
-          <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-5">
-            <div>
-              {/* تصغير حجم العنوان الرئيسي للتوافق مع الدستور الجمالي الموحد */}
-              <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2">
-                <span>لوحة التحكم الرئيسية لـ Golden Decoration ERP</span>
-                <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
-              </h1>
-              {/* تعديل لون الشرح أسفل العنوان للأبيض الصافي لتعزيز التباين البصري */}
-              <p className="text-white text-xs mt-2 ">مراقبة تفاعلية للعمليات والمؤشرات المالية والمشاريع الجارية.</p>
-            </div>
-
-            <button
-              onClick={loadUserRoleAndStats}
-              className="p-3 rounded-xl bg-[#07132a] border border-[#D4AF37]/40 hover:border-[#D4AF37] text-[#D4AF37] transition duration-300"
-            >
-              <RefreshCw className="w-4 h-4" />
-            </button>
+        <div className="p-4 md:p-8 space-y-6 text-right select-none animate-fade-in">
+          
+          <div>
+            <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2">
+              <span>سندات صرف الخامات والمخازن (Inventory Disbursements)</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
+            </h1>
+            <p className="text-white text-xs mt-2">تتبع تداول وصرف المواد من مخازن الشركة للمواقع الميدانية ومقارنة الاستهلاك الفعلي بالمقايسة.</p>
           </div>
 
-          {/* 1. الإحصائيات مع الإطارات شبه الشفافة الفاخرة */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-            <StatCard icon={<Users />} label="عملاء CRM" value={stats.customers} onClick={() => router.push("/customers")} />
-            <StatCard icon={<Activity />} label="مشاريع جارية" value={stats.activeProjects} onClick={() => router.push("/projects")} />
-            <StatCard
-              icon={<Clock />}
-              label="مقايسات معلقة"
-              value={stats.pendingEstimates}
-              onClick={() => {
-                if (pendingEstimateProjectIds.length === 1) {
-                  router.push(`/CRM?project_id=${pendingEstimateProjectIds[0]}`);
-                } else {
-                  router.push("/CRM");
-                }
-              }}
-            />
-            <StatCard icon={<ShieldCheck />} label="تعاقدات نهائية" value={stats.contracted} onClick={() => router.push("/estimates")} />
-            
-            {isFinancialStaff ? (
-              <>
-                <StatCard icon={<TrendingUp className="text-emerald-400" />} label="إيرادات" value={`${stats.revenue.toLocaleString()} ج.م`} onClick={() => router.push("/reports")} />
-                <StatCard icon={<TrendingDown className="text-rose-400" />} label="تكاليف" value={`${stats.costs.toLocaleString()} ج.م`} onClick={() => router.push("/reports")} />
-              </>
-            ) : (
-              <div className="p-4 rounded-2xl bg-[#07132a]/40 border border-[#1f2d4d] flex flex-col justify-center items-center opacity-50 select-none">
-                <span className="text-[10px] font-black text-gray-500 italic">بيانات مالية محجوبة</span>
-              </div>
-            )}
-          </div>
-
-          {/* 2. جدول المشاريع مدمج بالحدود شبه الشفافة */}
-          {isOperationalStaff && (
-            <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-2xl overflow-hidden">
-              <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-[#D4AF37] shrink-0" />
-                {/* تحويل لون ترويسة العنوان للون البني البرونزي المعتمد `#A17A4C` */}
-                <h3 className="text-[#D4AF37] text-md font-bold select-none">تتبع المشاريع الميدانية</h3>
-              </div>
-              <div className="overflow-x-auto max-h-[400px] ai-chat-scroll">
-                <ProjectsTable />
-              </div>
-            </div>
-          )}
-
-          {/* 3. المهام والمخطط */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {isEngineeringStaff && (
-              <div className="xl:col-span-1 bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-[420px] overflow-auto">
-                <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
-                  <ClipboardList className="w-6 h-6 text-[#D4AF37]" />
-                  {/* تحويل لون ترويسة عنوان المهام للون البني البرونزي المعتمد `#A17A4C` */}
-                  <h3 className="text-[#D4AF37] text-md font-bold select-none">المهام الهندسية</h3>
-                </div>
-                <Tasks />
-              </div>
-            )}
-
-            {isFinancialStaff && (
-              <div className="xl:col-span-2 bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl overflow-hidden">
-                <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
-                  <Wallet className="w-6 h-6 text-[#D4AF37]" />
-                  {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
-                  <h3 className="text-[#D4AF37] text-md font-bold select-none">التدفقات النقدية</h3>
-                </div>
-                <PerformanceChart />
-              </div>
-            )}
-          </div>
-
-          {/* 4. المؤشرات والتنبيهات */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            {isFinancialStaff && (
-              <div className="xl:col-span-1 bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl overflow-hidden">
-                <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
-                  <Target className="w-6 h-6 text-[#D4AF37]" />
-                  {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
-                  <h3 className="text-[#D4AF37] text-md font-bold select-none">كفاءة الأداء</h3>
-                </div>
-                <PerformanceIndicators />
-              </div>
-            )}
-
-            {isOperationalStaff && (
-              <div className="xl:col-span-2 bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-[400px] overflow-auto">
-                <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2 sticky top-0 z-10">
-                  <Bell className="w-6 h-6 text-[#D4AF37]" />
-                  {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
-                  <h3 className="text-[#D4AF37] text-md font-bold select-none">مركز الإشعارات والتحليلات</h3>
-                </div>
-                <Notifications />
-              </div>
-            )}
-          </div>
-
-          {/* 5. الأنشطة والتعاقدات والتقويم */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-[420px] overflow-auto">
-              <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2 sticky top-0 z-10">
-                <Activity className="w-6 h-6 text-[#D4AF37]" />
-                {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
-                <h3 className="text-[#D4AF37] text-md font-bold select-none">آخر الأنشطة والعمليات الميدانية</h3>
+            
+            {/* لوحة تسجيل مستند صرف جديد مدمجة بالمقياس الإمبراطوري المتين بالمنصة */}
+            <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] p-6 space-y-5 h-fit shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+              
+              <h3 className="text-[#D4AF37] font-bold text-md md:text-md border-b border-[#D4AF37] pb-3 flex items-center gap-2 select-none">
+                <span>➕</span> تسجيل سند صرف خامات جديد
+              </h3>
+              <div className="space-y-4 font-semibold text-xs text-slate-300">
+                
+                <div>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">موقع العمل المستهدف *</label>
+                  <select
+                    value={selectedProjectId}
+                    onChange={(e) => setSelectedProjectId(e.target.value)}
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-3 outline-none cursor-pointer focus:border-[#D4AF37]"
+                  >
+                    <option value="">-- اختر موقع العمل المسحوب له --</option>
+                    {projects.map((p) => (
+                      <option key={p.id} value={p.id}>{p.project_name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">الخامة / المنتج المراد سحبه *</label>
+                  <select
+                    value={selectedProductId}
+                    onChange={(e) => setSelectedProductId(e.target.value)}
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-bold px-3 outline-none cursor-pointer focus:border-[#D4AF37]"
+                  >
+                    <option value="">-- اختر الخامة من مكتبة المنتجات --</option>
+                    {products.map((p) => (
+                      <option key={p.id} value={p.id}>{p.product_name} ({p.unit})</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* كارت كشف الانحراف ومقارنة ميزانية المتر بالمقايسة حياً */}
+                {selectedProjectId && selectedProductId && (
+                  <div className="bg-[#020B1C] border border-[#D4AF37]/20 rounded-xl p-3.5 space-y-2 select-none animate-fade-in text-[10px] shadow-inner">
+                    <p className="text-white font-bold border-b border-[#D4AF37]/10 pb-1">⚖️ ميزانية الاستهلاك الفعلي للمشروع:</p>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">الكمية المعتمدة للعميل بالمقايسة:</span>
+                      <span className="text-[#D4AF37] font-bold">{currentProductStatistics.budgeted} {currentProductStatistics.unit}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-400">المنصرف الفعلي كلياً حتى الآن:</span>
+                      <span className="text-white font-bold">{currentProductStatistics.actualDisbursed} {currentProductStatistics.unit}</span>
+                    </div>
+                    {currentProductStatistics.budgeted > 0 && currentProductStatistics.actualDisbursed >= currentProductStatistics.budgeted && (
+                      <p className="text-rose-400 font-bold border-t border-rose-500/10 pt-1 text-center animate-pulse">
+                        🚨 تحذير: لقد تجاوزت الموقع الحصة المتفق عليها للعميل بالمقايسة!
+                      </p>
+                    )}
+
+                    <p className="text-white font-bold border-b border-t border-[#D4AF37]/10 pb-1 pt-2 mt-2">📦 اصرف من:</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setDisburseFrom("project")}
+                        className={`rounded-lg p-2 text-center border transition-all ${disburseFrom === "project" ? "border-blue-500 bg-blue-500/10 text-blue-300" : "border-[#243556] text-gray-500"}`}
+                      >
+                        🏗️ رصيد هذا المشروع<br />
+                        <span className="font-mono font-bold">{currentProductStatistics.projectRemaining} {currentProductStatistics.unit}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDisburseFrom("general")}
+                        className={`rounded-lg p-2 text-center border transition-all ${disburseFrom === "general" ? "border-emerald-500 bg-emerald-500/10 text-emerald-300" : "border-[#243556] text-gray-500"}`}
+                      >
+                        📦 المخزون العام<br />
+                        <span className="font-mono font-bold">{currentProductStatistics.generalStock} {currentProductStatistics.unit}</span>
+                      </button>
+                    </div>
+                    {disburseFrom === "project" && currentProductStatistics.projectRemaining <= 0 && (
+                      <p className="text-amber-400 text-center pt-1">⚠️ رصيد المشروع المخصص خلص — اعمل أمر شراء جديد له، أو اصرف من المخزون العام مؤقتاً.</p>
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">الكمية المنصرفة والموردة  *</label>
+                  <input
+                    type="number"
+                    min="1"
+                    placeholder="0"
+                    value={qtyDisbursed}
+                    onChange={(e) => setQtyDisbursed(e.target.value !== "" ? Number(e.target.value) : "")}
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none font-mono focus:border-[#D4AF37]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">المستلم الفعلي للمواد بالموقع</label>
+                  <input
+                    type="text"
+                    placeholder="مثال: المهندس المشرف / المقاول"
+                    value={receivedBy}
+                    onChange={(e) => setReceivedBy(e.target.value)}
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 outline-none focus:border-[#D4AF37] font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">تاريخ صرف وتسليم المواد</label>
+                  <input
+                    type="date"
+                    value={disbursedDate}
+                    onChange={(e) => setDisbursedDate(e.target.value)}
+                    className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-[#D4AF37] font-bold px-4 outline-none font-mono focus:border-[#D4AF37]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[#D4AF37] mb-1.5 font-bold px-2 text-[12px]">ملاحظات الصرف والتشوين بالموقع</label>
+                  <textarea
+                    placeholder="تفاصيل التشوين بالموقع، حالة استلام المواد..."
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className="w-full h-20 bg-[#020B1C] border border-[#D4AF37]/20 text-white p-3.5 rounded-xl outline-none focus:border-[#D4AF37] resize-none font-medium"
+                  />
+                </div>
+
+                {/* 🌟 ترقية زرار صرف الخامات للدستور البصري الحركي الموحد بـ عاكس الإضاءة السفلي */}
+                <button
+                  type="button" 
+                  onClick={(e) => { e.preventDefault(); handleCreateDisbursement(); }}
+                  disabled={saving}
+                  className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-40 cursor-pointer"
+                >
+                  {saving ? <Loader2 className="animate-spin w-4 h-4 text-[#D4AF37]" /> : <Package className="w-4 h-4 text-[#D4AF37]" />}
+                  <span>{saving ? "جاري تسجيل السند..." : "💾 تسجيل وصرف مستند الخامات"}</span>
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                </button>
               </div>
-              <RecentActivities />
             </div>
 
-            <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-[420px] overflow-auto">
-              <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
-                <FileSignature className="w-6 h-6 text-[#D4AF37]" />
-                {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
-                <h3 className="text-[#D4AF37] text-md font-bold select-none">التعاقدات القادمة وعقود الملاك</h3>
+            {/* جدول عرض كشوف وحركات صرف الخامات للمشاريع */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="bg-[#07132a] border-2 border-[#D4AF37] rounded-[2rem] overflow-hidden shadow-2xl flex flex-col relative w-full">
+                <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+                <div className="p-4 border-b border-[#D4AF37]/20 bg-[#0b1b3d]/60 select-none">
+                  <h3 className="text-[#D4AF37] text-md font-bold flex items-center gap-2">
+                    <span>📦</span> سجل المخرجات وسندات صرف الخامات للمواقع ({disbursements.length})
+                  </h3>
+                </div>
+                
+                {/* تفعيل التمرير مذهب الألوان وحماية الجدول من التقاطع بـ whitespace-nowrap و min-w-[850px] بالكامل */}
+                <div className="overflow-x-auto max-h-[550px] overflow-y-auto ai-chat-scroll">
+                  {loading ? (
+                    <div className="p-12 text-center text-[#D4AF37] animate-pulse text-xs font-bold">جاري جلب سجل حركات مخازن المواقع...</div>
+                  ) : disbursements.length > 0 ? (
+                    <table className="w-full text-right table-auto min-w-[850px] premium-disbursements-table">
+                      <thead>
+                        <tr className="whitespace-nowrap select-none bg-black">
+                          {/* 🌟 تم حل ثغرة التباين الصامت هنا بحقن كلاس التلوين المذهب والـ bg الأسود مباشرة على الـ th لمنع أي تداخل */}
+                          <th className="p-4 text-sm font-medium text-[#D4AF37] bg-[#07132a]/60 text-right border-b-2 border-[#D4AF37]/30">تاريخ الصرف</th>
+                          <th className="p-4 text-sm font-medium text-[#D4AF37] bg-[#07132a]/60 text-right border-b-2 border-[#D4AF37]/30">موقع المشروع المستلم</th>
+                          <th className="p-4 text-sm font-medium text-[#D4AF37] bg-[#07132a]/60 text-right border-b-2 border-[#D4AF37]/30">اسم الخامة الإنشائية</th>
+                          <th className="p-4 text-sm font-medium text-[#D4AF37] bg-[#07132a]/60 text-right border-b-2 border-[#D4AF37]/30">الكمية المنصرفة</th>
+                          <th className="p-4 text-sm font-medium text-[#D4AF37] bg-[#07132a]/60 text-right border-b-2 border-[#D4AF37]/30">مستلم المواد بالموقع</th>
+                          <th className="p-4 text-sm font-medium text-[#D4AF37] bg-[#07132a]/60 text-right border-b-2 border-[#D4AF37]/30">ملاحظات المستند</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#1f2d4d]/60 text-xs md:text-sm text-slate-100 font-semibold">
+                        {disbursements.map((d) => (
+                          <tr key={d.id} className="whitespace-nowrap">
+                            <td className="p-4 font-mono text-gray-400">{d.disbursed_date}</td>
+                            <td className="p-4 font-black text-[#F0E6D2]">{d.projects?.project_name || "موقع ممسوح"}</td>
+                            <td className="p-4 font-bold">{d.products_library?.product_name || "خامة ممسوحة"}</td>
+                            <td className="p-4 font-mono font-bold text-[#D4AF37]">{d.quantity_disbursed} {d.products_library?.unit || "وحدة"}</td>
+                            <td className="p-4 text-gray-300 font-bold">{d.received_by || "مشرف الموقع"}</td>
+                            <td className="p-4 text-gray-400 max-w-xs truncate">{d.notes || "-"}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className="p-12 text-center text-gray-500 text-xs">لا توجد سندات صرف مواد للمواقع مسجلة حتى الآن.</div>
+                  )}
+                </div>
               </div>
-              <UpcomingProjects />
             </div>
 
-            <MiniCalendar />
           </div>
 
         </div>
       </section>
     </main>
-  );
-}
-
-// مكون فرعي لبطاقات الإحصائيات لتقليل التكرار مدمج بالإطارات الشفافة الرفيعة
-function StatCard({ icon, label, value, onClick }: { icon: any, label: string, value: any, onClick: () => void }) {
-  return (
-    <div 
-      onClick={onClick}
-      className="p-4 rounded-2xl bg-[#07132a] border border-[#D4AF37]/40 flex flex-col justify-between hover:scale-[1.03] hover:border-[#D4AF37] transition duration-300 shadow-lg cursor-pointer group"
-    >
-      <div className="flex justify-between items-center w-full">
-        <div className="text-[#D4AF37] group-hover:scale-110 transition-transform">{icon}</div>
-        <span className="text-[#F0E6D2] text-xs md:text-sm font-mono">{value}</span>
-      </div>
-      <div className="mt-3 text-right">
-        {/* تحويل مسمى شارة الإحصاء للون البني البرونزي المعتمد `#A17A4C` */}
-        <p className="text-[#D4AF37] text-[10px] font-black uppercase tracking-wider">{label}</p>
-      </div>
-    </div>
   );
 }
