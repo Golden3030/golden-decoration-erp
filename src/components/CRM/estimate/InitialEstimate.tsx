@@ -1717,7 +1717,8 @@ export default function InitialEstimate() {
     if (!project.id || String(project.id).startsWith("new") || isSavingRef.current) return;
     isSavingRef.current = true;
     try {
-      // 1. مراجعة واستدعاء ترويسة المقايسة المبدئية الحالية
+      // 1. مراجعة واستدعاء ترويسة المقايسة الحالية (بنفس الحالة الحالية تحديدًا، عشان نعرف الـ id
+      // اللي هنعمله update لو موجود، أو ننشئ صف جديد له لو مش موجود).
       const { data: existingHeader } = await supabase
         .from("estimate_headers")
         .select("id, estimate_number")
@@ -1730,15 +1731,25 @@ export default function InitialEstimate() {
       const matTotal = items.reduce((sum, item) => sum + (Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0);
       const labTotal = items.reduce((sum, item) => sum + Number(item.laborCost || 0), 0);
 
-      // ✅ إصلاح حرج: كان بيولّد رقم مقايسة عشوائي جديد ويكتب فوق الرقم الأصلي في *كل* عملية حفظ تلقائي،
-      // حتى لو المقايسة موجودة بالفعل من قبل! دلوقتي بيعيد استخدام نفس الرقم المحفوظ فعلياً،
-      // وبيولّد رقم جديد بس أول مرة (لما تتنشأ المقايسة فعلاً)
-      // ✅ إصلاح: تم حذف الاعتماد على project.estimateNumber هنا لأنه عدّاد منفصل تمامًا
-      // على جدول مختلف (projects بدل estimate_headers)، وكان ممكن يدّي رقمًا مستخدمًا
-      // بالفعل لمشروع آخر بجدول estimate_headers نفسه. المصدر الوحيد المعتمد دلوقتي
-      // هو نفس الجدول اللي بيتسجل فيه الرقم فعليًا.
-      const finalEstimateNumber = existingHeader?.estimate_number
-        || await generateSequentialCode("estimate_headers", "estimate_number", "EST");
+      // ✅ إصلاح جوهري: رقم المقايسة لازم يبقى واحد ثابت للمشروع طول عمره، مهما اتغيرت حالته
+      // (مبدئية ← نهائية ← معتمدة). الكود القديم كان بيدوّر على رقم بنفس "الحالة الحالية" بس،
+      // فلو اتعمل صف جديد لحالة مختلفة (نهائية مثلاً) وماكانش موجود قبل كده، كان بيولّد رقم
+      // تسلسلي جديد تمامًا — فبيبقى عندك رقمين مختلفين لنفس المشروع (واحد للمسودة وواحد للنهائي)،
+      // وده اللي كان بيسبب اختلاف الرقم بين تاب المقايسة وبيانات المشروع والطباعة وبوابة العميل.
+      // دلوقتي بندور على أي صف موجود فعلاً لنفس المشروع (بأي حالة كانت) ونعيد استخدام رقمه، ونولّد
+      // رقم جديد فقط لو المشروع ده لسه ما اتعملتلوش أي مقايسة خالص من الأساس.
+      let finalEstimateNumber = existingHeader?.estimate_number;
+      if (!finalEstimateNumber) {
+        const { data: anyProjectHeader } = await supabase
+          .from("estimate_headers")
+          .select("estimate_number")
+          .eq("project_id", project.id)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        finalEstimateNumber = anyProjectHeader?.estimate_number
+          || await generateSequentialCode("estimate_headers", "estimate_number", "EST");
+      }
 
       const payloadHeader = {
         project_id: project.id,
@@ -1764,6 +1775,11 @@ export default function InitialEstimate() {
         if (hErr) throw hErr;
         headerId = newHeader.id;
       }
+
+      // ✅ إصلاح: الرقم كان بيتسجل صح في قاعدة البيانات لكن محدش كان بيرجّعه لحالة الواجهة
+      // المشتركة (crmData.estimate)، فكارت "رقم المقايسة" في نسخة الطباعة (PrintableEstimate.tsx)
+      // كان بيفضل فاضي دايمًا لأنه بيقرا من هنا بالظبط.
+      updateEstimate({ estimateNumber: finalEstimateNumber, estimate_number: finalEstimateNumber });
 
       if (headerId) {
         // 2. تحديث وتطهير وحقن البنود الـ BOQ التفصيلية حياً سحابياً
