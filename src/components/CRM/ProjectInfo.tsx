@@ -205,7 +205,7 @@ export default function ProjectInfo({
     const originalTitle = document.title;
     const customerName = crmData.customer?.name || "عميل";
     const projectName = project.projectName || "مشروع";
-    const estimateNumber = project.estimateNumber || "";
+    const estimateNumber = liveEstimateNumber || "";
     document.title = `مقايسة ${customerName} - ${projectName}${estimateNumber ? ` - ${estimateNumber}` : ""}`;
     window.print();
     setTimeout(() => { document.title = originalTitle; }, 1000);
