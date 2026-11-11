@@ -1,4 +1,4 @@
-import { GEMINI_MODEL } from "@/lib/aiConfig";
+import { GEMINI_MODEL, withGeminiRetry } from "@/lib/aiConfig";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
@@ -65,8 +65,8 @@ export async function POST(req: Request) {
       const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
       
       const result = imagePart 
-        ? await model.generateContent([salesPrompt, imagePart])
-        : await model.generateContent(salesPrompt);
+        ? await withGeminiRetry(() => model.generateContent([salesPrompt, imagePart]))
+        : await withGeminiRetry(() => model.generateContent(salesPrompt));
 
       responseText = result.response.text();
     } catch (geminiError: any) {

@@ -1,4 +1,4 @@
-import { GEMINI_MODEL } from "@/lib/aiConfig";
+import { GEMINI_MODEL, withGeminiRetry } from "@/lib/aiConfig";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
       // المحاولة الأولى: استخدام خادم جوجل جيميناي المستقر
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-      const result = await model.generateContent(procurementPrompt);
+      const result = await withGeminiRetry(() => model.generateContent(procurementPrompt));
       responseText = result.response.text();
     } catch (geminiError: any) {
       console.error("Gemini API error:", geminiError);

@@ -1,4 +1,4 @@
-import { GEMINI_MODEL } from "@/lib/aiConfig";
+import { GEMINI_MODEL, withGeminiRetry } from "@/lib/aiConfig";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -91,7 +91,7 @@ export async function GET() {
 
     let responseText = "";
     try {
-      const result = await model.generateContent(managerPrompt);
+      const result = await withGeminiRetry(() => model.generateContent(managerPrompt));
       responseText = result.response.text();
     } catch (geminiError: any) {
       console.error("Gemini API error:", geminiError);
