@@ -2,6 +2,9 @@ import { GEMINI_MODEL } from "@/lib/aiConfig";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
+// يرفع الحد الأقصى لزمن تنفيذ الدالة على Vercel (الافتراضي قصير ويسبب انقطاع التحليل)
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
