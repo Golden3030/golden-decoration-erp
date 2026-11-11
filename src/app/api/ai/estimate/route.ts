@@ -143,36 +143,8 @@ export async function POST(request: Request) {
       const result = await model.generateContent(estimatePrompt);
       responseText = result.response.text();
     } catch (geminiError: any) {
-      console.warn("Gemini service failed, switching to OpenRouter Llama 3.3...", geminiError);
-
-      // تجاوز الفشل الفوري: التحويل التلقائي المباشر لـ OpenRouter لثبات واستقرار تامين
-      const apiKeyOpenRouter = process.env.OPENROUTER_API_KEY;
-      if (!apiKeyOpenRouter) {
-        throw new Error("عذراً، خوادم جيميناي مشغولة حالياً ومفتاح الأمان للاحتياطي OPENROUTER_API_KEY غير معرّف في البيئة لتشغيل البديل.");
-      }
-
-      // اتصال مباشر موحد متوافق بالكامل مع واجهة OpenAI مع تمرير متطلبات الهيدر الإلزامية لـ OpenRouter
-      const orResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKeyOpenRouter}`,
-          "HTTP-Referer": "http://localhost:3000", // مطلوب لتعريف التطبيق في المنصة
-          "X-Title": "Golden Decoration ERP"
-        },
-        body: JSON.stringify({
-          model: "meta-llama/llama-3.3-70b-instruct:free", // استدعاء نموذج لاما 3.3 العملاق والنشط بالكامل على المنصة
-          messages: [{ role: "user", content: estimatePrompt }]
-        })
-      });
-
-      if (!orResponse.ok) {
-        const errorData = await orResponse.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || "فشلت خوادم OpenRouter البديلة في الاستجابة أيضاً.");
-      }
-
-      const orData = await orResponse.json();
-      responseText = orData.choices[0].message.content;
+      console.error("Gemini API error:", geminiError);
+      throw new Error("Gemini: " + (geminiError?.message || "خطأ غير معروف"));
     }
 
     return NextResponse.json({ analysis: responseText });

@@ -529,7 +529,7 @@ export default function AIAssistantPage() {
                   <button
                     onClick={handleAnalyzeDesignImage}
                     disabled={loadingVision}
-                    className="w-full h-11 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#D4AF37]/15"
+                    className="w-full h-11 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-bold text-xs md:text-sm transition-all duration-300 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#D4AF37]/15"
                   >
                     {loadingVision ? "جاري قراءة وتحليل خامات التصميم بالكامل..." : "🔍 بدء التحليل البصري واستخراج الخامات"}
                   </button>

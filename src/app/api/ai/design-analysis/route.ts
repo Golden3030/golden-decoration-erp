@@ -51,48 +51,8 @@ export async function POST(req: Request) {
       const result = await model.generateContent([visionPrompt, imagePart]);
       responseText = result.response.text();
     } catch (geminiError: any) {
-      console.warn("Gemini Vision service is down or key is invalid, switching to OpenRouter Fallback...", geminiError);
-
-      const apiKeyOpenRouter = process.env.OPENROUTER_API_KEY;
-      if (!apiKeyOpenRouter) {
-        throw new Error("عذراً، خوادم جيميناي غير مستجيبة ومفتاح الأمان الاحتياطي OPENROUTER_API_KEY غير معرّف في البيئة لتشغيل البديل البصري.");
-      }
-
-      // تجاوز الفشل الفوري: استدعاء واجهات OpenRouter وإرسال تيار الصورة للنموذج البصري البديل
-      const orResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${apiKeyOpenRouter}`,
-          "HTTP-Referer": "http://localhost:3000",
-          "X-Title": "Golden Decoration ERP"
-        },
-        body: JSON.stringify({
-          model: "qwen/qwen2.5-vl-72b-instruct:free", // تم تحديث النموذج هنا للإصدار الأحدث والمتاح مجاناً للرؤية البصرية
-          messages: [
-            {
-              role: "user",
-              content: [
-                { type: "text", text: visionPromptToText(visionPrompt) },
-                {
-                  type: "image_url",
-                  image_url: {
-                    url: `data:${mimeType};base64,${base64Data}`
-                  }
-                }
-              ]
-            }
-          ]
-        })
-      });
-
-      if (!orResponse.ok) {
-        const errorData = await orResponse.json().catch(() => ({}));
-        throw new Error(errorData.error?.message || "فشلت خوادم الرؤية البصرية لـ OpenRouter البديلة في الاستجابة أيضاً.");
-      }
-
-      const orData = await orResponse.json();
-      responseText = orData.choices[0].message.content;
+      console.error("Gemini API error:", geminiError);
+      throw new Error("Gemini: " + (geminiError?.message || "خطأ غير معروف"));
     }
 
     return NextResponse.json({ analysis: responseText });
@@ -102,14 +62,4 @@ export async function POST(req: Request) {
       error: "فشلت خوادم الرؤية البصرية للذكاء الاصطناعي في الاستجابة بالكامل: " + error.message
     }, { status: 500 });
   }
-}
-
-const visionPromptText = `
-  Analyze this interior design image.
-  Identify colors, materials, and lighting.
-  Respond ONLY in Egyptian Arabic using markdown.
-`;
-
-function visionPromptToText(prompt: string): string {
-  return prompt || visionPromptText;
 }
