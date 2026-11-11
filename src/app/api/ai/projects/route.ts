@@ -1,3 +1,4 @@
+import { GEMINI_MODEL } from "@/lib/aiConfig";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
@@ -68,7 +69,7 @@ export async function GET() {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
 
     // هندسة الأوامر (Prompt Engineering) لتلقين المساعد الإداري تواريخ التسليم الحالية وتحليل الأخطاء
     const managerPrompt = `

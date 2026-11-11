@@ -1,3 +1,4 @@
+import { GEMINI_MODEL } from "@/lib/aiConfig";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
     try {
       // المحاولة الأولى: استخدام خادم جوجل جيميناي النشط
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+      const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
       const result = await model.generateContent([visionPrompt, imagePart]);
       responseText = result.response.text();
     } catch (geminiError: any) {
