@@ -1,6 +1,6 @@
 "use client";
+import React, { useEffect, useRef, useState } from "react";
 
-import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Sidebar from "@/components/layout/Sidebar";
@@ -33,6 +33,25 @@ const roleLabels: { [key: string]: string } = {
   client: "العميل النهائي صاحب الوحدة 👤"
 };
 
+
+function compressImage(dataUrl: string, maxSize = 1280, quality = 0.8): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(dataUrl); return; }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+ 
 export default function AIAssistantPage() {
   const router = useRouter();
   const { crmData, setCRMData } = useCRM();
@@ -49,7 +68,7 @@ export default function AIAssistantPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [visionAnalysis, setVisionAnalysis] = useState<string | null>(null);
   const [loadingVision, setLoadingVision] = useState(false);
-
+ const visionAbortRef = useRef<AbortController | null>(null);
   const [ceilingLocation, setCeilingLocation] = useState("all");
   const [userRole, setUserRole] = useState<string>("sales");
 
@@ -188,10 +207,11 @@ export default function AIAssistantPage() {
   function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
+ 
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
+    reader.onloadend = async () => {
+      const compressed = await compressImage(reader.result as string);
+      setImagePreview(compressed);
       setVisionAnalysis(null);
     };
     reader.readAsDataURL(file);
@@ -206,20 +226,45 @@ export default function AIAssistantPage() {
       alert("يرجى رفع صورة التصميم أولاً للبدء بتحليلها.");
       return;
     }
+    visionAbortRef.current?.abort();
+    const controller = new AbortController();
+    visionAbortRef.current = controller;
+    const timeoutId = setTimeout(() => controller.abort(), 58000);
     setLoadingVision(true);
     try {
       const res = await fetch("/api/ai/design-analysis", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: imagePreview })
+        body: JSON.stringify({ imageBase64: imagePreview }),
+        signal: controller.signal
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشل المساعد البصري.");
+      const raw = await res.text();
+      let data: any = null;
+      try { data = JSON.parse(raw); } catch { /* الرد ليس JSON */ }
+      if (!res.ok || !data) {
+        const fallback =
+          res.status === 504 || res.status === 408
+            ? "انتهت مهلة الخادم، حاول مرة أخرى أو استخدم صورة أصغر."
+            : res.status === 413
+            ? "حجم الصورة كبير جداً، اختر صورة أصغر."
+            : "رد الخادم بخطأ غير متوقع (" + res.status + ").";
+        throw new Error(data?.error || fallback);
+      }
       setVisionAnalysis(data.analysis);
     } catch (err: any) {
-      alert("حدث خطأ أثناء تحليل التصميم: " + err.message);
+      if (err?.name === "AbortError") {
+        if (visionAbortRef.current === controller) {
+          alert("استغرق التحليل وقتاً طويلاً وتم إيقافه، حاول مرة أخرى.");
+        }
+      } else {
+        alert("حدث خطأ أثناء تحليل التصميم: " + err.message);
+      }
     } finally {
-      setLoadingVision(false);
+      clearTimeout(timeoutId);
+      if (visionAbortRef.current === controller) {
+        visionAbortRef.current = null;
+        setLoadingVision(false);
+      }
     }
   }
 
@@ -449,6 +494,9 @@ export default function AIAssistantPage() {
                     <button
                       onClick={() => {
                         if (!isAllowed) return;
+                        visionAbortRef.current?.abort();
+                        visionAbortRef.current = null;
+                        setLoadingVision(false);
                         setActiveEmployee(emp);
                         setChatHistory([]);
                         setChatQuery("");
