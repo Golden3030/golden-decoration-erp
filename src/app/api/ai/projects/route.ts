@@ -1,7 +1,10 @@
-import { GEMINI_MODEL, withGeminiRetry } from "@/lib/aiConfig";
+import { withGeminiFallback } from "@/lib/aiConfig";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+
+// يرفع الحد الأقصى لزمن تنفيذ الدالة على Vercel لمنع انقطاع الاتصال أثناء تحليل المهام
+export const maxDuration = 60;
 
 // تهيئة خوادم سوبابيز محلياً لجلب المهام والعملاء حياً من جداولك الفنية
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -68,20 +71,24 @@ export async function GET() {
       }));
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
+    const todayFormatted = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
 
     // هندسة الأوامر (Prompt Engineering) لتلقين المساعد الإداري تواريخ التسليم الحالية وتحليل الأخطاء
     const managerPrompt = `
       You are Golden Decoration AI Project Manager.
       You analyze active projects and construction tasks.
-      Today's current date is exactly: ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
+      Today's current date is exactly: ${todayFormatted}.
 
       Here is the raw live data of active tasks from our Supabase database:
       ${JSON.stringify(finalTasksData)}
 
       Analyze this data with high managerial precision:
-      1. Find delayed tasks: Tasks where the status is NOT 'completed' (or 'done') AND the due_date is BEFORE today (June 22, 2026).
+      1. Find delayed tasks: Tasks where the status is NOT 'completed' (or 'done') AND the due_date is BEFORE today (${todayFormatted}).
       2. Group these delays by Project.
       3. Identify the responsible engineers (assigned_to) for each delayed task.
       4. Suggest concrete, professional, and realistic interior design / construction corrective actions in Egyptian Arabic to resolve these delays and speed up execution.
@@ -91,7 +98,14 @@ export async function GET() {
 
     let responseText = "";
     try {
-      const result = await withGeminiRetry(() => model.generateContent(managerPrompt));
+      const genAI = new GoogleGenerativeAI(apiKey);
+
+      // يجرب gemini-3.8-flash أولاً، ولو فشل بضغط الخوادم ينتقل تلقائياً إلى gemini-3.5-flash-lite
+      const result = await withGeminiFallback(async (modelName) => {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        return await model.generateContent(managerPrompt);
+      });
+
       responseText = result.response.text();
     } catch (geminiError: any) {
       console.error("Gemini API error:", geminiError);

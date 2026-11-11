@@ -1,7 +1,11 @@
-import { GEMINI_MODEL, withGeminiRetry } from "@/lib/aiConfig";
+import { withGeminiFallback } from "@/lib/aiConfig";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+
+// يرفع الحد الأقصى لزمن تنفيذ الدالة على Vercel لمنع انقطاع الاتصال أثناء توليد التقارير المالية
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
@@ -113,15 +117,17 @@ export async function POST(request: Request) {
     let responseText = "";
 
     try {
-      // المحاولة الأولى: استخدام خادم جوجل جيميناي المستقر
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) throw new Error("مفتاح جيميناي غير معرّف.");
 
-      const { GoogleGenerativeAI } = require("@google/generative-ai");
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
 
-      const result = await withGeminiRetry(() => model.generateContent(financePrompt));
+      // يجرب gemini-3.8-flash أولاً، ولو فشل بضغط الخوادم ينتقل تلقائياً إلى gemini-3.5-flash-lite
+      const result = await withGeminiFallback(async (modelName) => {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        return await model.generateContent(financePrompt);
+      });
+
       responseText = result.response.text();
     } catch (geminiError: any) {
       console.error("Gemini API error:", geminiError);

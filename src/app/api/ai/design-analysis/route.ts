@@ -1,4 +1,4 @@
-import { GEMINI_MODEL, withGeminiRetry } from "@/lib/aiConfig";
+import { withGeminiFallback } from "@/lib/aiConfig";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 
@@ -48,10 +48,14 @@ export async function POST(req: Request) {
     let responseText = "";
 
     try {
-      // المحاولة الأولى: استخدام خادم جوجل جيميناي النشط
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-      const result = await withGeminiRetry(() => model.generateContent([visionPrompt, imagePart]));
+      
+      // يجرب gemini-3.8-flash أولاً، ولو فشل بضغط الخوادم ينتقل تلقائياً إلى gemini-3.5-flash-lite
+      const result = await withGeminiFallback(async (modelName) => {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        return await model.generateContent([visionPrompt, imagePart]);
+      });
+
       responseText = result.response.text();
     } catch (geminiError: any) {
       console.error("Gemini API error:", geminiError);

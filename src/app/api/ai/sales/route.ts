@@ -1,6 +1,9 @@
-import { GEMINI_MODEL, withGeminiRetry } from "@/lib/aiConfig";
+import { withGeminiFallback } from "@/lib/aiConfig";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
+
+// يرفع الحد الأقصى لزمن تنفيذ الدالة على Vercel لمنع انقطاع الاتصال خاصة عند تحليل صور المخططات
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
@@ -46,11 +49,9 @@ export async function POST(req: Request) {
 
     // معالجة صورة الكروكي المرفقة تفاعلياً بـ السيرفر الخلفي للرؤية الحاسوبية
     let imagePart: any = null;
-    let base64Data = "";
-    let mimeType = "";
     if (imageBase64) {
-      base64Data = imageBase64.split(",")[1] || imageBase64;
-      mimeType = imageBase64.split(";")[0].split(":")[1] || "image/jpeg";
+      const base64Data = imageBase64.split(",")[1] || imageBase64;
+      const mimeType = imageBase64.split(";")[0].split(":")[1] || "image/jpeg";
       imagePart = {
         inlineData: {
           data: base64Data,
@@ -60,13 +61,14 @@ export async function POST(req: Request) {
     }
 
     try {
-      // المحاولة الأولى: استخدام خادم جوجل جيميناي المستقر والنشط
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: GEMINI_MODEL });
-      
-      const result = imagePart 
-        ? await withGeminiRetry(() => model.generateContent([salesPrompt, imagePart]))
-        : await withGeminiRetry(() => model.generateContent(salesPrompt));
+      const contentPayload = imagePart ? [salesPrompt, imagePart] : salesPrompt;
+
+      // يجرب gemini-3.8-flash أولاً، ولو فشل بضغط الخوادم ينتقل تلقائياً إلى gemini-3.5-flash-lite
+      const result = await withGeminiFallback(async (modelName) => {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        return await model.generateContent(contentPayload);
+      });
 
       responseText = result.response.text();
     } catch (geminiError: any) {
