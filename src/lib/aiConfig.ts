@@ -1,6 +1,6 @@
 // اسم موديل Gemini في مكان واحد فقط.
 // لو جوجل أوقفت الموديل مرة تانية، غيّر المتغير GEMINI_MODEL في Vercel بدون ما تعدل الكود.
-export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.7-flash";
+export const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-4-argon";
 
 // يعيد المحاولة تلقائياً لو جوجل رجعت خطأ مؤقت (ضغط عالي 503 أو تجاوز مؤقت للحد 429)
 // أي خطأ آخر (مفتاح خاطئ، موديل غير موجود...) يظهر فوراً بدون إعادة محاولة.
