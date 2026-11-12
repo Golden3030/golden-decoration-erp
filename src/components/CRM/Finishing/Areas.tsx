@@ -278,7 +278,7 @@ export default function Areas() {
                 type="button"
                 disabled={isLocked}
                 onClick={() => handleCeilingHeightChange(ceilingHeight - 0.1)}
-                className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center transition-all"
+                className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center cursor-pointer justify-center transition-all"
               >
                 <Minus size={12} className="stroke-[3]" />
               </button>
@@ -287,15 +287,16 @@ export default function Areas() {
                 type="button"
                 disabled={isLocked}
                 onClick={() => handleCeilingHeightChange(ceilingHeight + 0.1)}
-                className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center transition-all"
+                className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] cursor-pointer hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center transition-all"
               >
                 <Plus size={12} className="stroke-[3]" />
               </button>
               <span className="text-[10px] text-gray-500 font-bold px-1 select-none">م</span>
             </div>
           </div>
-        
-          <Layers className="w-5 h-5 text-[#D4AF37]" />
+        </div>
+        <div className="flex items-center justify-start gap-1.5 w-full text-right mb-4">
+          <Layers className="w-5 h-5 text-[#D4AF37] shrink-0" />
           <h4 className="text-base font-bold text-[#D4AF37]">أولاً: حصر وتوزيع مساحات الريسبشن والغرف الأساسية للوحدة:</h4>
         </div>
 
