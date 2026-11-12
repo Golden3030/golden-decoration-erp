@@ -126,6 +126,27 @@ export default function Areas() {
 
   const activeRoomsList: Array<{ key: string; label: string; defaultSize: number; step: number }> = [];
 
+  // حالة الشقة (طوب أحمر / محارة) وارتفاع السقف: بيانات عامة للشقة كلها وتُحفظ مع قسم المساحات
+  const apartmentState: string = areasData.apartmentState || "";
+  const ceilingHeight: number = Number(areasData.ceilingHeight || 3);
+ 
+  const handleApartmentStateChange = (next: "brick" | "plastered") => {
+    if (isLocked) return;
+    updateBulkFinishingSection("areas", {
+      ...areasData,
+      apartmentState: next
+    });
+  };
+ 
+  const handleCeilingHeightChange = (nextHeight: number) => {
+    if (isLocked) return;
+    const safeHeight = Math.min(5, Math.max(2.2, Math.round(nextHeight * 10) / 10));
+    updateBulkFinishingSection("areas", {
+      ...areasData,
+      ceilingHeight: safeHeight
+    });
+  };
+ 
   for (let i = 1; i <= receptionsVal; i++) {
     activeRoomsList.push({
       key: receptionsVal === 1 ? 'الريسبشن الرئيسى' : `الريسبشن - قطعة ${i}`,
@@ -215,6 +236,65 @@ export default function Areas() {
 
       <div className="space-y-4">
         <div className="flex items-center gap-2 p-2 border-r-4 border-[#D4AF37] select-none">
+             <Home className="w-5 h-5 text-[#D4AF37]" />
+          <h4 className="text-base font-bold text-[#D4AF37]">بيانات الشقة العامة:</h4>
+        </div>
+ 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="p-5 rounded-2xl border border-[#1f2d4d] bg-[#07132a] space-y-3">
+            <span className="text-xs text-white block font-bold">حالة الشقة قبل بدء التشطيب:</span>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                { key: "brick", label: "على الطوب الأحمر" },
+                { key: "plastered", label: "على المحارة" }
+              ] as const).map((opt) => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  disabled={isLocked}
+                  onClick={() => handleApartmentStateChange(opt.key)}
+                  className={`h-11 rounded-xl border text-xs font-bold transition-all ${
+                    apartmentState === opt.key
+                      ? "bg-[#D4AF37] text-[#020B1C] border-[#D4AF37]"
+                      : "bg-[#020B1C] text-white border-[#243556] hover:border-[#D4AF37]"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {!apartmentState && (
+              <p className="text-[10px] text-amber-400 font-bold">لم يتم تحديد حالة الشقة بعد.</p>
+            )}
+          </div>
+ 
+          <div className="p-5 rounded-2xl border border-[#1f2d4d] bg-[#07132a] flex items-center justify-between">
+            <div className="text-right">
+              <span className="text-xs text-white block font-bold">ارتفاع السقف (للشقة كلها):</span>
+              <span className="text-[10px] text-[#D4AF37] block mt-2 font-bold">الافتراضي 3 م</span>
+            </div>
+            <div className="flex items-center gap-1.5 bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 py-1 select-none h-11" dir="ltr">
+              <button
+                type="button"
+                disabled={isLocked}
+                onClick={() => handleCeilingHeightChange(ceilingHeight - 0.1)}
+                className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center transition-all"
+              >
+                <Minus size={12} className="stroke-[3]" />
+              </button>
+              <span className="text-sm font-black text-white font-mono min-w-[34px] text-center">{ceilingHeight.toFixed(1)}</span>
+              <button
+                type="button"
+                disabled={isLocked}
+                onClick={() => handleCeilingHeightChange(ceilingHeight + 0.1)}
+                className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center transition-all"
+              >
+                <Plus size={12} className="stroke-[3]" />
+              </button>
+              <span className="text-[10px] text-gray-500 font-bold px-1 select-none">م</span>
+            </div>
+          </div>
+        
           <Layers className="w-5 h-5 text-[#D4AF37]" />
           <h4 className="text-base font-bold text-[#D4AF37]">أولاً: حصر وتوزيع مساحات الريسبشن والغرف الأساسية للوحدة:</h4>
         </div>

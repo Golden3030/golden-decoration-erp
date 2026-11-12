@@ -530,7 +530,7 @@ export default function AIAssistantPage() {
             <div className="w-full max-w-2xl bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل ترويسة العنوان داخل منبثق المبيعات للون البني البرونزي `#A17A4C` */}
-                <span className="text-[#A17A4C] font-black text-xs md:text-sm">💬 مساعد المبيعات الذكي | جولد ديكوريشن</span>
+                <span className="text-[#A17A4C] font-black text-xs md:text-sm">💬 مساعد المبيعات الذكي | جولدن ديكوريشن</span>
                 <button 
                   onClick={() => setActiveEmployee(null)} 
                   className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37] text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center font-bold text-xs cursor-pointer"
@@ -548,7 +548,7 @@ export default function AIAssistantPage() {
             <div className="w-full max-w-2xl bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل الترويسة للون البني البرونزي المعتمد */}
-                <span className="text-[#A17A4C] font-black text-xs md:text-sm">🖼️ محلل التصاميم والديكور البصري | جولد ديكوريشن</span>
+                <span className="text-[#A17A4C] font-black text-xs md:text-sm">🖼️ محلل التصاميم والديكور البصري | جولدن ديكوريشن</span>
                 <button 
                   onClick={() => setActiveEmployee(null)} 
                   className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37]/30 text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center font-bold text-xs cursor-pointer"
@@ -584,7 +584,7 @@ export default function AIAssistantPage() {
                 )}
                 {visionAnalysis && (
                   <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-5 space-y-3 transition-all duration-300 select-text">
-                    <h4 className="text-[#A17A4C] font-black text-xs border-r-2 border-[#D4AF37] pr-2">📋 تقرير تحليل الديكور والخامات المستخرج:</h4>
+                    <h4 className="text-[#A17A4C] font-black text-xs border-r-2 border-[#D4AF37] pr-2">📋 تقرير تحليل الديكور والخامات:</h4>
                     <p className="text-gray-300 text-xs whitespace-pre-wrap leading-relaxed font-sans font-bold">
                       {visionAnalysis}
                     </p>
@@ -598,7 +598,7 @@ export default function AIAssistantPage() {
             <div className="w-full max-w-2xl bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل الترويسة للون البني البرونزي المعتمد */}
-                <span className="text-[#A17A4C] font-black text-xs md:text-sm">📋 مدير المشاريع الذكي | جولد ديكوريشن</span>
+                <span className="text-[#A17A4C] font-black text-xs md:text-sm">📋 مدير المشاريع الذكي | جولدن ديكوريشن</span>
                 <button 
                   onClick={() => setActiveEmployee(null)} 
                   className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37]/30 text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center font-bold text-xs cursor-pointer"
@@ -641,7 +641,7 @@ export default function AIAssistantPage() {
             <div className="w-full max-w-2xl bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل الترويسة للون البني البرونزي المعتمد */}
-                <span className="text-[#A17A4C] font-black text-xs md:text-sm">🛒 مساعد المشتريات والمخازن | جولد ديكوريشن</span>
+                <span className="text-[#A17A4C] font-black text-xs md:text-sm">🛒 مساعد المشتريات والمخازن | جولدن ديكوريشن</span>
                 <button
                   onClick={() => {
                     setActiveEmployee(null);
@@ -710,7 +710,7 @@ export default function AIAssistantPage() {
             <div className="w-full max-w-2xl bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل الترويسة للون البني البرونزي المعتمد */}
-                <span className="text-[#A17A4C] font-black text-xs md:text-sm">📐 مهندس التسعير وحساب الكميات | جولد ديكوريشن</span>
+                <span className="text-[#A17A4C] font-black text-xs md:text-sm">📐 مهندس التسعير وحساب الكميات | جولدن ديكوريشن</span>
                 <button
                   onClick={() => {
                     setActiveEmployee(null);
@@ -798,7 +798,7 @@ export default function AIAssistantPage() {
             <div className="w-full max-w-2xl bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل الترويسة للون البني البرونزي المعتمد */}
-                <span className="text-[#A17A4C] font-black text-xs md:text-sm">📊 محلل الأرباح والميزانية الذكي | جولد ديكوريشن</span>
+                <span className="text-[#A17A4C] font-black text-xs md:text-sm">📊 محلل الأرباح والميزانية الذكي | جولدن ديكوريشن</span>
                 <button
                   onClick={() => {
                     setActiveEmployee(null);
