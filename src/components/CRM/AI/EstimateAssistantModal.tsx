@@ -4,6 +4,7 @@ import React, { useRef, useState } from "react";
 import { X } from "lucide-react";
 import { isOnline } from "@/lib/offline-sync";
 import GoldButton from "@/components/ui/GoldButton";
+import { quickRoomNames } from "@/lib/takeoffEngine";
 
 type Mode = "project" | "quick";
 
@@ -47,21 +48,32 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
   const [kitchens, setKitchens] = useState("1");
   const [state, setState] = useState<"brick" | "plastered">("brick");
   const [level, setLevel] = useState<"economic" | "medium" | "luxury">("medium");
-  const [ceilingKinds, setCeilingKinds] = useState<string[]>([]);
+  const [corridors, setCorridors] = useState("1");
+  const [ceilingRooms, setCeilingRooms] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<EstimateResult | null>(null);
   const [copied, setCopied] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
+  // غرف الشقة الناتجة من الأعداد المختارة، وتُستخدم لاختيار غرف الجبس بورد بالاسم
+  const roomOptions = quickRoomNames({
+    bedrooms: Number(bedrooms),
+    bathrooms: Number(bathrooms),
+    receptions: Number(receptions),
+    kitchens: Number(kitchens),
+    corridors: Number(corridors)
+  });
+  const selectedCeilingRooms = ceilingRooms.filter((n) => roomOptions.some((r) => r.name === n));
+
   function resetResult() {
     setResult(null);
     setCopied(false);
   }
 
-  function toggleCeilingKind(kind: string) {
+  function toggleCeilingRoom(name: string) {
     resetResult();
-    setCeilingKinds((prev) => (prev.includes(kind) ? prev.filter((k) => k !== kind) : [...prev, kind]));
+    setCeilingRooms((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
   }
 
   async function handleRun() {
@@ -97,9 +109,10 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
                 bathrooms: Number(bathrooms),
                 receptions: Number(receptions),
                 kitchens: Number(kitchens),
+                corridors: Number(corridors),
                 state,
                 level,
-                ceilingKinds
+                ceilingRooms: selectedCeilingRooms
               }
             };
 
@@ -246,6 +259,12 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
                   {COUNT_OPTIONS(1, 2).map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
               </div>
+              <div className="col-span-2">
+                <label className={labelClass}>الطرقة</label>
+                <select value={corridors} onChange={(e) => { setCorridors(e.target.value); resetResult(); }} className={selectClass}>
+                  {COUNT_OPTIONS(0, 2).map((n) => <option key={n} value={n}>{n === "0" ? "بدون طرقة" : n}</option>)}
+                </select>
+              </div>
             </div>
 
             <div>
@@ -266,15 +285,35 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
             </div>
 
             <div>
-              <label className={labelClass}>جبس بورد في (اختياري)</label>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  { k: "reception", t: "الريسبشن" },
-                  { k: "bedroom", t: "غرف النوم" },
-                  { k: "corridor", t: "الطرقة" }
-                ].map((o) => (
-                  <GoldButton toggle size="fill" active={ceilingKinds.includes(o.k)} key={o.k} onClick={() => toggleCeilingKind(o.k)}>
-                    {o.t}
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-black text-[#D4AF37]">جبس بورد في (اختر الغرف)</label>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => { resetResult(); setCeilingRooms(roomOptions.map((r) => r.name)); }}
+                    className="text-[11px] font-black text-[#D4AF37] underline"
+                  >
+                    تحديد الكل
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { resetResult(); setCeilingRooms([]); }}
+                    className="text-[11px] font-black text-gray-400 underline"
+                  >
+                    مسح
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {roomOptions.map((r) => (
+                  <GoldButton
+                    toggle
+                    size="fill"
+                    active={selectedCeilingRooms.includes(r.name)}
+                    key={r.name}
+                    onClick={() => toggleCeilingRoom(r.name)}
+                  >
+                    {r.name}
                   </GoldButton>
                 ))}
               </div>

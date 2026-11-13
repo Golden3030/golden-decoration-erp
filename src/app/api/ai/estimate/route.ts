@@ -12,7 +12,6 @@ import {
   type ApartmentState,
   type Coeff,
   type FinishLevel,
-  type RoomKind,
   type TakeoffCoefficients,
   type TakeoffRoom
 } from "@/lib/takeoffEngine";
@@ -22,7 +21,6 @@ export const maxDuration = 60;
 
 const LEVELS: FinishLevel[] = ["economic", "medium", "luxury"];
 const LEVEL_LABELS: Record<FinishLevel, string> = { economic: "اقتصادي", medium: "متوسط", luxury: "لوكس" };
-const CEILING_KINDS: RoomKind[] = ["reception", "bedroom", "corridor"];
 
 export async function POST(request: Request) {
   try {
@@ -145,9 +143,7 @@ export async function POST(request: Request) {
       };
       const state: ApartmentState = q.state === "plastered" ? "plastered" : "brick";
       const level: FinishLevel = LEVELS.includes(q.level) ? q.level : "medium";
-      const ceilingKinds: RoomKind[] = (Array.isArray(q.ceilingKinds) ? q.ceilingKinds : []).filter(
-        (k: any) => CEILING_KINDS.includes(k)
-      );
+      const requestedCeilingRooms: string[] = (Array.isArray(q.ceilingRooms) ? q.ceilingRooms : []).map(String);
 
       const rooms = buildQuickRooms({
         totalArea,
@@ -155,16 +151,20 @@ export async function POST(request: Request) {
         bathrooms: clamp(q.bathrooms, 1, 6, 2),
         receptions: clamp(q.receptions, 1, 4, 1),
         kitchens: clamp(q.kitchens, 1, 2, 1),
-        ceilingKinds
+        corridors: clamp(q.corridors, 0, 2, 1)
       });
+      const ceilingNames = requestedCeilingRooms.filter((n) => rooms.some((r) => r.name === n));
 
       result = computeTakeoff({
         rooms,
         state,
         ceilingHeight: null,
-        ceilingArea: quickCeilingArea(rooms, ceilingKinds),
+        ceilingArea: quickCeilingArea(rooms, ceilingNames),
         coeffs
       });
+      if (ceilingNames.length > 0) {
+        result.assumptions.push("الجبس بورد محسوب في: " + ceilingNames.join("، ") + ".");
+      }
       result.assumptions.unshift(
         "تقدير سريع بدون معاينة: المساحة موزعة على الغرف بأوزان تقديرية، والأرقام الفعلية قد تختلف بعد المعاينة والمقايسة."
       );

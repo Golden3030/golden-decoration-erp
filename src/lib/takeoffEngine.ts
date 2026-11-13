@@ -282,7 +282,7 @@ export interface QuickInput {
   bathrooms: number;
   receptions: number;
   kitchens: number;
-  ceilingKinds: RoomKind[]; // الأنواع التي سيُركّب فيها جبس بورد
+  corridors: number; // عدد الطرقات (0 أو أكثر)
 }
 
 // توزيع المساحة الإجمالية على الغرف بأوزان تقديرية
@@ -304,7 +304,9 @@ export function buildQuickRooms(q: QuickInput): TakeoffRoom[] {
   for (let i = 1; i <= q.kitchens; i++) {
     raw.push({ name: q.kitchens === 1 ? "المطبخ" : `المطبخ ${i}`, kind: "kitchen", weight: 1.0 });
   }
-  raw.push({ name: "الطرقة والمدخل", kind: "corridor", weight: 1.0 });
+  for (let i = 1; i <= q.corridors; i++) {
+    raw.push({ name: q.corridors === 1 ? "الطرقة" : `الطرقة ${i}`, kind: "corridor", weight: 1.0 });
+  }
 
   const totalWeight = raw.reduce((s, r) => s + r.weight, 0);
   return raw.map((r) => ({
@@ -314,8 +316,14 @@ export function buildQuickRooms(q: QuickInput): TakeoffRoom[] {
   }));
 }
 
-export function quickCeilingArea(rooms: TakeoffRoom[], kinds: RoomKind[]): number {
-  return rooms.filter((r) => kinds.includes(r.kind)).reduce((s, r) => s + r.area, 0);
+// أسماء غرف التقدير السريع (نفس الأسماء يستخدمها الخادم والواجهة لاختيار غرف الجبس بورد)
+export function quickRoomNames(q: Omit<QuickInput, "totalArea">): { name: string; kind: RoomKind }[] {
+  return buildQuickRooms({ ...q, totalArea: 100 }).map((r) => ({ name: r.name, kind: r.kind }));
+}
+
+// مساحة الأسقف المعلقة = مجموع مساحات الغرف التي اختارها المستخدم بالاسم
+export function quickCeilingArea(rooms: TakeoffRoom[], roomNames: string[]): number {
+  return rooms.filter((r) => roomNames.includes(r.name)).reduce((s, r) => s + r.area, 0);
 }
 
 export function quickCostRange(totalArea: number, minPerM2: number, maxPerM2: number) {
