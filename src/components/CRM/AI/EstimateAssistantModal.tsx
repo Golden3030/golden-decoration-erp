@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import { X } from "lucide-react";
 import { isOnline } from "@/lib/offline-sync";
+import GoldButton from "@/components/ui/GoldButton";
 
 type Mode = "project" | "quick";
 
@@ -160,12 +161,6 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
     s.items.push(l);
   });
 
-  const toggleBtn = (active: boolean) =>
-    `h-11 rounded-xl border text-xs font-bold transition-all ${
-      active
-        ? "bg-[#D4AF37] text-[#020B1C] border-[#D4AF37]"
-        : "bg-[#020B1C] text-white border-[#243556] hover:border-[#D4AF37]"
-    }`;
 
   return (
     <div className="w-full max-w-2xl bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
@@ -181,12 +176,12 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
 
       <div className="p-6 overflow-y-auto flex-1 ai-chat-scroll space-y-5 text-right" dir="rtl">
         <div className="grid grid-cols-2 gap-2">
-          <button type="button" className={toggleBtn(mode === "project")} onClick={() => { setMode("project"); resetResult(); }}>
+          <GoldButton toggle size="fill" active={mode === "project"} onClick={() => { setMode("project"); resetResult(); }}>
             مشروع مسجل
-          </button>
-          <button type="button" className={toggleBtn(mode === "quick")} onClick={() => { setMode("quick"); resetResult(); }}>
+          </GoldButton>
+          <GoldButton toggle size="fill" active={mode === "quick"} onClick={() => { setMode("quick"); resetResult(); }}>
             تقدير سريع لعميل جديد
-          </button>
+          </GoldButton>
         </div>
 
         {mode === "project" ? (
@@ -256,17 +251,17 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
             <div>
               <label className={labelClass}>حالة الشقة</label>
               <div className="grid grid-cols-2 gap-2">
-                <button type="button" className={toggleBtn(state === "brick")} onClick={() => { setState("brick"); resetResult(); }}>على الطوب الأحمر</button>
-                <button type="button" className={toggleBtn(state === "plastered")} onClick={() => { setState("plastered"); resetResult(); }}>على المحارة</button>
+                <GoldButton toggle size="fill" active={state === "brick"} onClick={() => { setState("brick"); resetResult(); }}>على الطوب الأحمر</GoldButton>
+                <GoldButton toggle size="fill" active={state === "plastered"} onClick={() => { setState("plastered"); resetResult(); }}>على المحارة</GoldButton>
               </div>
             </div>
 
             <div>
               <label className={labelClass}>مستوى التشطيب</label>
               <div className="grid grid-cols-3 gap-2">
-                <button type="button" className={toggleBtn(level === "economic")} onClick={() => { setLevel("economic"); resetResult(); }}>اقتصادي</button>
-                <button type="button" className={toggleBtn(level === "medium")} onClick={() => { setLevel("medium"); resetResult(); }}>متوسط</button>
-                <button type="button" className={toggleBtn(level === "luxury")} onClick={() => { setLevel("luxury"); resetResult(); }}>لوكس</button>
+                <GoldButton toggle size="fill" active={level === "economic"} onClick={() => { setLevel("economic"); resetResult(); }}>اقتصادي</GoldButton>
+                <GoldButton toggle size="fill" active={level === "medium"} onClick={() => { setLevel("medium"); resetResult(); }}>متوسط</GoldButton>
+                <GoldButton toggle size="fill" active={level === "luxury"} onClick={() => { setLevel("luxury"); resetResult(); }}>لوكس</GoldButton>
               </div>
             </div>
 
@@ -278,9 +273,9 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
                   { k: "bedroom", t: "غرف النوم" },
                   { k: "corridor", t: "الطرقة" }
                 ].map((o) => (
-                  <button key={o.k} type="button" className={toggleBtn(ceilingKinds.includes(o.k))} onClick={() => toggleCeilingKind(o.k)}>
+                  <GoldButton toggle size="fill" active={ceilingKinds.includes(o.k)} key={o.k} onClick={() => toggleCeilingKind(o.k)}>
                     {o.t}
-                  </button>
+                  </GoldButton>
                 ))}
               </div>
             </div>
@@ -288,12 +283,9 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
         )}
 
         {!loading && (
-          <button
-            onClick={handleRun}
-            className="w-full h-11 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-black text-xs transition-all"
-          >
+          <GoldButton size="lg" className="w-full" onClick={handleRun}>
             {mode === "project" ? "🔍 تشغيل حصر الكميات للمشروع" : "⚡ احسب التقدير السريع"}
-          </button>
+          </GoldButton>
         )}
 
         {loading && (
@@ -366,13 +358,9 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
               <div className="bg-emerald-950/20 border border-emerald-500/30 rounded-xl p-4 space-y-3">
                 <h4 className="text-emerald-400 font-black text-xs">💬 رسالة جاهزة للعميل</h4>
                 <p className="text-white text-xs whitespace-pre-wrap leading-relaxed font-bold">{result.whatsappMessage}</p>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="h-9 px-4 rounded-full bg-emerald-500 text-[#020B1C] font-black text-xs"
-                >
+                <GoldButton onClick={handleCopy}>
                   {copied ? "تم النسخ ✓" : "نسخ الرسالة"}
-                </button>
+                </GoldButton>
               </div>
             )}
           </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Save } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { isOnline } from "@/lib/offline-sync";
+import GoldButton from "@/components/ui/GoldButton";
 
 const LEVELS = [
   { key: "economic", label: "اقتصادي" },
@@ -124,15 +125,10 @@ export default function QuickPricesCard() {
         <p className={`text-xs font-bold ${message.type === "ok" ? "text-emerald-400" : "text-rose-400"}`}>{message.text}</p>
       )}
 
-      <button
-        type="button"
-        onClick={handleSave}
-        disabled={saving || loading}
-        className="h-10 px-5 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] text-[#020B1C] font-black text-xs flex items-center gap-2 disabled:opacity-50"
-      >
+      <GoldButton onClick={handleSave} disabled={saving || loading}>
         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
         حفظ الأسعار
-      </button>
+      </GoldButton>
     </div>
   );
 }
