@@ -1,4 +1,4 @@
-"use client";
+"use client";import EstimateAssistantModal from "@/components/CRM/AI/EstimateAssistantModal";
 import React, { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
@@ -705,93 +705,17 @@ export default function AIAssistantPage() {
               </div>
             </div>
           )}
-
-          {activeEmployee.id === "estimate" && (
-            <div className="w-full max-w-2xl bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
-              <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
-                {/* 🌟 تحويل الترويسة للون البني البرونزي المعتمد */}
-                <span className="text-[#A17A4C] font-black text-xs md:text-sm">📐 مهندس التسعير وحساب الكميات | جولدن ديكوريشن</span>
-                <button
-                  onClick={() => {
-                    setActiveEmployee(null);
-                    setProjects([]);
-                    setSelectedProjectId("");
-                    setVisionAnalysis(null);
-                  }}
-                  className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37]/30 text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center text-xs cursor-pointer"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-
-              <div className="p-6 overflow-y-auto flex-1 ai-chat-scroll space-y-6 text-right" dir="rtl">
-                <p className="text-white text-xs font-semibold">يقوم مهندس التسعير الذكي بقراءة الأبعاد الفنية للموقع وحساب وحصر إجمالي كميات الرمل والأسمنت والمعجون والدهانات والوزرات المطلوبة للتنفيذ تفصيلياً مع عرض معاملات الهلاك:</p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs mb-2 font-black text-[#D4AF37]">اختر المشروع لإصدار كشف حصر خاماته بالتفصيل *</label>
-                    <select
-                      value={selectedProjectId}
-                      onChange={(e) => {
-                        setSelectedProjectId(e.target.value);
-                        setVisionAnalysis(null);
-                      }}
-                      disabled={loadingProjects}
-                      className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#D4AF37]/30 text-white px-3 outline-none text-xs font-bold"
-                    >
-                      <option value="">{loadingProjects ? "جاري جلب المشاريع الحالية..." : "اختر المشروع التابع للعميل..."}</option>
-                      {projects.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.project_name} ({p.location})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs mb-2 font-black text-[#D4AF37]">تحديد موقع تركيب السقف المعلق (الجبس بورد) *</label>
-                    <select
-                      value={ceilingLocation}
-                      onChange={(e) => {
-                        setCeilingLocation(e.target.value);
-                        setVisionAnalysis(null);
-                      }}
-                      className="w-full h-11 rounded-lg bg-[#020B1C] border border-[#D4AF37]/30 text-white px-3 outline-none text-xs font-bold"
-                    >
-                      <option value="all">الشقة كلها</option>
-                      <option value="reception">الريسبشن فقط</option>
-                      <option value="rooms">الغرف فقط</option>
-                      <option value="none">لا يوجد سقف معلق</option>
-                    </select>
-                  </div>
-                </div>
-
-                {selectedProjectId && !visionAnalysis && !loadingVision && (
-                  <button
-                    onClick={handleAnalyzeEstimate}
-                    className="w-full h-11 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer"
-                  >
-                    🔍 تشغيل حصر الكميات وتوليد المقايسة الإنشائية
-                  </button>
-                )}
-
-                {loadingVision && (
-                  <div className="bg-[#020B1C] border border-[#D4AF37]/20 rounded-xl p-6 text-center text-gray-400 text-xs font-bold flex items-center justify-center gap-2">
-                    <span className="w-2 h-2 bg-[#D4AF37] rounded-full animate-bounce" />
-                    جاري حساب المساحات وضرب المعاملات الهندسية للبنود...
-                  </div>
-                )}
-
-                {visionAnalysis && (
-                  <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-5 space-y-3 transition-all duration-300 select-text">
-                    <h4 className="text-[#A17A4C] font-black text-xs border-r-2 border-[#D4AF37] pr-2">📋 كشف حصر وتفريد المواد الإنشائية المتوقع للموقع:</h4>
-                    <p className="text-gray-300 text-xs whitespace-pre-wrap leading-relaxed font-sans font-bold">
-                      {visionAnalysis}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+{activeEmployee.id === "estimate" && (
+            <EstimateAssistantModal
+              projects={projects}
+              loadingProjects={loadingProjects}
+              onClose={() => {
+                setActiveEmployee(null);
+                setProjects([]);
+                setSelectedProjectId("");
+                setVisionAnalysis(null);
+              }}
+            />
           )}
 
           {activeEmployee.id === "finance" && (

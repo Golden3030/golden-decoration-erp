@@ -4,6 +4,9 @@ import { useEffect, useState, useMemo } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import Header from "@/components/layout/Header";
 import { supabase } from "@/lib/supabaseClient";
+
+import QuickPricesCard from "@/components/CRM/settings/QuickPricesCard";
+ 
 import { isOnline, addToOfflineQueue } from "@/lib/offline-sync";
 import { PlusCircle, Save, Plus, Minus, Loader2 } from "lucide-react"; // 👈 تم الحل وتضمين استيراد أيقونة التحميل المفقودة هنا
 
@@ -395,6 +398,7 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+                    <QuickPricesCard />
         </div>
       </section>
     </main>

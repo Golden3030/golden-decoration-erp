@@ -253,7 +253,7 @@ export default function Areas() {
                   type="button"
                   disabled={isLocked}
                   onClick={() => handleApartmentStateChange(opt.key)}
-                  className={`h-11 rounded-xl border text-xs font-bold transition-all ${
+                  className={`h-11 rounded-xl border text-xs cursor-pointer font-bold transition-all ${
                     apartmentState === opt.key
                       ? "bg-[#D4AF37] text-[#020B1C] border-[#D4AF37]"
                       : "bg-[#020B1C] text-white border-[#243556] hover:border-[#D4AF37]"
