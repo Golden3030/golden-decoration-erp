@@ -383,7 +383,7 @@ export default function AIAssistantPage() {
     setLoadingChat(true);
 
     try {
-      const res = await fetch("/api/ai/chat", {
+      const data = await fetchAiJson("/api/ai/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -392,9 +392,6 @@ export default function AIAssistantPage() {
           history: chatHistory
         })
       });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشل الموظف الذكي.");
       const aiResponse = { sender: "ai", text: data.reply };
       setChatHistory((prev) => [...prev, aiResponse]);
     } catch (err: any) {

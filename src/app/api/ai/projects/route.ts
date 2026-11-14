@@ -2,121 +2,88 @@ import { withGeminiFallback } from "@/lib/aiConfig";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createClient as createServerClient } from "@/lib/supabase/server";
+import { analyzeTasks, tasksToMarkdown } from "@/lib/pmAnalysis";
 
 // يرفع الحد الأقصى لزمن تنفيذ الدالة على Vercel لمنع انقطاع الاتصال أثناء تحليل المهام
 export const maxDuration = 60;
 
-// تهيئة خوادم سوبابيز محلياً لجلب المهام والعملاء حياً من جداولك الفنية
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
 export async function GET() {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    // هذا API داخلي لفريق العمل فقط
+    const supabaseAuth = await createServerClient();
+    const { data: { user }, error: authCheckError } = await supabaseAuth.auth.getUser();
+    if (authCheckError || !user) {
+      return NextResponse.json({ error: "يرجى تسجيل الدخول أولاً." }, { status: 401 });
+    }
+    const { data: requesterProfile } = await supabaseAuth.from("users").select("role").eq("id", user.id).single();
+    if (!requesterProfile || requesterProfile.role === "client") {
+      return NextResponse.json({ error: "غير مصرح لك بهذا الإجراء." }, { status: 403 });
+    }
 
-    if (!apiKey) {
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "",
+      process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+    );
+
+    // 1. المهام الحقيقية فقط من قاعدة البيانات (بدون أي بيانات بديلة مختلقة)
+    const { data: tasks, error: dbError } = await supabaseAdmin
+      .from("tasks")
+      .select("id, title, assigned_to, status, due_date, projects ( project_name, location )");
+    if (dbError) throw dbError;
+
+    if (!tasks || tasks.length === 0) {
       return NextResponse.json({
-        error: "مفتاح الأمان GEMINI_API_KEY غير معرّف أو مفقود في ملف الإعدادات .env.local"
-      }, { status: 500 });
-    }
-
-    // 1. جلب كامل المهام حياً من قاعدة البيانات مع دمج تفاصيل المشروع والعميل المرتبطين بها
-    const { data: tasks, error: dbError } = await supabase
-      .from("tasks") // سنقرأ من جدول المهام
-      .select(`
-        id,
-        title,
-        assigned_to,
-        status,
-        due_date,
-        projects (
-          project_name,
-          location,
-          customers (
-            name
-          )
-        )
-      `);
-
-    // تعيين نوع المتغير كـ any لمنع اعتراض TypeScript الصارم على مصفوفات العلاقات المتداخلة
-    let finalTasksData: any = tasks;
-
-    // ملاحظة احترازية: في حال لم تكن قد أنشأت جدول tasks بالكامل بعد، سنقوم بجلب بيانات بديلة من جدول المشاريع تفادياً للانهيار
-    if (dbError || !tasks || tasks.length === 0) {
-      console.warn("Tasks table not found or empty, querying projects instead for backup.");
-      const { data: backupTasks } = await supabase
-        .from("projects")
-        .select(`
-          id,
-          project_name,
-          location,
-          customers (
-            name
-          )
-        `);
-      
-      // بناء هيكل مهام افتراضي ذكي بناءً على مشاريعك الحالية لضمان تشغيل الذكاء الاصطناعي بنجاح
-      finalTasksData = (backupTasks || []).map((p: any) => ({
-        id: p.id,
-        title: p.project_name?.includes("فيلا") ? "تركيب حلوق الأبواب الخشبية والمصفحة" : "تأسيس خراطيم وعلب سقف الكهرباء",
-        assigned_to: p.project_name?.includes("فيلا") ? "مهندس عادل" : "مهندس محمد",
-        status: p.project_name?.includes("فيلا") ? "pending" : "in_progress",
-        due_date: p.project_name?.includes("6 أكتوبر") ? "2026-06-15" : "2026-06-10",
-        projects: {
-          project_name: p.project_name,
-          location: p.location,
-          customers: p.customers
-        }
-      }));
-    }
-
-    const todayFormatted = new Date().toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-
-    // هندسة الأوامر (Prompt Engineering) لتلقين المساعد الإداري تواريخ التسليم الحالية وتحليل الأخطاء
-    const managerPrompt = `
-      You are Golden Decoration AI Project Manager.
-      You analyze active projects and construction tasks.
-      Today's current date is exactly: ${todayFormatted}.
-
-      Here is the raw live data of active tasks from our Supabase database:
-      ${JSON.stringify(finalTasksData)}
-
-      Analyze this data with high managerial precision:
-      1. Find delayed tasks: Tasks where the status is NOT 'completed' (or 'done') AND the due_date is BEFORE today (${todayFormatted}).
-      2. Group these delays by Project.
-      3. Identify the responsible engineers (assigned_to) for each delayed task.
-      4. Suggest concrete, professional, and realistic interior design / construction corrective actions in Egyptian Arabic to resolve these delays and speed up execution.
-
-      Write your analysis ONLY in Egyptian Arabic in a highly structured, professional, and authoritative executive summary layout. Use clean markdown, bullet points, and red flags (🚨) for delayed items.
-    `;
-
-    let responseText = "";
-    try {
-      const genAI = new GoogleGenerativeAI(apiKey);
-
-      // يجرب gemini-3.8-flash أولاً، ولو فشل بضغط الخوادم ينتقل تلقائياً إلى gemini-3.5-flash-lite
-      const result = await withGeminiFallback(async (modelName) => {
-        const model = genAI.getGenerativeModel({ model: modelName });
-        return await model.generateContent(managerPrompt);
+        analysis:
+          "## لا توجد مهام مسجلة\n> لا توجد أي مهام مسجلة في النظام حالياً، فلا يمكن تحليل التأخيرات. سجّل مهام المشاريع (المهمة، المهندس المسؤول، تاريخ الاستحقاق) ثم أعد تشغيل مدير المشاريع."
       });
-
-      responseText = result.response.text();
-    } catch (geminiError: any) {
-      console.error("Gemini API error:", geminiError);
-      throw new Error("Gemini: " + (geminiError?.message || "خطأ غير معروف"));
     }
 
-    return NextResponse.json({ analysis: responseText });
+    // 2. تحليل التأخيرات بالكود
+    const analysis = analyzeTasks(tasks);
+    const tableMd = tasksToMarkdown(analysis);
+
+    // 3. الذكاء الاصطناعي يقترح الحلول بناءً على النتائج فقط
+    let aiText = "";
+    if (analysis.delayed.length > 0 || analysis.dueSoon.length > 0) {
+      try {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) throw new Error("مفتاح جيميناي غير معرّف.");
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const prompt = `
+You are the AI Project Manager of Golden Decoration, an Egyptian interior finishing contractor.
+The delays below were calculated by the system from live data. NEVER change, add, or invent any task, name, date, or number. Do NOT repeat the tables.
+Write in clear Egyptian Arabic, concise and practical, as markdown with exactly these three sections:
+
+## أولويات المتابعة
+A numbered list of at most 5 items: which delayed tasks or projects the manager must follow up first and why (use the project, task, engineer and days late from the data).
+
+## إجراءات تصحيحية مقترحة
+3 to 5 short realistic corrective actions for the delays and for the tasks due soon (for example reallocating work, adding a crew, confirming material delivery).
+
+## تحذيرات التسليم
+1 to 3 short bullets about projects at risk of missing delivery dates, only if the data supports it.
+
+Today: ${analysis.today}
+Delayed tasks by project: ${JSON.stringify(analysis.byProject)}
+Delayed tasks by engineer: ${JSON.stringify(analysis.byEngineer)}
+Top delayed tasks: ${JSON.stringify(analysis.delayed.slice(0, 12))}
+Tasks due within 3 days: ${JSON.stringify(analysis.dueSoon.slice(0, 8))}
+`;
+        const result = await withGeminiFallback(async (modelName) => {
+          const model = genAI.getGenerativeModel({ model: modelName });
+          return await model.generateContent(prompt);
+        });
+        aiText = result.response.text().trim();
+      } catch (geminiError: any) {
+        console.error("Gemini API error:", geminiError);
+        aiText = "> تعذّر توليد التوصيات الذكية حالياً. جداول التأخيرات أعلاه محسوبة بالكامل وصالحة للاستخدام.";
+      }
+    }
+
+    return NextResponse.json({ analysis: tableMd + aiText });
   } catch (error: any) {
     console.error("Error in PM AI Route:", error);
-    return NextResponse.json({
-      error: "فشلت خوادم إدارة المشاريع للذكاء الاصطناعي في الاستجابة بالكامل: " + error.message
-    }, { status: 500 });
+    return NextResponse.json({ error: "فشل تحليل المهام: " + error.message }, { status: 500 });
   }
 }
