@@ -2,16 +2,32 @@
 
 import { useCRM } from "@/components/CRM/context/CRMContext";
 import { useRouter } from "next/navigation";
+import GoldButton from "@/components/ui/GoldButton";
+
+interface SalesOptionData {
+  level: string;
+  label: string;
+  minCost: number | null;
+  maxCost: number | null;
+  minDays: number | null;
+  maxDays: number | null;
+}
 
 interface AnalysisData {
   area: number;
   level: string;
   dbLevel: string;
-  minCost: number;
-  maxCost: number;
-  duration: number;
+  levelSpecified: boolean;
+  minCost: number | null;
+  maxCost: number | null;
+  minDays: number | null;
+  maxDays: number | null;
+  options: SalesOptionData[];
+  counts: { bedrooms: number | null; bathrooms: number | null; receptions: number | null; kitchens: number | null };
   aiText?: string;
 }
+
+const money = (n: number) => n.toLocaleString("en-US");
 
 export default function SalesResult({ analysis }: { analysis: AnalysisData }) {
   const { setCRMData } = useCRM();
@@ -43,10 +59,10 @@ export default function SalesResult({ analysis }: { analysis: AnalysisData }) {
         area: analysis.area,
         unitStatus: "بدون تشطيب (طوب احمر)",
         finishingLevel: Array.isArray(analysis.dbLevel) ? "متوسط (سوبر لوكس )" : analysis.dbLevel, 
-        receptionsCount: 1,
-        roomsCount: 2,
-        bathroomsCount: 1,
-        kitchensCount: 1,
+        receptionsCount: analysis.counts?.receptions ?? 1,
+        roomsCount: analysis.counts?.bedrooms ?? 2,
+        bathroomsCount: analysis.counts?.bathrooms ?? 1,
+        kitchensCount: analysis.counts?.kitchens ?? 1,
         balconiesCount: 1
       }
     }));
@@ -74,24 +90,50 @@ export default function SalesResult({ analysis }: { analysis: AnalysisData }) {
         <div className="border border-[#F0E6D2] rounded-xl p-4">
           <p className="text-gray-300 text-xs">مستوى التشطيب</p>
           <h3 className="text-xl font-bold mt-2 text-[#F0E6D2]">
-            {analysis.level}
+            {analysis.levelSpecified ? analysis.level : "لم يحدده العميل"}
           </h3>
         </div>
 
         <div className="border border-[#F0E6D2] rounded-xl p-4">
           <p className="text-gray-300 text-xs">التكلفة التقديرية</p>
           <h3 className="text-lg font-bold mt-2 text-[#F0E6D2]">
-            {analysis.minCost.toLocaleString()} - {analysis.maxCost.toLocaleString()} جنيه
+            {analysis.minCost !== null && analysis.maxCost !== null
+              ? `${money(analysis.minCost)} - ${money(analysis.maxCost)} جنيه`
+              : "غير مضبوطة في الإعدادات"}
           </h3>
         </div>
 
         <div className="border border-[#F0E6D2] rounded-xl p-4">
           <p className="text-gray-300 text-xs">مدة التنفيذ</p>
           <h3 className="text-xl font-bold mt-2 text-[#F0E6D2]">
-            {analysis.duration} يوم
+            {analysis.minDays !== null && analysis.maxDays !== null
+              ? `${analysis.minDays} - ${analysis.maxDays} يوم`
+              : "غير مضبوطة في الإعدادات"}
           </h3>
         </div>
       </div>
+
+      {!analysis.levelSpecified && analysis.options?.length > 0 && (
+        <div className="mt-4 border border-[#243556] rounded-xl p-4 select-text">
+          <p className="text-[#D4AF37] text-xs font-bold mb-3">التقدير لكل مستوى تشطيب (لأن العميل لم يحدد المستوى):</p>
+          <div className="space-y-2">
+            {analysis.options.map((o) => (
+              <div key={o.level} className="flex items-center justify-between gap-3 text-xs text-gray-300 border-b border-[#1f2d4d] pb-2 last:border-0">
+                <span className="font-bold text-white">{o.label}</span>
+                <span>
+                  {o.minCost !== null && o.maxCost !== null ? `${money(o.minCost)} - ${money(o.maxCost)} جنيه` : "السعر غير مضبوط"}
+                  {" | "}
+                  {o.minDays !== null && o.maxDays !== null ? `${o.minDays} - ${o.maxDays} يوم` : "المدة غير مضبوطة"}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <p className="mt-3 text-[11px] text-gray-400 font-bold">
+        مصدر الأرقام: جدول أسعار المتر ومدد التنفيذ في صفحة الإعدادات الفنية، وليست تقديراً من الذكاء الاصطناعي.
+      </p>
 
       {analysis.aiText && (
         <div className="mt-6 p-4 bg-[#020B1C] border border-[#243556] rounded-xl text-right select-text">
@@ -103,12 +145,9 @@ export default function SalesResult({ analysis }: { analysis: AnalysisData }) {
       )}
 
       <div className="mt-8 pt-6 border-t border-[#243556] flex justify-end">
-        <button
-          onClick={handleRequestEstimate}
-          className="bg-[#D4AF37] text-black px-6 py-3 rounded-xl font-bold hover:bg-[#F0E6D2] cursor-pointer transition duration-200 text-xs flex items-center gap-2"
-        >
+        <GoldButton onClick={handleRequestEstimate}>
           📋 طلب مقايسة مبدئية للمشروع
-        </button>
+        </GoldButton>
       </div>
 
     </div>

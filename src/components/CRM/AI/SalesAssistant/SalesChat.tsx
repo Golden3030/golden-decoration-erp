@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import SalesResult from "./SalesResult";
+import { fetchAiJson } from "@/lib/fetchAi";
 import { isOnline } from "@/lib/offline-sync"; // استيراد مستشعر الشبكة المعتمد
 
 export default function SalesChat() {
@@ -39,57 +40,31 @@ export default function SalesChat() {
     setShowResult(false);
 
     try {
-      const res = await fetch("/api/ai/sales", {
+      const data = await fetchAiJson("/api/ai/sales", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ 
-          message: message,
-          imageBase64: planImage 
-        })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: message, imageBase64: planImage })
       });
 
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.error || "فشل السيرفر في التخاطب مع خوادم جولد.");
+      // لو الذكاء الاصطناعي لم يجد مساحة الشقة في الطلب، لا نعرض أي أرقام
+      const est = data.estimate;
+      if (!est) {
+        alert(data.response || "لم أتمكن من تحديد مساحة الشقة من الطلب.");
+        return;
       }
-
-      const data = await res.json();
-      const aiText = data.response;
-
-      const areaMatch = aiText.match(/المساحة التقديرية المستخرجة:\s*(\d+)/) || aiText.match(/المساحة:\s*(\d+)/) || aiText.match(/(\d+)\s*متر/);
-      const parsedArea = areaMatch ? Number(areaMatch[1]) : 120;
-
-      const levelMatch = aiText.match(/مستوى التشطيب المطلوب:\s*([^\n\r]+)/) || aiText.match(/مستوى التشطيب:\s*([^\n\r]+)/);
-      let parsedLevel = levelMatch ? levelMatch[1].trim() : "لوكس";
-
-      let dbLevel = "اقتصادى (لوكس)";
-      if (parsedLevel.includes("الترا") || parsedLevel.includes("فاخر")) {
-        dbLevel = "فاخر (الترا لوكس)";
-        parsedLevel = "الترا لوكس";
-      } else if (parsedLevel.includes("سوبر")) {
-        dbLevel = "متوسط (سوبر لوكس )";
-        parsedLevel = "سوبر لوكس";
-      } else {
-        parsedLevel = "لوكس";
-      }
-
-      const costMatch = aiText.match(/من\s*([\d,]+)\s*إلى\s*([\d,]+)/);
-      const minCost = costMatch ? Number(costMatch[1].replace(/,/g, "")) : (parsedArea * 3500 * 0.9);
-      const maxCost = costMatch ? Number(costMatch[2].replace(/,/g, "")) : (parsedArea * 3500 * 1.1);
-
-      const durationMatch = aiText.match(/مدة التنفيذ المتوقعة:\s*(\d+)/) || aiText.match(/مدة التنفيذ:\s*(\d+)/) || aiText.match(/(\d+)\s*يوم/);
-      const duration = durationMatch ? Number(durationMatch[1]) : 75;
 
       setAnalysisData({
-        area: parsedArea,
-        level: parsedLevel,
-        dbLevel: dbLevel,
-        minCost: minCost,
-        maxCost: maxCost,
-        duration: duration,
-        aiText: aiText
+        area: est.area,
+        level: est.levelLabel,
+        dbLevel: est.dbLevel,
+        levelSpecified: est.levelSpecified,
+        minCost: est.minCost,
+        maxCost: est.maxCost,
+        minDays: est.minDays,
+        maxDays: est.maxDays,
+        options: est.options,
+        counts: est.counts,
+        aiText: data.response
       });
 
       setShowResult(true);

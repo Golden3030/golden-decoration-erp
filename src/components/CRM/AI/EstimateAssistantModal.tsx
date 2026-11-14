@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { isOnline } from "@/lib/offline-sync";
 import GoldButton from "@/components/ui/GoldButton";
 import { quickRoomNames } from "@/lib/takeoffEngine";
+import { DEFAULT_FINISH_LEVEL, FINISH_LEVELS, type FinishLevel } from "@/lib/finishLevels";
 
 type Mode = "project" | "quick";
 
@@ -16,6 +17,7 @@ interface EstimateResult {
   assumptions: string[];
   warnings: string[];
   cost: { level: string; min: number; max: number } | null;
+  duration: { minDays: number; maxDays: number } | null;
   costNote: string;
   analysis: string;
   whatsappMessage: string;
@@ -47,7 +49,7 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
   const [receptions, setReceptions] = useState("1");
   const [kitchens, setKitchens] = useState("1");
   const [state, setState] = useState<"brick" | "plastered">("brick");
-  const [level, setLevel] = useState<"economic" | "medium" | "luxury">("medium");
+  const [level, setLevel] = useState<FinishLevel>(DEFAULT_FINISH_LEVEL);
   const [corridors, setCorridors] = useState("1");
   const [ceilingRooms, setCeilingRooms] = useState<string[]>([]);
 
@@ -278,9 +280,17 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
             <div>
               <label className={labelClass}>مستوى التشطيب</label>
               <div className="grid grid-cols-3 gap-2">
-                <GoldButton toggle size="fill" active={level === "economic"} onClick={() => { setLevel("economic"); resetResult(); }}>اقتصادي</GoldButton>
-                <GoldButton toggle size="fill" active={level === "medium"} onClick={() => { setLevel("medium"); resetResult(); }}>متوسط</GoldButton>
-                <GoldButton toggle size="fill" active={level === "luxury"} onClick={() => { setLevel("luxury"); resetResult(); }}>لوكس</GoldButton>
+                {FINISH_LEVELS.map((l) => (
+                  <GoldButton
+                    key={l.key}
+                    toggle
+                    size="fill"
+                    active={level === l.key}
+                    onClick={() => { setLevel(l.key); resetResult(); }}
+                  >
+                    {l.label}
+                  </GoldButton>
+                ))}
               </div>
             </div>
 
@@ -353,6 +363,11 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
                     <p className="text-white font-black text-lg mt-1">
                       {fmt(result.cost.min)} – {fmt(result.cost.max)} جنيه
                     </p>
+                    {result.duration && (
+                      <p className="text-white font-black text-xs mt-2">
+                        مدة التنفيذ التقديرية: {fmt(result.duration.minDays)} – {fmt(result.duration.maxDays)} يوم
+                      </p>
+                    )}
                     <p className="text-gray-400 text-[10px] font-bold mt-1">تقدير مبدئي غير ملزم لحين المعاينة والمقايسة.</p>
                   </>
                 ) : (

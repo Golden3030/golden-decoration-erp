@@ -3,6 +3,8 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { DEFAULT_FINISH_LEVEL, isFinishLevel, levelLabel, type FinishLevel } from "@/lib/finishLevels";
+import { computeOption } from "@/lib/salesEstimate";
 import {
   buildQuickRooms,
   classifyRoom,
@@ -11,7 +13,6 @@ import {
   quickCostRange,
   type ApartmentState,
   type Coeff,
-  type FinishLevel,
   type TakeoffCoefficients,
   type TakeoffRoom
 } from "@/lib/takeoffEngine";
@@ -19,8 +20,6 @@ import {
 // يضمن عدم انقطاع الاتصال على Vercel عند توليد التقارير
 export const maxDuration = 60;
 
-const LEVELS: FinishLevel[] = ["economic", "medium", "luxury"];
-const LEVEL_LABELS: Record<FinishLevel, string> = { economic: "اقتصادي", medium: "متوسط", luxury: "لوكس" };
 
 export async function POST(request: Request) {
   try {
@@ -71,6 +70,7 @@ export async function POST(request: Request) {
     let contextLabel = "";
     let result;
     let cost: { level: string; min: number; max: number } | null = null;
+    let duration: { minDays: number; maxDays: number } | null = null;
     let costNote = "";
 
     if (mode === "project") {
@@ -142,7 +142,7 @@ export async function POST(request: Request) {
         return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
       };
       const state: ApartmentState = q.state === "plastered" ? "plastered" : "brick";
-      const level: FinishLevel = LEVELS.includes(q.level) ? q.level : "medium";
+      const level: FinishLevel = isFinishLevel(q.level) ? q.level : DEFAULT_FINISH_LEVEL;
       const requestedCeilingRooms: string[] = (Array.isArray(q.ceilingRooms) ? q.ceilingRooms : []).map(String);
 
       const rooms = buildQuickRooms({
@@ -168,21 +168,34 @@ export async function POST(request: Request) {
       result.assumptions.unshift(
         "تقدير سريع بدون معاينة: المساحة موزعة على الغرف بأوزان تقديرية، والأرقام الفعلية قد تختلف بعد المعاينة والمقايسة."
       );
-      contextLabel = `تقدير سريع لعميل غير مسجل: شقة ${totalArea} م²، ${rooms.filter(r => r.kind === "bedroom").length} غرف نوم، مستوى تشطيب ${LEVEL_LABELS[level]}`;
+      contextLabel = `تقدير سريع لعميل غير مسجل: شقة ${totalArea} م²، ${rooms.filter(r => r.kind === "bedroom").length} غرف نوم، مستوى تشطيب ${levelLabel(level)}`;
 
       const { data: priceRow } = await supabaseAdmin
         .from("quick_estimate_prices")
-        .select("min_price_per_m2, max_price_per_m2")
+        .select("min_price_per_m2, max_price_per_m2, min_days_per_100m2, max_days_per_100m2")
         .eq("level", level)
         .maybeSingle();
 
-      const minP = Number(priceRow?.min_price_per_m2 || 0);
-      const maxP = Number(priceRow?.max_price_per_m2 || 0);
-      if (minP > 0 && maxP >= minP) {
-        const range = quickCostRange(totalArea, minP, maxP);
-        cost = { level: LEVEL_LABELS[level], min: range.min, max: range.max };
+      const option = computeOption(
+        totalArea,
+        level,
+        priceRow
+          ? {
+              level,
+              minPricePerM2: Number(priceRow.min_price_per_m2 || 0),
+              maxPricePerM2: Number(priceRow.max_price_per_m2 || 0),
+              minDaysPer100m2: Number(priceRow.min_days_per_100m2 || 0),
+              maxDaysPer100m2: Number(priceRow.max_days_per_100m2 || 0)
+            }
+          : undefined
+      );
+      if (option.minCost !== null && option.maxCost !== null) {
+        cost = { level: option.label, min: option.minCost, max: option.maxCost };
       } else {
-        costNote = `لم تُضبط أسعار المتر لمستوى (${LEVEL_LABELS[level]}) في صفحة الإعدادات، فتم عرض الكميات فقط.`;
+        costNote = `لم تُضبط أسعار المتر لمستوى (${option.label}) في صفحة الإعدادات، فتم عرض الكميات فقط.`;
+      }
+      if (option.minDays !== null && option.maxDays !== null) {
+        duration = { minDays: option.minDays, maxDays: option.maxDays };
       }
     }
 
@@ -193,7 +206,8 @@ export async function POST(request: Request) {
       lines: result.lines.map((l) => ({ stage: l.stage, item: l.item, quantity: l.quantity, unit: l.unit, basis: l.basis })),
       assumptions: result.assumptions,
       warnings: result.warnings,
-      cost
+      cost,
+      duration
     };
 
     const prompt = `
@@ -212,7 +226,7 @@ ${mode === "quick" ? `4) رسالة للعميل: write a short WhatsApp reply (
   cost
     ? `Mention the estimated cost range from ${cost.min} to ${cost.max} EGP for the ${cost.level} finishing level, exactly as given.`
     : "Do not mention any price; say the team will send a price after the site visit."
-} State clearly that it is a preliminary non-binding estimate pending a site visit. Put the message between the markers [[WHATSAPP]] and [[/WHATSAPP]].` : ""}
+} ${duration ? `Mention the expected execution time from ${duration.minDays} to ${duration.maxDays} days, exactly as given.` : ""} State clearly that it is a preliminary non-binding estimate pending a site visit. Put the message between the markers [[WHATSAPP]] and [[/WHATSAPP]].` : ""}
 `;
 
     let responseText = "";
@@ -247,6 +261,7 @@ ${mode === "quick" ? `4) رسالة للعميل: write a short WhatsApp reply (
       assumptions: result.assumptions,
       warnings: result.warnings,
       cost,
+      duration,
       costNote,
       analysis: responseText,
       whatsappMessage

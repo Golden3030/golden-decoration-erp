@@ -5,7 +5,7 @@ export type ApartmentState = "brick" | "plastered";
 export type RoomKind =
   | "reception" | "living" | "bedroom" | "kitchen" | "bathroom"
   | "corridor" | "balcony" | "garden" | "other";
-export type FinishLevel = "economic" | "medium" | "luxury";
+export type { FinishLevel } from "@/lib/finishLevels";
 
 export interface TakeoffRoom {
   name: string;
