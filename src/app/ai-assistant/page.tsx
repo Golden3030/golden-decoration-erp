@@ -509,7 +509,7 @@ export default function AIAssistantPage() {
                       disabled={!isAllowed}
                       className={`w-full h-11 rounded-full text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
                         isAllowed 
-                          ? "bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer" 
+                          ? "bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer" 
                           : "bg-gray-800 text-gray-500 border border-transparent cursor-not-allowed"
                       }`}
                     >
@@ -578,7 +578,7 @@ export default function AIAssistantPage() {
                   <button
                     onClick={handleAnalyzeDesignImage}
                     disabled={loadingVision}
-                    className="w-full h-11 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-bold text-xs md:text-sm transition-all duration-300 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#D4AF37]/15"
+                    className="w-full h-11 rounded-full bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-bold text-xs md:text-sm transition-all duration-300 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#D4AF37]/15"
                   >
                     {loadingVision ? "جاري قراءة وتحليل خامات التصميم بالكامل..." : "🔍 بدء التحليل البصري واستخراج الخامات"}
                   </button>
@@ -612,7 +612,7 @@ export default function AIAssistantPage() {
                 {!visionAnalysis && !loadingVision && (
                   <button
                     onClick={handleAuditProjects}
-                    className="w-full h-11 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer"
+                    className="w-full h-11 rounded-full bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer"
                   >
                     🔍 تشغيل الفحص الإداري وجلب التأخيرات 
                   </button>
@@ -680,7 +680,7 @@ export default function AIAssistantPage() {
                 {selectedProjectId && !visionAnalysis && !loadingVision && (
                   <button
                     onClick={handleAnalyzeProcurement}
-                    className="w-full h-11 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer"
+                    className="w-full h-11 rounded-full bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer"
                   >
                     🔍 تشغيل تحليل المشتريات وإصدار كشوف الخامات
                   </button>
@@ -761,7 +761,7 @@ export default function AIAssistantPage() {
                 {selectedProjectId && !visionAnalysis && !loadingVision && (
                   <button
                     onClick={handleAnalyzeFinance}
-                    className="w-full h-11 rounded-full bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer"
+                    className="w-full h-11 rounded-full bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer"
                   >
                     🔍 تشغيل تحليل ميزانية الموقع والأرباح الفعلية
                   </button>
@@ -824,7 +824,7 @@ export default function AIAssistantPage() {
                   chatHistory.map((msg, index) => (
                     <div key={index} className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}>
                       <div className={`max-w-[75%] rounded-2xl p-4 text-xs leading-relaxed ${
-                        msg.sender === "user" ? "bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] text-[#020B1C] font-black rounded-tr-none" : "bg-[#07132a] border border-[#D4AF37]/20 text-[#F0E6D2] rounded-tl-none font-bold"
+                        msg.sender === "user" ? "bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] text-[#020B1C] font-black rounded-tr-none" : "bg-[#07132a] border border-[#D4AF37]/20 text-[#F0E6D2] rounded-tl-none font-bold"
                       }`}>
                         {msg.text}
                       </div>
@@ -858,7 +858,7 @@ export default function AIAssistantPage() {
                 <button
                   onClick={handleSendMessage}
                   disabled={loadingChat}
-                  className="bg-gradient-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] px-6 py-3 rounded-full font-black hover:shadow-lg transition-all duration-300 text-xs disabled:opacity-50 cursor-pointer flex items-center justify-center"
+                  className="bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] px-6 py-3 rounded-full font-black hover:shadow-lg transition-all duration-300 text-xs disabled:opacity-50 cursor-pointer flex items-center justify-center"
                 >
                   إرسال 🚀
                 </button>

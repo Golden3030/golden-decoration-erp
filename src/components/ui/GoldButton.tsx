@@ -41,7 +41,7 @@ export default function GoldButton({
     <button type={type} {...rest} className={`${BASE} ${SIZES[size]} ${selected ? ON : OFF} ${className}`}>
       {children}
       {selected && (
-        <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+        <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
       )}
     </button>
   );

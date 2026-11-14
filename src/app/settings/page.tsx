@@ -199,8 +199,8 @@ export default function SettingsPage() {
             <div className="space-y-8">
               
               {/* كارت حجز المعامل الجديد المطور بالمقياس الإمبراطوري المتين بكسلياً */}
-              <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-6 space-y-5 shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+              <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4x1 p-6 space-y-5 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-1.5 h-full bg-linear-to-b from-[#C9A45D] to-transparent opacity-40" />
                 <h3 className="text-[#D4AF37] font-black text-xs md:text-sm border-b border-[#D4AF37]/20 pb-3 flex items-center gap-2 select-none">
                   <span>➕</span> إضافة وإدراج معامل حصر إنشائي جديد
                 </h3>
@@ -248,7 +248,7 @@ export default function SettingsPage() {
                         })}
                         className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                       >
-                        <Minus size={12} className="stroke-[3]" />
+                        <Minus size={12} className="stroke-3" />
                       </button>
                       
                       <div className="text-center font-black">
@@ -260,7 +260,7 @@ export default function SettingsPage() {
                         onClick={() => setNewQty(prev => Number(((Number(prev) || 0) + 0.001).toFixed(4)))}
                         className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#D4AF37]/20 hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                       >
-                        <Plus size={12} className="stroke-[3]" />
+                        <Plus size={12} className="stroke-3" />
                       </button>
                     </div>
                   </div>
@@ -288,7 +288,7 @@ export default function SettingsPage() {
                       placeholder="مثال: رمل لكل متر محارة"
                       value={newNotes}
                       onChange={(e) => setNewNotes(e.target.value)}
-                      className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 text-xs outline-none font-bold focus:border-[#D4AF37] placeholder-slate-600 font-semibold"
+                      className="w-full h-11 rounded-xl bg-[#020B1C] border border-[#D4AF37]/20 text-white px-4 text-xs outline-none focus:border-[#D4AF37] placeholder-slate-600 font-semibold"
                     />
                   </div>
                 </div>
@@ -299,11 +299,11 @@ export default function SettingsPage() {
                     type="button" 
                     onClick={(e) => { e.preventDefault(); handleInsertNewCoeff(); }}
                     disabled={saving}
-                    className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-40 cursor-pointer"
+                    className="px-6 h-11 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-40 cursor-pointer"
                   >
                     {saving ? <Loader2 className="animate-spin w-4 h-4 text-[#D4AF37]" /> : <PlusCircle className="w-4 h-4 text-[#D4AF37]" />}
                     <span>{saving ? "جاري الإدراج..." : "حفظ وإدراج المعامل الجديد"}</span>
-                    <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                   </button>
                 </div>
               </div>
@@ -311,8 +311,8 @@ export default function SettingsPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-bold select-none">
                 
                 {/* 1. كارت معاملات المحارة مدمجة بالزوايا الإمبراطورية المتينة والحدود المذهبة */}
-                <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-5 space-y-4 shadow-xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-20" />
+                <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4x1 p-5 space-y-4 shadow-xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-1 h-full bg-linear-to-b from-[#C9A45D] to-transparent opacity-20" />
                   <h3 className="text-[#D4AF37] font-black text-base border-b border-[#D4AF37]/20 pb-2">🧱 معاملات المحارة والتأسيس</h3>
                   <div className="space-y-4 text-xs">
                     {plasterSpecs.length > 0 ? (
@@ -335,8 +335,8 @@ export default function SettingsPage() {
                 </div>
 
                 {/* 2. كارت معاملات الدهانات مدمجة بالزوايا الإمبراطورية المتينة والحدود المذهبة */}
-                <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-5 space-y-4 shadow-xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-20" />
+                <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4x1 p-5 space-y-4 shadow-xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-1 h-full bg-linear-to-b from-[#C9A45D] to-transparent opacity-20" />
                   <h3 className="text-[#D4AF37] font-black text-base border-b border-[#D4AF37]/20 pb-2">🎨 معاملات معالجة ودهان الحوائط</h3>
                   <div className="space-y-4 text-xs">
                     {paintSpecs.length > 0 ? (
@@ -359,8 +359,8 @@ export default function SettingsPage() {
                 </div>
 
                 {/* 3. كارت معاملات الأرضيات مدمجة بالزوايا الإمبراطورية المتينة والحدود المذهبة */}
-                <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-[2rem] p-5 space-y-4 shadow-xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-20" />
+                <div className="bg-[#07132a] border-2 border-[#D4AF37]/20 rounded-4x1 p-5 space-y-4 shadow-xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-1 h-full bg-linear-to-b from-[#C9A45D] to-transparent opacity-20" />
                   <h3 className="text-[#D4AF37] font-black text-base border-b border-[#D4AF37]/20 pb-2">📐 معاملات تكسيات وأرضيات الوحدة</h3>
                   <div className="space-y-4 text-xs">
                     {floorSpecs.length > 0 ? (
@@ -389,11 +389,11 @@ export default function SettingsPage() {
                   type="button" 
                   onClick={(e) => { e.preventDefault(); handleSaveAll(); }}
                   disabled={saving}
-                  className="px-8 py-3.5 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-40 cursor-pointer"
+                  className="px-8 py-3.5 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.01] active:scale-95 transition-all duration-300 text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-40 cursor-pointer"
                 >
                   {saving ? <Loader2 className="animate-spin w-4 h-4 text-[#D4AF37]" /> : <Save className="w-4 h-4 text-[#D4AF37]" />}
                   <span>{saving ? "جاري حفظ الإعدادات..." : "حفظ التعديلات الجارية مع حاسبة الحصر"}</span>
-                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                 </button>
               </div>
             </div>

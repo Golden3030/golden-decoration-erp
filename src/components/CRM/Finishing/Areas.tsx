@@ -280,16 +280,16 @@ export default function Areas() {
                 onClick={() => handleCeilingHeightChange(ceilingHeight - 0.1)}
                 className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center cursor-pointer justify-center transition-all"
               >
-                <Minus size={12} className="stroke-[3]" />
+                <Minus size={12} className="stroke-3" />
               </button>
-              <span className="text-sm font-black text-white font-mono min-w-[34px] text-center">{ceilingHeight.toFixed(1)}</span>
+              <span className="text-sm font-black text-white font-mono min-w-8.5 text-center">{ceilingHeight.toFixed(1)}</span>
               <button
                 type="button"
                 disabled={isLocked}
                 onClick={() => handleCeilingHeightChange(ceilingHeight + 0.1)}
                 className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] cursor-pointer hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center transition-all"
               >
-                <Plus size={12} className="stroke-[3]" />
+                <Plus size={12} className="stroke-3" />
               </button>
               <span className="text-[10px] text-gray-500 font-bold px-1 select-none">م</span>
             </div>
@@ -327,16 +327,16 @@ export default function Areas() {
                       onClick={() => handleValueChange(room.key, Math.max(0, currentSize - room.step))} 
                       className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                     >
-                      <Minus size={12} className="stroke-[3]" />
+                      <Minus size={12} className="stroke-3" />
                     </button>
-                    <span className="text-sm font-black text-white font-mono min-w-[20px] text-center">{currentSize}</span>
+                    <span className="text-sm font-black text-white font-mono min-w-5 text-center">{currentSize}</span>
                     <button 
                       type="button" 
                       disabled={isLocked}
                       onClick={() => handleValueChange(room.key, currentSize + room.step)} 
                       className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
                     >
-                      <Plus size={12} className="stroke-[3]" />
+                      <Plus size={12} className="stroke-3" />
                     </button>
                     <span className="text-[10px] text-gray-500 font-bold px-1 select-none">م²</span>
                   </div>
@@ -365,7 +365,7 @@ export default function Areas() {
             }}
             className={`p-5 rounded-3xl border transition-all duration-300 cursor-pointer flex flex-col justify-between h-full select-none ${
               corridorsActive 
-                ? 'border-[#D4AF37] bg-gradient-to-r from-[#07132a] to-[#D4AF37]/5 font-black' 
+                ? 'border-[#D4AF37] bg-linear-to-r from-[#07132a] to-[#D4AF37]/5 font-black' 
                 : 'border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/25'
             }`}
           >
@@ -385,7 +385,7 @@ export default function Areas() {
                     {/* تعديل عداد الطرقة الرئيسية */}
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs text-[#D4AF37] font-black shrink-0">الرئيسية:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 select-none h-11 w-full max-w-[120px]" dir="ltr">
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 select-none h-11 w-full max-w-30" dir="ltr">
                         <button 
                           type="button" 
                           disabled={isLocked}
@@ -409,7 +409,7 @@ export default function Areas() {
                     {/* تعديل عداد الطرقة الفرعية */}
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs text-[#D4AF37] font-black shrink-0">الفرعية:</span>
-                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 select-none h-11 w-full max-w-[120px]" dir="ltr">
+                      <div className="flex items-center justify-between bg-[#020B1C] border border-[#1f2d4d] rounded-xl px-2 select-none h-11 w-full max-w-30" dir="ltr">
                         <button 
                           type="button" 
                           disabled={isLocked}
@@ -445,7 +445,7 @@ export default function Areas() {
             }}
             className={`p-5 rounded-3xl border transition-all duration-300 cursor-pointer flex flex-col justify-between h-full select-none ${
               gardenActive 
-                ? 'border-[#D4AF37] bg-gradient-to-r from-[#07132a] to-[#D4AF37]/5 font-black' 
+                ? 'border-[#D4AF37] bg-linear-to-r from-[#07132a] to-[#D4AF37]/5 font-black' 
                 : 'border-[#1f2d4d] bg-[#020B1C]/40 hover:border-[#D4AF37]/25'
             }`}
           >

@@ -388,7 +388,7 @@ export default function DashboardPage() {
                 {/* تحويل لون ترويسة العنوان للون البني البرونزي المعتمد `#A17A4C` */}
                 <h3 className="text-[#D4AF37] text-md font-bold select-none">تتبع المشاريع الميدانية</h3>
               </div>
-              <div className="overflow-x-auto max-h-[400px] ai-chat-scroll">
+              <div className="overflow-x-auto max-h-100 ai-chat-scroll">
                 <ProjectsTable />
               </div>
             </div>
@@ -397,7 +397,7 @@ export default function DashboardPage() {
           {/* 3. المهام والمخطط */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {isEngineeringStaff && (
-              <div className="xl:col-span-1 bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-[420px] overflow-auto">
+              <div className="xl:col-span-1 bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-105 overflow-auto">
                 <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
                   <ClipboardList className="w-6 h-6 text-[#D4AF37]" />
                   {/* تحويل لون ترويسة عنوان المهام للون البني البرونزي المعتمد `#A17A4C` */}
@@ -433,7 +433,7 @@ export default function DashboardPage() {
             )}
 
             {isOperationalStaff && (
-              <div className="xl:col-span-2 bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-[400px] overflow-auto">
+              <div className="xl:col-span-2 bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-100 overflow-auto">
                 <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2 sticky top-0 z-10">
                   <Bell className="w-6 h-6 text-[#D4AF37]" />
                   {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
@@ -446,7 +446,7 @@ export default function DashboardPage() {
 
           {/* 5. الأنشطة والتعاقدات والتقويم */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-[420px] overflow-auto">
+            <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-105 overflow-auto">
               <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2 sticky top-0 z-10">
                 <Activity className="w-6 h-6 text-[#D4AF37]" />
                 {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
@@ -455,7 +455,7 @@ export default function DashboardPage() {
               <RecentActivities />
             </div>
 
-            <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-[420px] overflow-auto">
+            <div className="bg-[#07132a] border border-[#D4AF37] rounded-2xl shadow-xl h-105 overflow-auto">
               <div className="p-4 border-b border-[#D4AF37] bg-[#0b1b3d]/60 flex items-center gap-2">
                 <FileSignature className="w-6 h-6 text-[#D4AF37]" />
                 {/* تحويل لون ترويسة العنوان للبني المعتمد `#A17A4C` */}
