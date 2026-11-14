@@ -13,6 +13,7 @@ import { Lock, X } from "lucide-react";
 // استيراد مكون المبيعات الفعال الخاص بك
 import SalesChat from "@/components/CRM/AI/SalesAssistant/SalesChat";
 
+import { fetchAiJson } from "@/lib/fetchAi";
 interface AIEmployee {
   id: string;
   name: string;
@@ -277,9 +278,7 @@ export default function AIAssistantPage() {
     setLoadingVision(true);
     setVisionAnalysis(null);
     try {
-      const res = await fetch("/api/ai/projects", { method: "GET" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشل مدير المشاريع.");
+      const data = await fetchAiJson("/api/ai/projects", { method: "GET" });
       setVisionAnalysis(data.analysis);
     } catch (err: any) {
       alert("حدث خطأ أثناء فحص المشاريع: " + err.message);
@@ -300,13 +299,11 @@ export default function AIAssistantPage() {
     setLoadingVision(true);
     setVisionAnalysis(null);
     try {
-      const res = await fetch("/api/ai/procurement", {
+      const data = await fetchAiJson("/api/ai/procurement", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: selectedProjectId })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشل مساعد المشتريات.");
       setVisionAnalysis(data.analysis); 
     } catch (err: any) {
       alert("حدث خطأ أثناء تحليل المشتريات: " + err.message);
@@ -357,13 +354,11 @@ export default function AIAssistantPage() {
     setLoadingVision(true);
     setVisionAnalysis(null);
     try {
-      const res = await fetch("/api/ai/finance", {
+      const data = await fetchAiJson("/api/ai/finance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ projectId: selectedProjectId })
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "فشل المحلل المالي.");
       setVisionAnalysis(data.analysis); 
     } catch (err: any) {
       alert("حدث خطأ أثناء التحليل المالي للموقع: " + err.message);
