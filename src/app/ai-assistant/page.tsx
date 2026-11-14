@@ -1,4 +1,5 @@
 "use client";import EstimateAssistantModal from "@/components/CRM/AI/EstimateAssistantModal";
+import ReportBlock from "@/components/CRM/AI/ReportBlock";
 import React, { useEffect, useRef, useState } from "react";
 
 import { useRouter } from "next/navigation";
@@ -583,12 +584,11 @@ export default function AIAssistantPage() {
                   </button>
                 )}
                 {visionAnalysis && (
-                  <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-5 space-y-3 transition-all duration-300 select-text">
-                    <h4 className="text-[#A17A4C] font-black text-xs border-r-2 border-[#D4AF37] pr-2">📋 تقرير تحليل الديكور والخامات:</h4>
-                    <p className="text-gray-300 text-xs whitespace-pre-wrap leading-relaxed font-sans font-bold">
-                      {visionAnalysis}
-                    </p>
-                  </div>
+                  <ReportBlock
+                    heading="📋 تقرير تحليل الديكور والخامات:"
+                    reportTitle="تقرير تحليل الديكور والخامات"
+                    markdown={visionAnalysis}
+                  />
                 )}
               </div>
             </div>
@@ -625,13 +625,12 @@ export default function AIAssistantPage() {
                   </div>
                 )}
 
-                {visionAnalysis && (
-                  <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-5 space-y-3 transition-all duration-300 select-text">
-                    <h4 className="text-[#A17A4C] font-black text-xs border-r-2 border-[#D4AF37] pr-2">📋 تقرير تحليل المهام والتأخيرات بالمواقع:</h4>
-                    <p className="text-gray-300 text-xs whitespace-pre-wrap leading-relaxed font-sans font-bold">
-                      {visionAnalysis}
-                    </p>
-                  </div>
+               {visionAnalysis && (
+                  <ReportBlock
+                    heading="📋 تقرير تحليل المهام والتأخيرات بالمواقع:"
+                    reportTitle="تقرير متابعة المشاريع والتأخيرات"
+                    markdown={visionAnalysis}
+                  />
                 )}
               </div>
             </div>
@@ -695,12 +694,12 @@ export default function AIAssistantPage() {
                 )}
 
                 {visionAnalysis && (
-                  <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-5 space-y-3 transition-all duration-300 select-text">
-                    <h4 className="text-[#A17A4C] font-black text-xs border-r-2 border-[#D4AF37] pr-2">📋 كشوف طلبات التوريد والشراء الأسبوعية المقترحة:</h4>
-                    <p className="text-gray-300 text-xs whitespace-pre-wrap leading-relaxed font-sans font-bold">
-                      {visionAnalysis}
-                    </p>
-                  </div>
+                  <ReportBlock
+                    heading="📋 كشوف طلبات التوريد والشراء الأسبوعية المقترحة:"
+                    reportTitle="كشف طلبات الشراء والتوريد"
+                    markdown={visionAnalysis}
+                    projectName={projects.find((p) => p.id === selectedProjectId)?.project_name}
+                  />
                 )}
               </div>
             </div>
@@ -776,12 +775,12 @@ export default function AIAssistantPage() {
                 )}
 
                 {visionAnalysis && (
-                  <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-5 space-y-3 transition-all duration-300 select-text">
-                    <h4 className="text-[#A17A4C] font-black text-xs border-r-2 border-[#D4AF37] pr-2">📋 تقرير تحليل الميزانية وصافي هوامش أرباح الموقع:</h4>
-                    <p className="text-gray-300 text-xs whitespace-pre-wrap leading-relaxed font-sans font-bold">
-                      {visionAnalysis}
-                    </p>
-                  </div>
+                  <ReportBlock
+                    heading="📋 تقرير تحليل الميزانية وصافي هوامش أرباح الموقع:"
+                    reportTitle="تقرير التحليل المالي وربحية المشروع"
+                    markdown={visionAnalysis}
+                    projectName={projects.find((p) => p.id === selectedProjectId)?.project_name}
+                  />
                 )}
               </div>
             </div>
