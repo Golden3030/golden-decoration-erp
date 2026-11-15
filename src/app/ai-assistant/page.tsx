@@ -407,7 +407,7 @@ export default function AIAssistantPage() {
       {/* تضمين تنسيقات شريط التمرير بالأسهم الذهبية والأنيميشن في النوافذ المنبثقة وصناديق المحادثات */}
       <style jsx global>{`
         .ai-chat-scroll::-webkit-scrollbar {
-          width: 8px !important;
+          width: 4px !important;
         }
         .ai-chat-scroll::-webkit-scrollbar-track {
           background: #020B1C !important;
@@ -523,7 +523,7 @@ export default function AIAssistantPage() {
             <div className="w-full max-w-2xl bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل ترويسة العنوان داخل منبثق المبيعات للون البني البرونزي `#A17A4C` */}
-                <span className="text-[#A17A4C] font-black text-xs md:text-sm">💬 مساعد المبيعات الذكي | جولدن ديكوريشن</span>
+                <span className="text-[#D4AF37] font-black text-xs md:text-sm">💬 مساعد المبيعات الذكي | جولدن ديكوريشن</span>
                 <button 
                   onClick={() => setActiveEmployee(null)} 
                   className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37] text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center font-bold text-xs cursor-pointer"
@@ -541,7 +541,7 @@ export default function AIAssistantPage() {
             <div className="w-full max-w-2xl bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل الترويسة للون البني البرونزي المعتمد */}
-                <span className="text-[#A17A4C] font-black text-xs md:text-sm">🖼️ محلل التصاميم والديكور البصري | جولدن ديكوريشن</span>
+                <span className="text-[#D4AF37] font-black text-xs md:text-sm">🖼️ محلل التصاميم والديكور البصري | جولدن ديكوريشن</span>
                 <button 
                   onClick={() => setActiveEmployee(null)} 
                   className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37]/30 text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center font-bold text-xs cursor-pointer"
