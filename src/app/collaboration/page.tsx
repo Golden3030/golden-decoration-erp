@@ -363,7 +363,7 @@ export default function CollaborationPage() {
       `}} />
 
       {/* تفعيل جدار الحماية وعزل الإزاحة الجانبية الميدانية */}
-      <section className="w-full lg:pr-56 m-0 min-h-screen flex flex-col z-10 relative">
+      <section className="w-full lg:pr-sidebar m-0 min-h-screen flex flex-col z-10 relative">
         <Header />
         
         <div className="p-4 md:p-8 space-y-6 text-right flex-1 flex flex-col justify-between animate-fade-in">

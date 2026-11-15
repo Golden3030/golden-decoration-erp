@@ -241,7 +241,7 @@ export default function ContractsArchivePage() {
         }
       `}} />
 
-      <section className="w-full lg:pr-56 min-h-screen flex flex-col z-10 relative">
+      <section className="w-full lg:pr-sidebar min-h-screen flex flex-col z-10 relative">
         <Header />
         <div className="p-4 md:p-8 space-y-6 text-right select-none animate-fade-in">
 

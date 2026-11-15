@@ -99,7 +99,7 @@ export default function EstimatesPage() {
     // 🌟 حل المشكلة: إرجاع وسم التوجيه dir="rtl" وموازاة الـ flex إلى الـ main الرئيسي لضمان ثبات السايدبار الأيمن بالكامل وتكامل الشاشة كلياً
     <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       <Sidebar />
-      <section className="flex-1 flex flex-col print:p-0 lg:pr-56 m-0 min-h-screen">
+      <section className="flex-1 flex flex-col print:p-0 lg:pr-sidebar m-0 min-h-screen">
         <Header />
         
         {/* 🛠️ جدار الحماية البصري الموحد وتنسيق شريط التمرير مذهب الألوان بسمك 6px لمنع التداخل والقص كلياً للـ BOQ */}

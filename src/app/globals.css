@@ -61,3 +61,7 @@ body {
     cursor: not-allowed;
   }
 }
+
+@utility pr-sidebar {
+  padding-right: 4.5rem;
+}

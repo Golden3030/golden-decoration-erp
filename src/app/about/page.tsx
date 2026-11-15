@@ -14,7 +14,7 @@ export default function AboutPage() {
       <Sidebar />
       
       {/* 🛡️ تفعيل جدار الحماية وعزل الإزاحة الجانبية الميدانية */}
-      <section className="w-full lg:pr-56 m-0 min-h-screen flex flex-col">
+      <section className="w-full lg:pr-sidebar m-0 min-h-screen flex flex-col">
         <Header />
         
         <div className="p-8 space-y-6 text-right select-none flex-1 flex flex-col justify-between">

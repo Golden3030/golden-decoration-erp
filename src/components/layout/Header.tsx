@@ -450,7 +450,7 @@ export default function Header() {
       `}</style>
 
       <header
-        className="h-20 border-b border-[#D4AF37] bg-[#07132a] flex items-center justify-between px-6 relative print:hidden animate-fade-in"
+        className="h-20 border-b border-[#D4AF37] bg-[#07132a] flex items-center justify-between px-6 relative print:hidden animate-fade-in max-lg:pr-[68px]"
         dir="rtl"
       >
         {/* قطاع بيانات الموظف والملف الشخصي والاسم */}

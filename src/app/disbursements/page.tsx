@@ -250,7 +250,7 @@ export default function MaterialDisbursementsPage() {
   return (
     <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       <Sidebar />
-      <section className="flex-1 flex flex-col lg:pr-56 m-0 min-h-screen">
+      <section className="flex-1 flex flex-col lg:pr-sidebar m-0 min-h-screen">
         <Header />
         <div className="p-4 md:p-8 space-y-6 text-right select-none animate-fade-in">
           

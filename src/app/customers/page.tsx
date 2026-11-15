@@ -269,7 +269,7 @@ export default function CustomersPage() {
       <Sidebar />
       
       {/* تأصيل جدار حماية الاستجابة والمحاذاة الكاملة مع الـ Sidebar */}
-      <section className="w-full lg:pr-56 min-h-screen flex flex-col z-10 relative">
+      <section className="w-full lg:pr-sidebar min-h-screen flex flex-col z-10 relative">
         <Header />
 
         {/* 🛠️ جدار الحماية البصري الموحد وتنسيق شريط التمرير المذهب وحظر التداخل بـ whitespace-nowrap و min-w-[850px] بالجدول لمنع القص والتقاطع كلياً */}

@@ -722,7 +722,7 @@ function ProjectsPageInner() {
         }
       `}} />
 
-      <section className="flex-1 flex flex-col lg:pr-56 m-0">
+      <section className="flex-1 flex flex-col lg:pr-sidebar m-0">
         <Header />
         
         <div className="p-4 md:p-8 space-y-6 text-right select-none">

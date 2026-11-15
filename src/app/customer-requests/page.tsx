@@ -274,7 +274,7 @@ export default function CustomerRequestsPage() {
     return (
       <main className="min-h-screen bg-[#020B1C] flex items-center justify-center text-[#D4AF37] font-black" dir="rtl">
         <Sidebar />
-        <section className="w-full lg:pr-56 min-h-screen flex flex-col">
+        <section className="w-full lg:pr-sidebar min-h-screen flex flex-col">
           <Header />
           <div className="p-12 text-center text-[#D4AF37] font-black text-lg animate-pulse flex items-center justify-center gap-2">
             <Loader2 className="animate-spin" size={24} />
@@ -367,7 +367,7 @@ export default function CustomerRequestsPage() {
       `}} />
 
       <Sidebar />
-      <section className="w-full lg:pr-56 min-h-screen flex flex-col z-10 relative animate-fade-in">
+      <section className="w-full lg:pr-sidebar min-h-screen flex flex-col z-10 relative animate-fade-in">
         <Header />
         <div className="p-4 md:p-8 space-y-6 text-right select-none">
           

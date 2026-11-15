@@ -440,7 +440,7 @@ export default function AIAssistantPage() {
       `}</style>
 
       <Sidebar />
-      <section dir="rtl" className="w-full lg:pr-56 m-0 min-h-screen flex flex-col">
+      <section dir="rtl" className="w-full lg:pr-sidebar m-0 min-h-screen flex flex-col">
         <Header />
         
         <div className="p-8 space-y-8">

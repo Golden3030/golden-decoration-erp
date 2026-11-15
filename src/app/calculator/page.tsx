@@ -69,6 +69,20 @@ function useCountUp(targetValue: number, durationMs: number = 300) {
 
 type FinishingLevel = "standard" | "luxury" | "ultra";
 
+// ربط مستويات الحاسبة بمستويات جدول الإعدادات الفنية (لوكس / سوبر لوكس / ألترا لوكس)
+const SETTINGS_KEY: Record<FinishingLevel, string> = {
+  standard: "lux",
+  luxury: "super_lux",
+  ultra: "ultra_lux"
+};
+
+interface SettingsRate {
+  minPricePerM2: number;
+  maxPricePerM2: number;
+  minDaysPer100m2: number | null;
+  maxDaysPer100m2: number | null;
+}
+
 export default function PublicCampaignCalculator() {
   const [mounted, setMounted] = useState(false);
   const [area, setArea] = useState<number>(185); // المساحة الافتراضية الأولية
@@ -93,6 +107,11 @@ export default function PublicCampaignCalculator() {
   const [pricePulseKey, setPricePulseKey] = useState<number>(0);
 
   // أسعار الباقات الافتراضية لشركات المقاولات الفاخرة
+  // أسعار ومدد التنفيذ من صفحة الإعدادات الفنية (المصدر الأساسي للأسعار)
+  const [settingsRates, setSettingsRates] = useState<Record<string, SettingsRate>>({});
+  const [ratesLoaded, setRatesLoaded] = useState<boolean>(false);
+
+  // احتياطي مؤقت: الجدول القديم package_rates، يُستخدم فقط لمستوى لم تُضبط أسعاره في الإعدادات
   const [ratePerSqm, setRatePerSqm] = useState({
     standard: 4500, // باقة لوكس
     luxury: 6500,   // باقة سوبر لوكس
@@ -102,8 +121,19 @@ export default function PublicCampaignCalculator() {
   useEffect(() => {
     document.title = "حاسبة التكاليف الذكية | Golden Decoration";
     setMounted(true);
-    fetchDynamicRates();
+    Promise.allSettled([fetchSettingsRates(), fetchDynamicRates()]).then(() => setRatesLoaded(true));
   }, []);
+
+  // جلب أسعار ومدد التنفيذ من جدول الإعدادات عبر مسار عام آمن
+  async function fetchSettingsRates() {
+    try {
+      const res = await fetch("/api/public/pricing");
+      const data = await res.json();
+      if (data && data.levels) setSettingsRates(data.levels);
+    } catch (err) {
+      console.warn("تعذّر جلب أسعار الإعدادات، سيتم استخدام الاحتياطي المؤقت.", err);
+    }
+  }
 
   // جلب الأسعار ديناميكياً مع حماية كاملة ضد الأخطاء السحابية
   async function fetchDynamicRates() {
@@ -125,10 +155,29 @@ export default function PublicCampaignCalculator() {
 
   // حساب النطاق السعري
   useEffect(() => {
-    const baseCost = Number(area) * ratePerSqm[finishingLevel];
-    setEstimatedMin(Math.round(baseCost * 0.95));
-    setEstimatedMax(Math.round(baseCost * 1.05));
-  }, [area, finishingLevel, ratePerSqm]);
+    if (!ratesLoaded) return; // لا نعرض أرقاماً قديمة قبل وصول الأسعار الحالية
+    const s = settingsRates[SETTINGS_KEY[finishingLevel]];
+    if (s) {
+      // الأسعار من الإعدادات: من أدنى سعر للمتر إلى أقصى سعر
+      setEstimatedMin(Math.round(Number(area) * s.minPricePerM2));
+      setEstimatedMax(Math.round(Number(area) * s.maxPricePerM2));
+    } else {
+      // احتياطي مؤقت للمستوى غير المضبوط في الإعدادات: سعر واحد ± 5%
+      const baseCost = Number(area) * ratePerSqm[finishingLevel];
+      setEstimatedMin(Math.round(baseCost * 0.95));
+      setEstimatedMax(Math.round(baseCost * 1.05));
+    }
+  }, [area, finishingLevel, ratePerSqm, settingsRates, ratesLoaded]);
+
+  // مدة التنفيذ التقريبية من الإعدادات (لو مضبوطة)
+  const duration = useMemo(() => {
+    const s = settingsRates[SETTINGS_KEY[finishingLevel]];
+    if (!s || s.minDaysPer100m2 === null || s.maxDaysPer100m2 === null) return null;
+    return {
+      min: Math.max(1, Math.round((Number(area) / 100) * s.minDaysPer100m2)),
+      max: Math.max(1, Math.round((Number(area) / 100) * s.maxDaysPer100m2))
+    };
+  }, [area, finishingLevel, settingsRates]);
 
   // تحديث وميض السعر عند حدوث أي تغير في الحسابات
   useEffect(() => {
@@ -384,7 +433,7 @@ export default function PublicCampaignCalculator() {
                   احسب تكلفة تشطيب شقتك
                 </h1>
                 {/* تم تعديل الحجم إلى 3.5xl مع تحرير ارتفاع السطر وإضافة حشوة سفلية لضمان ظهور الذيول كاملة */}
-                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-bold text-3xl md:text-3xl font-Arial leading-none">
+                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-bold text-3xl md:text-3xl font-alexandria leading-[1.6] pb-2">
                   من موبايلك
                 </span>
               </div>
@@ -447,6 +496,11 @@ export default function PublicCampaignCalculator() {
                   <p className="mt-2.5 pt-2 border-t border-[#D4AF37]/20 text-[10px] text-emerald-400/95 font-bold text-center select-none font-alexandria">
                     الأسعار شاملة الخامات والمصنعيات
                   </p>
+                  {duration && (
+                    <p className="mt-1.5 text-[10px] text-[#F0E6D2]/70 font-bold text-center select-none font-alexandria">
+                      مدة التنفيذ التقريبية: {duration.min} - {duration.max} يوم
+                    </p>
+                  )}
 
                   {/* الوشاح الدائري المذهب الدقيق جداً أعلى يسار الصندوق بدلاً من المربع المائل */}
                   <div className="absolute -top-4 -left-3.5 flex flex-col items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] shadow-[0_4px_12px_rgba(212,175,55,0.4)] border-2 border-[#D4AF37] select-none z-20">

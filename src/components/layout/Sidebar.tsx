@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import {
@@ -20,7 +20,9 @@ import {
   CalendarDays,
   Notebook,
   Coins,
-  ChevronDown // 👈 أيقونة السهم لتوجيه الأكورديون تفاعلياً
+  ChevronDown, // 👈 أيقونة السهم لتوجيه الأكورديون تفاعلياً
+  Menu as MenuIcon,
+  X as CloseIcon
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -31,6 +33,11 @@ export default function Sidebar() {
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
 
+  // القائمة الجانبية: شريط أيقونات رفيع على الكمبيوتر يتوسع بالماوس، وقائمة منزلقة على الموبايل
+  const [hovered, setHovered] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const asideRef = useRef<HTMLElement | null>(null);
+
   // حالات التحكم المستقلة في فتح وإغلاق المجموعات الأربعة المنسدلة
   const [isSalesOpen, setIsSalesOpen] = useState(false);
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
@@ -40,6 +47,34 @@ export default function Sidebar() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // إغلاق القائمة عند التنقل بين الصفحات
+  useEffect(() => {
+    setMobileOpen(false);
+    setHovered(false);
+  }, [pathname]);
+
+  // الضغط خارج القائمة (للمس) يطويها، ومفتاح Escape يغلق قائمة الموبايل
+  useEffect(() => {
+    function onPointerDown(e: PointerEvent) {
+      if (asideRef.current && !asideRef.current.contains(e.target as Node)) setHovered(false);
+    }
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") { setMobileOpen(false); setHovered(false); }
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
+  // منع تمرير الصفحة خلف قائمة الموبايل المفتوحة
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
 
   useEffect(() => {
     async function getUserRole() {
@@ -157,7 +192,7 @@ export default function Sidebar() {
 
   if (!mounted || loading) {
     return (
-      <aside dir="rtl" className="w-56 h-screen fixed right-0 top-0 bg-[#020B1C] border-l border-[#1f2d4d] flex flex-col justify-between text-white shrink-0 select-none print:hidden z-40" suppressHydrationWarning>
+      <aside dir="rtl" className="max-lg:hidden lg:w-18 w-56 h-screen fixed right-0 top-0 bg-[#020B1C] border-l border-[#1f2d4d] flex flex-col justify-between text-white shrink-0 select-none print:hidden z-40" suppressHydrationWarning>
         <div className="pt-2 pb-2 px-4 border-b border-[#1f2d4d] shrink-0">
           <div className="w-[110px] h-[45px] mx-auto bg-[#020B1C] rounded-lg animate-pulse" />
         </div>
@@ -271,15 +306,64 @@ export default function Sidebar() {
           background: linear-gradient(90deg, transparent 0%, #D4AF37 50%, transparent 100%) !important;
           box-shadow: 0 -1px 6px rgba(212, 175, 55, 0.8) !important;
         }
+
+        /* حالة الشريط الرفيع على الكمبيوتر: أيقونات فقط */
+        @media (min-width: 1024px) {
+          .sb-collapsed .sb-label,
+          .sb-collapsed .sb-chevron,
+          .sb-collapsed .sb-sub,
+          .sb-collapsed .sb-footer { display: none !important; }
+          .sb-collapsed nav { padding-left: 0.5rem !important; padding-right: 0.5rem !important; }
+          .sb-collapsed nav button {
+            justify-content: center !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            gap: 0 !important;
+          }
+          .sb-collapsed nav button > span:not(.sb-label):not(.royal-laser-line) { display: none !important; }
+          .sb-collapsed .sb-logo-card { padding: 0.5rem 0.25rem !important; }
+          .sb-collapsed .sb-logo-card > div { padding: 0.25rem !important; }
+          .sb-collapsed .sb-logo-card img { height: auto !important; width: 100% !important; max-width: 40px; }
+        }
       `}</style>
 
+      {/* زرار فتح القائمة على الموبايل */}
+      <button
+        type="button"
+        onClick={() => setMobileOpen(true)}
+        aria-label="فتح القائمة"
+        className="lg:hidden fixed top-4 right-3 z-40 w-11 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] border-2 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] flex items-center justify-center active:scale-95 transition-all print:hidden"
+      >
+        <MenuIcon size={20} />
+      </button>
+      {mobileOpen && (
+        <div onClick={() => setMobileOpen(false)} className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm print:hidden" />
+      )}
+
       <aside
+        ref={asideRef}
         dir="rtl"
         suppressHydrationWarning
-        className="w-56 h-screen fixed right-0 top-0 bg-[#020B1C] border-l border-[#1f2d4d] flex flex-col justify-between text-white text-right shrink-0 select-none print:hidden z-40"
+        onPointerEnter={(e) => { if (e.pointerType === "mouse") setHovered(true); }}
+        onPointerLeave={(e) => { if (e.pointerType === "mouse") setHovered(false); }}
+        onClick={() => { if (!hovered) setHovered(true); }}
+        className={`h-screen fixed right-0 top-0 z-50 overflow-hidden transition-[width,transform] duration-300 ease-in-out max-lg:w-64 ${
+          mobileOpen ? "max-lg:translate-x-0" : "max-lg:translate-x-full"
+        } ${
+          hovered ? "lg:w-56 lg:shadow-[-8px_0_30px_rgba(0,0,0,0.5)] sb-expanded" : "lg:w-18 sb-collapsed"
+        } bg-[#020B1C] border-l border-[#1f2d4d] flex flex-col justify-between text-white text-right shrink-0 select-none print:hidden z-40`}
       >
+        {/* زرار إغلاق القائمة على الموبايل */}
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setMobileOpen(false); }}
+          aria-label="إغلاق القائمة"
+          className="lg:hidden absolute top-3 left-3 z-10 w-9 h-9 rounded-lg bg-[#020B1C] border border-[#D4AF37]/50 text-[#D4AF37] flex items-center justify-center active:scale-95"
+        >
+          <CloseIcon size={18} />
+        </button>
         {/* كارت اللوجو العلوي المطور */}
-        <div className="pt-3 px-3 pb-5 border-b border-[#D4AF37] shrink-0 select-none bg-[#07132a]">
+        <div className="sb-logo-card pt-3 px-3 pb-5 border-b border-[#D4AF37] shrink-0 select-none bg-[#07132a]">
           <div 
             onClick={() => router.push("/about")}
             className="luxury-breath-btn rounded-xl py-1 px-2.5 cursor-pointer transition-all duration-300 flex items-center justify-center border border-[#D4AF37]/50 bg-[#020B1C]"
@@ -313,15 +397,15 @@ export default function Sidebar() {
                       >
                         <div className="flex items-center gap-3">
                           <ClipboardList size={15} className={isAnySubActive ? "text-[#D4AF37]" : "text-[#F0E6D2]/40"} />
-                          <span> المبيعات والـ CRM</span>
+                          <span className="sb-label"> المبيعات والـ CRM</span>
                         </div>
                         <ChevronDown 
                           size={14} 
-                          className={`transition-transform duration-300 ${isSalesOpen ? "rotate-180 text-[#D4AF37]" : "text-[#F0E6D2]/40"}`} 
+                          className={`sb-chevron transition-transform duration-300 ${isSalesOpen ? "rotate-180 text-[#D4AF37]" : "text-[#F0E6D2]/40"}`} 
                         />
                       </button>
 
-                      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                      <div className={`sb-sub transition-all duration-300 ease-in-out overflow-hidden ${
                         isSalesOpen 
                           ? "max-h-48 opacity-100 mt-1.5 space-y-1 pr-3 border-r border-[#D4AF37]/20 mr-2" 
                           : "max-h-0 opacity-0 pointer-events-none"
@@ -392,15 +476,15 @@ export default function Sidebar() {
                       >
                         <div className="flex items-center gap-3">
                           <FolderKanban size={15} className={isAnySubActive ? "text-[#D4AF37]" : "text-[#F0E6D2]/40"} />
-                          <span> المشاريع والـ BOQ</span>
+                          <span className="sb-label"> المشاريع والـ BOQ</span>
                         </div>
                         <ChevronDown 
                           size={14} 
-                          className={`transition-transform duration-300 ${isProjectsOpen ? "rotate-180 text-[#D4AF37]" : "text-[#F0E6D2]/40"}`} 
+                          className={`sb-chevron transition-transform duration-300 ${isProjectsOpen ? "rotate-180 text-[#D4AF37]" : "text-[#F0E6D2]/40"}`} 
                         />
                       </button>
 
-                      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                      <div className={`sb-sub transition-all duration-300 ease-in-out overflow-hidden ${
                         isProjectsOpen 
                           ? "max-h-56 opacity-100 mt-1.5 space-y-1 pr-3 border-r border-[#D4AF37]/20 mr-2" 
                           : "max-h-0 opacity-0 pointer-events-none"
@@ -485,15 +569,15 @@ export default function Sidebar() {
                       >
                         <div className="flex items-center gap-3">
                           <CalendarDays size={15} className={isAnySubActive ? "text-[#D4AF37]" : "text-[#F0E6D2]/40"} />
-                          <span>التنسيق المشتركة</span>
+                          <span className="sb-label">التنسيق المشتركة</span>
                         </div>
                         <ChevronDown 
                           size={14} 
-                          className={`transition-transform duration-300 ${isCollabOpen ? "rotate-180 text-[#D4AF37]" : "text-[#F0E6D2]/40"}`} 
+                          className={`sb-chevron transition-transform duration-300 ${isCollabOpen ? "rotate-180 text-[#D4AF37]" : "text-[#F0E6D2]/40"}`} 
                         />
                       </button>
 
-                      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                      <div className={`sb-sub transition-all duration-300 ease-in-out overflow-hidden ${
                         isCollabOpen 
                           ? "max-h-48 opacity-100 mt-1.5 space-y-1 pr-3 border-r border-[#D4AF37]/20 mr-2" 
                           : "max-h-0 opacity-0 pointer-events-none"
@@ -564,15 +648,15 @@ export default function Sidebar() {
                       >
                         <div className="flex items-center gap-3">
                           <Wallet size={15} className={isAnySubActive ? "text-[#D4AF37]" : "text-[#F0E6D2]/40"} />
-                          <span>المالية والحسابات </span>
+                          <span className="sb-label">المالية والحسابات </span>
                         </div>
                         <ChevronDown 
                           size={14} 
-                          className={`transition-transform duration-300 ${isFinanceOpen ? "rotate-180 text-[#D4AF37]" : "text-[#F0E6D2]/40"}`} 
+                          className={`sb-chevron transition-transform duration-300 ${isFinanceOpen ? "rotate-180 text-[#D4AF37]" : "text-[#F0E6D2]/40"}`} 
                         />
                       </button>
 
-                      <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                      <div className={`sb-sub transition-all duration-300 ease-in-out overflow-hidden ${
                         isFinanceOpen 
                           ? "max-h-48 opacity-100 mt-1.5 space-y-1 pr-3 border-r border-[#D4AF37]/20 mr-2" 
                           : "max-h-0 opacity-0 pointer-events-none"
@@ -646,7 +730,7 @@ export default function Sidebar() {
                     )}
 
                     <Icon size={15} className={`shrink-0 transition-colors duration-300 ${isActive ? "text-[#D4AF37]" : "text-[#F0E6D2]/40"}`} />
-                    <span className="truncate">{item.name}</span>
+                    <span className="sb-label truncate">{item.name}</span>
 
                     {/* خط الليزر السفلي المتوهج بقاع الخيار النشط بالسايدبار */}
                     {isActive && (
@@ -660,7 +744,7 @@ export default function Sidebar() {
         </nav>
 
         {/* منطقة الفوتر: الدعم المباشر + جملة الحقوق باللون البني المعتمد */}
-        <div className="p-3 border-t border-[#1f2d4d] mt-auto select-none shrink-0 bg-[#07132a] flex flex-col gap-2">
+        <div className="sb-footer p-3 border-t border-[#1f2d4d] mt-auto select-none shrink-0 bg-[#07132a] flex flex-col gap-2">
           {/* كارت الدعم الفني المنفس */}
           <a
             href="https://wa.me/201065282534"
