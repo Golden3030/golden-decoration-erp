@@ -276,8 +276,8 @@ export default function CustomersPage() {
         <style dangerouslySetInnerHTML={{ __html: `
           /* تفعيل وإظهار شريط التمرير الأفقي والرأسي بكافة الجداول بألوان ذهبية فاخرة */
           ::-webkit-scrollbar { 
-            width: 6px !important; 
-            height: 6px !important; 
+            width: 4px !important; 
+            height: 4px !important; 
             display: block !important;
           }
           ::-webkit-scrollbar-track { 
@@ -293,14 +293,13 @@ export default function CustomersPage() {
 
           /* إلغاء أكواد الإخفاء لضمان انسيابية التمرير بالماوس والجوال */
           .overflow-x-auto { 
-            scrollbar-width: thin !important; 
             -ms-overflow-style: auto !important; 
             overflow-x: auto !important; 
           }
 
           /* كشوف رؤوس الجداول الموحدة والمحصورة داخل الصفحة فقط */
           .premium-customers-table thead th {
-            font-size: 0.75rem !important;
+            font-size: 0.80rem !important;
             font-weight: 500 !important;
             color: #D4AF37 !important;
             text-align: right !important;
@@ -340,8 +339,8 @@ export default function CustomersPage() {
 
           {/* 1. جدول تتبع وتدفق العملاء مع إطار زجاجي رفيع وشبه شفاف وموحد */}
           {isOperationalStaff && (
-            <div className="w-full bg-[#07132a] border border-[#D4AF37] rounded-[2rem] shadow-2xl overflow-hidden flex flex-col relative">
-              <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+            <div className="w-full bg-[#07132a] border border-[#D4AF37] rounded-4x1 shadow-2xl overflow-hidden flex flex-col relative">
+              <div className="absolute top-0 right-0 w-1.5 h-full bg-linear-to-b from-[#C9A45D] to-transparent opacity-40" />
               
               <div className="p-4 border-b border-[#D4AF37] bg-[#050914]/80 flex items-center justify-between gap-2 select-none">
                 <div className="flex items-center gap-2">
@@ -392,8 +391,8 @@ export default function CustomersPage() {
                 </div>
               </div>
             
-              <div className="overflow-x-auto w-full max-w-full max-h-[240px] overflow-y-auto ai-chat-scroll">
-                <table className="w-full text-right table-auto min-w-[850px] premium-customers-table">
+              <div className="overflow-x-auto w-full max-w-full max-h-60 overflow-y-auto ai-chat-scroll">
+                <table className="w-full text-right table-auto min-w-212.5 premium-customers-table">
                   <thead>
                     <tr className="whitespace-nowrap select-none">
                       <th className="p-4">كود العميل</th>
@@ -435,8 +434,8 @@ export default function CustomersPage() {
 
           {/* 2. كارت تعديل وإنشاء العملاء مدمج بإطار شفاف رفيع وموحد */}
           {selectedCustomer || isAddingNew ? (
-            <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 space-y-4 animate-fade-in shadow-2xl relative overflow-hidden w-full">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+            <div className="bg-[#07132a] border border-[#D4AF37] rounded-4x1 p-6 space-y-4 animate-fade-in shadow-2xl relative overflow-hidden w-full">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
               
               <h3 className="text-[#D4AF37] text-xs md:text-sm font-black border-b border-[#D4AF37]/20 pb-3 flex items-center justify-between select-none">
                 <div className="flex items-center gap-2">
@@ -578,10 +577,10 @@ export default function CustomersPage() {
                       type="button"
                       onClick={(e) => { e.preventDefault(); handleInsertCustomer(); }}
                       disabled={saving}
-                      className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
+                      className="px-6 h-11 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden disabled:opacity-50"
                     >
                       {saving ? "جاري الإدراج..." : "💾 حفظ عميل جديد"}
-                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                     </button>
 
                     <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
@@ -600,10 +599,10 @@ export default function CustomersPage() {
                       type="button"
                       onClick={(e) => { e.preventDefault(); handleUpdateCustomer(); }}
                       disabled={saving}
-                      className="px-6 h-11 rounded-xl bg-gradient-to-b from-[#064e3b] to-[#022c22] text-[#34d399] border-2 border-[#34d399] shadow-[0_0_20px_rgba(52,211,153,0.25)] hover:shadow-[0_0_30px_rgba(52,211,153,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
+                      className="px-6 h-11 rounded-xl bg-linear-to-b from-[#064e3b] to-[#022c22] text-[#34d399] border-2 border-[#34d399] shadow-[0_0_20px_rgba(52,211,153,0.25)] hover:shadow-[0_0_30px_rgba(52,211,153,0.45)] hover:scale-[1.03] active:scale-95 transition-all duration-300 cursor-pointer text-xs font-black flex items-center justify-center gap-1.5 select-none relative overflow-hidden"
                     >
                       {saving ? "جاري الحفظ..." : "✏️ حفظ التعديلات الجارية"}
-                      <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#34d399] to-transparent shadow-[0_-1px_6px_rgba(52,211,153,0.8)]" />
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-lin-to-r from-transparent via-[#34d399] to-transparent shadow-[0_-1px_6px_rgba(52,211,153,0.8)]" />
                     </button>
 
                     <div className="absolute bottom-full mb-3 right-1/2 translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-50 animate-fade-in whitespace-nowrap">
@@ -619,7 +618,7 @@ export default function CustomersPage() {
             </div>
           ) : (
             /* كارت التنبيه التوجيهي الشفاف المذهب */
-            <div className="bg-[#07132a]/40 border border-dashed border-[#D4AF37]/50 rounded-[2rem] p-8 text-center select-none text-gray-400 text-xs">
+            <div className="bg-[#07132a]/40 border border-dashed border-[#D4AF37]/50 rounded-4x1 p-8 text-center select-none text-gray-400 text-xs">
               ⚠️ برجاء تحديد أحد العملاء من جدول المبيعات أعلاه لتنشيط التعديل، أو الضغط على الإضافة لتأسيس بيانات عميل جديد.
             </div>
           )}
@@ -627,7 +626,7 @@ export default function CustomersPage() {
           {/* ✅ قسم مشاريع هذا العميل — عميل واحد ممكن يكون عنده أكتر من مشروع (مشروع قديم
               وجديد مثلاً)، فبدل ما نبحث عن كل مشروع لوحده، كل مشاريع العميل ظاهرة هنا مع بعض */}
           {selectedCustomer && !isAddingNew && (
-            <div className="bg-[#07132a] border border-[#D4AF37]/30 rounded-[2rem] p-6 space-y-3 animate-fade-in shadow-2xl w-full">
+            <div className="bg-[#07132a] border border-[#D4AF37]/30 rounded-4x1 p-6 space-y-3 animate-fade-in shadow-2xl w-full">
               <div className="flex items-center justify-between border-b border-[#D4AF37]/20 pb-3">
                 <h3 className="text-[#D4AF37] text-xs md:text-sm font-black flex items-center gap-2">
                   🏗️ مشاريع هذا العميل ({customerProjects.length})

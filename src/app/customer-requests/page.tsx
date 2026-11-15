@@ -290,7 +290,7 @@ export default function CustomerRequestsPage() {
     return (
       <main className="min-h-screen bg-[#020B1C] flex items-center justify-center text-right p-8" dir="rtl">
         <div className="max-w-md w-full bg-[#07132a] border border-[#D4AF37]/40 rounded-3xl p-8 text-center shadow-2xl relative overflow-hidden animate-in zoom-in duration-300">
-          <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#D4AF37]/10 to-transparent rounded-full blur-xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-24 h-24 bg-linear-to-br from-[#D4AF37]/10 to-transparent rounded-full blur-xl pointer-events-none" />
           <Lock className="text-[#D4AF37] mx-auto mb-4 animate-pulse" size={56} />
           <h3 className="font-black text-[#D4AF37] text-xl mb-2">منطقة أمنية محظورة 🔒</h3>
           <p className="text-gray-300 text-xs leading-relaxed font-bold">
@@ -299,7 +299,7 @@ export default function CustomerRequestsPage() {
           <button 
             type="button"
             onClick={() => router.push("/dashboard")} 
-            className="mt-6 w-full bg-gradient-to-r from-[#D4AF37] to-[#F0E6D2] text-[#020B1C] font-black py-3 rounded-xl shadow-2xl text-xs cursor-pointer"
+            className="mt-6 w-full bg-linear-to-r from-[#D4AF37] to-[#F0E6D2] text-[#020B1C] font-black py-3 rounded-xl shadow-2xl text-xs cursor-pointer"
           >
             العودة للرئيسية
           </button>
@@ -312,7 +312,7 @@ export default function CustomerRequestsPage() {
     <main className="min-h-screen flex bg-[#020B1C] relative overflow-hidden font-alexandria" dir="rtl">
       
       {/* 🌟 هالة تلميحات الإضاءة الخلفية الدافئة تتدفق ببطء خلف الكروت */}
-      <div className="absolute top-1/3 left-1/3 w-[600px] h-[600px] rounded-full bg-[#D4AF37]/5 blur-[140px] pointer-events-none z-0" />
+      <div className="absolute top-1/3 left-1/3 w-150 h-150 rounded-full bg-[#D4AF37]/5 blur-[140px] pointer-events-none z-0" />
 
       {/* 🛠️ جدار الحماية البصري الموحد وتنسيق شريط التمرير مذهب الألوان بسمك 6px لإنهاء عوائق الـ CRM */}
       <style dangerouslySetInnerHTML={{ __html: `
@@ -383,7 +383,7 @@ export default function CustomerRequestsPage() {
 
             {/* شارة عرض الصلاحية النشطة للمخدم الإداري */}
             {userRole && ROLE_LABELS[userRole] && (
-              <div className="flex-shrink-0 bg-[#D4AF37]/10 border border-[#D4AF37]/35 text-[#D4AF37] px-4 py-2 rounded-xl text-xs font-black shadow-lg flex items-center gap-2 select-none">
+              <div className="shrink-0 bg-[#D4AF37]/10 border border-[#D4AF37]/35 text-[#D4AF37] px-4 py-2 rounded-xl text-xs font-black shadow-lg flex items-center gap-2 select-none">
                 <span>صلاحيتك النشطة:</span>
                 <span className="text-white bg-black/60 px-2.5 py-0.5 rounded-lg border border-white/5 font-mono">{ROLE_LABELS[userRole]}</span>
               </div>
@@ -391,8 +391,8 @@ export default function CustomerRequestsPage() {
           </div>
 
           {/* 1. جدول عرض طلبات الإعلانات الحالية مدعم بحماية منع تداخل الحروف القياسي والتمرير المذهب */}
-          <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] overflow-hidden shadow-2xl flex flex-col relative w-full">
-            <div className="absolute top-0 right-0 w-1.5 h-full bg-gradient-to-b from-[#C9A45D] to-transparent opacity-40" />
+          <div className="bg-[#07132a] border border-[#D4AF37] rounded-4x1 overflow-hidden shadow-2xl flex flex-col relative w-full">
+            <div className="absolute top-0 right-0 w-1.5 h-full bg-linear-to-b from-[#C9A45D] to-transparent opacity-40" />
             
             {/* 🌟 هيدر الجدول: مدمج به محرك البحث الثلاثي وأزرار الفلترة المذهبة للدستور البصري الموحد */}
             <div className="p-4 border-b border-[#D4AF37]/20 bg-[#0b1b3d]/60 flex flex-col md:flex-row justify-between items-center gap-4 select-none">
@@ -453,14 +453,14 @@ export default function CustomerRequestsPage() {
               </div>
             </div>
             
-            <div className="overflow-x-auto max-h-[240px] overflow-y-auto">
+            <div className="overflow-x-auto max-h-60 overflow-y-auto">
               {loading ? (
                 <div className="p-12 text-center text-[#D4AF37] font-black text-ms animate-pulse flex items-center justify-center gap-2">
                   <Loader2 className="animate-spin" size={16} />
                   <span>جاري جلب وقراءة الطلبات من قاعدة البيانات...</span>
                 </div>
               ) : filteredRequests.length > 0 ? (
-                <table className="w-full text-right table-auto min-w-[850px] premium-leads-table font-bold">
+                <table className="w-full text-right table-auto min-w-212.5 premium-leads-table font-bold">
                   <thead>
                     <tr className="whitespace-nowrap select-none font-bold">
                       <th>اسم العميل</th>
@@ -513,8 +513,8 @@ export default function CustomerRequestsPage() {
 
           {/* 🌟 2. تفاصيل وبيانات طلب العميل المحتمل (تم ضغطه بالتبويب المدمج المذهب ذو الوسام العائم لتوحيد الرؤية ومكافحة التضخم البصري) */}
           {selectedRequest && (
-            <div className="bg-[#07132a] border border-[#D4AF37] rounded-[2rem] p-6 space-y-5 shadow-2xl relative overflow-hidden w-full animate-fade-in">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
+            <div className="bg-[#07132a] border border-[#D4AF37] rounded-4x1 p-6 space-y-5 shadow-2xl relative overflow-hidden w-full animate-fade-in">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-linear-to-br from-[#D4AF37]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
               
               {/* هيدر الكارت المطور: تم فيه حذف حقول إدخال الاسم والهاتف المعطلة ونقلهما كوسام ذهبي عائم يوفر المساحة ويمنع التضخم */}
               <h3 className="text-[#D4AF37] text-md md:text-md font-bold border-b border-[#D4AF37] pb-3 flex items-center justify-between select-none">
@@ -625,11 +625,11 @@ export default function CustomerRequestsPage() {
                   type="button" 
                   onClick={(e) => { e.preventDefault(); handleConvertToCRM(); }}
                   disabled={actionLoading || String(selectedRequest.status || "").includes("تم تحويل") || selectedRequest.status === "تم التحويل لعميل"}
-                  className="px-8 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.02] active:scale-95 transition-all duration-300 font-black cursor-pointer text-xs flex items-center justify-center gap-2 select-none relative overflow-hidden disabled:opacity-50"
+                  className="px-8 h-11 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] text-[#D4AF37] border-2 border-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:shadow-[0_0_30px_rgba(212,175,55,0.45)] hover:scale-[1.02] active:scale-95 transition-all duration-300 font-black cursor-pointer text-xs flex items-center justify-center gap-2 select-none relative overflow-hidden disabled:opacity-50"
                 >
                   {actionLoading ? <Loader2 size={12} className="animate-spin" /> : <ArrowLeftRight size={14} />}
                   {String(selectedRequest.status || "").includes("تم تحويل") || selectedRequest.status === "تم التحويل لعميل" ? "تمت الترقية للـ CRM وتعيين السيلز بنجاح" : "✅ تحويل وترقية لعميل CRM رسمي"}
-                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-linear-to-r from-transparent via-[#D4AF37] to-transparent shadow-[0_-1px_6px_rgba(212,175,55,0.8)]" />
                 </button>
 
               </div>
