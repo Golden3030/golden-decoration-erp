@@ -253,7 +253,7 @@ export default function PublicCampaignCalculator() {
     <main className="min-h-screen bg-[#000000] text-[#F0E6D2] py-8 px-4 relative overflow-hidden flex items-center justify-center font-alexandria tracking-normal" dir="rtl">
       
       {/* الهالة الضوئية الذهبية الدافئة المتنفسة بالخلفية السوداء المطلقة */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] rounded-full bg-[#D4AF37]/8 blur-[120px] pointer-events-none animate-ambient-breathe z-0" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-137.5 h-137.5 rounded-full bg-[#D4AF37]/8 blur-[120px] pointer-events-none animate-ambient-breathe z-0" />
 
       {/* ورقة أنماط الدستور الجمالي الموحد - تم حذف سطر الـ @import المبطئ تماماً وتعيين خط تاوما الاحتياطي السلس */}
       <style dangerouslySetInnerHTML={{__html: `
@@ -390,15 +390,15 @@ export default function PublicCampaignCalculator() {
         }
       `}} />
 
-      <div className="w-full max-w-[430px] z-10 relative">
+      <div className="w-full max-w-107.5 z-10 relative">
         
         {/* الإطارات الزخرفية المذهبة الجانبية - ملتصقة ومحاذية للكارت تماماً لمنع الانفصال بصرياً */}
         <div 
-          className="hidden xl:block absolute right-[102%] top-1/2 -translate-y-1/2 h-[550px] w-[220px] bg-contain bg-right bg-no-repeat select-none pointer-events-none opacity-45 z-0"
+          className="hidden xl:block absolute right-[102%] top-1/2 -translate-y-1/2 h-137.5 w-55 bg-contain bg-right bg-no-repeat select-none pointer-events-none opacity-45 z-0"
           style={{ backgroundImage: "url('/right-chevron.png')" }}
         />
         <div 
-          className="hidden xl:block absolute left-[102%] top-1/2 -translate-y-1/2 h-[550px] w-[220px] bg-contain bg-left bg-no-repeat select-none pointer-events-none opacity-45 z-0"
+          className="hidden xl:block absolute left-[102%] top-1/2 -translate-y-1/2 h-137.5 w-55 bg-contain bg-left bg-no-repeat select-none pointer-events-none opacity-45 z-0"
           style={{ backgroundImage: "url('/left-chevron.png')" }}
         />
         
@@ -408,7 +408,7 @@ export default function PublicCampaignCalculator() {
           {/* ترويسة التطبيق مع زيادة ذكية ومتجانسة للمسافات لتوفير الراحة والبروز البصري الفاخر */}
           <header className="text-center space-y-4 pb-1">
             
-            <div className="flex flex-col items-center gap-0 mt-[-5px]">
+            <div className="flex flex-col items-center gap-0 mt-1.25">
               <img 
                 src="/logo.png" 
                 alt="Golden Decoration Logo" 
@@ -427,13 +427,13 @@ export default function PublicCampaignCalculator() {
             </div>
 
             {/* كتلة النصوص الرئيسية مع تطبيق إزاحة للأعلى بنسبة صغيرة ممتازة وإحكام المسافات البينية بدقة متناهية لمنع اقتصاص الحروف */}
-            <div className="inline-flex items-center justify-center gap-2.5 select-none mx-auto mt-1.5 translate-y-[-6px]">
+            <div className="inline-flex items-center justify-center gap-2.5 select-none mx-auto mt-1.5 translate-y-1.5">
               <div className="flex flex-col items-center text-center space-y-2">
                 <h1 className="text-md font-bold text-white leading-tight font-alexandria">
                   احسب تكلفة تشطيب شقتك
                 </h1>
                 {/* تم تعديل الحجم إلى 3.5xl مع تحرير ارتفاع السطر وإضافة حشوة سفلية لضمان ظهور الذيول كاملة */}
-                <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-bold text-3xl md:text-3xl font-alexandria leading-[1.6] pb-2">
+                <span className="bg-linear-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent font-bold text-3xl md:text-3xl font-alexandria leading-[1.6] pb-2">
                   من موبايلك
                 </span>
               </div>
@@ -478,7 +478,7 @@ export default function PublicCampaignCalculator() {
                   <div key={pricePulseKey} className="space-y-1 animate-price-fade font-alexandria">
                     <div className="flex items-baseline gap-2">
                       <span className="text-[11px] font-bold text-[#F0E6D2]/50 w-6 text-right select-none">من:</span>
-                      <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent text-2xl font-black font-mono tracking-normal leading-none">
+                      <span className="bg-linear-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent text-2xl font-black font-mono tracking-normal leading-none">
                         {formatNumber(displayedMin)}
                       </span>
                       <span className="text-[10px] text-[#F0E6D2]/40 font-bold select-none">ج.م</span>
@@ -486,7 +486,7 @@ export default function PublicCampaignCalculator() {
 
                     <div className="flex items-baseline gap-2">
                       <span className="text-[11px] font-bold text-[#F0E6D2]/50 w-6 text-right select-none">إلى:</span>
-                      <span className="bg-gradient-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent text-2xl font-black font-mono tracking-normal leading-none">
+                      <span className="bg-linear-to-r from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] bg-clip-text text-transparent text-2xl font-black font-mono tracking-normal leading-none">
                         {formatNumber(displayedMax)}
                       </span>
                       <span className="text-[10px] text-[#F0E6D2]/40 font-bold select-none">ج.م</span>
@@ -503,7 +503,7 @@ export default function PublicCampaignCalculator() {
                   )}
 
                   {/* الوشاح الدائري المذهب الدقيق جداً أعلى يسار الصندوق بدلاً من المربع المائل */}
-                  <div className="absolute -top-4 -left-3.5 flex flex-col items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] shadow-[0_4px_12px_rgba(212,175,55,0.4)] border-2 border-[#D4AF37] select-none z-20">
+                  <div className="absolute -top-4 -left-3.5 flex flex-col items-center justify-center w-14 h-14 rounded-full bg-linear-to-br from-[#F0E6D2] via-[#C9A45D] to-[#D4AF37] shadow-[0_4px_12px_rgba(212,175,55,0.4)] border-2 border-[#D4AF37] select-none z-20">
                     <span className="text-[#020B1C] text-sm font-black leading-none font-mono">{area}</span>
                     <span className="text-[#020B1C] text-[8px] font-bold leading-none mt-0.5">م²</span>
                   </div>
@@ -523,7 +523,7 @@ export default function PublicCampaignCalculator() {
                       <Minus size={12} strokeWidth={3} />
                     </button>
                     
-                    <span className="text-[#D4AF37] font-black text-sm font-alexandria bg-[#000000] px-3.5 py-0.5 rounded-lg border border-[#D4AF37]/20 font-mono">
+                    <span className="text-[#D4AF37] font-black text-sm font-alexandria bg-[#000000] px-3.5 py-0.5 rounded-lg border border-[#D4AF37]/20">
                       {area} m²
                     </span>
                     
@@ -603,7 +603,7 @@ export default function PublicCampaignCalculator() {
                 {/* زر الإجراء الأساسي بالهوية الأرستقراطية الملكية (The Matte Royal Velvet Button) */}
                 <button
                   onClick={() => setShowLeadForm(true)}
-                  className="cta-shimmer relative overflow-hidden w-full h-12 bg-gradient-to-r from-black via-[#0d0904] to-black border-2 border-[#D4AF37] text-[#F0E6D2] rounded-full font-bold text-xs shadow-[0_4px_18px_rgba(212,175,55,0.2)] flex items-center justify-center gap-2.5 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(212,175,55,0.55)] hover:border-[#F0E6D2] active:scale-[1.01] transition-all duration-300 cursor-pointer font-alexandria"
+                  className="cta-shimmer relative overflow-hidden w-full h-12 bg-linear-to-r from-black via-[#0d0904] to-black border-2 border-[#D4AF37] text-[#F0E6D2] rounded-full font-bold text-xs shadow-[0_4px_18px_rgba(212,175,55,0.2)] flex items-center justify-center gap-2.5 hover:scale-[1.02] hover:shadow-[0_0_25px_rgba(212,175,55,0.55)] hover:border-[#F0E6D2] active:scale-[1.01] transition-all duration-300 cursor-pointer font-alexandria"
                 >
                   <span className="text-[#F0E6D2] tracking-wider">احصل على مقايسة تفصيلية الآن</span>
                   <ChevronLeft size={16} className="text-[#D4AF37] shrink-0" />
@@ -634,7 +634,7 @@ export default function PublicCampaignCalculator() {
                 />
                 
                 <div className="relative">
-                  <Phone className="absolute right-3.5 top-[14px] text-gray-500" size={15} />
+                  <Phone className="absolute right-3.5 top-3.5 text-gray-500" size={15} />
                   <input
                     type="tel" 
                     placeholder="رقم الموبايل (مصحح ذاتياً)"
@@ -657,7 +657,7 @@ export default function PublicCampaignCalculator() {
                 <div className="grid grid-cols-2 gap-3">
                   
                   <div className="relative">
-                    <MapPin className="absolute right-3.5 top-[14px] text-gray-500" size={15} />
+                    <MapPin className="absolute right-3.5 top-3.5 text-gray-500" size={15} />
                     <input
                       type="text" 
                       placeholder="المنطقة / المدينة"
@@ -669,7 +669,7 @@ export default function PublicCampaignCalculator() {
                   </div>
 
                   <div className="relative">
-                    <span className="absolute left-3.5 top-[14px] text-[11px] text-[#D4AF37] font-bold select-none font-alexandria">م²</span>
+                    <span className="absolute left-3.5 top-3.5 text-[11px] text-[#D4AF37] font-bold select-none font-alexandria">م²</span>
                     <input
                       type="number" 
                       placeholder="المساحة"
@@ -704,7 +704,7 @@ export default function PublicCampaignCalculator() {
                   <button 
                     type="submit" 
                     disabled={loading} 
-                    className="cta-shimmer relative overflow-hidden flex-[2.5] h-11 bg-gradient-to-r from-black via-[#0d0904] to-black border-2 border-[#D4AF37] text-[#F0E6D2] rounded-full font-black text-[11px] shadow-lg cursor-pointer hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all duration-300"
+                    className="cta-shimmer relative overflow-hidden flex-[2.5] h-11 bg-linear-to-r from-black via-[#0d0904] to-black border-2 border-[#D4AF37] text-[#F0E6D2] rounded-full font-black text-[11px] shadow-lg cursor-pointer hover:shadow-[0_0_20px_rgba(212,175,55,0.4)] transition-all duration-300"
                   >
                     {loading ? "جاري حفظ بياناتك..." : "تأكيد وإرسال بياناتك"}
                   </button>

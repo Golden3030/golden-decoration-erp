@@ -450,7 +450,7 @@ export default function Header() {
       `}</style>
 
       <header
-        className="h-20 border-b border-[#D4AF37] bg-[#07132a] flex items-center justify-between px-6 relative print:hidden animate-fade-in max-lg:pr-[68px]"
+        className="h-20 border-b border-[#D4AF37] bg-[#07132a] flex items-center justify-between px-6 relative print:hidden animate-fade-in max-lg:pr-17"
         dir="rtl"
       >
         {/* قطاع بيانات الموظف والملف الشخصي والاسم */}
@@ -513,7 +513,7 @@ export default function Header() {
                           setShowSearchResults(false);
                           setSearchQuery("");
                         }}
-                        className="w-full text-right text-xs p-2.5 rounded-lg hover:bg-[#07132a] transition duration-150 block text-white font-bold flex items-center justify-between cursor-pointer border border-transparent hover:border-[#D4AF37]/20"
+                        className="w-full text-right text-xs p-2.5 rounded-lg hover:bg-[#07132a] transition duration-150 text-white font-bold flex items-center justify-between cursor-pointer border border-transparent hover:border-[#D4AF37]/20"
                       >
                         <span className="truncate">{res.title}</span>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${res.type === "project" ? "bg-amber-500/10 text-amber-400" : "bg-blue-500/10 text-blue-400"}`}>
@@ -551,14 +551,14 @@ export default function Header() {
               </button>
 
               {isTrashOpen && (
-                <div className="absolute top-13 left-0 w-[420px] bg-[#020B1C] border border-[#D4AF37]/40 rounded-2xl shadow-2xl p-5 z-50 text-right space-y-4 transition-all duration-300 animate-fade-in">
+                <div className="absolute top-13 left-0 w-105 bg-[#020B1C] border border-[#D4AF37]/40 rounded-2xl shadow-2xl p-5 z-50 text-right space-y-4 transition-all duration-300 animate-fade-in">
                   <div className="border-b border-[#D4AF37]/20 pb-3 flex justify-between items-center select-none">
                     {/* تعديل لون ترويسة العنوان للون البني البرونزي المعتمد */}
                     <span className="text-[#A17A4C] font-extrabold text-xs">سلة المحذوفات والرقابة الفنية للمواقع</span>
                     <span className="text-[10px] text-gray-500">منظومة المالك المعتمدة 👑</span>
                   </div>
                   
-                  <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1 header-dropdown-scroll">
+                  <div className="space-y-3 max-h-105 overflow-y-auto pr-1 header-dropdown-scroll">
                     {deletedRecords.length > 0 ? (
                       deletedRecords.map((item) => (
                         <div 
@@ -605,7 +605,7 @@ export default function Header() {
             </button>
 
             {isNotificationsOpen && (
-              <div className="absolute top-13 left-0 w-[400px] bg-[#020B1C] border border-[#D4AF37]/40 rounded-2xl shadow-2xl p-5 z-50 text-right space-y-4 transition-all duration-300 animate-fade-in">
+              <div className="absolute top-13 left-0 w-100 bg-[#020B1C] border border-[#D4AF37]/40 rounded-2xl shadow-2xl p-5 z-50 text-right space-y-4 transition-all duration-300 animate-fade-in">
                 <div className="border-b border-[#D4AF37]/20 pb-3 flex justify-between items-center select-none">
                   {/* تحويل نصوص العناوين للون البني البرونزي المعتمد */}
                   <span className="text-[#A17A4C] font-extrabold text-xs">التنبيهات الأخيرة ({unreadCount})</span>
@@ -618,7 +618,7 @@ export default function Header() {
                     </span>
                   )}
                 </div>
-                <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1 header-dropdown-scroll">
+                <div className="space-y-3 max-h-70 overflow-y-auto pr-1 header-dropdown-scroll">
                   {unreadCount > 0 ? (
                     notifications.map((alert) => (
                       <div 
@@ -661,7 +661,7 @@ export default function Header() {
 
         {/* كارت المعاينة التفصيلي للسجلات المحذوفة */}
         {selectedRecordDetails && (
-          <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[100] flex items-center justify-center p-4 animate-fade-in select-none">
+          <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-100 flex items-center justify-center p-4 animate-fade-in select-none">
             <div className="bg-[#020B1C] border border-[#D4AF37]/50 rounded-3xl p-6 md:p-8 w-full max-w-xl shadow-2xl relative space-y-4 text-right text-white">
               <div className="flex justify-between items-center border-b border-[#D4AF37]/20 pb-3">
                 {/* تعديل لون العنوان للون البني البرونزي المعتمد */}

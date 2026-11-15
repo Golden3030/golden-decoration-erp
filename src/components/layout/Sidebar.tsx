@@ -194,7 +194,7 @@ export default function Sidebar() {
     return (
       <aside dir="rtl" className="max-lg:hidden lg:w-18 w-56 h-screen fixed right-0 top-0 bg-[#020B1C] border-l border-[#1f2d4d] flex flex-col justify-between text-white shrink-0 select-none print:hidden z-40" suppressHydrationWarning>
         <div className="pt-2 pb-2 px-4 border-b border-[#1f2d4d] shrink-0">
-          <div className="w-[110px] h-[45px] mx-auto bg-[#020B1C] rounded-lg animate-pulse" />
+          <div className="w-27.5 h-11.25 mx-auto bg-[#020B1C] rounded-lg animate-pulse" />
         </div>
         <div className="flex-1 px-3 pt-4 space-y-3">
           {[...Array(9)].map((_, i) => (
@@ -332,7 +332,7 @@ export default function Sidebar() {
         type="button"
         onClick={() => setMobileOpen(true)}
         aria-label="فتح القائمة"
-        className="lg:hidden fixed top-4 right-3 z-40 w-11 h-11 rounded-xl bg-gradient-to-b from-[#0c1e3d] to-[#040e20] border-2 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] flex items-center justify-center active:scale-95 transition-all print:hidden"
+        className="lg:hidden fixed top-4 right-3 z-40 w-11 h-11 rounded-xl bg-linear-to-b from-[#0c1e3d] to-[#040e20] border-2 border-[#D4AF37] text-[#D4AF37] shadow-[0_0_20px_rgba(212,175,55,0.25)] flex items-center justify-center active:scale-95 transition-all print:hidden"
       >
         <MenuIcon size={20} />
       </button>
@@ -721,7 +721,7 @@ export default function Sidebar() {
                     className={`w-full px-4 py-2.5 rounded-xl font-bold text-xs flex items-center justify-start gap-3 transition-all duration-300 cursor-pointer border relative overflow-hidden ${
                       isActive 
                         ? "royal-active-btn" 
-                        : "text-[#F0E6D2]/80 border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37] hover:translate-x-[-3px]"
+                        : "text-[#F0E6D2]/80 border-transparent hover:bg-[#07132a] hover:border-[#D4AF37]/35 hover:text-[#D4AF37] hover:translate-x-0.75"
                     }`}
                   >
                     {/* نبضة نيون ذهبية دائرية تظهر بجانب الخيار النشط بالسايدبار لتوحيد النسق */}
@@ -734,7 +734,7 @@ export default function Sidebar() {
 
                     {/* خط الليزر السفلي المتوهج بقاع الخيار النشط بالسايدبار */}
                     {isActive && (
-                      <span className="absolute bottom-0 left-0 right-0 h-[2px] royal-laser-line animate-pulse pointer-events-none" />
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 royal-laser-line animate-pulse pointer-events-none" />
                     )}
                   </button>
                 </li>
