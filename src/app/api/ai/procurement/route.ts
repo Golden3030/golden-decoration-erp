@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { sortEstimateHeaders } from "@/lib/estimateHeader";
 
 // يرفع الحد الأقصى لزمن تنفيذ الدالة على Vercel لمنع انقطاع الاتصال
 export const maxDuration = 60;
@@ -86,21 +87,34 @@ export async function POST(req: Request) {
       .eq("id", projectId)
       .maybeSingle();
 
-    const { data: header, error: headerError } = await supabaseAdmin
+    // كل مقايسات المشروع (قد توجد مبدئية ونهائية): نجرب النهائية أولاً ثم الأحدث حتى نجد واحدة لها بنود
+    const { data: headersData, error: headerError } = await supabaseAdmin
       .from("estimate_headers")
-      .select("id")
-      .eq("project_id", projectId)
-      .maybeSingle();
+      .select("id, status, created_at")
+      .eq("project_id", projectId);
     if (headerError) throw headerError;
+    const headers = sortEstimateHeaders(headersData || []);
 
     let items: any[] = [];
-    if (header) {
-      const { data: dbItems } = await supabaseAdmin.from("estimate_items").select("*").eq("estimate_id", header.id);
-      items = dbItems || [];
+    for (const h of headers) {
+      const { data: dbItems, error: itemsError } = await supabaseAdmin
+        .from("estimate_items")
+        .select("*")
+        .eq("estimate_id", h.id);
+      if (itemsError) throw itemsError;
+      if (dbItems && dbItems.length > 0) {
+        items = dbItems;
+        break;
+      }
     }
     if (items.length === 0) {
       return NextResponse.json(
-        { error: "لا توجد مقايسة محفوظة لهذا المشروع. أنشئ المقايسة أولاً ثم أعد تحليل المشتريات." },
+        {
+          error:
+            headers.length === 0
+              ? "لا توجد مقايسة مرتبطة بهذا المشروع. أنشئ المقايسة أولاً ثم أعد تحليل المشتريات."
+              : `يوجد ${headers.length} مقايسة لهذا المشروع لكن بدون أي بنود محفوظة بداخلها. افتح المقايسة واحفظ بنودها ثم أعد التحليل.`
+        },
         { status: 400 }
       );
     }

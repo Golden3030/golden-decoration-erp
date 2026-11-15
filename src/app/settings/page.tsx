@@ -277,6 +277,7 @@ export default function SettingsPage() {
                       <option>شكارة</option>
                       <option>بستلة</option>
                       <option>م²</option>
+                      <option>لتر</option>
                       <option>م.ط</option>
                     </select>
                   </div>

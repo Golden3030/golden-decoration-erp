@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { pickEstimateHeader } from "@/lib/estimateHeader";
 
 // يرفع الحد الأقصى لزمن تنفيذ الدالة على Vercel لمنع انقطاع الاتصال أثناء توليد التقارير المالية
 export const maxDuration = 60;
@@ -57,11 +58,11 @@ export async function POST(request: Request) {
       .single();
     if (projError || !project) throw projError || new Error("المشروع غير موجود.");
 
-    const { data: estimateHeader } = await supabaseAdmin
+    const { data: headersData } = await supabaseAdmin
       .from("estimate_headers")
-      .select("grand_total")
-      .eq("project_id", projectId)
-      .maybeSingle();
+      .select("grand_total, status, created_at")
+      .eq("project_id", projectId);
+    const estimateHeader = pickEstimateHeader(headersData);
     const contractTotal = estimateHeader ? num(estimateHeader.grand_total) : num(project.contract_value);
 
     const { data: projectTransactions } = await supabaseAdmin.from("transactions").select("*").eq("project_id", projectId);

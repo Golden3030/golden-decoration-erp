@@ -56,13 +56,10 @@ export async function POST(request: Request) {
     };
 
     const coeffs: TakeoffCoefficients = {
-      sandPlaster: getCoeff("رمل", 0.025),
-      cementPlaster: getCoeff("أسمنت", 0.1625),
       putty: getCoeff("معجون", 0.2),
       primer: getCoeff("بطانة", 0.037),
       finishPaint: getCoeff("دهان نهائي", 0.037),
       ceramicFloor: getCoeff("سيراميك أرضيات", 1.05),
-      baseboard: getCoeff("وزرة", 0.4),
       sandFloor: getCoeff("رمل ردم", 0.1),
       cementFloor: getCoeff("أسمنت تركيب", 0.25)
     };

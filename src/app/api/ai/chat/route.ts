@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { FINISH_LEVELS } from "@/lib/finishLevels";
 import { ASSUMPTIONS } from "@/lib/takeoffEngine";
 import { analyzeTasks } from "@/lib/pmAnalysis";
+import { pickEstimateHeader } from "@/lib/estimateHeader";
 
 // يرفع الحد الأقصى لزمن تنفيذ الدالة على Vercel لمنع انقطاع الاتصال
 export const maxDuration = 60;
@@ -74,11 +75,13 @@ async function loadGrounding(id: EmployeeId, db: any): Promise<any> {
     return {
       coefficientsFromSettings: (data || []).map((c: any) => ({ item: c.notes, coefficient: c.consumption_qty, unit: c.unit })),
       engineAssumptions: {
-        wallsFormula: "مساحة الحوائط = محيط الغرفة × الارتفاع − نسبة الأبواب والشبابيك",
+        wallsFormula: "مساحة الحوائط = محيط الغرفة × الارتفاع. للدهان تُخصم نسبة الأبواب والشبابيك، وللمحارة لا تُخصم الفراغات لأنها بدون نسبة هالك (ولو أُضيف هالك تُخصم الفراغات)",
         openingsPercent: ASSUMPTIONS.openingsPct * 100,
         roomAspectRatio: ASSUMPTIONS.roomAspectRatio,
         defaultCeilingHeightM: ASSUMPTIONS.defaultCeilingHeight,
         plasterOnlyWhenApartmentIsRedBrick: true,
+        plasterRule: "شيكارة الأسمنت 50 كجم تفرد 5 م² بسمك 2.5 سم، وكل 6 شكاير أسمنت تحتاج 1 م³ رمل",
+        baseboardRule: "محيط الغرف بدون الحمامات ناقص 0.9 م لباب كل غرفة",
         paintCoversWallsAndCeilings: true,
         bathroomWallsAreTiledSoNotPainted: true,
         gypsumSheetAreaM2: ASSUMPTIONS.gypsumSheetArea
@@ -117,11 +120,11 @@ async function loadGrounding(id: EmployeeId, db: any): Promise<any> {
     const { data: projects } = await db.from("projects").select("id, project_name, contract_value").order("created_at", { ascending: false }).limit(25);
     const ids = (projects || []).map((p: any) => p.id);
     if (ids.length === 0) return { projects: "لا توجد مشاريع." };
-    const { data: headers } = await db.from("estimate_headers").select("project_id, grand_total").in("project_id", ids);
+    const { data: headers } = await db.from("estimate_headers").select("project_id, grand_total, status, created_at").in("project_id", ids);
     const { data: trans } = await db.from("transactions").select("project_id, type, amount").in("project_id", ids).limit(5000);
     return {
       projects: (projects || []).map((p: any) => {
-        const contract = num((headers || []).find((h: any) => h.project_id === p.id)?.grand_total) || num(p.contract_value);
+        const contract = num(pickEstimateHeader<any>((headers || []).filter((h: any) => h.project_id === p.id))?.grand_total) || num(p.contract_value);
         const mine = (trans || []).filter((t: any) => t.project_id === p.id);
         const collected = mine.filter((t: any) => t.type === "inflow").reduce((s: number, t: any) => s + num(t.amount), 0);
         const expenses = mine.filter((t: any) => t.type === "outflow").reduce((s: number, t: any) => s + num(t.amount), 0);

@@ -20,13 +20,10 @@ export interface Coeff {
 }
 
 export interface TakeoffCoefficients {
-  sandPlaster: Coeff;
-  cementPlaster: Coeff;
   putty: Coeff;
   primer: Coeff;
   finishPaint: Coeff;
   ceramicFloor: Coeff;
-  baseboard: Coeff;
   sandFloor: Coeff;
   cementFloor: Coeff;
 }
@@ -57,6 +54,13 @@ export interface TakeoffResult {
 export const ASSUMPTIONS = {
   roomAspectRatio: 1.3,      // نسبة طول الغرفة إلى عرضها لتقدير المحيط من المساحة
   openingsPct: 0.15,         // نسبة الأبواب والشبابيك من مساحة الحوائط
+  // قاعدة المحارة المعتمدة: شيكارة الأسمنت (50 كجم) تفرد 5 م² بسمك 2.5 سم، وكل 6 شكاير أسمنت تحتاج 1 م³ رمل
+  plasterBagCoverageM2: 5,
+  cementBagKg: 50,
+  cementBagsPerSandM3: 6,
+  doorWidthM: 0.9,           // عرض الباب المخصوم من محيط الغرفة عند حساب الوزرة
+  // قاعدة المحارة: لو لا توجد نسبة هالك فالفراغات (أبواب وشبابيك) لا تُخصم، ولو أُضيفت نسبة هالك فالفراغات تُخصم
+  plasterWastePct: 0,        // 0 = بدون هالك وبدون خصم فراغات، مثال: 0.1 = هالك 10% مع خصم الفراغات
   defaultCeilingHeight: 3,   // م، لو لم يُحدد في تاب المساحات
   gypsumSheetArea: 2.88,     // م² مساحة لوح الجبس بورد (1.2 × 2.4)
   anglesPerM2: 1.2,          // متر زوايا صاج لكل م² سقف
@@ -80,11 +84,16 @@ export function classifyRoom(name: string): RoomKind {
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-// مساحة الحوائط الصافية للغرفة: (المحيط × الارتفاع) − الأبواب والشبابيك
-function netWallArea(roomArea: number, height: number): number {
+// مساحة الحوائط الكاملة للغرفة: المحيط × الارتفاع
+function grossWallArea(roomArea: number, height: number): number {
   const r = ASSUMPTIONS.roomAspectRatio;
   const perimeter = 2 * (1 + r) * Math.sqrt(roomArea / r);
-  return perimeter * height * (1 - ASSUMPTIONS.openingsPct);
+  return perimeter * height;
+}
+
+// مساحة الحوائط الصافية للغرفة: (المحيط × الارتفاع) − الأبواب والشبابيك
+function netWallArea(roomArea: number, height: number): number {
+  return grossWallArea(roomArea, height) * (1 - ASSUMPTIONS.openingsPct);
 }
 
 export interface TakeoffInput {
@@ -108,11 +117,14 @@ export function computeTakeoff(input: TakeoffInput): TakeoffResult {
   const floorArea = floorRooms.reduce((s, r) => s + r.area, 0);
   const interiorArea = interior.reduce((s, r) => s + r.area, 0);
   const netWalls = interior.reduce((s, r) => s + netWallArea(r.area, height), 0);
+  const grossWalls = interior.reduce((s, r) => s + grossWallArea(r.area, height), 0);
   const paintWalls = interior
     .filter((r) => r.kind !== "bathroom")
     .reduce((s, r) => s + netWallArea(r.area, height), 0);
 
-  const plasterArea = state === "brick" ? netWalls : 0;
+  // المحارة: بدون هالك تُحسب على الحوائط كاملة (الفراغات لا تُخصم)، ومع هالك تُحسب بعد خصم الفراغات
+  const plasterWaste = ASSUMPTIONS.plasterWastePct;
+  const plasterArea = state === "brick" ? (plasterWaste > 0 ? netWalls : grossWalls) : 0;
   const paintArea = paintWalls + interiorArea; // حوائط (بدون الحمامات) + أسقف الغرف الداخلية
   const ceilingArea = Math.max(0, input.ceilingArea || 0);
 
@@ -121,15 +133,20 @@ export function computeTakeoff(input: TakeoffInput): TakeoffResult {
   const lines: TakeoffLine[] = [];
 
   if (state === "brick") {
+    // قاعدة المحارة: عدد شكاير الأسمنت = المساحة ÷ 5، والرمل = عدد الشكاير ÷ 6
+    // نحسب على المساحة المقرّبة المعروضة لتجنب أخطاء الكسور العشرية (300 ÷ 5 = 60 بالظبط)
+    const cementBags = Math.ceil((round1(plasterArea) * (1 + plasterWaste)) / ASSUMPTIONS.plasterBagCoverageM2);
+    const cementTons = (cementBags * ASSUMPTIONS.cementBagKg) / 1000;
+    const sandM3 = cementBags / ASSUMPTIONS.cementBagsPerSandM3;
     lines.push({
-      stage: "أعمال المحارة", item: "رمل محارة", unit: "م³",
-      quantity: round1(plasterArea * coeffs.sandPlaster.value),
-      basis: `مساحة المحارة ${round1(plasterArea)} م² × معامل ${cv(coeffs.sandPlaster)} (${src(coeffs.sandPlaster)})`
+      stage: "أعمال المحارة", item: "أسمنت محارة", unit: "شيكارة",
+      quantity: cementBags,
+      basis: `مساحة المحارة ${round1(plasterArea)} م² (${plasterWaste > 0 ? `بعد خصم الفراغات مع هالك ${Math.round(plasterWaste * 100)}%` : "حوائط كاملة بدون خصم فراغات وبدون هالك"}) ÷ ${ASSUMPTIONS.plasterBagCoverageM2} م² للشيكارة (سمك 2.5 سم) = ${cementBags} شيكارة، يعني حوالي ${round2(cementTons)} طن (الشيكارة ${ASSUMPTIONS.cementBagKg} كجم)`
     });
     lines.push({
-      stage: "أعمال المحارة", item: "أسمنت محارة", unit: "طن",
-      quantity: round2(plasterArea * coeffs.cementPlaster.value),
-      basis: `مساحة المحارة ${round1(plasterArea)} م² × معامل ${cv(coeffs.cementPlaster)} (${src(coeffs.cementPlaster)})`
+      stage: "أعمال المحارة", item: "رمل محارة", unit: "م³",
+      quantity: round1(sandM3),
+      basis: `${cementBags} شيكارة أسمنت ÷ ${ASSUMPTIONS.cementBagsPerSandM3} شكاير لكل 1 م³ رمل`
     });
   }
 
@@ -153,9 +170,17 @@ export function computeTakeoff(input: TakeoffInput): TakeoffResult {
     stage: "الأرضيات", item: "سيراميك أرضيات", unit: "م²",
     quantity: Math.ceil(floorArea * coeffs.ceramicFloor.value), basis: floorBasis(coeffs.ceramicFloor)
   });
+  // الوزرة بالمتر الطولي = محيط الغرف (بدون الحمامات لأن حوائطها مكسية) − عرض باب لكل غرفة
+  const dryRooms = interior.filter((r) => r.kind !== "bathroom");
+  const dryPerimeter = dryRooms.reduce(
+    (s, r) => s + 2 * (1 + ASSUMPTIONS.roomAspectRatio) * Math.sqrt(r.area / ASSUMPTIONS.roomAspectRatio),
+    0
+  );
+  const baseboardLength = Math.max(0, dryPerimeter - dryRooms.length * ASSUMPTIONS.doorWidthM);
   lines.push({
     stage: "الأرضيات", item: "وزرة", unit: "متر",
-    quantity: Math.ceil(floorArea * coeffs.baseboard.value), basis: floorBasis(coeffs.baseboard)
+    quantity: Math.ceil(baseboardLength),
+    basis: `محيط ${dryRooms.length} غرفة (بدون الحمامات) ${round1(dryPerimeter)} م − ${ASSUMPTIONS.doorWidthM} م لباب كل غرفة (بدون هالك)`
   });
   lines.push({
     stage: "الأرضيات", item: "رمل ردم", unit: "م³",
@@ -202,10 +227,14 @@ export function computeTakeoff(input: TakeoffInput): TakeoffResult {
       : `ارتفاع السقف ${height} م للشقة كلها.`
   );
   assumptions.push(
-    `مساحة الحوائط = محيط كل غرفة × الارتفاع − ${Math.round(ASSUMPTIONS.openingsPct * 100)}% للأبواب والشبابيك. ` +
+    `مساحة الحوائط = محيط كل غرفة × الارتفاع. ` + (plasterWaste > 0 ? "" : `للدهان يُخصم ${Math.round(ASSUMPTIONS.openingsPct * 100)}% للأبواب والشبابيك، وللمحارة لا يُخصم شيء لأنها بدون نسبة هالك. `) +
     `المحيط مقدّر من مساحة الغرفة بافتراض نسبة طول/عرض ${ASSUMPTIONS.roomAspectRatio}.`
   );
   assumptions.push("حوائط الحمامات مكسية بالكامل بالسيراميك فلا تدخل في الدهان (تدخل في المحارة).");
+  assumptions.push("الوزرة تُحسب من محيط الغرف (بدون الحمامات) بعد خصم عرض باب لكل غرفة، وليس بمعامل.");
+  if (state === "brick") {
+    assumptions.push("المحارة: شيكارة الأسمنت (50 كجم) تفرد 5 م² بسمك 2.5 سم، وكل 6 شكاير أسمنت تحتاج 1 م³ رمل.");
+  }
   assumptions.push("الدهان يشمل حوائط الغرف الداخلية وأسقفها. البلكونات والحديقة خارج حساب الحوائط والدهان.");
   assumptions.push("تكسيات الحوائط (سيراميك الحمامات والمطبخ) غير داخلة في هذا الحصر.");
   if (ceilingArea > 0) {
@@ -235,28 +264,6 @@ export function computeTakeoff(input: TakeoffInput): TakeoffResult {
     warnings.push(
       `مساحة الأسقف المعلقة (${round1(ceilingArea)} م²) أكبر من مساحة الغرف الداخلية (${round1(interiorArea)} م²).`
     );
-  }
-
-  // مراجعة منطقية للأرقام (تنبيه فقط، لا تغيّر أي كمية)
-  const cementLine = lines.find((l) => l.item === "أسمنت محارة");
-  if (cementLine && plasterArea > 0 && cementLine.unit === "طن") {
-    const kgPerM2 = (cementLine.quantity * 1000) / plasterArea;
-    if (kgPerM2 > 30) {
-      warnings.push(
-        `أسمنت المحارة ${cementLine.quantity} طن لمساحة ${round1(plasterArea)} م² يعني حوالي ${Math.round(kgPerM2)} كجم لكل م²، وده أعلى بكثير من المعتاد (غالباً أقل من 20 كجم/م²). راجع قيمة ووحدة معامل الأسمنت في الإعدادات.`
-      );
-    }
-  }
-  const baseboardLine = lines.find((l) => l.item === "وزرة");
-  if (baseboardLine) {
-    const dryPerimeter = interior
-      .filter((r) => r.kind !== "bathroom")
-      .reduce((s, r) => s + 2 * (1 + ASSUMPTIONS.roomAspectRatio) * Math.sqrt(r.area / ASSUMPTIONS.roomAspectRatio), 0);
-    if (dryPerimeter > 0 && baseboardLine.quantity < dryPerimeter * 0.6) {
-      warnings.push(
-        `الوزرة المحسوبة ${baseboardLine.quantity} متر أقل كثيراً من محيط الغرف الجافة التقديري (حوالي ${Math.round(dryPerimeter)} متر). راجع معامل الوزرة في الإعدادات.`
-      );
-    }
   }
 
   return {
