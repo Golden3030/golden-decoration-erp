@@ -6,6 +6,9 @@ import Header from "@/components/layout/Header";
 import { supabase } from "@/lib/supabaseClient";
 
 import QuickPricesCard from "@/components/CRM/settings/QuickPricesCard";
+import BomSimulator from "@/components/CRM/settings/BomSimulator";
+import BomSettings from "@/components/CRM/settings/BomSettings";
+import GoldButton from "@/components/ui/GoldButton";
  
 import { isOnline, addToOfflineQueue } from "@/lib/offline-sync";
 import { PlusCircle, Save, Plus, Minus, Loader2 } from "lucide-react"; // 👈 تم الحل وتضمين استيراد أيقونة التحميل المفقودة هنا
@@ -16,6 +19,7 @@ export default function SettingsPage() {
   const [materials, setMaterials] = useState<any[]>([]); 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<"sim" | "coeffs" | "prices" | "legacy">("sim");
 
   // حقول نموذج إدراج معامل هندسي جديد
   const [selectedWorkItemId, setSelectedWorkItemId] = useState("");
@@ -184,13 +188,29 @@ export default function SettingsPage() {
         <div className="p-4 md:p-8 space-y-6 text-right select-none animate-fade-in">
           <div>
             <h1 className="text-xl md:text-2xl font-black text-[#D4AF37] flex items-center gap-2 select-none">
-              <span>إعدادات النظام الفنية لـحساب الكميات</span>
+              <span>حصر الكميات: المحاكي والمعاملات الفنية</span>
               <span className="w-2.5 h-2.5 rounded-full bg-[#D4AF37] animate-pulse" />
             </h1>
             <p className="text-white text-xs mt-2 font-semibold">إدارة الثوابت الحسابية ومعاملات حصر الكميات الهندسية للتحكم الفوري ببنود ومقايسات الـ BOQ.</p>
           </div>
 
-          {loading ? (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 select-none">
+            <GoldButton toggle size="fill" active={tab === "sim"} onClick={() => setTab("sim")}>محاكي الحصر الفوري</GoldButton>
+            <GoldButton toggle size="fill" active={tab === "coeffs"} onClick={() => setTab("coeffs")}>ضبط المعاملات الفنية</GoldButton>
+            <GoldButton toggle size="fill" active={tab === "prices"} onClick={() => setTab("prices")}>أسعار التقدير السريع</GoldButton>
+            <GoldButton toggle size="fill" active={tab === "legacy"} onClick={() => setTab("legacy")}>معاملات قديمة</GoldButton>
+          </div>
+
+          {tab === "sim" && <BomSimulator />}
+          {tab === "coeffs" && <BomSettings />}
+          {tab === "prices" && <QuickPricesCard />}
+          {tab === "legacy" && (
+            <p className="text-amber-200 text-xs font-bold bg-amber-950/20 border border-amber-500/30 rounded-xl p-3 leading-relaxed">
+              المعاملات القديمة بتُستخدم حالياً في الحصر الآلي بمساعد "مهندس التسعير" لحد ما نربطه بالجداول الجديدة (تاب ضبط المعاملات الفنية).
+            </p>
+          )}
+
+          {tab === "legacy" && (loading ? (
             <div className="p-12 text-center text-[#D4AF37] animate-pulse text-xs font-bold flex items-center justify-center gap-2">
               <Loader2 className="animate-spin" size={16} />
               <span>جاري جلب وتحليل الثوابت الهندسية...</span>
@@ -398,8 +418,7 @@ export default function SettingsPage() {
                 </button>
               </div>
             </div>
-          )}
-                    <QuickPricesCard />
+          ))}
         </div>
       </section>
     </main>

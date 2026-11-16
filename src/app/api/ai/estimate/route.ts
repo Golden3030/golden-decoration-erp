@@ -43,9 +43,10 @@ export async function POST(request: Request) {
     );
 
     // 1. معاملات الحصر من صفحة الإعدادات (نفس المصدر القديم، مع تمييز القيم الافتراضية)
-    const { data: dbCoefficients } = await supabaseAdmin
+    const { data: dbCoefficients, error: coeffError } = await supabaseAdmin
       .from("work_item_analysis")
-      .select("work_item_id, notes, consumption_qty, unit");
+      .select("*");
+    if (coeffError) console.error("تعذّر قراءة معاملات work_item_analysis:", coeffError.message);
 
     const getCoeff = (keyword: string, defaultVal: number): Coeff => {
       const match = (dbCoefficients || []).find((c: any) => String(c.notes || "").includes(keyword));
@@ -194,6 +195,10 @@ export async function POST(request: Request) {
       if (option.minDays !== null && option.maxDays !== null) {
         duration = { minDays: option.minDays, maxDays: option.maxDays };
       }
+    }
+
+    if (coeffError) {
+      result.warnings.unshift("تعذّر قراءة معاملات الإعدادات (" + coeffError.message + ")، فتم استخدام القيم الافتراضية بدلاً منها.");
     }
 
     // 2. دور الذكاء الاصطناعي: مراجعة وشرح وصياغة، بدون تغيير أي رقم

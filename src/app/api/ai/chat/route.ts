@@ -71,7 +71,8 @@ async function loadGrounding(id: EmployeeId, db: any): Promise<any> {
   }
 
   if (id === "estimate") {
-    const { data } = await db.from("work_item_analysis").select("notes, consumption_qty, unit");
+    const { data, error } = await db.from("work_item_analysis").select("*");
+    if (error) console.error("تعذّر قراءة معاملات work_item_analysis:", error.message);
     return {
       coefficientsFromSettings: (data || []).map((c: any) => ({ item: c.notes, coefficient: c.consumption_qty, unit: c.unit })),
       engineAssumptions: {
