@@ -3,6 +3,7 @@
 import { useState } from "react";
 import SalesResult from "./SalesResult";
 import { fetchAiJson } from "@/lib/fetchAi";
+import GoldButton from "@/components/ui/GoldButton";
 import { isOnline } from "@/lib/offline-sync"; // استيراد مستشعر الشبكة المعتمد
 
 export default function SalesChat() {
@@ -64,6 +65,7 @@ export default function SalesChat() {
         maxDays: est.maxDays,
         options: est.options,
         counts: est.counts,
+        location: est.location,
         aiText: data.response
       });
 
@@ -113,13 +115,9 @@ export default function SalesChat() {
         )}
       </div>
 
-      <button
-        onClick={handleAnalyze}
-        disabled={loading}
-        className="w-full h-12 rounded-xl bg-[#c9a227] text-black font-bold px-8 py-3 transition disabled:opacity-50 cursor-pointer text-xs"
-      >
+      <GoldButton onClick={handleAnalyze} disabled={loading} size="lg" className="w-full">
         {loading ? "جاري قراءة المخطط وتحليل الطلب ..." : "تحليل الطلب بالذكاء الاصطناعي"}
-      </button>
+      </GoldButton>
 
       {showResult && analysisData && (
         <SalesResult analysis={analysisData} />

@@ -52,6 +52,9 @@ export default function CRMPage() {
   const [addAssignedTo, setAddAssignedTo] = useState("");
   const [addStatus, setAddStatus] = useState("جديد");
 
+  // تقدير مبدئي قادم من مساعد المبيعات الذكي: يُنقل لمشروع العميل بعد تسجيله فعلياً
+  const [leadDraft, setLeadDraft] = useState<any>(null);
+
   const [customersList, setCustomersList] = useState<any[]>([]);
   const [projectsList, setProjectsList] = useState<any[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -104,6 +107,25 @@ export default function CRMPage() {
   // ?customer_id=، نجيب بيانات العميل ده ونبدأله مشروع جديد تلقائياً بدل ما يتسجل من الصفر
   // ✅ لو الرابط جاي من مكان تاني (زي زرار "مشروع جديد لنفس العميل" فى ملف العميل، أو من
   // إشعار "طلب تسعير معلق") ومعاه ?customer_id= أو ?project_id=، نجيب البيانات المناسبة تلقائياً
+  // فتح نموذج "إضافة عميل جديد" تلقائياً لو الطلب جاي من زرار "طلب مقايسة مبدئية" في مساعد المبيعات
+  useEffect(() => {
+    if (searchParams.get("newLead") !== "1") return;
+    try {
+      const raw = sessionStorage.getItem("salesLeadDraft");
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (!draft?.createdAt || Date.now() - draft.createdAt > 2 * 60 * 60 * 1000) {
+        sessionStorage.removeItem("salesLeadDraft"); // مسودة قديمة
+        return;
+      }
+      setLeadDraft(draft);
+      setAddAddress(draft.location || "");
+      setIsAddCustomerOpen(true);
+    } catch (e) {
+      console.warn("تعذّر قراءة مسودة مساعد المبيعات", e);
+    }
+  }, [searchParams]);
+
   useEffect(() => {
     const customerIdParam = searchParams.get("customer_id");
     const projectIdParam = searchParams.get("project_id");
@@ -274,6 +296,40 @@ export default function CRMPage() {
     }
   }
 
+  // إغلاق نموذج إضافة العميل (وإلغاء مسودة التقدير حتى لا تُنسب لعميل آخر بالغلط)
+  function closeAddCustomer() {
+    setIsAddCustomerOpen(false);
+    setLeadDraft(null);
+    try { sessionStorage.removeItem("salesLeadDraft"); } catch { /* تجاهل */ }
+  }
+
+  // بعد تسجيل العميل: نفتحه في الـ CRM وننقل بيانات التقدير المبدئي لمشروعه ليكمل المندوب ويحفظ
+  async function applyLeadDraft(customer: any, draft: any) {
+    await handleSelectCustomerFromGrid(customer);
+    setCRMData((prev: any) => ({
+      ...prev,
+      activeTab: "المقايسة",
+      project: {
+        ...prev.project,
+        projectName: `مشروع ${draft.area}م² ${draft.levelSpecified ? draft.levelLabel : ""} - ${customer.name}`.replace(/\s+/g, " "),
+        estimateDate: new Date().toLocaleDateString("en-CA"),
+        unitType: "شقة",
+        area: draft.area,
+        finishingLevel: draft.dbLevel,
+        location: draft.location || prev.project?.location || "",
+        unitAddress: draft.location || prev.project?.unitAddress || "",
+        receptionsCount: draft.counts?.receptions ?? prev.project?.receptionsCount ?? 1,
+        roomsCount: draft.counts?.bedrooms ?? prev.project?.roomsCount ?? 2,
+        bathroomsCount: draft.counts?.bathrooms ?? prev.project?.bathroomsCount ?? 1,
+        kitchensCount: draft.counts?.kitchens ?? prev.project?.kitchensCount ?? 1,
+        // نفس منطق طلبات الحاسبة: القيمة التقديرية تبدأ بأدنى التقدير ويعدلها المندوب
+        contractValue: draft.minCost || prev.project?.contractValue || 0
+      }
+    }));
+    try { sessionStorage.removeItem("salesLeadDraft"); } catch { /* تجاهل */ }
+    setLeadDraft(null);
+  }
+
   async function handleInsertNewCustomer() {
     if (!addName || !addMobile) {
       alert("الرجاء إدخال اسم العميل ورقم المحمول لإتمام عملية التسجيل.");
@@ -308,6 +364,10 @@ export default function CRMPage() {
         // ✅ إصلاح: إضافة العميل الجديد مباشرة للقائمة المحلية بدل عمل تحميل كامل للصفحة يشبه الـ Reload
         if (newCustomer) {
           setCustomersList(prev => [newCustomer, ...prev]);
+        }
+
+        if (newCustomer && leadDraft) {
+          await applyLeadDraft(newCustomer, leadDraft);
         }
 
         if (assignedRepId && assignedRepId !== currentUserId) {
@@ -1014,12 +1074,25 @@ export default function CRMPage() {
                   </h3>
                   <button 
                     type="button" 
-                    onClick={(e) => { e.preventDefault(); setIsAddCustomerOpen(false); }}
+                    onClick={(e) => { e.preventDefault(); closeAddCustomer(); }}
                     className="text-gray-400 hover:text-rose-500 font-bold text-sm cursor-pointer transition"
                   >
                     ✕
                   </button>
                 </div>
+
+                {leadDraft && (
+                  <div className="bg-[#D4AF37]/10 border border-[#D4AF37]/40 rounded-2xl p-3 text-[11px] font-bold text-[#F0E6D2] leading-relaxed">
+                    🤖 تقدير مبدئي من مساعد المبيعات: شقة {leadDraft.area} م²
+                    {leadDraft.levelSpecified ? ` - ${leadDraft.levelLabel}` : " - المستوى لم يُحدد"}
+                    {leadDraft.minCost && leadDraft.maxCost
+                      ? ` | ${Number(leadDraft.minCost).toLocaleString("en-US")} - ${Number(leadDraft.maxCost).toLocaleString("en-US")} جنيه`
+                      : ""}
+                    {leadDraft.minDays && leadDraft.maxDays ? ` | ${leadDraft.minDays} - ${leadDraft.maxDays} يوم` : ""}
+                    <br />
+                    أدخل الاسم والموبايل الحقيقيين للعميل، وسيُنقل هذا التقدير لمشروعه تلقائياً بعد التسجيل.
+                  </div>
+                )}
 
                 <div className="space-y-4 text-sm font-semibold">
                   <div>

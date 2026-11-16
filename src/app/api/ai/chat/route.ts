@@ -75,7 +75,7 @@ async function loadGrounding(id: EmployeeId, db: any): Promise<any> {
     return {
       coefficientsFromSettings: (data || []).map((c: any) => ({ item: c.notes, coefficient: c.consumption_qty, unit: c.unit })),
       engineAssumptions: {
-        wallsFormula: "مساحة الحوائط = محيط الغرفة × الارتفاع. للدهان تُخصم نسبة الأبواب والشبابيك، وللمحارة لا تُخصم الفراغات لأنها بدون نسبة هالك (ولو أُضيف هالك تُخصم الفراغات)",
+        wallsFormula: "مساحة الحوائط = محيط الغرفة × الارتفاع. بدون نسبة هالك (المحارة والدهانات) لا تُخصم الفراغات، ومع نسبة هالك تُخصم الفراغات (الأبواب والشبابيك)",
         openingsPercent: ASSUMPTIONS.openingsPct * 100,
         roomAspectRatio: ASSUMPTIONS.roomAspectRatio,
         defaultCeilingHeightM: ASSUMPTIONS.defaultCeilingHeight,

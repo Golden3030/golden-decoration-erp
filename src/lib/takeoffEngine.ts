@@ -61,6 +61,7 @@ export const ASSUMPTIONS = {
   doorWidthM: 0.9,           // عرض الباب المخصوم من محيط الغرفة عند حساب الوزرة
   // قاعدة المحارة: لو لا توجد نسبة هالك فالفراغات (أبواب وشبابيك) لا تُخصم، ولو أُضيفت نسبة هالك فالفراغات تُخصم
   plasterWastePct: 0,        // 0 = بدون هالك وبدون خصم فراغات، مثال: 0.1 = هالك 10% مع خصم الفراغات
+  paintWastePct: 0,          // نفس القاعدة للدهانات
   defaultCeilingHeight: 3,   // م، لو لم يُحدد في تاب المساحات
   gypsumSheetArea: 2.88,     // م² مساحة لوح الجبس بورد (1.2 × 2.4)
   anglesPerM2: 1.2,          // متر زوايا صاج لكل م² سقف
@@ -118,9 +119,11 @@ export function computeTakeoff(input: TakeoffInput): TakeoffResult {
   const interiorArea = interior.reduce((s, r) => s + r.area, 0);
   const netWalls = interior.reduce((s, r) => s + netWallArea(r.area, height), 0);
   const grossWalls = interior.reduce((s, r) => s + grossWallArea(r.area, height), 0);
+  // الدهان: نفس قاعدة المحارة، بدون هالك الحوائط كاملة، ومع هالك تُخصم الفراغات
+  const paintWaste = ASSUMPTIONS.paintWastePct;
   const paintWalls = interior
     .filter((r) => r.kind !== "bathroom")
-    .reduce((s, r) => s + netWallArea(r.area, height), 0);
+    .reduce((s, r) => s + (paintWaste > 0 ? netWallArea(r.area, height) : grossWallArea(r.area, height)), 0);
 
   // المحارة: بدون هالك تُحسب على الحوائط كاملة (الفراغات لا تُخصم)، ومع هالك تُحسب بعد خصم الفراغات
   const plasterWaste = ASSUMPTIONS.plasterWastePct;
@@ -154,15 +157,15 @@ export function computeTakeoff(input: TakeoffInput): TakeoffResult {
     `مساحة الدهان ${round1(paintArea)} م² × معامل ${cv(c)} ÷ 3 (${src(c)})`;
   lines.push({
     stage: "المعجون والدهانات", item: "معجون", unit: "كيس",
-    quantity: Math.ceil((paintArea * coeffs.putty.value) / 3), basis: paintBasis(coeffs.putty)
+    quantity: Math.ceil((paintArea * (1 + paintWaste) * coeffs.putty.value) / 3), basis: paintBasis(coeffs.putty)
   });
   lines.push({
     stage: "المعجون والدهانات", item: "بطانة دهان", unit: "جردل",
-    quantity: Math.ceil((paintArea * coeffs.primer.value) / 3), basis: paintBasis(coeffs.primer)
+    quantity: Math.ceil((paintArea * (1 + paintWaste) * coeffs.primer.value) / 3), basis: paintBasis(coeffs.primer)
   });
   lines.push({
     stage: "المعجون والدهانات", item: "دهان نهائي", unit: "جردل",
-    quantity: Math.ceil((paintArea * coeffs.finishPaint.value) / 3), basis: paintBasis(coeffs.finishPaint)
+    quantity: Math.ceil((paintArea * (1 + paintWaste) * coeffs.finishPaint.value) / 3), basis: paintBasis(coeffs.finishPaint)
   });
 
   const floorBasis = (c: Coeff) => `مساحة الأرضيات ${round1(floorArea)} م² × معامل ${cv(c)} (${src(c)})`;
@@ -227,8 +230,11 @@ export function computeTakeoff(input: TakeoffInput): TakeoffResult {
       : `ارتفاع السقف ${height} م للشقة كلها.`
   );
   assumptions.push(
-    `مساحة الحوائط = محيط كل غرفة × الارتفاع. ` + (plasterWaste > 0 ? "" : `للدهان يُخصم ${Math.round(ASSUMPTIONS.openingsPct * 100)}% للأبواب والشبابيك، وللمحارة لا يُخصم شيء لأنها بدون نسبة هالك. `) +
-    `المحيط مقدّر من مساحة الغرفة بافتراض نسبة طول/عرض ${ASSUMPTIONS.roomAspectRatio}.`
+    `مساحة الحوائط = محيط كل غرفة × الارتفاع. ` +
+      (plasterWaste > 0 || paintWaste > 0
+        ? `عند وجود نسبة هالك تُخصم الفراغات (${Math.round(ASSUMPTIONS.openingsPct * 100)}% للأبواب والشبابيك). `
+        : "الحوائط محسوبة كاملة بدون خصم الأبواب والشبابيك لأن الحساب بدون نسبة هالك (المحارة والدهانات). ") +
+      `المحيط مقدّر من مساحة الغرفة بافتراض نسبة طول/عرض ${ASSUMPTIONS.roomAspectRatio}.`
   );
   assumptions.push("حوائط الحمامات مكسية بالكامل بالسيراميك فلا تدخل في الدهان (تدخل في المحارة).");
   assumptions.push("الوزرة تُحسب من محيط الغرف (بدون الحمامات) بعد خصم عرض باب لكل غرفة، وليس بمعامل.");

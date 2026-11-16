@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { X } from "lucide-react";
 import { isOnline } from "@/lib/offline-sync";
 import GoldButton from "@/components/ui/GoldButton";
+import CloseButton from "@/components/ui/CloseButton";
 import { quickRoomNames } from "@/lib/takeoffEngine";
 import { DEFAULT_FINISH_LEVEL, FINISH_LEVELS, type FinishLevel } from "@/lib/finishLevels";
 
@@ -181,12 +181,7 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
     <div className="w-full max-w-2xl bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
       <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
         <span className="text-[#A17A4C] font-black text-xs md:text-sm">📐 مهندس التسعير وحساب الكميات | جولدن ديكوريشن</span>
-        <button
-          onClick={handleClose}
-          className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37]/30 text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center"
-        >
-          <X size={14} />
-        </button>
+        <CloseButton onClick={handleClose} />
       </div>
 
       <div className="p-6 overflow-y-auto flex-1 ai-chat-scroll space-y-5 text-right" dir="rtl">

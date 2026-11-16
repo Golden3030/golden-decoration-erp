@@ -1,6 +1,5 @@
 "use client";
 
-import { useCRM } from "@/components/CRM/context/CRMContext";
 import { useRouter } from "next/navigation";
 import GoldButton from "@/components/ui/GoldButton";
 
@@ -24,50 +23,39 @@ interface AnalysisData {
   maxDays: number | null;
   options: SalesOptionData[];
   counts: { bedrooms: number | null; bathrooms: number | null; receptions: number | null; kitchens: number | null };
+  location?: string | null;
   aiText?: string;
 }
 
 const money = (n: number) => n.toLocaleString("en-US");
 
 export default function SalesResult({ analysis }: { analysis: AnalysisData }) {
-  const { setCRMData } = useCRM();
   const router = useRouter();
 
   function handleRequestEstimate() {
-    setCRMData((prev: any) => ({
-      ...prev,
-      activeTab: "المقايسة",
-      customer: {
-        // ✅ إصلاح: كان فيه كود عميل عشوائي هنا بيتخزن فى المسودة، وبيتاخد كـ"القيمة النهائية"
-        // وقت الحفظ الفعلي (بسبب منطق "|| generateSequentialCode" فى دالة الحفظ)، فيتخطى التوليد
-        // التسلسلي الصحيح تماماً. حذفناه عشان الحفظ الفعلي يولد كود تسلسلي حقيقي دايماً.
-        name: "عميل مبيعات ذكي (محتمل)",
-        mobile: "010xxxxxxx",
-        phone: "",
-        address: "التجمع الخامس - مشروع مبيعات ذكي",
-        email: "sales.lead@goldendecor.com",
-        status: "جديد"
-      },
-      project: {
-        id: "d19b7d8d-6927-4481-8608-d8f96e4ab50f",
-        // ✅ نفس الإصلاح: مفيش projectCode ولا estimateNumber هنا عمداً، عشان الحفظ الفعلي
-        // فى CRMClientPage.tsx يولدهم تسلسلياً بدل ما ياخد قيمة عشوائية جاهزة من هنا.
-        projectName: `مشروع ${analysis.area}م² ${analysis.level} - مبيعات ذكي`,
-        estimateDate: new Date().toLocaleDateString("en-CA"),
-        unitAddress: "موقع تشطيب مبيعات ذكي",
-        unitType: "شقة",
-        area: analysis.area,
-        unitStatus: "بدون تشطيب (طوب احمر)",
-        finishingLevel: Array.isArray(analysis.dbLevel) ? "متوسط (سوبر لوكس )" : analysis.dbLevel, 
-        receptionsCount: analysis.counts?.receptions ?? 1,
-        roomsCount: analysis.counts?.bedrooms ?? 2,
-        bathroomsCount: analysis.counts?.bathrooms ?? 1,
-        kitchensCount: analysis.counts?.kitchens ?? 1,
-        balconiesCount: 1
-      }
-    }));
-
-    router.push("/CRM");
+    // نحفظ التقدير كمسودة فقط (بدون أي بيانات عميل وهمية). شاشة الـ CRM تفتح نموذج "إضافة عميل جديد"
+    // فيكتب المندوب الاسم والموبايل الحقيقيين، وبعد التسجيل ينتقل التقدير لمشروع العميل تلقائياً.
+    try {
+      sessionStorage.setItem(
+        "salesLeadDraft",
+        JSON.stringify({
+          area: analysis.area,
+          levelLabel: analysis.level,
+          dbLevel: analysis.dbLevel,
+          levelSpecified: analysis.levelSpecified,
+          minCost: analysis.minCost,
+          maxCost: analysis.maxCost,
+          minDays: analysis.minDays,
+          maxDays: analysis.maxDays,
+          counts: analysis.counts,
+          location: analysis.location || "",
+          createdAt: Date.now()
+        })
+      );
+    } catch (e) {
+      console.warn("تعذّر حفظ مسودة التقدير", e);
+    }
+    router.push("/CRM?newLead=1");
   }
 
   return (

@@ -210,7 +210,8 @@ Data (JSON): ${JSON.stringify({
         maxDays: main.maxDays,
         options,
         counts,
-        hasPrices
+        hasPrices,
+        location: typeof extracted.location === "string" && extracted.location.trim() ? extracted.location.trim().slice(0, 80) : null
       }
     });
   } catch (error: any) {

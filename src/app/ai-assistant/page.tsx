@@ -14,6 +14,8 @@ import { Lock, X } from "lucide-react";
 import SalesChat from "@/components/CRM/AI/SalesAssistant/SalesChat";
 
 import { fetchAiJson } from "@/lib/fetchAi";
+import GoldButton from "@/components/ui/GoldButton";
+import CloseButton from "@/components/ui/CloseButton";
 interface AIEmployee {
   id: string;
   name: string;
@@ -484,8 +486,7 @@ export default function AIAssistantPage() {
                   </div>
 
                   <div className="mt-6 pt-4 border-t border-[#D4AF37]">
-                    <button
-                      onClick={() => {
+                    <GoldButton size="fill" onClick={() => {
                         if (!isAllowed) return;
                         visionAbortRef.current?.abort();
                         visionAbortRef.current = null;
@@ -497,16 +498,9 @@ export default function AIAssistantPage() {
                         setVisionAnalysis(null);
                         setSelectedProjectId("");
                         setCeilingLocation("all");
-                      }}
-                      disabled={!isAllowed}
-                      className={`w-full h-11 rounded-full text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 flex items-center justify-center gap-2 ${
-                        isAllowed 
-                          ? "bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer" 
-                          : "bg-gray-800 text-gray-500 border border-transparent cursor-not-allowed"
-                      }`}
-                    >
+                      }} disabled={!isAllowed}>
                       {isAllowed ? "💬 استشارة الموظف الذكي" : "🔒 مغلق لعدم الصلاحية"}
-                    </button>
+                    </GoldButton>
                   </div>
                 </div>
               );
@@ -517,19 +511,14 @@ export default function AIAssistantPage() {
 
       {/* نوافذ عرض الكروت الـ 6 */}
       {activeEmployee && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start justify-center z-50 transition-all duration-300 overflow-y-auto py-10 px-4">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-start justify-center z-60 transition-all duration-300 overflow-y-auto py-10 px-4">
           
           {activeEmployee.id === "sales" && (
             <div className="w-full max-w-2xl bg-[#07132a] border border-[#D4AF37]/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل ترويسة العنوان داخل منبثق المبيعات للون البني البرونزي `#A17A4C` */}
                 <span className="text-[#D4AF37] font-black text-xs md:text-sm">💬 مساعد المبيعات الذكي | جولدن ديكوريشن</span>
-                <button 
-                  onClick={() => setActiveEmployee(null)} 
-                  className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37] text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center font-bold text-xs cursor-pointer"
-                >
-                  <X size={14} />
-                </button>
+                <CloseButton onClick={() => setActiveEmployee(null)} />
               </div>
               <div className="p-6 overflow-y-auto flex-1 ai-chat-scroll">
                 <SalesChat />
@@ -542,12 +531,7 @@ export default function AIAssistantPage() {
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل الترويسة للون البني البرونزي المعتمد */}
                 <span className="text-[#D4AF37] font-black text-xs md:text-sm">🖼️ محلل التصاميم والديكور البصري | جولدن ديكوريشن</span>
-                <button 
-                  onClick={() => setActiveEmployee(null)} 
-                  className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37]/30 text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center font-bold text-xs cursor-pointer"
-                >
-                  <X size={14} />
-                </button>
+                <CloseButton onClick={() => setActiveEmployee(null)} />
               </div>
               <div className="p-6 overflow-y-auto flex-1 ai-chat-scroll space-y-6 text-right" dir="rtl">
                 <p className="text-white text-xs font-semibold">قم برفع صورة التصميم ثلاثي الأبعاد ليقوم الذكاء الاصطناعي بقراءتها وتفريد خاماتها ودرجات ألوانها وتقدير تكلفتها فوراً:</p>
@@ -567,13 +551,9 @@ export default function AIAssistantPage() {
                   )}
                 </div>
                 {imagePreview && !visionAnalysis && (
-                  <button
-                    onClick={handleAnalyzeDesignImage}
-                    disabled={loadingVision}
-                    className="w-full h-11 rounded-full bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-bold text-xs md:text-sm transition-all duration-300 disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#D4AF37]/15"
-                  >
+                  <GoldButton size="lg" className="w-full" onClick={handleAnalyzeDesignImage} disabled={loadingVision}>
                     {loadingVision ? "جاري قراءة وتحليل خامات التصميم بالكامل..." : "🔍 بدء التحليل البصري واستخراج الخامات"}
-                  </button>
+                  </GoldButton>
                 )}
                 {visionAnalysis && (
                   <ReportBlock
@@ -591,23 +571,15 @@ export default function AIAssistantPage() {
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل الترويسة للون البني البرونزي المعتمد */}
                 <span className="text-[#A17A4C] font-black text-xs md:text-sm">📋 مدير المشاريع الذكي | جولدن ديكوريشن</span>
-                <button 
-                  onClick={() => setActiveEmployee(null)} 
-                  className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37]/30 text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center font-bold text-xs cursor-pointer"
-                >
-                  <X size={14} />
-                </button>
+                <CloseButton onClick={() => setActiveEmployee(null)} />
               </div>
               <div className="p-6 overflow-y-auto flex-1 ai-chat-scroll space-y-6 text-right" dir="rtl">
                 <p className="text-white text-xs font-semibold">يقوم مدير المشاريع بالاستعلام اللحظي من قاعدة البيانات عن مهام المواقع، وتواريخ تسليمها، والمهندسين المسؤولين عنها لفلترة التأخيرات وكتابة تقرير تفصيلي بالحلول الفورية:</p>
                 
                 {!visionAnalysis && !loadingVision && (
-                  <button
-                    onClick={handleAuditProjects}
-                    className="w-full h-11 rounded-full bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer"
-                  >
+                  <GoldButton size="lg" className="w-full" onClick={handleAuditProjects}>
                     🔍 تشغيل الفحص الإداري وجلب التأخيرات 
-                  </button>
+                  </GoldButton>
                 )}
 
                 {loadingVision && (
@@ -633,17 +605,12 @@ export default function AIAssistantPage() {
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل الترويسة للون البني البرونزي المعتمد */}
                 <span className="text-[#A17A4C] font-black text-xs md:text-sm">🛒 مساعد المشتريات والمخازن | جولدن ديكوريشن</span>
-                <button
-                  onClick={() => {
+                <CloseButton onClick={() => {
                     setActiveEmployee(null);
                     setProjects([]);
                     setSelectedProjectId("");
                     setVisionAnalysis(null);
-                  }}
-                  className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37]/30 text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center text-xs cursor-pointer"
-                >
-                  <X size={14} />
-                </button>
+                  }} />
               </div>
 
               <div className="p-6 overflow-y-auto flex-1 ai-chat-scroll space-y-6 text-right" dir="rtl">
@@ -670,12 +637,9 @@ export default function AIAssistantPage() {
                 </div>
 
                 {selectedProjectId && !visionAnalysis && !loadingVision && (
-                  <button
-                    onClick={handleAnalyzeProcurement}
-                    className="w-full h-11 rounded-full bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer"
-                  >
+                  <GoldButton size="lg" className="w-full" onClick={handleAnalyzeProcurement}>
                     🔍 تشغيل تحليل المشتريات وإصدار كشوف الخامات
-                  </button>
+                  </GoldButton>
                 )}
 
                 {loadingVision && (
@@ -714,17 +678,12 @@ export default function AIAssistantPage() {
               <div className="p-4 bg-[#0b1d3d] border-b border-[#D4AF37]/20 flex justify-between items-center" dir="rtl">
                 {/* 🌟 تحويل الترويسة للون البني البرونزي المعتمد */}
                 <span className="text-[#A17A4C] font-black text-xs md:text-sm">📊 محلل الأرباح والميزانية الذكي | جولدن ديكوريشن</span>
-                <button
-                  onClick={() => {
+                <CloseButton onClick={() => {
                     setActiveEmployee(null);
                     setProjects([]);
                     setSelectedProjectId("");
                     setVisionAnalysis(null);
-                  }}
-                  className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37]/30 text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center font-bold text-xs cursor-pointer"
-                >
-                  <X size={14} />
-                </button>
+                  }} />
               </div>
 
               <div className="p-6 overflow-y-auto flex-1 ai-chat-scroll space-y-6 text-right" dir="rtl">
@@ -751,12 +710,9 @@ export default function AIAssistantPage() {
                 </div>
 
                 {selectedProjectId && !visionAnalysis && !loadingVision && (
-                  <button
-                    onClick={handleAnalyzeFinance}
-                    className="w-full h-11 rounded-full bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] font-black text-xs md:text-sm transition-all duration-300 shadow-md hover:shadow-[#D4AF37]/15 cursor-pointer"
-                  >
+                  <GoldButton size="lg" className="w-full" onClick={handleAnalyzeFinance}>
                     🔍 تشغيل تحليل ميزانية الموقع والأرباح الفعلية
-                  </button>
+                  </GoldButton>
                 )}
 
                 {loadingVision && (
@@ -791,12 +747,7 @@ export default function AIAssistantPage() {
                     </span>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setActiveEmployee(null)} 
-                  className="w-8 h-8 rounded-full bg-[#020B1C] border border-[#D4AF37]/30 text-[#D4AF37] hover:text-red-400 hover:border-red-500/20 transition-all flex items-center justify-center font-bold text-xs cursor-pointer"
-                >
-                  <X size={14} />
-                </button>
+                <CloseButton onClick={() => setActiveEmployee(null)} />
               </div>
 
               <div className="flex-1 p-6 overflow-y-auto ai-chat-scroll space-y-4 bg-[#020B1C]" dir="rtl">
@@ -805,12 +756,9 @@ export default function AIAssistantPage() {
                     <span className="text-5xl select-none">{activeEmployee?.icon}</span>
                     <p className="text-[#F0E6D2] font-bold">مرحباً بك! أنا مساعدك الذكي الخاص بـ {activeEmployee?.name}.</p>
                     <p className="text-gray-500 text-xs max-w-sm leading-relaxed">يمكنك سؤالي أو طلبي مباشرة، أو استخدام المثال الجاهز بالأسفل للضغط عليه وبدء التجربة فوراً!</p>
-                    <button
-                      onClick={() => setChatQuery(activeEmployee?.promptExample || "")}
-                      className="text-xs bg-[#020B1C] border border-[#D4AF37]/30 hover:border-[#D4AF37] text-[#D4AF37] px-4 py-2.5 rounded-full transition-all duration-300 cursor-pointer"
-                    >
+                    <GoldButton toggle active={false} className="h-auto! py-2.5 text-center whitespace-normal" onClick={() => setChatQuery(activeEmployee?.promptExample || "")}>
                       💡 مثال للطلب: "{activeEmployee?.promptExample}"
-                    </button>
+                    </GoldButton>
                   </div>
                 ) : (
                   chatHistory.map((msg, index) => (
@@ -847,13 +795,7 @@ export default function AIAssistantPage() {
                   className="flex-1 h-12 bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl px-4 text-[#F0E6D2] font-bold outline-none focus:border-[#D4AF37] text-xs"
                 />
                 
-                <button
-                  onClick={handleSendMessage}
-                  disabled={loadingChat}
-                  className="bg-linear-to-r from-[#D4AF37] to-[#F1E5C6] hover:from-[#B48C34] hover:to-[#E5D7B3] text-[#020B1C] px-6 py-3 rounded-full font-black hover:shadow-lg transition-all duration-300 text-xs disabled:opacity-50 cursor-pointer flex items-center justify-center"
-                >
-                  إرسال 🚀
-                </button>
+                <GoldButton size="lg" onClick={handleSendMessage} disabled={loadingChat}>إرسال 🚀</GoldButton>
               </div>
 
             </div>
