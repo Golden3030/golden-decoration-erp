@@ -81,6 +81,8 @@ interface SettingsRate {
   maxPricePerM2: number;
   minDaysPer100m2: number | null;
   maxDaysPer100m2: number | null;
+  fixedDaysMin: number | null;
+  fixedDaysMax: number | null;
 }
 
 export default function PublicCampaignCalculator() {
@@ -172,6 +174,9 @@ export default function PublicCampaignCalculator() {
   // مدة التنفيذ التقريبية من الإعدادات (لو مضبوطة)
   const duration = useMemo(() => {
     const s = settingsRates[SETTINGS_KEY[finishingLevel]];
+    if (s && s.fixedDaysMin !== null && s.fixedDaysMax !== null) {
+      return { min: s.fixedDaysMin, max: s.fixedDaysMax }; // مدة ثابتة لنظام التشطيب
+    }
     if (!s || s.minDaysPer100m2 === null || s.maxDaysPer100m2 === null) return null;
     return {
       min: Math.max(1, Math.round((Number(area) / 100) * s.minDaysPer100m2)),

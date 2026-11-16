@@ -7,11 +7,11 @@ import { isOnline } from "@/lib/offline-sync";
 import GoldButton from "@/components/ui/GoldButton";
 import { FINISH_LEVELS } from "@/lib/finishLevels";
 
-type Row = { min: string; max: string; dmin: string; dmax: string };
+type Row = { min: string; max: string; dmin: string; dmax: string; fmin: string; fmax: string };
 type Rows = Record<string, Row>;
 
 const emptyRows = (): Rows =>
-  Object.fromEntries(FINISH_LEVELS.map((l) => [l.key, { min: "", max: "", dmin: "", dmax: "" }]));
+  Object.fromEntries(FINISH_LEVELS.map((l) => [l.key, { min: "", max: "", dmin: "", dmax: "", fmin: "", fmax: "" }]));
 
 const inputClass =
   "h-10 w-full rounded-lg bg-[#020B1C] border border-[#D4AF37]/30 text-white px-3 outline-none text-xs font-bold";
@@ -39,7 +39,9 @@ export default function QuickPricesCard() {
               min: positive(r.min_price_per_m2),
               max: positive(r.max_price_per_m2),
               dmin: positive(r.min_days_per_100m2),
-              dmax: positive(r.max_days_per_100m2)
+              dmax: positive(r.max_days_per_100m2),
+              fmin: positive(r.fixed_days_min),
+              fmax: positive(r.fixed_days_max)
             };
           }
         });
@@ -83,18 +85,22 @@ export default function QuickPricesCard() {
     for (const l of FINISH_LEVELS) {
       const r = rows[l.key];
       const min = Number(r.min || 0), max = Number(r.max || 0), dmin = Number(r.dmin || 0), dmax = Number(r.dmax || 0);
-      if ([min, max, dmin, dmax].some((n) => !Number.isFinite(n) || n < 0)) {
+      const fmin = Number(r.fmin || 0), fmax = Number(r.fmax || 0);
+      if ([min, max, dmin, dmax, fmin, fmax].some((n) => !Number.isFinite(n) || n < 0)) {
         setMessage({ type: "error", text: `أرقام غير صحيحة في مستوى ${l.label}.` });
         return;
       }
       if (max < min) { setMessage({ type: "error", text: `في مستوى ${l.label}: السعر الأقصى أقل من الأدنى.` }); return; }
       if (dmax < dmin) { setMessage({ type: "error", text: `في مستوى ${l.label}: أقصى مدة أقل من الأدنى.` }); return; }
+      if (fmax < fmin) { setMessage({ type: "error", text: `في مستوى ${l.label}: أقصى مدة ثابتة أقل من الأدنى.` }); return; }
       payload.push({
         level: l.key,
         min_price_per_m2: min,
         max_price_per_m2: max,
         min_days_per_100m2: dmin,
         max_days_per_100m2: dmax,
+        fixed_days_min: fmin,
+        fixed_days_max: fmax,
         updated_at: new Date().toISOString()
       });
     }
@@ -132,7 +138,15 @@ export default function QuickPricesCard() {
                 </div>
               </div>
               <div>
-                <p className="text-[#A17A4C] text-[11px] font-black mb-2">مدة التنفيذ (يوم لكل 100 م²)</p>
+                <p className="text-[#A17A4C] text-[11px] font-black mb-2">مدة التنفيذ الثابتة للنظام (بالأيام، بغض النظر عن المساحة)</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <input type="text" inputMode="decimal" placeholder="الأدنى" value={rows[l.key].fmin} onChange={(e) => setField(l.key, "fmin", e.target.value)} className={inputClass} />
+                  <input type="text" inputMode="decimal" placeholder="الأقصى" value={rows[l.key].fmax} onChange={(e) => setField(l.key, "fmax", e.target.value)} className={inputClass} />
+                </div>
+                <p className="text-gray-500 text-[10px] font-bold mt-1">لو اتضبطت المدة الثابتة، هي اللي بتظهر للعميل وبتتقدم على المعدل بالمتر تحت.</p>
+              </div>
+              <div>
+                <p className="text-[#A17A4C] text-[11px] font-black mb-2">أو: مدة التنفيذ بالمعدل (يوم لكل 100 م²)</p>
                 <div className="grid grid-cols-2 gap-3">
                   <input type="text" inputMode="decimal" placeholder="الأدنى" value={rows[l.key].dmin} onChange={(e) => setField(l.key, "dmin", e.target.value)} className={inputClass} />
                   <input type="text" inputMode="decimal" placeholder="الأقصى" value={rows[l.key].dmax} onChange={(e) => setField(l.key, "dmax", e.target.value)} className={inputClass} />

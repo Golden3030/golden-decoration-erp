@@ -126,7 +126,7 @@ ${clientMessage || "(لا يوجد نص، الطلب في الصورة المر�
     );
     const { data: priceRows } = await supabaseAdmin
       .from("quick_estimate_prices")
-      .select("level, min_price_per_m2, max_price_per_m2, min_days_per_100m2, max_days_per_100m2");
+      .select("level, min_price_per_m2, max_price_per_m2, min_days_per_100m2, max_days_per_100m2, fixed_days_min, fixed_days_max");
     const rates: LevelRates[] = (priceRows || [])
       .filter((r: any) => isFinishLevel(r.level))
       .map((r: any) => ({
@@ -134,7 +134,9 @@ ${clientMessage || "(لا يوجد نص، الطلب في الصورة المر�
         minPricePerM2: Number(r.min_price_per_m2 || 0),
         maxPricePerM2: Number(r.max_price_per_m2 || 0),
         minDaysPer100m2: Number(r.min_days_per_100m2 || 0),
-        maxDaysPer100m2: Number(r.max_days_per_100m2 || 0)
+        maxDaysPer100m2: Number(r.max_days_per_100m2 || 0),
+        fixedDaysMin: Number(r.fixed_days_min || 0),
+        fixedDaysMax: Number(r.fixed_days_max || 0)
       }));
 
     const options: SalesOption[] = computeAllOptions(area, rates);

@@ -45,6 +45,8 @@ export default function BomSimulator() {
   const [overrides, setOverrides] = useState<Partial<Record<AreaKey, string>>>({});
   const [removedRooms, setRemovedRooms] = useState<string[]>([]); // غرف محذوفة من الأسقف المعلقة
   const [result, setResult] = useState<BomResult | null>(null);
+  const [excluded, setExcluded] = useState<string[]>([]); // خامات مستبعدة من تقرير الـ PDF
+  const [includeAreas, setIncludeAreas] = useState(true);
 
   useEffect(() => {
     async function load() {
@@ -104,26 +106,39 @@ export default function BomSimulator() {
     return out;
   }
 
-  function touch() { setResult(null); }
+  function touch() { setResult(null); setExcluded([]); }
 
   function handleCalculate() {
     if (!(totalArea > 0)) { alert("أدخل مساحة الشقة الإجمالية بالمتر المربع."); return; }
     setResult(computeBom(items, materials, factors, { ...baseInput, overrides: numericOverrides() }));
   }
 
+  // اختيار البنود والخامات اللي تدخل تقرير الـ PDF
+  const isIncluded = (id: string) => !excluded.includes(id);
+  const toggleLine = (id: string) => setExcluded((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  const toggleGroup = (ids: string[]) =>
+    setExcluded((p) => (ids.every((id) => !p.includes(id)) ? [...p, ...ids] : p.filter((x) => !ids.includes(x))));
+  const selectedCount = result ? result.groups.reduce((s, g) => s + g.lines.filter((l) => isIncluded(l.materialId)).length, 0) : 0;
+
   function handleExport() {
     if (!result) return;
+    if (selectedCount === 0 && !includeAreas) { alert("اختار بند أو خامة واحدة على الأقل للتصدير."); return; }
     const a = result.areas;
-    let md =
-      `## المساحات الهندسية المستنتجة\n| البيان | القيمة |\n|---|---|\n` +
-      (Object.keys(a) as AreaKey[])
-        .filter((k) => k !== "paint_area" && (a[k] > 0))
-        .map((k) => `| ${AREA_LABELS[k]} | ${fmt(a[k])} |`).join("\n") + "\n\n";
+    let md = "";
+    if (includeAreas) {
+      md +=
+        `## المساحات الهندسية المستنتجة\n| البيان | القيمة |\n|---|---|\n` +
+        (Object.keys(a) as AreaKey[])
+          .filter((k) => k !== "paint_area" && (a[k] > 0))
+          .map((k) => `| ${AREA_LABELS[k]} | ${fmt(a[k])} |`).join("\n") + "\n\n";
+    }
     result.groups.forEach((g) => {
+      const lines = g.lines.filter((l) => isIncluded(l.materialId));
+      if (lines.length === 0) return;
       md += `## ${g.item.name_ar}\n| الخامة | الكمية | الوحدة | طريقة الحساب |\n|---|---|---|---|\n` +
-        g.lines.map((l) => `| ${l.name} | ${fmt(l.quantity)} | ${l.unit} | ${l.basis} |`).join("\n") + "\n\n";
+        lines.map((l) => `| ${l.name} | ${fmt(l.quantity)} | ${l.unit} | ${l.basis} |`).join("\n") + "\n\n";
     });
-    if (result.info.length) md += result.info.map((x) => `- ${x.label}: ${x.value}`).join("\n") + "\n\n";
+    if (result.info.length && selectedCount > 0) md += result.info.map((x) => `- ${x.label}: ${x.value}`).join("\n") + "\n\n";
     md += `> ${BOM_FINAL_NOTE}\n`;
     openReportPdf({
       title: "حصر الكميات المبدئي",
@@ -230,13 +245,24 @@ export default function BomSimulator() {
           {result.groups.map((g) => (
             <div key={g.item.key} className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">{g.item.name_ar}</h4>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={g.lines.every((l) => isIncluded(l.materialId))}
+                    onChange={() => toggleGroup(g.lines.map((l) => l.materialId))}
+                    aria-label={`تضمين بند ${g.item.name_ar} في التقرير`}
+                  />
+                  <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">{g.item.name_ar}</h4>
+                </label>
                 <span className="text-[10px] text-gray-500 font-bold">مجموعة {g.item.active_set === "A" ? "المعاملات الفنية" : "الحصر لكل 1م²"}</span>
               </div>
               {g.lines.map((l) => (
                 <div key={l.materialId} className="border-b border-[#1f2d4d] last:border-0 pb-2 last:pb-0">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-white text-xs font-black">{l.name}</span>
+                    <label className="flex items-center gap-2 cursor-pointer min-w-0">
+                      <input type="checkbox" checked={isIncluded(l.materialId)} onChange={() => toggleLine(l.materialId)} />
+                      <span className="text-white text-xs font-black">{l.name}</span>
+                    </label>
                     <span className="text-[#D4AF37] text-xs font-black" dir="ltr">{fmt(l.quantity)} {l.unit}</span>
                   </div>
                   <p className="text-gray-500 text-[10px] font-bold mt-1 leading-relaxed">{l.basis}</p>
@@ -248,7 +274,18 @@ export default function BomSimulator() {
             <p key={x.label} className="text-gray-300 text-[11px] font-bold">• {x.label}: {x.value}</p>
           ))}
           <div className="bg-[#D4AF37]/10 border-r-4 border-[#D4AF37] rounded-lg p-3 text-amber-100 text-xs font-bold">{result.note}</div>
-          <GoldButton onClick={handleExport}>📄 تصدير PDF</GoldButton>
+          <div className="bg-[#07132a] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
+            <p className="text-[#D4AF37] text-[11px] font-black">اختار اللي يدخل تقرير الـ PDF (علّم على البنود أو الخامات فوق)</p>
+            <label className="flex items-center gap-2 text-xs font-bold text-gray-300 cursor-pointer">
+              <input type="checkbox" checked={includeAreas} onChange={(e) => setIncludeAreas(e.target.checked)} />
+              تضمين جدول المساحات المستنتجة
+            </label>
+            <div className="flex flex-wrap gap-2">
+              <GoldButton onClick={handleExport}>📄 تصدير المحدد ({selectedCount} خامة) PDF</GoldButton>
+              <GoldButton toggle active={false} onClick={() => setExcluded([])}>تحديد الكل</GoldButton>
+              <GoldButton toggle active={false} onClick={() => setExcluded(result.groups.flatMap((g) => g.lines.map((l) => l.materialId)))}>إلغاء الكل</GoldButton>
+            </div>
+          </div>
         </div>
       )}
     </div>

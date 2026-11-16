@@ -57,13 +57,14 @@ async function loadGrounding(id: EmployeeId, db: any): Promise<any> {
   if (id === "sales") {
     const { data } = await db
       .from("quick_estimate_prices")
-      .select("level, min_price_per_m2, max_price_per_m2, min_days_per_100m2, max_days_per_100m2");
+      .select("level, min_price_per_m2, max_price_per_m2, min_days_per_100m2, max_days_per_100m2, fixed_days_min, fixed_days_max");
     return {
       finishingLevels: FINISH_LEVELS.map((l) => {
         const r = (data || []).find((x: any) => x.level === l.key);
         return {
           level: l.label,
           pricePerM2: r && num(r.min_price_per_m2) > 0 ? `${num(r.min_price_per_m2)} - ${num(r.max_price_per_m2)} جنيه` : "غير مضبوط",
+          fixedDuration: r && num(r.fixed_days_min) > 0 ? `${num(r.fixed_days_min)} - ${num(r.fixed_days_max)} يوم (مدة ثابتة للنظام)` : "غير مضبوطة",
           daysPer100m2: r && num(r.min_days_per_100m2) > 0 ? `${num(r.min_days_per_100m2)} - ${num(r.max_days_per_100m2)} يوم` : "غير مضبوط"
         };
       })

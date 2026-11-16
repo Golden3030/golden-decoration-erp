@@ -8,6 +8,8 @@ export interface LevelRates {
   maxPricePerM2: number;
   minDaysPer100m2: number;
   maxDaysPer100m2: number;
+  fixedDaysMin?: number;   // مدة ثابتة بالأيام لنظام التشطيب (تتقدم على المعدل بالمتر لو اتضبطت)
+  fixedDaysMax?: number;
 }
 
 export interface SalesOption {
@@ -22,6 +24,7 @@ export interface SalesOption {
 
 export function computeOption(area: number, level: FinishLevel, rates?: LevelRates): SalesOption {
   const hasPrice = !!rates && rates.minPricePerM2 > 0 && rates.maxPricePerM2 >= rates.minPricePerM2;
+  const hasFixed = !!rates && (rates.fixedDaysMin ?? 0) > 0 && (rates.fixedDaysMax ?? 0) >= (rates.fixedDaysMin ?? 0);
   const hasDays = !!rates && rates.minDaysPer100m2 > 0 && rates.maxDaysPer100m2 >= rates.minDaysPer100m2;
   return {
     level,
@@ -29,8 +32,9 @@ export function computeOption(area: number, level: FinishLevel, rates?: LevelRat
     dbLevel: levelDbValue(level),
     minCost: hasPrice ? Math.round(area * rates!.minPricePerM2) : null,
     maxCost: hasPrice ? Math.round(area * rates!.maxPricePerM2) : null,
-    minDays: hasDays ? Math.max(1, Math.round((area / 100) * rates!.minDaysPer100m2)) : null,
-    maxDays: hasDays ? Math.max(1, Math.round((area / 100) * rates!.maxDaysPer100m2)) : null
+    // المدة الثابتة للنظام أولاً، وإلا بالمعدل لكل 100 م²
+    minDays: hasFixed ? rates!.fixedDaysMin! : hasDays ? Math.max(1, Math.round((area / 100) * rates!.minDaysPer100m2)) : null,
+    maxDays: hasFixed ? rates!.fixedDaysMax! : hasDays ? Math.max(1, Math.round((area / 100) * rates!.maxDaysPer100m2)) : null
   };
 }
 

@@ -170,7 +170,7 @@ export async function POST(request: Request) {
 
       const { data: priceRow } = await supabaseAdmin
         .from("quick_estimate_prices")
-        .select("min_price_per_m2, max_price_per_m2, min_days_per_100m2, max_days_per_100m2")
+        .select("min_price_per_m2, max_price_per_m2, min_days_per_100m2, max_days_per_100m2, fixed_days_min, fixed_days_max")
         .eq("level", level)
         .maybeSingle();
 
@@ -183,7 +183,9 @@ export async function POST(request: Request) {
               minPricePerM2: Number(priceRow.min_price_per_m2 || 0),
               maxPricePerM2: Number(priceRow.max_price_per_m2 || 0),
               minDaysPer100m2: Number(priceRow.min_days_per_100m2 || 0),
-              maxDaysPer100m2: Number(priceRow.max_days_per_100m2 || 0)
+              maxDaysPer100m2: Number(priceRow.max_days_per_100m2 || 0),
+              fixedDaysMin: Number(priceRow.fixed_days_min || 0),
+              fixedDaysMax: Number(priceRow.fixed_days_max || 0)
             }
           : undefined
       );

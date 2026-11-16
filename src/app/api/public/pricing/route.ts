@@ -13,7 +13,7 @@ export async function GET() {
     );
     const { data, error } = await db
       .from("quick_estimate_prices")
-      .select("level, min_price_per_m2, max_price_per_m2, min_days_per_100m2, max_days_per_100m2");
+      .select("level, min_price_per_m2, max_price_per_m2, min_days_per_100m2, max_days_per_100m2, fixed_days_min, fixed_days_max");
     if (error) throw error;
 
     const levels: Record<string, {
@@ -21,6 +21,8 @@ export async function GET() {
       maxPricePerM2: number;
       minDaysPer100m2: number | null;
       maxDaysPer100m2: number | null;
+      fixedDaysMin: number | null;
+      fixedDaysMax: number | null;
     }> = {};
 
     (data || []).forEach((r: any) => {
@@ -30,11 +32,16 @@ export async function GET() {
       const dmin = Number(r.min_days_per_100m2);
       const dmax = Number(r.max_days_per_100m2);
       const hasDays = dmin > 0 && dmax >= dmin;
+      const fmin = Number(r.fixed_days_min);
+      const fmax = Number(r.fixed_days_max);
+      const hasFixed = fmin > 0 && fmax >= fmin;
       levels[r.level] = {
         minPricePerM2: min,
         maxPricePerM2: max,
         minDaysPer100m2: hasDays ? dmin : null,
-        maxDaysPer100m2: hasDays ? dmax : null
+        maxDaysPer100m2: hasDays ? dmax : null,
+        fixedDaysMin: hasFixed ? fmin : null,
+        fixedDaysMax: hasFixed ? fmax : null
       };
     });
 
