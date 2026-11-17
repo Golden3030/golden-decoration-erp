@@ -200,3 +200,49 @@ export function computeBom(
 
   return { areas, groups, info, note: BOM_FINAL_NOTE };
 }
+// ---------- التقدير السريع (مكالمة عميل): نفس الجداول لكن بخيارات حالة الشقة والجبس بورد ----------
+export interface QuickBomInput {
+  totalArea: number;
+  bedrooms: number;
+  bathrooms: number;
+  kitchens: number;
+  receptions: number;
+  state: "brick" | "plastered"; // على الطوب الأحمر أو على المحارة (المحارة لا تُحتسب لو الشقة متحارة)
+  gypsumShare: number;          // نسبة الأسقف المعلقة بالجبس بورد من الشقة (0 = بدون جبس بورد)
+}
+
+export function computeQuickBom(
+  items: BomItem[],
+  materials: BomMaterial[],
+  factors: BomRoomFactor[],
+  p: QuickBomInput
+): BomResult {
+  const base: SimInput = {
+    totalArea: p.totalArea,
+    bedrooms: p.bedrooms,
+    bathrooms: Math.max(1, p.bathrooms),
+    kitchens: Math.max(1, p.kitchens),
+    receptions: Math.max(1, p.receptions)
+  };
+
+  // كل البنود ما عدا الجبس بورد (والمحارة لو الشقة متحارة). الأسقف تُدهن كلها حتى بدون جبس بورد.
+  const main = computeBom(
+    items.filter((i) => i.key !== "gypsum" && !(p.state === "plastered" && i.key === "plaster")),
+    materials, factors, { ...base, ceilingShare: 1 }
+  );
+
+  let gypsumGroups: BomGroup[] = [];
+  const share = Math.min(1, Math.max(0, p.gypsumShare));
+  const gypsumItem = items.find((i) => i.key === "gypsum");
+  if (share > 0 && gypsumItem) {
+    // الجبس بورد على الغرف المختارة فقط: المساحة والمحيط يتناسبان مع نسبتها
+    gypsumGroups = computeBom([gypsumItem], materials, factors, {
+      ...base,
+      ceilingShare: share,
+      overrides: { perimeter_ml: p.totalArea * DEFAULT_RATIOS.perimeter * share }
+    }).groups;
+  }
+
+  const groups = [...main.groups, ...gypsumGroups].sort((a, b) => a.item.sort_order - b.item.sort_order);
+  return { areas: main.areas, groups, info: main.info, note: BOM_FINAL_NOTE };
+}

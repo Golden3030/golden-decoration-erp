@@ -14,8 +14,10 @@ import {
   type ApartmentState,
   type Coeff,
   type TakeoffCoefficients,
+  type TakeoffResult,
   type TakeoffRoom
 } from "@/lib/takeoffEngine";
+import { computeQuickBom, type BomItem, type BomMaterial, type BomRoomFactor } from "@/lib/bomEngine";
 
 // يضمن عدم انقطاع الاتصال على Vercel عند توليد التقارير
 export const maxDuration = 60;
@@ -143,29 +145,64 @@ export async function POST(request: Request) {
       const level: FinishLevel = isFinishLevel(q.level) ? q.level : DEFAULT_FINISH_LEVEL;
       const requestedCeilingRooms: string[] = (Array.isArray(q.ceilingRooms) ? q.ceilingRooms : []).map(String);
 
-      const rooms = buildQuickRooms({
-        totalArea,
+      const counts = {
         bedrooms: clamp(q.bedrooms, 0, 8, 3),
         bathrooms: clamp(q.bathrooms, 1, 6, 2),
         receptions: clamp(q.receptions, 1, 4, 1),
         kitchens: clamp(q.kitchens, 1, 2, 1),
         corridors: clamp(q.corridors, 0, 2, 1)
-      });
+      };
+      const rooms = buildQuickRooms({ totalArea, ...counts });
       const ceilingNames = requestedCeilingRooms.filter((n) => rooms.some((r) => r.name === n));
+      const roomsTotal = rooms.reduce((s, r) => s + r.area, 0) || 1;
+      const gypsumShare = ceilingNames.length > 0 ? quickCeilingArea(rooms, ceilingNames) / roomsTotal : 0;
 
-      result = computeTakeoff({
-        rooms,
-        state,
-        ceilingHeight: null,
-        ceilingArea: quickCeilingArea(rooms, ceilingNames),
-        coeffs
-      });
-      if (ceilingNames.length > 0) {
-        result.assumptions.push("الجبس بورد محسوب في: " + ceilingNames.join("، ") + ".");
+      // معاملات الحصر الفنية من الإعدادات (نفس مصدر المحاكي)
+      const [itemsRes, matsRes, facRes] = await Promise.all([
+        supabaseAdmin.from("takeoff_items").select("*"),
+        supabaseAdmin.from("takeoff_materials").select("*"),
+        supabaseAdmin.from("takeoff_room_factors").select("*")
+      ]);
+      if (itemsRes.error || matsRes.error || facRes.error || !(itemsRes.data || []).length) {
+        return NextResponse.json(
+          { error: "جداول معاملات الحصر الفنية غير جاهزة. شغّل ملف takeoff_bom_setup.sql في Supabase أولاً." },
+          { status: 400 }
+        );
       }
-      result.assumptions.unshift(
-        "تقدير سريع بدون معاينة: المساحة موزعة على الغرف بأوزان تقديرية، والأرقام الفعلية قد تختلف بعد المعاينة والمقايسة."
+      const bom = computeQuickBom(
+        itemsRes.data as BomItem[],
+        (matsRes.data as any[]).map((m) => ({ ...m, coefficient: Number(m.coefficient), pack_size: Number(m.pack_size) })) as BomMaterial[],
+        (facRes.data as any[]).map((f) => ({ ...f, factor: Number(f.factor) })) as BomRoomFactor[],
+        { totalArea, ...counts, state, gypsumShare }
       );
+
+      const a = bom.areas;
+      const quickResult: TakeoffResult = {
+        rooms,
+        lines: bom.groups.flatMap((g) =>
+          g.lines.map((l) => ({ stage: g.item.name_ar, item: l.name, quantity: l.quantity, unit: l.unit, basis: l.basis }))
+        ),
+        assumptions: [
+          "تقدير سريع بدون معاينة: الكميات من جدول المعاملات الفنية في الإعدادات، والأرقام الفعلية قد تختلف بعد المعاينة والمقايسة.",
+          `المساحات مستنتجة من مساحة الشقة: حوائط ${Math.round(a.wall_area)} م²، أسقف ${Math.round(a.ceiling_area)} م²، أرضيات ${Math.round(a.floor_area)} م²، سيراميك حوائط ${Math.round(a.wall_tile_area)} م²، عزل ${Math.round(a.waterproof_area)} م²، محيط ${Math.round(a.perimeter_ml)} م.ط.`,
+          state === "brick" ? "الشقة على الطوب الأحمر: أعمال المحارة محسوبة." : "الشقة على المحارة: أعمال المحارة غير محسوبة.",
+          ceilingNames.length > 0
+            ? "الجبس بورد محسوب في: " + ceilingNames.join("، ") + "."
+            : "لا توجد أسقف جبس بورد مختارة، فلم تُحتسب خاماتها (الأسقف تُدهن كلها).",
+          ...bom.info.map((x) => `${x.label}: ${x.value}`),
+          bom.note
+        ],
+        warnings: [],
+        totals: {
+          floorArea: Math.round(a.floor_area * 10) / 10,
+          netWallArea: Math.round(a.wall_area * 10) / 10,
+          plasterArea: state === "brick" ? Math.round(a.wall_area * 10) / 10 : 0,
+          paintArea: Math.round(a.paint_area * 10) / 10,
+          ceilingArea: Math.round(gypsumShare * a.ceiling_area * 10) / 10
+        }
+      };
+      result = quickResult;
+
       contextLabel = `تقدير سريع لعميل غير مسجل: شقة ${totalArea} م²، ${rooms.filter(r => r.kind === "bedroom").length} غرف نوم، مستوى تشطيب ${levelLabel(level)}`;
 
       const { data: priceRow } = await supabaseAdmin

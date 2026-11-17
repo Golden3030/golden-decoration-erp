@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { isOnline } from "@/lib/offline-sync";
 import GoldButton from "@/components/ui/GoldButton";
 import CloseButton from "@/components/ui/CloseButton";
@@ -57,6 +58,7 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
   const [result, setResult] = useState<EstimateResult | null>(null);
   const [copied, setCopied] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
+  const router = useRouter();
 
   // غرف الشقة الناتجة من الأعداد المختارة، وتُستخدم لاختيار غرف الجبس بورد بالاسم
   const roomOptions = quickRoomNames({
@@ -149,6 +151,38 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
         setLoading(false);
       }
     }
+  }
+
+  // الخطوة التالية بعد التقدير السريع (مكالمة عميل): تسجيل العميل وفتح مشروعه والتقدير منقول له
+  function handleContinueToCRM() {
+    if (!result || result.mode !== "quick") return;
+    const levelInfo = FINISH_LEVELS.find((l) => l.key === level) || FINISH_LEVELS[0];
+    try {
+      sessionStorage.setItem(
+        "salesLeadDraft",
+        JSON.stringify({
+          area: Number(totalArea),
+          levelLabel: levelInfo.label,
+          dbLevel: levelInfo.dbLevel,
+          levelSpecified: true,
+          minCost: result.cost?.min ?? null,
+          maxCost: result.cost?.max ?? null,
+          minDays: result.duration?.minDays ?? null,
+          maxDays: result.duration?.maxDays ?? null,
+          counts: {
+            bedrooms: Number(bedrooms),
+            bathrooms: Number(bathrooms),
+            receptions: Number(receptions),
+            kitchens: Number(kitchens)
+          },
+          location: "",
+          createdAt: Date.now()
+        })
+      );
+    } catch (e) {
+      console.warn("تعذّر حفظ مسودة التقدير", e);
+    }
+    router.push("/CRM?newLead=1");
   }
 
   async function handleCopy() {
@@ -368,6 +402,16 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
                 ) : (
                   <p className="text-gray-300 text-xs font-bold">{result.costNote}</p>
                 )}
+              </div>
+            )}
+
+            {result.mode === "quick" && (
+              <div className="bg-[#07132a] border border-[#D4AF37]/40 rounded-xl p-4 space-y-3">
+                <p className="text-[#D4AF37] font-black text-xs">الخطوة التالية: لو العميل موافق</p>
+                <p className="text-gray-300 text-[11px] font-bold leading-relaxed">
+                  سجّل العميل (الاسم والموبايل) وهيتفتحله مشروع جاهز بالمساحة والمستوى وعدد الغرف وقيمة التقدير، وتكمل المقايسة من هناك.
+                </p>
+                <GoldButton size="fill" onClick={handleContinueToCRM}>👤 تسجيل العميل وفتح مشروعه</GoldButton>
               </div>
             )}
 
