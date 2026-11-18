@@ -58,8 +58,8 @@ export default function BomSimulator() {
       if (i.error || m.error || f.error) {
         setLoadError("تعذّر تحميل جداول المعاملات. تأكد من تشغيل ملف takeoff_bom_setup.sql في Supabase.");
       } else {
-        setItems((i.data || []) as BomItem[]);
-        setMaterials(((m.data || []) as any[]).map((x) => ({ ...x, coefficient: Number(x.coefficient), pack_size: Number(x.pack_size) })));
+        setItems(((i.data || []) as any[]).map((x) => ({ ...x, labor_per_m2: Number(x.labor_per_m2 || 0) })) as BomItem[]);
+        setMaterials(((m.data || []) as any[]).map((x) => ({ ...x, coefficient: Number(x.coefficient), pack_size: Number(x.pack_size), unit_price: Number(x.unit_price || 0) })));
         setFactors(((f.data || []) as any[]).map((x) => ({ ...x, factor: Number(x.factor) })));
         if ((i.data || []).length === 0) setLoadError("جداول المعاملات فاضية. شغّل ملف takeoff_bom_setup.sql في Supabase.");
       }
@@ -119,6 +119,18 @@ export default function BomSimulator() {
   const toggleGroup = (ids: string[]) =>
     setExcluded((p) => (ids.every((id) => !p.includes(id)) ? [...p, ...ids] : p.filter((x) => !ids.includes(x))));
   const selectedCount = result ? result.groups.reduce((s, g) => s + g.lines.filter((l) => isIncluded(l.materialId)).length, 0) : 0;
+  // تكلفة المحدد: خامات الخامات المختارة + مصنعية كل بند فيه خامة مختارة
+  const selectedTotals = (() => {
+    if (!result) return { materials: 0, labor: 0, grand: 0 };
+    let materials = 0, labor = 0;
+    result.groups.forEach((g) => {
+      const sel = g.lines.filter((l) => isIncluded(l.materialId));
+      if (sel.length === 0) return;
+      materials += sel.reduce((s, l) => s + l.cost, 0);
+      labor += g.laborCost;
+    });
+    return { materials, labor, grand: materials + labor };
+  })();
 
   function handleExport() {
     if (!result) return;
@@ -132,12 +144,23 @@ export default function BomSimulator() {
           .filter((k) => k !== "paint_area" && (a[k] > 0))
           .map((k) => `| ${AREA_LABELS[k]} | ${fmt(a[k])} |`).join("\n") + "\n\n";
     }
+    const priced = result.groups.some((g) => g.lines.some((l) => isIncluded(l.materialId) && l.unitPrice > 0));
     result.groups.forEach((g) => {
       const lines = g.lines.filter((l) => isIncluded(l.materialId));
       if (lines.length === 0) return;
-      md += `## ${g.item.name_ar}\n| الخامة | الكمية | الوحدة | طريقة الحساب |\n|---|---|---|---|\n` +
-        lines.map((l) => `| ${l.name} | ${fmt(l.quantity)} | ${l.unit} | ${l.basis} |`).join("\n") + "\n\n";
+      md += priced
+        ? `## ${g.item.name_ar}\n| الخامة | الكمية | الوحدة | سعر الوحدة | التكلفة | طريقة الحساب |\n|---|---|---|---|---|---|\n` +
+          lines.map((l) => `| ${l.name} | ${fmt(l.quantity)} | ${l.unit} | ${l.unitPrice > 0 ? fmt(l.unitPrice) : "-"} | ${l.cost > 0 ? fmt(l.cost) : "-"} | ${l.basis} |`).join("\n") + "\n\n"
+        : `## ${g.item.name_ar}\n| الخامة | الكمية | الوحدة | طريقة الحساب |\n|---|---|---|---|\n` +
+          lines.map((l) => `| ${l.name} | ${fmt(l.quantity)} | ${l.unit} | ${l.basis} |`).join("\n") + "\n\n";
+      const mat = lines.reduce((s, l) => s + l.cost, 0);
+      if (priced && (mat > 0 || g.laborCost > 0)) {
+        md += `**خامات: ${fmt(mat)} جنيه | مصنعيات: ${fmt(g.laborCost)} جنيه | إجمالي البند: ${fmt(mat + g.laborCost)} جنيه**\n\n`;
+      }
     });
+    if (priced) {
+      md += `## إجمالي التكلفة التقديرية\n| البيان | القيمة (جنيه) |\n|---|---|\n| إجمالي الخامات | ${fmt(selectedTotals.materials)} |\n| إجمالي المصنعيات | ${fmt(selectedTotals.labor)} |\n| **الإجمالي** | **${fmt(selectedTotals.grand)}** |\n\n`;
+    }
     if (result.info.length && selectedCount > 0) md += result.info.map((x) => `- ${x.label}: ${x.value}`).join("\n") + "\n\n";
     md += `> ${BOM_FINAL_NOTE}\n`;
     openReportPdf({
@@ -254,7 +277,11 @@ export default function BomSimulator() {
                   />
                   <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">{g.item.name_ar}</h4>
                 </label>
-                <span className="text-[10px] text-gray-500 font-bold">مجموعة {g.item.active_set === "A" ? "المعاملات الفنية" : "الحصر لكل 1م²"}</span>
+                <span className="text-[10px] text-gray-500 font-bold text-left">
+                  {g.totalCost > 0
+                    ? `خامات ${fmt(g.materialsCost)} + مصنعيات ${fmt(g.laborCost)} = ${fmt(g.totalCost)} ج.م`
+                    : `مجموعة ${g.item.active_set === "A" ? "المعاملات الفنية" : "الحصر لكل 1م²"}`}
+                </span>
               </div>
               {g.lines.map((l) => (
                 <div key={l.materialId} className="border-b border-[#1f2d4d] last:border-0 pb-2 last:pb-0">
@@ -265,7 +292,10 @@ export default function BomSimulator() {
                     </label>
                     <span className="text-[#D4AF37] text-xs font-black" dir="ltr">{fmt(l.quantity)} {l.unit}</span>
                   </div>
-                  <p className="text-gray-500 text-[10px] font-bold mt-1 leading-relaxed">{l.basis}</p>
+                  <p className="text-gray-500 text-[10px] font-bold mt-1 leading-relaxed">
+                    {l.basis}
+                    {l.unitPrice > 0 ? ` | ${fmt(l.quantity)} × ${fmt(l.unitPrice)} = ${fmt(l.cost)} جنيه` : ""}
+                  </p>
                 </div>
               ))}
             </div>
@@ -273,6 +303,21 @@ export default function BomSimulator() {
           {result.info.map((x) => (
             <p key={x.label} className="text-gray-300 text-[11px] font-bold">• {x.label}: {x.value}</p>
           ))}
+          {result.totals.grand > 0 ? (
+            <div className="bg-[#020B1C] border border-[#D4AF37]/50 rounded-xl p-4 space-y-1.5">
+              <p className="text-[#D4AF37] font-black text-xs">إجمالي التكلفة التقديرية (من أسعار ومصنعيات جدول المعاملات)</p>
+              <div className="flex justify-between text-xs font-bold text-gray-300"><span>الخامات</span><span>{fmt(result.totals.materials)} جنيه</span></div>
+              <div className="flex justify-between text-xs font-bold text-gray-300"><span>المصنعيات</span><span>{fmt(result.totals.labor)} جنيه</span></div>
+              <div className="flex justify-between text-sm font-black text-white border-t border-[#1f2d4d] pt-2"><span>الإجمالي</span><span>{fmt(result.totals.grand)} جنيه</span></div>
+              {result.totals.unpricedLines > 0 && (
+                <p className="text-amber-300 text-[10px] font-bold">{result.totals.unpricedLines} خامة بدون سعر وحدة، فالإجمالي ناقص. اضبط أسعارها من تاب ضبط المعاملات الفنية.</p>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-gray-600 p-3 text-gray-400 text-[11px] font-bold">
+              لسه ماتضبطتش أسعار الخامات ولا مصنعيات البنود، فالجدول كميات بس. ضبطها من تاب ضبط المعاملات الفنية عشان يطلع إجمالي التكلفة.
+            </div>
+          )}
           <div className="bg-[#D4AF37]/10 border-r-4 border-[#D4AF37] rounded-lg p-3 text-amber-100 text-xs font-bold">{result.note}</div>
           <div className="bg-[#07132a] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
             <p className="text-[#D4AF37] text-[11px] font-black">اختار اللي يدخل تقرير الـ PDF (علّم على البنود أو الخامات فوق)</p>

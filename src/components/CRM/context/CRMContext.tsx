@@ -12,6 +12,11 @@ export const CRMContext = createContext<any>(null);
 
 // 🌟 تصدير المخطط الفني الموحد للتشطيبات لمنع خطأ الاستيراد بشاشة الـ CRM
 export const DEFAULT_FINISHING_SCHEMA = {
+  // الحصر السريع للمقايسة المبدئية (بنود من جدول المعاملات الفنية)
+  quickBom: {
+    enabled: false,
+    lines: [] as any[]
+  },
   electricity: {
     enabled: true,
     foundation: {

@@ -18,6 +18,11 @@ const ROUNDING_LABELS: Record<Rounding, string> = {
   none: "بدون تقريب"
 };
 const ROOM_LABELS: Record<string, string> = { bedroom: "غرفة نوم", kitchen: "مطبخ", bathroom: "حمام", reception: "ريسبشن" };
+const CATEGORY_OPTIONS: Record<string, string> = {
+  masonry: "المباني", plaster: "المحارة", paint: "الدهانات", flooring: "الأرضيات والسيراميك", ceiling: "الأسقف المعلقة",
+  doors: "الأبواب", aluminum: "الألوميتال", electricity: "الكهرباء", plumbing: "السباكة والصحي", ac: "التكييف",
+  decorations: "الديكورات", ventilation: "التهوية", staircase: "السلم", archMod: "التعديلات المعمارية"
+};
 const FACTOR_LABELS: Record<string, string> = { electric_boxes: "علب الكهرباء لكل غرفة", plumbing_outlets: "مخارج السباكة لكل غرفة" };
 
 type Msg = { type: "ok" | "error"; text: string } | null;
@@ -44,8 +49,8 @@ export default function BomSettings() {
     if (i.error || m.error || f.error) {
       setLoadError("تعذّر تحميل جداول المعاملات. تأكد من تشغيل ملف takeoff_bom_setup.sql في Supabase.");
     } else {
-      setItems((i.data || []) as BomItem[]);
-      setMaterials(((m.data || []) as any[]).map((x) => ({ ...x, coefficient: Number(x.coefficient), pack_size: Number(x.pack_size) })));
+      setItems(((i.data || []) as any[]).map((x) => ({ ...x, labor_per_m2: Number(x.labor_per_m2 || 0) })) as BomItem[]);
+      setMaterials(((m.data || []) as any[]).map((x) => ({ ...x, coefficient: Number(x.coefficient), pack_size: Number(x.pack_size), unit_price: Number(x.unit_price || 0) })));
       setFactors(((f.data || []) as any[]).map((x) => ({ ...x, factor: Number(x.factor) })));
       setLoadError("");
     }
@@ -70,7 +75,8 @@ export default function BomSettings() {
   async function saveMaterial(m: BomMaterial) {
     const coef = Number(m.coefficient);
     const pack = Number(m.pack_size);
-    if (!m.name_ar.trim() || !Number.isFinite(coef) || coef < 0 || !Number.isFinite(pack) || !(pack > 0)) {
+    const price = Number(m.unit_price || 0);
+    if (!m.name_ar.trim() || !Number.isFinite(coef) || coef < 0 || !Number.isFinite(pack) || !(pack > 0) || !Number.isFinite(price) || price < 0) {
       fail("راجع الاسم والمعامل وحجم العبوة (حجم العبوة لازم أكبر من صفر).");
       return;
     }
@@ -86,10 +92,10 @@ export default function BomSettings() {
       }
       const { error } = await supabase.from("takeoff_materials").update({
         name_ar: m.name_ar.trim(), coefficient: coef, coeff_unit: m.coeff_unit, purchase_unit: m.purchase_unit,
-        pack_size: pack, rounding: m.rounding, basis: m.basis, is_active: m.is_active, updated_at: new Date().toISOString()
+        pack_size: pack, unit_price: price, rounding: m.rounding, basis: m.basis, is_active: m.is_active, updated_at: new Date().toISOString()
       }).eq("id", m.id);
       if (error) throw error;
-      setMaterials((prev) => prev.map((x) => (x.id === m.id ? { ...x, coefficient: coef, pack_size: pack } : x)));
+      setMaterials((prev) => prev.map((x) => (x.id === m.id ? { ...x, coefficient: coef, pack_size: pack, unit_price: price } : x)));
       setDirty((d) => ({ ...d, [m.id]: false }));
       ok("تم حفظ الخامة.");
     });
@@ -131,9 +137,15 @@ export default function BomSettings() {
   }
 
   async function saveItem(item: BomItem) {
+    const labor = Number(item.labor_per_m2 || 0);
+    if (!Number.isFinite(labor) || labor < 0) { fail("مصنعية البند لازم تكون رقم صحيح."); return; }
     await run(item.key, async () => {
-      const { error } = await supabase.from("takeoff_items").update({ name_ar: item.name_ar.trim(), golden_notes: item.golden_notes, is_active: item.is_active }).eq("key", item.key);
+      const { error } = await supabase.from("takeoff_items").update({
+        name_ar: item.name_ar.trim(), golden_notes: item.golden_notes, is_active: item.is_active,
+        labor_per_m2: labor, labor_basis: item.labor_basis || "apartment_area", estimate_category: item.estimate_category || "decorations"
+      }).eq("key", item.key);
       if (error) throw error;
+      setItems((prev) => prev.map((i) => (i.key === item.key ? { ...i, labor_per_m2: labor } : i)));
       setDirty((d) => ({ ...d, ["item:" + item.key]: false }));
       ok("تم حفظ بيانات البند.");
     });
@@ -238,7 +250,11 @@ export default function BomSettings() {
                       <label className={miniLabel}>حجم العبوة (لتحويل اللتر لبستلة مثلاً)</label>
                       <input type="text" inputMode="decimal" value={String(m.pack_size)} onChange={(e) => patchMat(m.id, { pack_size: e.target.value.replace(/[^0-9.]/g, "") as any })} className={inputClass} />
                     </div>
-                    <div className="col-span-2">
+                    <div>
+                      <label className={miniLabel}>سعر الوحدة (جنيه)</label>
+                      <input type="text" inputMode="decimal" value={String(m.unit_price ?? 0)} onChange={(e) => patchMat(m.id, { unit_price: e.target.value.replace(/[^0-9.]/g, "") as any })} className={inputClass} />
+                    </div>
+                    <div>
                       <label className={miniLabel}>التقريب</label>
                       <select value={m.rounding} onChange={(e) => patchMat(m.id, { rounding: e.target.value as Rounding })} className={inputClass}>
                         {(Object.keys(ROUNDING_LABELS) as Rounding[]).map((r) => <option key={r} value={r}>{ROUNDING_LABELS[r]}</option>)}
@@ -273,6 +289,34 @@ export default function BomSettings() {
               <GoldButton size="fill" disabled={busy === item.key} onClick={() => addMaterial(item, set)}>+ إضافة الخامة</GoldButton>
             </div>
 
+            <div className="rounded-xl border border-[#1f2d4d] bg-[#020B1C] p-3 space-y-2">
+              <p className="text-[#D4AF37] text-[11px] font-black">مصنعية البند وقسمه في المقايسة</p>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className={miniLabel}>مصنعية البند (جنيه لكل م²)</label>
+                  <input type="text" inputMode="decimal" value={String(item.labor_per_m2 ?? 0)}
+                    onChange={(e) => { setItems((p) => p.map((i) => (i.key === item.key ? { ...i, labor_per_m2: e.target.value.replace(/[^0-9.]/g, "") as any } : i))); setDirty((d) => ({ ...d, ["item:" + item.key]: true })); }}
+                    className={inputClass} />
+                </div>
+                <div>
+                  <label className={miniLabel}>المصنعية تُحسب على</label>
+                  <select value={item.labor_basis || "apartment_area"}
+                    onChange={(e) => { setItems((p) => p.map((i) => (i.key === item.key ? { ...i, labor_basis: e.target.value as Basis } : i))); setDirty((d) => ({ ...d, ["item:" + item.key]: true })); }}
+                    className={inputClass}>
+                    {BASIS_OPTIONS.map((b) => <option key={b} value={b}>{AREA_LABELS[b]}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className={miniLabel}>يظهر في قسم المقايسة</label>
+                  <select value={item.estimate_category || "decorations"}
+                    onChange={(e) => { setItems((p) => p.map((i) => (i.key === item.key ? { ...i, estimate_category: e.target.value } : i))); setDirty((d) => ({ ...d, ["item:" + item.key]: true })); }}
+                    className={inputClass}>
+                    {Object.entries(CATEGORY_OPTIONS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label className={miniLabel}>ملاحظات فنية للبند</label>
               <textarea
@@ -283,7 +327,7 @@ export default function BomSettings() {
               />
               <div className="mt-2 flex justify-end">
                 <GoldButton disabled={!dirty["item:" + item.key] || busy === item.key} onClick={() => saveItem(item)} className="h-9! px-4!">
-                  {dirty["item:" + item.key] ? "حفظ اسم البند والملاحظات" : "محفوظ"}
+                  {dirty["item:" + item.key] ? "حفظ بيانات البند" : "محفوظ"}
                 </GoldButton>
               </div>
             </div>

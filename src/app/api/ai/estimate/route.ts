@@ -190,6 +190,11 @@ export async function POST(request: Request) {
             ? "الجبس بورد محسوب في: " + ceilingNames.join("، ") + "."
             : "لا توجد أسقف جبس بورد مختارة، فلم تُحتسب خاماتها (الأسقف تُدهن كلها).",
           ...bom.info.map((x) => `${x.label}: ${x.value}`),
+          ...(bom.totals.grand > 0
+            ? [
+                `تكلفة الخامات والمصنعيات المحسوبة من جدول الحصر الفني (للمراجعة الداخلية): ${Math.round(bom.totals.grand).toLocaleString("en-US")} جنيه (خامات ${Math.round(bom.totals.materials).toLocaleString("en-US")} + مصنعيات ${Math.round(bom.totals.labor).toLocaleString("en-US")})${bom.totals.unpricedLines > 0 ? `، وفيها ${bom.totals.unpricedLines} خامة بدون سعر` : ""}.`
+              ]
+            : []),
           bom.note
         ],
         warnings: [],

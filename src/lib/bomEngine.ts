@@ -15,6 +15,9 @@ export interface BomItem {
   active_set: "A" | "B";
   golden_notes: string | null;
   is_active: boolean;
+  labor_per_m2?: number;          // مصنعية البند (جنيه لكل م² من مساحة الأساس)
+  labor_basis?: Basis;            // المساحة التي تُحسب عليها المصنعية
+  estimate_category?: string | null; // قسم المقايسة الذي يذهب إليه البند
 }
 
 export interface BomMaterial {
@@ -34,6 +37,7 @@ export interface BomMaterial {
   is_active: boolean;
   sort_order: number;
   notes: string | null;
+  unit_price?: number;            // سعر وحدة الشراء بالجنيه
 }
 
 export interface BomRoomFactor {
@@ -121,18 +125,40 @@ export interface BomLine {
   unit: string;
   rawQuantity: number;  // قبل التقريب
   basis: string;        // شرح طريقة الحساب
+  unitPrice: number;    // سعر وحدة الشراء (0 = غير مسعّر)
+  cost: number;         // الكمية × سعر الوحدة
 }
 
 export interface BomGroup {
   item: BomItem;
   lines: BomLine[];
+  materialsCost: number;
+  laborBase: number;    // مساحة حساب المصنعية
+  laborRate: number;    // جنيه لكل م²
+  laborCost: number;
+  totalCost: number;
+}
+
+export interface BomTotals {
+  materials: number;
+  labor: number;
+  grand: number;
+  unpricedLines: number;
 }
 
 export interface BomResult {
   areas: DerivedAreas;
   groups: BomGroup[];
   info: { label: string; value: string }[];
+  totals: BomTotals;
   note: string;
+}
+
+export function sumTotals(groups: BomGroup[]): BomTotals {
+  const materials = groups.reduce((s, g) => s + g.materialsCost, 0);
+  const labor = groups.reduce((s, g) => s + g.laborCost, 0);
+  const unpricedLines = groups.reduce((s, g) => s + g.lines.filter((l) => !(l.unitPrice > 0)).length, 0);
+  return { materials, labor, grand: materials + labor, unpricedLines };
 }
 
 export const BOM_FINAL_NOTE = "جميع الكميات تقريبية للحصر المبدئي، ويتم المراجعة حسب المخططات والمواصفات الفنية للمشروع.";
@@ -187,10 +213,19 @@ export function computeBom(
         rawQuantity: raw,
         basis:
           `${baseText} × ${fmt(m.coefficient)}${extraText}` +
-          (m.pack_size > 1 ? ` ÷ ${fmt(m.pack_size)} للوحدة` : "")
+          (m.pack_size > 1 ? ` ÷ ${fmt(m.pack_size)} للوحدة` : ""),
+        unitPrice: Number(m.unit_price) || 0,
+        cost: qty * (Number(m.unit_price) || 0)
       });
     }
-    if (lines.length > 0) groups.push({ item, lines });
+    if (lines.length > 0) {
+      const materialsCost = lines.reduce((s, l) => s + l.cost, 0);
+      const laborBasis = (item.labor_basis || "apartment_area") as Basis;
+      const laborBase = laborBasis === "per_unit" ? 1 : areas[laborBasis];
+      const laborRate = Number(item.labor_per_m2) || 0;
+      const laborCost = laborBase * laborRate;
+      groups.push({ item, lines, materialsCost, laborBase, laborRate, laborCost, totalCost: materialsCost + laborCost });
+    }
   }
 
   // مخارج السباكة: معلومة إرشادية فقط (لم يحدد النص أي خامة تُضرب فيها)
@@ -198,7 +233,7 @@ export function computeBom(
   const outlets = outletFactors.reduce((s, f) => s + (counts[f.room_type] || 0) * f.factor, 0);
   const info = outlets > 0 ? [{ label: "عدد مخارج السباكة التقديري (حمامات ومطابخ)", value: fmt(outlets) + " مخرج" }] : [];
 
-  return { areas, groups, info, note: BOM_FINAL_NOTE };
+  return { areas, groups, info, totals: sumTotals(groups), note: BOM_FINAL_NOTE };
 }
 // ---------- التقدير السريع (مكالمة عميل): نفس الجداول لكن بخيارات حالة الشقة والجبس بورد ----------
 export interface QuickBomInput {
@@ -244,5 +279,46 @@ export function computeQuickBom(
   }
 
   const groups = [...main.groups, ...gypsumGroups].sort((a, b) => a.item.sort_order - b.item.sort_order);
-  return { areas: main.areas, groups, info: main.info, note: BOM_FINAL_NOTE };
+  return { areas: main.areas, groups, info: main.info, totals: sumTotals(groups), note: BOM_FINAL_NOTE };
+}
+
+// ---------- ربط الحصر بالمقايسة: تحويل نتيجة الحصر لبنود بنفس شكل بنود المقايسة ----------
+export interface EstimateLineShape {
+  category: string;
+  name: string;
+  unit: string;
+  quantity: number;
+  unitPrice: number;
+  laborCost: number;
+  description: string;
+}
+
+export function bomToEstimateLines(groups: BomGroup[]): EstimateLineShape[] {
+  const out: EstimateLineShape[] = [];
+  for (const g of groups) {
+    const category = g.item.estimate_category || "decorations";
+    for (const l of g.lines) {
+      out.push({
+        category,
+        name: `${l.name} (${g.item.name_ar})`,
+        unit: l.unit,
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        laborCost: 0,
+        description: `من الحصر الفني: ${l.basis}`
+      });
+    }
+    if (g.laborCost > 0) {
+      out.push({
+        category,
+        name: `مصنعية ${g.item.name_ar}`,
+        unit: "م²",
+        quantity: Math.round(g.laborBase * 100) / 100,
+        unitPrice: 0,
+        laborCost: Math.round(g.laborCost),
+        description: `مصنعية ${g.item.name_ar}: ${fmt(g.laborBase)} م² × ${fmt(g.laborRate)} جنيه/م²`
+      });
+    }
+  }
+  return out;
 }

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useCRM } from "@/components/CRM/context/CRMContext";
+import QuickBomPanel from "@/components/CRM/estimate/QuickBomPanel";
 import { supabase } from "@/lib/supabaseClient";
 import { generateSequentialCode } from "@/lib/generateSequentialCode";
 import EstimateHeader from "./EstimateHeader";
@@ -1667,6 +1668,23 @@ export function generateDetailedBOQ(crmData: any, dbMaterials: any[], dbSpecs: a
     }
   }
 
+  // بنود الحصر السريع (المقايسة المبدئية من جدول المعاملات الفنية: خامات + مصنعيات)
+  const quickBom = crmData?.finishing?.quickBom;
+  if (quickBom?.enabled && Array.isArray(quickBom.lines)) {
+    quickBom.lines.forEach((l: any, idx: number) => {
+      generated.push({
+        id: `gen-quickbom-${idx}`,
+        category: l.category || "decorations",
+        name: l.name,
+        unit: l.unit,
+        quantity: Number(l.quantity) || 0,
+        unitPrice: Number(l.unitPrice) || 0,
+        laborCost: Number(l.laborCost) || 0,
+        description: l.description || "بند من الحصر السريع (مقايسة مبدئية)"
+      });
+    });
+  }
+
   return generated;
 }
 
@@ -1852,6 +1870,8 @@ export default function InitialEstimate() {
           </div>
         </div>
       </div>
+
+      <QuickBomPanel />
 
       {detailedBOQ.length === 0 ? (
         <div className="p-12 rounded-2xl bg-[#020B1C] border border-[#1f2d4d] border-dashed text-center">
