@@ -8,19 +8,78 @@ import { computeOption } from "@/lib/salesEstimate";
 import {
   buildQuickRooms,
   classifyRoom,
-  computeTakeoff,
   quickCeilingArea,
-  quickCostRange,
   type ApartmentState,
-  type Coeff,
-  type TakeoffCoefficients,
   type TakeoffResult,
   type TakeoffRoom
 } from "@/lib/takeoffEngine";
-import { computeQuickBom, type BomItem, type BomMaterial, type BomRoomFactor } from "@/lib/bomEngine";
+import {
+  computeQuickBom,
+  type BomItem,
+  type BomMaterial,
+  type BomResult,
+  type BomRoomFactor,
+  type LaborConfig,
+  type LaborRate,
+  type PlumbingInstall,
+  type PlumbingTier
+} from "@/lib/bomEngine";
+import { computeProjectBom } from "@/lib/projectBom";
 
 // يضمن عدم انقطاع الاتصال على Vercel عند توليد التقارير
 export const maxDuration = 60;
+
+// جداول الحصر الفني + المصنعيات (نفس المصدر في المحاكي والتقدير السريع والمقايسة ووضع المشروع)
+async function loadBomTables(db: any): Promise<
+  | { ok: true; items: BomItem[]; materials: BomMaterial[]; factors: BomRoomFactor[]; labor: LaborConfig }
+  | { ok: false; error: string }
+> {
+  const [itemsRes, matsRes, facRes, laborRes, plumbRes] = await Promise.all([
+    db.from("takeoff_items").select("*"),
+    db.from("takeoff_materials").select("*"),
+    db.from("takeoff_room_factors").select("*"),
+    db.from("takeoff_labor").select("*"),
+    db.from("takeoff_plumbing_labor").select("*")
+  ]);
+  if (itemsRes.error || matsRes.error || facRes.error || !(itemsRes.data || []).length) {
+    return { ok: false, error: "جداول معاملات الحصر الفنية غير جاهزة. شغّل ملف takeoff_bom_setup.sql في Supabase أولاً." };
+  }
+  if (laborRes.error || plumbRes.error) {
+    return { ok: false, error: "جداول المصنعيات غير جاهزة. شغّل ملف migrate_labor_rates.sql في Supabase أولاً." };
+  }
+  return {
+    ok: true,
+    items: itemsRes.data as BomItem[],
+    materials: (matsRes.data as any[]).map((m) => ({ ...m, coefficient: Number(m.coefficient), pack_size: Number(m.pack_size), unit_price: Number(m.unit_price || 0) })) as BomMaterial[],
+    factors: (facRes.data as any[]).map((f) => ({ ...f, factor: Number(f.factor) })) as BomRoomFactor[],
+    labor: {
+      rates: (laborRes.data as any[]).map((r) => ({ ...r, rate: Number(r.rate || 0) })) as LaborRate[],
+      plumbing: (plumbRes.data as any[]).map((r) => ({ ...r, bathrooms_tier: Number(r.bathrooms_tier), price: Number(r.price || 0) })) as PlumbingTier[]
+    }
+  };
+}
+
+// شكل النتيجة المرسل للواجهة (للعرض وللتصدير PDF)
+function bomPayload(bom: BomResult) {
+  return {
+    areas: bom.areas,
+    groups: bom.groups.map((g) => ({
+      key: g.item.key,
+      name: g.item.name_ar,
+      materialsCost: g.materialsCost,
+      laborCost: g.laborCost,
+      laborBase: g.laborBase,
+      laborRate: g.laborRate,
+      lines: g.lines.map((l) => ({ name: l.name, quantity: l.quantity, unit: l.unit, unitPrice: l.unitPrice, cost: l.cost, basis: l.basis }))
+    })),
+    lump: bom.lumpLabor.map((l) => ({ name: l.name, amount: l.amount, basis: l.basis })),
+    info: bom.info,
+    totals: bom.totals,
+    note: bom.note
+  };
+}
+
+const fmtN = (n: number) => Math.round(n).toLocaleString("en-US");
 
 
 export async function POST(request: Request) {
@@ -44,31 +103,16 @@ export async function POST(request: Request) {
       process.env.SUPABASE_SERVICE_ROLE_KEY || ""
     );
 
-    // 1. معاملات الحصر من صفحة الإعدادات (نفس المصدر القديم، مع تمييز القيم الافتراضية)
-    const { data: dbCoefficients, error: coeffError } = await supabaseAdmin
-      .from("work_item_analysis")
-      .select("*");
-    if (coeffError) console.error("تعذّر قراءة معاملات work_item_analysis:", coeffError.message);
+    const plumbingInstall: PlumbingInstall | undefined =
+      body.plumbingInstall === "buried" || body.plumbingInstall === "regular" ? body.plumbingInstall : undefined;
 
-    const getCoeff = (keyword: string, defaultVal: number): Coeff => {
-      const match = (dbCoefficients || []).find((c: any) => String(c.notes || "").includes(keyword));
-      if (match && Number.isFinite(Number(match.consumption_qty))) {
-        return { value: Number(match.consumption_qty), fromSettings: true, unit: match.unit || undefined };
-      }
-      return { value: defaultVal, fromSettings: false };
-    };
-
-    const coeffs: TakeoffCoefficients = {
-      putty: getCoeff("معجون", 0.2),
-      primer: getCoeff("بطانة", 0.037),
-      finishPaint: getCoeff("دهان نهائي", 0.037),
-      ceramicFloor: getCoeff("سيراميك أرضيات", 1.05),
-      sandFloor: getCoeff("رمل ردم", 0.1),
-      cementFloor: getCoeff("أسمنت تركيب", 0.25)
-    };
+    // 1. جداول الحصر الفني والمصنعيات من الإعدادات (مصدر واحد لكل أوضاع الحصر)
+    const tables = await loadBomTables(supabaseAdmin);
+    if (!tables.ok) return NextResponse.json({ error: tables.error }, { status: 400 });
 
     let contextLabel = "";
-    let result;
+    let result: TakeoffResult;
+    let bomOut: ReturnType<typeof bomPayload> | null = null;
     let cost: { level: string; min: number; max: number } | null = null;
     let duration: { minDays: number; maxDays: number } | null = null;
     let costNote = "";
@@ -97,38 +141,55 @@ export async function POST(request: Request) {
         const row = (specs || []).find((s: any) => s.category === cat);
         try { return row ? JSON.parse(row.value) : {}; } catch { return {}; }
       };
-      const areas = parse("areas");
-      const ceiling = parse("ceiling");
+      const areasSpec = parse("areas");
+      const ceilingSpec = parse("ceiling");
 
-      const rooms: TakeoffRoom[] = Object.entries(areas.values || {})
+      const rooms: TakeoffRoom[] = Object.entries(areasSpec.values || {})
         .map(([name, area]) => ({ name, kind: classifyRoom(name), area: Number(area) }))
         .filter((r) => Number.isFinite(r.area) && r.area > 0);
+      const ceilingSpaces = Object.entries(ceilingSpec.spacesConfig || {})
+        .filter(([, c]: [string, any]) => c?.enabled && Number(c.area) > 0)
+        .map(([name, c]: [string, any]) => ({ name, area: Number(c.area) }));
 
-      if (rooms.length === 0) {
-        return NextResponse.json(
-          { error: "لم تُسجَّل مساحات الغرف لهذا المشروع. سجّلها أولاً في تاب المساحات ثم أعد الحصر." },
-          { status: 400 }
-        );
-      }
-      if (areas.apartmentState !== "brick" && areas.apartmentState !== "plastered") {
-        return NextResponse.json(
-          { error: "حدد حالة الشقة (على الطوب الأحمر أو على المحارة) في تاب المساحات ثم أعد الحصر." },
-          { status: 400 }
-        );
-      }
-
-      const ceilingArea = Object.values(ceiling.spacesConfig || {}).reduce(
-        (sum: number, c: any) => sum + (c?.enabled ? Number(c.area) || 0 : 0), 0
-      );
-
-      result = computeTakeoff({
+      // نفس محرك المحاكي والتقدير السريع، بمساحات مشتقة من الغرف الفعلية (projectBom.ts)
+      const pr = computeProjectBom(tables.items, tables.materials, tables.factors, tables.labor, {
         rooms,
-        state: areas.apartmentState as ApartmentState,
-        ceilingHeight: areas.ceilingHeight ? Number(areas.ceilingHeight) : null,
-        ceilingArea,
-        coeffs,
-        declaredTotalArea: Number(project.area) || undefined
+        state: areasSpec.apartmentState === "brick" || areasSpec.apartmentState === "plastered" ? (areasSpec.apartmentState as ApartmentState) : null,
+        ceilingHeight: Number(areasSpec.ceilingHeight) > 0 ? Number(areasSpec.ceilingHeight) : null,
+        ceilingSpaces,
+        declaredTotalArea: Number(project.area) || undefined,
+        plumbingInstall
       });
+      if (!pr.ok || !pr.bom) {
+        return NextResponse.json({ error: "لا يمكن حساب الحصر قبل استكمال بيانات المشروع:\n- " + pr.blockers.join("\n- ") }, { status: 400 });
+      }
+      const bom = pr.bom;
+      const a = bom.areas;
+      const state = areasSpec.apartmentState as ApartmentState;
+      bomOut = bomPayload(bom);
+      result = {
+        rooms: pr.derived.rooms.map((r) => ({ name: r.name, kind: r.kind, area: r.area })),
+        lines: bom.groups.flatMap((g) =>
+          g.lines.map((l) => ({ stage: g.item.name_ar, item: l.name, quantity: l.quantity, unit: l.unit, basis: l.basis }))
+        ),
+        assumptions: [
+          ...pr.derived.assumptions,
+          `المساحات المشتقة من الغرف: حوائط ${fmtN(a.wall_area)} م²، دهان ${fmtN(a.paint_area)} م²، أسقف ${fmtN(a.ceiling_area)} م²، أرضيات ${fmtN(a.floor_area)} م²، سيراميك حوائط ${fmtN(a.wall_tile_area)} م²، عزل ${fmtN(a.waterproof_area)} م²، وزرة وشادو جاب ${fmtN(a.perimeter_ml)} م.ط.`,
+          ...bom.info.map((x) => `${x.label}: ${x.value}`),
+          ...(bom.totals.grand > 0
+            ? [`تكلفة الخامات والمصنعيات من جدول الحصر الفني (للمراجعة الداخلية): ${fmtN(bom.totals.grand)} جنيه (خامات ${fmtN(bom.totals.materials)} + مصنعيات ${fmtN(bom.totals.labor)})${bom.totals.unpricedLines > 0 ? `، وفيها ${bom.totals.unpricedLines} خامة بدون سعر` : ""}.`]
+            : []),
+          bom.note
+        ],
+        warnings: [...pr.derived.warnings, ...bom.warnings],
+        totals: {
+          floorArea: Math.round(a.floor_area * 10) / 10,
+          netWallArea: Math.round(a.wall_area * 10) / 10,
+          plasterArea: state === "brick" ? Math.round(a.wall_area * 10) / 10 : 0,
+          paintArea: Math.round(a.paint_area * 10) / 10,
+          ceilingArea: pr.derived.gypsum.area
+        }
+      };
       contextLabel = `مشروع (${project.project_name}) للعميل (${project.customers?.name || "عام"})`;
     } else {
       // ---------- وضع التقدير السريع: عميل غير مسجل ----------
@@ -157,24 +218,12 @@ export async function POST(request: Request) {
       const roomsTotal = rooms.reduce((s, r) => s + r.area, 0) || 1;
       const gypsumShare = ceilingNames.length > 0 ? quickCeilingArea(rooms, ceilingNames) / roomsTotal : 0;
 
-      // معاملات الحصر الفنية من الإعدادات (نفس مصدر المحاكي)
-      const [itemsRes, matsRes, facRes] = await Promise.all([
-        supabaseAdmin.from("takeoff_items").select("*"),
-        supabaseAdmin.from("takeoff_materials").select("*"),
-        supabaseAdmin.from("takeoff_room_factors").select("*")
-      ]);
-      if (itemsRes.error || matsRes.error || facRes.error || !(itemsRes.data || []).length) {
-        return NextResponse.json(
-          { error: "جداول معاملات الحصر الفنية غير جاهزة. شغّل ملف takeoff_bom_setup.sql في Supabase أولاً." },
-          { status: 400 }
-        );
-      }
       const bom = computeQuickBom(
-        itemsRes.data as BomItem[],
-        (matsRes.data as any[]).map((m) => ({ ...m, coefficient: Number(m.coefficient), pack_size: Number(m.pack_size) })) as BomMaterial[],
-        (facRes.data as any[]).map((f) => ({ ...f, factor: Number(f.factor) })) as BomRoomFactor[],
-        { totalArea, ...counts, state, gypsumShare }
+        tables.items, tables.materials, tables.factors,
+        { totalArea, ...counts, state, gypsumShare, plumbingInstall },
+        tables.labor
       );
+      bomOut = bomPayload(bom);
 
       const a = bom.areas;
       const quickResult: TakeoffResult = {
@@ -197,7 +246,7 @@ export async function POST(request: Request) {
             : []),
           bom.note
         ],
-        warnings: [],
+        warnings: [...bom.warnings],
         totals: {
           floorArea: Math.round(a.floor_area * 10) / 10,
           netWallArea: Math.round(a.wall_area * 10) / 10,
@@ -239,10 +288,6 @@ export async function POST(request: Request) {
       if (option.minDays !== null && option.maxDays !== null) {
         duration = { minDays: option.minDays, maxDays: option.maxDays };
       }
-    }
-
-    if (coeffError) {
-      result.warnings.unshift("تعذّر قراءة معاملات الإعدادات (" + coeffError.message + ")، فتم استخدام القيم الافتراضية بدلاً منها.");
     }
 
     // 2. دور الذكاء الاصطناعي: مراجعة وشرح وصياغة، بدون تغيير أي رقم
@@ -310,7 +355,8 @@ ${mode === "quick" ? `4) رسالة للعميل: write a short WhatsApp reply (
       duration,
       costNote,
       analysis: responseText,
-      whatsappMessage
+      whatsappMessage,
+      bom: bomOut
     });
   } catch (error: any) {
     console.error("Error in Estimate AI Route:", error);

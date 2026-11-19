@@ -46,6 +46,38 @@ export interface BomRoomFactor {
   factor: number;
 }
 
+// ---------- المصنعيات (تاب منفصل في الإعدادات): بالمتر، أو مقطوعة، أو سباكة حسب عدد الحمامات ونوع التأسيس ----------
+export type LaborKind = "per_m2" | "lump" | "plumbing_tiers";
+export type PlumbingInstall = "buried" | "regular"; // دفن أو عادي
+
+export interface LaborRate {
+  item_key: string;
+  kind: LaborKind;
+  basis: Basis;   // المساحة التي تُحسب عليها المصنعية (للنوع per_m2 فقط)
+  rate: number;   // جنيه لكل م² (per_m2) أو مبلغ مقطوع (lump)
+}
+
+export interface PlumbingTier {
+  bathrooms_tier: 1 | 2 | 3; // 3 = ثلاثة حمامات فأكثر
+  install_type: PlumbingInstall;
+  price: number;
+}
+
+export interface LaborConfig {
+  rates: LaborRate[];
+  plumbing: PlumbingTier[];
+}
+
+export const PLUMBING_INSTALL_LABELS: Record<PlumbingInstall, string> = { buried: "تأسيس دفن", regular: "تأسيس عادي" };
+
+export interface LumpLabor {
+  itemKey: string;
+  name: string;
+  amount: number;
+  basis: string;
+  category: string;
+}
+
 export type DerivedAreas = Record<Exclude<Basis, "per_unit">, number>;
 
 export const AREA_LABELS: Record<Basis, string> = {
@@ -81,6 +113,7 @@ export interface SimInput {
   ceilingShare?: number;                              // نسبة الأسقف المعلقة المختارة (0 إلى 1)، الافتراضي 1
   masonryArea?: number;                               // مساحة المباني (تُدخل يدوياً، الافتراضي 0)
   overrides?: Partial<Record<keyof DerivedAreas, number>>; // تعديل يدوي لأي مساحة مشتقة
+  plumbingInstall?: PlumbingInstall;                  // نوع تأسيس السباكة (دفن أو عادي) لمصنعية السباكة المقطوعة
 }
 
 export function deriveAreas(inp: SimInput): DerivedAreas {
@@ -149,14 +182,16 @@ export interface BomTotals {
 export interface BomResult {
   areas: DerivedAreas;
   groups: BomGroup[];
+  lumpLabor: LumpLabor[];   // مصنعيات مقطوعة (كهرباء، سباكة...) خارج جداول الخامات
   info: { label: string; value: string }[];
+  warnings: string[];
   totals: BomTotals;
   note: string;
 }
 
-export function sumTotals(groups: BomGroup[]): BomTotals {
+export function sumTotals(groups: BomGroup[], lump: LumpLabor[] = []): BomTotals {
   const materials = groups.reduce((s, g) => s + g.materialsCost, 0);
-  const labor = groups.reduce((s, g) => s + g.laborCost, 0);
+  const labor = groups.reduce((s, g) => s + g.laborCost, 0) + lump.reduce((s, l) => s + l.amount, 0);
   const unpricedLines = groups.reduce((s, g) => s + g.lines.filter((l) => !(l.unitPrice > 0)).length, 0);
   return { materials, labor, grand: materials + labor, unpricedLines };
 }
@@ -165,13 +200,71 @@ export const BOM_FINAL_NOTE = "جميع الكميات تقريبية للحصر
 
 const fmt = (n: number) => Number(Math.round(n * 1000) / 1000).toLocaleString("en-US", { maximumFractionDigits: 3 });
 
+// دمج جدول المصنعيات في البنود: البند اللي نوعه "بالمتر" ياخد سعره وأساسه من التاب، وغيره بدون مصنعية متر
+export function applyLaborRates(items: BomItem[], rates: LaborRate[]): BomItem[] {
+  return items.map((it) => {
+    const r = rates.find((x) => x.item_key === it.key);
+    if (r && r.kind === "per_m2") return { ...it, labor_per_m2: r.rate, labor_basis: r.basis };
+    return { ...it, labor_per_m2: 0 };
+  });
+}
+
+// المصنعيات المقطوعة: كهرباء وأمثالها (مبلغ ثابت للشقة)، والسباكة (سعر حسب عدد الحمامات ونوع التأسيس)
+export function computeLumpLabor(
+  items: BomItem[],
+  labor: LaborConfig,
+  bathrooms: number,
+  install: PlumbingInstall | undefined
+): { lines: LumpLabor[]; warnings: string[] } {
+  const lines: LumpLabor[] = [];
+  const warnings: string[] = [];
+  for (const it of items.filter((i) => i.is_active).sort((a, b) => a.sort_order - b.sort_order)) {
+    const r = labor.rates.find((x) => x.item_key === it.key);
+    if (!r) continue;
+    const category = it.estimate_category || "decorations";
+    if (r.kind === "lump") {
+      if (r.rate > 0) {
+        lines.push({ itemKey: it.key, name: `مصنعية ${it.name_ar}`, amount: r.rate, basis: "مصنعية مقطوعة للشقة", category });
+      } else {
+        warnings.push(`مصنعية ${it.name_ar} (مقطوعة) غير مضبوطة في تاب المصنعيات، فلم تُحسب.`);
+      }
+    } else if (r.kind === "plumbing_tiers") {
+      if (!(bathrooms >= 1)) {
+        warnings.push(`مصنعية ${it.name_ar} لم تُحسب لأن عدد الحمامات صفر.`);
+        continue;
+      }
+      if (!install) {
+        warnings.push(`مصنعية ${it.name_ar} لم تُحسب: اختر نوع التأسيس (دفن أو عادي).`);
+        continue;
+      }
+      const tier = (bathrooms >= 3 ? 3 : bathrooms) as 1 | 2 | 3;
+      const row = labor.plumbing.find((x) => x.bathrooms_tier === tier && x.install_type === install);
+      if (row && row.price > 0) {
+        const tierLabel = tier === 1 ? "حمام واحد" : tier === 2 ? "حمامان" : "ثلاثة حمامات فأكثر";
+        lines.push({
+          itemKey: it.key,
+          name: `مصنعية ${it.name_ar}`,
+          amount: row.price,
+          basis: `مقطوعة: ${tierLabel} (${bathrooms} فعلياً)، ${PLUMBING_INSTALL_LABELS[install]}`,
+          category
+        });
+      } else {
+        warnings.push(`سعر مصنعية ${it.name_ar} لـ ${tier === 1 ? "حمام واحد" : tier === 2 ? "حمامين" : "ثلاثة حمامات فأكثر"} (${PLUMBING_INSTALL_LABELS[install]}) غير مضبوط في تاب المصنعيات.`);
+      }
+    }
+  }
+  return { lines, warnings };
+}
+
 export function computeBom(
   items: BomItem[],
   materials: BomMaterial[],
   factors: BomRoomFactor[],
-  inp: SimInput
+  inp: SimInput,
+  labor?: LaborConfig
 ): BomResult {
   const areas = deriveAreas(inp);
+  if (labor) items = applyLaborRates(items, labor.rates);
   const counts: Record<string, number> = {
     bedroom: inp.bedrooms, kitchen: inp.kitchens, bathroom: inp.bathrooms, reception: inp.receptions
   };
@@ -233,7 +326,11 @@ export function computeBom(
   const outlets = outletFactors.reduce((s, f) => s + (counts[f.room_type] || 0) * f.factor, 0);
   const info = outlets > 0 ? [{ label: "عدد مخارج السباكة التقديري (حمامات ومطابخ)", value: fmt(outlets) + " مخرج" }] : [];
 
-  return { areas, groups, info, totals: sumTotals(groups), note: BOM_FINAL_NOTE };
+  const lump = labor ? computeLumpLabor(items, labor, inp.bathrooms, inp.plumbingInstall) : { lines: [], warnings: [] };
+  return {
+    areas, groups, lumpLabor: lump.lines, info, warnings: lump.warnings,
+    totals: sumTotals(groups, lump.lines), note: BOM_FINAL_NOTE
+  };
 }
 // ---------- التقدير السريع (مكالمة عميل): نفس الجداول لكن بخيارات حالة الشقة والجبس بورد ----------
 export interface QuickBomInput {
@@ -244,26 +341,29 @@ export interface QuickBomInput {
   receptions: number;
   state: "brick" | "plastered"; // على الطوب الأحمر أو على المحارة (المحارة لا تُحتسب لو الشقة متحارة)
   gypsumShare: number;          // نسبة الأسقف المعلقة بالجبس بورد من الشقة (0 = بدون جبس بورد)
+  plumbingInstall?: PlumbingInstall; // نوع تأسيس السباكة (دفن أو عادي)
 }
 
 export function computeQuickBom(
   items: BomItem[],
   materials: BomMaterial[],
   factors: BomRoomFactor[],
-  p: QuickBomInput
+  p: QuickBomInput,
+  labor?: LaborConfig
 ): BomResult {
   const base: SimInput = {
     totalArea: p.totalArea,
     bedrooms: p.bedrooms,
     bathrooms: Math.max(1, p.bathrooms),
     kitchens: Math.max(1, p.kitchens),
-    receptions: Math.max(1, p.receptions)
+    receptions: Math.max(1, p.receptions),
+    plumbingInstall: p.plumbingInstall
   };
 
   // كل البنود ما عدا الجبس بورد (والمحارة لو الشقة متحارة). الأسقف تُدهن كلها حتى بدون جبس بورد.
   const main = computeBom(
     items.filter((i) => i.key !== "gypsum" && !(p.state === "plastered" && i.key === "plaster")),
-    materials, factors, { ...base, ceilingShare: 1 }
+    materials, factors, { ...base, ceilingShare: 1 }, labor
   );
 
   let gypsumGroups: BomGroup[] = [];
@@ -275,11 +375,14 @@ export function computeQuickBom(
       ...base,
       ceilingShare: share,
       overrides: { perimeter_ml: p.totalArea * DEFAULT_RATIOS.perimeter * share }
-    }).groups;
+    }, labor).groups; // المصنعيات المقطوعة تُحسب مرة واحدة من النتيجة الأساسية فقط
   }
 
   const groups = [...main.groups, ...gypsumGroups].sort((a, b) => a.item.sort_order - b.item.sort_order);
-  return { areas: main.areas, groups, info: main.info, totals: sumTotals(groups), note: BOM_FINAL_NOTE };
+  return {
+    areas: main.areas, groups, lumpLabor: main.lumpLabor, info: main.info, warnings: main.warnings,
+    totals: sumTotals(groups, main.lumpLabor), note: BOM_FINAL_NOTE
+  };
 }
 
 // ---------- ربط الحصر بالمقايسة: تحويل نتيجة الحصر لبنود بنفس شكل بنود المقايسة ----------
@@ -293,7 +396,7 @@ export interface EstimateLineShape {
   description: string;
 }
 
-export function bomToEstimateLines(groups: BomGroup[]): EstimateLineShape[] {
+export function bomToEstimateLines(groups: BomGroup[], lump: LumpLabor[] = []): EstimateLineShape[] {
   const out: EstimateLineShape[] = [];
   for (const g of groups) {
     const category = g.item.estimate_category || "decorations";
@@ -319,6 +422,17 @@ export function bomToEstimateLines(groups: BomGroup[]): EstimateLineShape[] {
         description: `مصنعية ${g.item.name_ar}: ${fmt(g.laborBase)} م² × ${fmt(g.laborRate)} جنيه/م²`
       });
     }
+  }
+  for (const l of lump) {
+    out.push({
+      category: l.category,
+      name: l.name,
+      unit: "مقطوعة",
+      quantity: 1,
+      unitPrice: 0,
+      laborCost: Math.round(l.amount),
+      description: `${l.name}: ${l.basis}`
+    });
   }
   return out;
 }

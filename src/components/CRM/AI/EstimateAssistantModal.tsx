@@ -7,12 +7,27 @@ import GoldButton from "@/components/ui/GoldButton";
 import CloseButton from "@/components/ui/CloseButton";
 import { quickRoomNames } from "@/lib/takeoffEngine";
 import { DEFAULT_FINISH_LEVEL, FINISH_LEVELS, type FinishLevel } from "@/lib/finishLevels";
+import { AREA_LABELS, PLUMBING_INSTALL_LABELS, type Basis, type PlumbingInstall } from "@/lib/bomEngine";
+import { openReportPdf } from "@/lib/reportPrint";
 
 type Mode = "project" | "quick";
 
 interface EstimateLine { stage: string; item: string; quantity: number; unit: string; basis: string }
+interface BomPayloadLine { name: string; quantity: number; unit: string; unitPrice: number; cost: number; basis: string }
+interface BomPayloadGroup {
+  key: string; name: string; materialsCost: number; laborCost: number; laborBase: number; laborRate: number; lines: BomPayloadLine[];
+}
+interface BomPayload {
+  areas: Record<string, number>;
+  groups: BomPayloadGroup[];
+  lump: { name: string; amount: number; basis: string }[];
+  info: { label: string; value: string }[];
+  totals: { materials: number; labor: number; grand: number; unpricedLines: number };
+  note: string;
+}
 interface EstimateResult {
   mode: Mode;
+  bom: BomPayload | null;
   lines: EstimateLine[];
   totals: { floorArea: number; netWallArea: number; plasterArea: number; paintArea: number; ceilingArea: number };
   assumptions: string[];
@@ -53,6 +68,9 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
   const [level, setLevel] = useState<FinishLevel>(DEFAULT_FINISH_LEVEL);
   const [corridors, setCorridors] = useState("1");
   const [ceilingRooms, setCeilingRooms] = useState<string[]>([]);
+  const [plumbingInstall, setPlumbingInstall] = useState<"" | PlumbingInstall>("");
+  const [excludedStages, setExcludedStages] = useState<string[]>([]); // بنود مستبعدة من تقرير الـ PDF
+  const [includeLump, setIncludeLump] = useState(true);
 
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<EstimateResult | null>(null);
@@ -73,6 +91,8 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
   function resetResult() {
     setResult(null);
     setCopied(false);
+    setExcludedStages([]);
+    setIncludeLump(true);
   }
 
   function toggleCeilingRoom(name: string) {
@@ -104,9 +124,10 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
     try {
       const body =
         mode === "project"
-          ? { mode, projectId }
+          ? { mode, projectId, plumbingInstall: plumbingInstall || undefined }
           : {
               mode,
+              plumbingInstall: plumbingInstall || undefined,
               quick: {
                 totalArea: Number(totalArea),
                 bedrooms: Number(bedrooms),
@@ -151,6 +172,55 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
         setLoading(false);
       }
     }
+  }
+
+  // تصدير PDF لنتيجة الحصر (مشروع مسجل أو تقدير سريع): البنود المحددة فقط، بنفس شكل تقرير المحاكي
+  function handleExportPdf() {
+    if (!result?.bom) return;
+    const bom = result.bom;
+    const groups = bom.groups.filter((g) => !excludedStages.includes(g.name));
+    const lump = includeLump ? bom.lump : [];
+    if (groups.length === 0 && lump.length === 0) { alert("اختار بند واحد على الأقل للتصدير."); return; }
+    const f2 = (n: number) => Number(Math.round(n * 100) / 100).toLocaleString("en-US");
+
+    let md = "";
+    md += `## المساحات الهندسية\n| البيان | القيمة |\n|---|---|\n` +
+      Object.keys(bom.areas).filter((k) => bom.areas[k] > 0).map((k) => `| ${AREA_LABELS[k as Basis] || k} | ${f2(bom.areas[k])} |`).join("\n") + "\n\n";
+    const priced = groups.some((g) => g.lines.some((l) => l.unitPrice > 0) || g.laborCost > 0) || lump.length > 0;
+    let materials = 0, labor = 0;
+    groups.forEach((g) => {
+      md += priced
+        ? `## ${g.name}\n| الخامة | الكمية | الوحدة | سعر الوحدة | التكلفة | طريقة الحساب |\n|---|---|---|---|---|---|\n` +
+          g.lines.map((l) => `| ${l.name} | ${f2(l.quantity)} | ${l.unit} | ${l.unitPrice > 0 ? f2(l.unitPrice) : "-"} | ${l.cost > 0 ? f2(l.cost) : "-"} | ${l.basis} |`).join("\n") + "\n\n"
+        : `## ${g.name}\n| الخامة | الكمية | الوحدة | طريقة الحساب |\n|---|---|---|---|\n` +
+          g.lines.map((l) => `| ${l.name} | ${f2(l.quantity)} | ${l.unit} | ${l.basis} |`).join("\n") + "\n\n";
+      if (priced && (g.materialsCost > 0 || g.laborCost > 0)) {
+        md += `**خامات: ${f2(g.materialsCost)} جنيه | مصنعيات: ${f2(g.laborCost)} جنيه | إجمالي البند: ${f2(g.materialsCost + g.laborCost)} جنيه**\n\n`;
+      }
+      materials += g.materialsCost;
+      labor += g.laborCost;
+    });
+    if (lump.length > 0) {
+      md += `## المصنعيات المقطوعة\n| البند | المبلغ (جنيه) | الأساس |\n|---|---|---|\n` + lump.map((l) => `| ${l.name} | ${f2(l.amount)} | ${l.basis} |`).join("\n") + "\n\n";
+      labor += lump.reduce((sum, l) => sum + l.amount, 0);
+    }
+    if (priced) {
+      md += `## إجمالي التكلفة التقديرية\n| البيان | القيمة (جنيه) |\n|---|---|\n| إجمالي الخامات | ${f2(materials)} |\n| إجمالي المصنعيات | ${f2(labor)} |\n| **الإجمالي** | **${f2(materials + labor)}** |\n\n`;
+    }
+    if (result.warnings.length > 0) md += result.warnings.map((w) => `> ${w}`).join("\n") + "\n\n";
+    if (bom.info.length > 0) md += bom.info.map((x) => `- ${x.label}: ${x.value}`).join("\n") + "\n\n";
+    md += `## الافتراضات\n` + result.assumptions.filter((a) => a !== bom.note).map((a) => `- ${a}`).join("\n") + "\n\n";
+    md += `> ${bom.note}\n`;
+
+    const project = projects.find((p) => p.id === projectId);
+    openReportPdf({
+      title: result.mode === "project" ? "حصر كميات المشروع" : "حصر الكميات المبدئي (تقدير سريع)",
+      subtitle: result.mode === "project" ? (project?.project_name || "") : `شقة ${totalArea} م²`,
+      meta: result.mode === "project"
+        ? [{ label: "المشروع", value: project?.project_name || "-" }, { label: "الموقع", value: project?.location || "-" }]
+        : [{ label: "مساحة الشقة", value: `${totalArea} م²` }, { label: "مستوى التشطيب", value: FINISH_LEVELS.find((l) => l.key === level)?.label || "" }],
+      markdown: md
+    });
   }
 
   // الخطوة التالية بعد التقدير السريع (مكالمة عميل): تسجيل العميل وفتح مشروعه والتقدير منقول له
@@ -360,6 +430,14 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
           </div>
         )}
 
+        <div>
+          <label className={labelClass}>نوع تأسيس السباكة (لمصنعية السباكة المقطوعة)</label>
+          <select value={plumbingInstall} onChange={(e) => { setPlumbingInstall(e.target.value as "" | PlumbingInstall); resetResult(); }} className={selectClass}>
+            <option value="">اختر النوع</option>
+            {(Object.keys(PLUMBING_INSTALL_LABELS) as PlumbingInstall[]).map((k) => <option key={k} value={k}>{PLUMBING_INSTALL_LABELS[k]}</option>)}
+          </select>
+        </div>
+
         {!loading && (
           <GoldButton size="lg" className="w-full" onClick={handleRun}>
             {mode === "project" ? "🔍 تشغيل حصر الكميات للمشروع" : "⚡ احسب التقدير السريع"}
@@ -417,7 +495,15 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
 
             {stages.map((s) => (
               <div key={s.name} className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
-                <h4 className="text-[#A17A4C] font-black text-xs border-r-2 border-[#D4AF37] pr-2">{s.name}</h4>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!excludedStages.includes(s.name)}
+                    onChange={() => setExcludedStages((p) => (p.includes(s.name) ? p.filter((x) => x !== s.name) : [...p, s.name]))}
+                    aria-label={`تضمين بند ${s.name} في التقرير`}
+                  />
+                  <h4 className="text-[#A17A4C] font-black text-xs border-r-2 border-[#D4AF37] pr-2">{s.name}</h4>
+                </label>
                 {s.items.map((l) => (
                   <div key={l.item} className="border-b border-[#1f2d4d] last:border-0 pb-2 last:pb-0">
                     <div className="flex items-center justify-between gap-3">
@@ -431,6 +517,47 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
                 ))}
               </div>
             ))}
+
+            {result.bom && result.bom.lump.length > 0 && (
+              <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={includeLump} onChange={(e) => setIncludeLump(e.target.checked)} aria-label="تضمين المصنعيات المقطوعة في التقرير" />
+                  <h4 className="text-[#A17A4C] font-black text-xs border-r-2 border-[#D4AF37] pr-2">المصنعيات المقطوعة</h4>
+                </label>
+                {result.bom.lump.map((l) => (
+                  <div key={l.name} className="flex items-start justify-between gap-3 border-b border-[#1f2d4d] last:border-0 pb-2 last:pb-0">
+                    <div>
+                      <p className="text-white text-xs font-black">{l.name}</p>
+                      <p className="text-gray-500 text-[10px] font-bold">{l.basis}</p>
+                    </div>
+                    <span className="text-[#D4AF37] text-xs font-black whitespace-nowrap">{fmt(Math.round(l.amount))} جنيه</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {result.bom && result.bom.totals.grand > 0 && (
+              <div className="bg-[#020B1C] border border-[#D4AF37]/50 rounded-xl p-4 space-y-1.5">
+                <p className="text-[#D4AF37] font-black text-xs">تكلفة الخامات والمصنعيات من جدول الحصر (للمراجعة الداخلية)</p>
+                <div className="flex justify-between text-xs font-bold text-gray-300"><span>الخامات</span><span>{fmt(Math.round(result.bom.totals.materials))} جنيه</span></div>
+                <div className="flex justify-between text-xs font-bold text-gray-300"><span>المصنعيات</span><span>{fmt(Math.round(result.bom.totals.labor))} جنيه</span></div>
+                <div className="flex justify-between text-sm font-black text-white border-t border-[#1f2d4d] pt-2"><span>الإجمالي</span><span>{fmt(Math.round(result.bom.totals.grand))} جنيه</span></div>
+                {result.bom.totals.unpricedLines > 0 && (
+                  <p className="text-amber-300 text-[10px] font-bold">{result.bom.totals.unpricedLines} خامة بدون سعر وحدة، فالإجمالي ناقص. اضبط أسعارها من الإعدادات.</p>
+                )}
+              </div>
+            )}
+
+            {result.bom && (
+              <div className="bg-[#07132a] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
+                <p className="text-[#D4AF37] text-[11px] font-black">علّم على البنود اللي تدخل تقرير الـ PDF (المربعات فوق)</p>
+                <div className="flex flex-wrap gap-2">
+                  <GoldButton onClick={handleExportPdf}>📄 تصدير PDF</GoldButton>
+                  <GoldButton toggle active={false} onClick={() => { setExcludedStages([]); setIncludeLump(true); }}>تحديد الكل</GoldButton>
+                  <GoldButton toggle active={false} onClick={() => { setExcludedStages(stages.map((x) => x.name)); setIncludeLump(false); }}>إلغاء الكل</GoldButton>
+                </div>
+              </div>
+            )}
 
             <details className="bg-[#020B1C] border border-[#1f2d4d] rounded-xl p-4">
               <summary className="text-[#D4AF37] font-black text-xs cursor-pointer">الافتراضات المستخدمة في الحساب</summary>

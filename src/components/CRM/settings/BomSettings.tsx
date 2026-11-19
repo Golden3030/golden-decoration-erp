@@ -137,15 +137,12 @@ export default function BomSettings() {
   }
 
   async function saveItem(item: BomItem) {
-    const labor = Number(item.labor_per_m2 || 0);
-    if (!Number.isFinite(labor) || labor < 0) { fail("مصنعية البند لازم تكون رقم صحيح."); return; }
     await run(item.key, async () => {
       const { error } = await supabase.from("takeoff_items").update({
         name_ar: item.name_ar.trim(), golden_notes: item.golden_notes, is_active: item.is_active,
-        labor_per_m2: labor, labor_basis: item.labor_basis || "apartment_area", estimate_category: item.estimate_category || "decorations"
+        estimate_category: item.estimate_category || "decorations"
       }).eq("key", item.key);
       if (error) throw error;
-      setItems((prev) => prev.map((i) => (i.key === item.key ? { ...i, labor_per_m2: labor } : i)));
       setDirty((d) => ({ ...d, ["item:" + item.key]: false }));
       ok("تم حفظ بيانات البند.");
     });
@@ -290,22 +287,9 @@ export default function BomSettings() {
             </div>
 
             <div className="rounded-xl border border-[#1f2d4d] bg-[#020B1C] p-3 space-y-2">
-              <p className="text-[#D4AF37] text-[11px] font-black">مصنعية البند وقسمه في المقايسة</p>
+              <p className="text-[#D4AF37] text-[11px] font-black">قسم البند في المقايسة</p>
+              <p className="text-gray-500 text-[10px] font-bold leading-relaxed">مصنعيات البنود بتتضبط من تاب "المصنعيات" (بالمتر أو مقطوعة).</p>
               <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className={miniLabel}>مصنعية البند (جنيه لكل م²)</label>
-                  <input type="text" inputMode="decimal" value={String(item.labor_per_m2 ?? 0)}
-                    onChange={(e) => { setItems((p) => p.map((i) => (i.key === item.key ? { ...i, labor_per_m2: e.target.value.replace(/[^0-9.]/g, "") as any } : i))); setDirty((d) => ({ ...d, ["item:" + item.key]: true })); }}
-                    className={inputClass} />
-                </div>
-                <div>
-                  <label className={miniLabel}>المصنعية تُحسب على</label>
-                  <select value={item.labor_basis || "apartment_area"}
-                    onChange={(e) => { setItems((p) => p.map((i) => (i.key === item.key ? { ...i, labor_basis: e.target.value as Basis } : i))); setDirty((d) => ({ ...d, ["item:" + item.key]: true })); }}
-                    className={inputClass}>
-                    {BASIS_OPTIONS.map((b) => <option key={b} value={b}>{AREA_LABELS[b]}</option>)}
-                  </select>
-                </div>
                 <div className="col-span-2">
                   <label className={miniLabel}>يظهر في قسم المقايسة</label>
                   <select value={item.estimate_category || "decorations"}

@@ -8,11 +8,15 @@ import GoldButton from "@/components/ui/GoldButton";
 import {
   bomToEstimateLines,
   computeQuickBom,
+  PLUMBING_INSTALL_LABELS,
   type BomItem,
   type BomMaterial,
   type BomResult,
-  type BomRoomFactor
+  type BomRoomFactor,
+  type LaborConfig,
+  type PlumbingInstall
 } from "@/lib/bomEngine";
+import { fetchLaborConfig } from "@/lib/laborLoader";
 
 // لوحة "الحصر السريع" داخل المقايسة المبدئية: تحسب الخامات والمصنعيات من جدول المعاملات الفنية
 // وتضيفها كبنود للمقايسة المبدئية للمشروع (تتحفظ تلقائياً مع باقي بنود المقايسة).
@@ -32,6 +36,8 @@ export default function QuickBomPanel() {
   const [items, setItems] = useState<BomItem[]>([]);
   const [materials, setMaterials] = useState<BomMaterial[]>([]);
   const [factors, setFactors] = useState<BomRoomFactor[]>([]);
+  const [labor, setLabor] = useState<LaborConfig | null>(null);
+  const [plumbingInstall, setPlumbingInstall] = useState<"" | PlumbingInstall>("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [open, setOpen] = useState(false);
@@ -49,14 +55,18 @@ export default function QuickBomPanel() {
 
   useEffect(() => {
     async function load() {
-      const [i, m, f] = await Promise.all([
+      const [i, m, f, lab] = await Promise.all([
         supabase.from("takeoff_items").select("*").order("sort_order"),
         supabase.from("takeoff_materials").select("*").order("sort_order"),
-        supabase.from("takeoff_room_factors").select("*")
+        supabase.from("takeoff_room_factors").select("*"),
+        fetchLaborConfig()
       ]);
-      if (i.error || m.error || f.error || !(i.data || []).length) {
+      if (lab.error) {
+        setLoadError(lab.error);
+      } else if (i.error || m.error || f.error || !(i.data || []).length) {
         setLoadError("جداول معاملات الحصر الفني غير جاهزة. شغّل takeoff_bom_setup.sql ثم migrate_bom_pricing.sql في Supabase.");
       } else {
+        setLabor(lab.config);
         setItems(((i.data || []) as any[]).map((x) => ({ ...x, labor_per_m2: Number(x.labor_per_m2 || 0) })) as BomItem[]);
         setMaterials(((m.data || []) as any[]).map((x) => ({ ...x, coefficient: Number(x.coefficient), pack_size: Number(x.pack_size), unit_price: Number(x.unit_price || 0) })) as BomMaterial[]);
         setFactors(((f.data || []) as any[]).map((x) => ({ ...x, factor: Number(x.factor) })) as BomRoomFactor[]);
@@ -95,18 +105,19 @@ export default function QuickBomPanel() {
       kitchens: Math.max(1, Math.round(Number(kitchens)) || 1),
       receptions: Math.max(1, Math.round(Number(receptions)) || 1),
       state,
-      gypsumShare: Math.min(1, Math.max(0, (Number(gypsumPct) || 0) / 100))
-    });
-  }, [open, totalArea, items, materials, factors, bedrooms, bathrooms, kitchens, receptions, state, gypsumPct]);
+      gypsumShare: Math.min(1, Math.max(0, (Number(gypsumPct) || 0) / 100)),
+      plumbingInstall: plumbingInstall || undefined
+    }, labor || undefined);
+  }, [open, totalArea, items, materials, factors, labor, bedrooms, bathrooms, kitchens, receptions, state, gypsumPct, plumbingInstall]);
 
   function apply() {
     if (!result) return;
     if (!projectSaved) { setMessage("احفظ المشروع أولاً (تاب بيانات المشروع) ثم أضف الحصر للمقايسة."); return; }
-    const lines = bomToEstimateLines(result.groups);
+    const lines = bomToEstimateLines(result.groups, result.lumpLabor);
     updateBulkFinishingSection("quickBom", {
       enabled: true,
       lines,
-      input: { area: totalArea, bedrooms, bathrooms, kitchens, receptions, state, gypsumPct },
+      input: { area: totalArea, bedrooms, bathrooms, kitchens, receptions, state, gypsumPct, plumbingInstall },
       totals: result.totals,
       createdAt: new Date().toISOString()
     });
@@ -167,6 +178,13 @@ export default function QuickBomPanel() {
               <GoldButton toggle size="fill" active={state === "plastered"} onClick={() => setState("plastered")}>على المحارة</GoldButton>
             </div>
             <div className="col-span-2">
+              <label className={labelClass}>نوع تأسيس السباكة (لمصنعية السباكة المقطوعة)</label>
+              <select value={plumbingInstall} onChange={(e) => setPlumbingInstall(e.target.value as "" | PlumbingInstall)} className={inputClass}>
+                <option value="">اختر النوع</option>
+                {(Object.keys(PLUMBING_INSTALL_LABELS) as PlumbingInstall[]).map((k) => <option key={k} value={k}>{PLUMBING_INSTALL_LABELS[k]}</option>)}
+              </select>
+            </div>
+            <div className="col-span-2">
               <label className={labelClass}>نسبة الأسقف بالجبس بورد من الشقة (%)</label>
               <input type="text" inputMode="decimal" value={gypsumPct} onChange={(e) => setGypsumPct(e.target.value.replace(/[^0-9.]/g, ""))} className={inputClass} />
             </div>
@@ -183,6 +201,10 @@ export default function QuickBomPanel() {
                 )}
               </div>
 
+              {result.warnings.map((w) => (
+                <p key={w} className="text-amber-300 text-[11px] font-bold">⚠️ {w}</p>
+              ))}
+
               <GoldButton toggle active={false} onClick={() => setShowDetails((v) => !v)}>{showDetails ? "إخفاء التفاصيل" : "عرض تفاصيل البنود"}</GoldButton>
               {showDetails && result.groups.map((g) => (
                 <div key={g.item.key} className="rounded-xl bg-[#020B1C] border border-[#1f2d4d] p-3 space-y-1.5">
@@ -193,6 +215,15 @@ export default function QuickBomPanel() {
                   {g.laborCost > 0 && <p className="text-gray-400 text-[11px] font-bold">• مصنعية: {fmt(g.laborCost)} جنيه</p>}
                 </div>
               ))}
+
+              {showDetails && result.lumpLabor.length > 0 && (
+                <div className="rounded-xl bg-[#020B1C] border border-[#1f2d4d] p-3 space-y-1.5">
+                  <p className="text-[#D4AF37] text-xs font-black">المصنعيات المقطوعة</p>
+                  {result.lumpLabor.map((l) => (
+                    <p key={l.itemKey} className="text-gray-300 text-[11px] font-bold">• {l.name}: {fmt(l.amount)} جنيه ({l.basis})</p>
+                  ))}
+                </div>
+              )}
 
               <GoldButton size="lg" className="w-full" onClick={apply}>
                 {quick?.enabled ? "تحديث بنود المقايسة من الحصر" : "إضافة للمقايسة المبدئية"}

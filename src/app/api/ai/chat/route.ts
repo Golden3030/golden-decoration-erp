@@ -4,7 +4,8 @@ import { createClient } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { FINISH_LEVELS } from "@/lib/finishLevels";
-import { ASSUMPTIONS } from "@/lib/takeoffEngine";
+import { AREA_LABELS, PLUMBING_INSTALL_LABELS, type Basis } from "@/lib/bomEngine";
+import { PROJECT_ASSUMPTIONS } from "@/lib/projectBom";
 import { analyzeTasks } from "@/lib/pmAnalysis";
 import { pickEstimateHeader } from "@/lib/estimateHeader";
 
@@ -72,21 +73,61 @@ async function loadGrounding(id: EmployeeId, db: any): Promise<any> {
   }
 
   if (id === "estimate") {
-    const { data, error } = await db.from("work_item_analysis").select("*");
-    if (error) console.error("تعذّر قراءة معاملات work_item_analysis:", error.message);
+    // نفس الجداول اللي بيحسب منها المحاكي والتقدير السريع والمقايسة المبدئية ووضع المشروع المسجل
+    const [itemsRes, matsRes, laborRes, plumbRes] = await Promise.all([
+      db.from("takeoff_items").select("key, name_ar, sort_order, active_set, is_active").order("sort_order"),
+      db.from("takeoff_materials").select("item_key, set_name, name_ar, basis, coefficient, purchase_unit, pack_size, unit_price, is_active").order("sort_order"),
+      db.from("takeoff_labor").select("item_key, kind, basis, rate"),
+      db.from("takeoff_plumbing_labor").select("bathrooms_tier, install_type, price")
+    ]);
+    if (itemsRes.error || matsRes.error || laborRes.error || plumbRes.error) {
+      console.error("تعذّر قراءة جداول الحصر الفني:", itemsRes.error?.message || matsRes.error?.message || laborRes.error?.message || plumbRes.error?.message);
+      return { error: "جداول الحصر الفني أو المصنعيات غير متاحة حالياً، فلا تذكر أي معاملات أو أسعار." };
+    }
+    const price = (v: any) => (num(v) > 0 ? `${num(v)} جنيه` : "غير مضبوط");
+    const laborText = (key: string) => {
+      const r = (laborRes.data || []).find((x: any) => x.item_key === key);
+      if (!r) return "غير مضبوطة";
+      if (r.kind === "per_m2") return `${price(r.rate)} لكل م² من ${AREA_LABELS[r.basis as Basis] || r.basis}`;
+      if (r.kind === "lump") return `مقطوعة للشقة: ${price(r.rate)}`;
+      return "مقطوعة حسب عدد الحمامات ونوع التأسيس (الجدول في plumbingLaborTiers)";
+    };
     return {
-      coefficientsFromSettings: (data || []).map((c: any) => ({ item: c.notes, coefficient: c.consumption_qty, unit: c.unit })),
-      engineAssumptions: {
-        wallsFormula: "مساحة الحوائط = محيط الغرفة × الارتفاع. بدون نسبة هالك (المحارة والدهانات) لا تُخصم الفراغات، ومع نسبة هالك تُخصم الفراغات (الأبواب والشبابيك)",
-        openingsPercent: ASSUMPTIONS.openingsPct * 100,
-        roomAspectRatio: ASSUMPTIONS.roomAspectRatio,
-        defaultCeilingHeightM: ASSUMPTIONS.defaultCeilingHeight,
-        plasterOnlyWhenApartmentIsRedBrick: true,
-        plasterRule: "شيكارة الأسمنت 50 كجم تفرد 5 م² بسمك 2.5 سم، وكل 6 شكاير أسمنت تحتاج 1 م³ رمل",
-        baseboardRule: "محيط الغرف بدون الحمامات ناقص 0.9 م لباب كل غرفة",
-        paintCoversWallsAndCeilings: true,
-        bathroomWallsAreTiledSoNotPainted: true,
-        gypsumSheetAreaM2: ASSUMPTIONS.gypsumSheetArea
+      sourceOfTruth: "جداول الحصر الفني في صفحة الإعدادات، وهي نفس المصدر في المحاكي والتقدير السريع والمقايسة المبدئية ووضع المشروع المسجل",
+      items: (itemsRes.data || []).filter((i: any) => i.is_active).map((i: any) => ({
+        item: i.name_ar,
+        activeSet: i.active_set === "A" ? "المعاملات الفنية" : "الحصر لكل 1م²",
+        labor: laborText(i.key),
+        materials: (matsRes.data || [])
+          .filter((m: any) => m.item_key === i.key && m.set_name === i.active_set && m.is_active)
+          .map((m: any) => ({
+            material: m.name_ar,
+            basis: AREA_LABELS[m.basis as Basis] || m.basis,
+            coefficient: num(m.coefficient),
+            purchaseUnit: m.purchase_unit,
+            packSize: num(m.pack_size),
+            unitPrice: price(m.unit_price)
+          }))
+      })),
+      plumbingLaborTiers: (plumbRes.data || []).map((t: any) => ({
+        bathrooms: t.bathrooms_tier === 1 ? "حمام واحد" : t.bathrooms_tier === 2 ? "حمامان" : "ثلاثة حمامات فأكثر",
+        installation: PLUMBING_INSTALL_LABELS[t.install_type as "buried" | "regular"] || t.install_type,
+        price: price(t.price)
+      })),
+      projectModeRules: {
+        areasDerivedFromRealRooms: "في وضع المشروع المسجل المساحات تتشتق من مساحات الغرف الفعلية في تاب المساحات وتاب الأسقف، وبعدها نفس المعاملات والأسعار",
+        wallsFormula: "مساحة الحوائط = محيط كل غرفة × ارتفاع السقف. بدون نسبة هالك لا تُخصم الفراغات (الأبواب والشبابيك)، ومع نسبة هالك تُخصم الفراغات",
+        openingsPercentWhenWasteApplied: PROJECT_ASSUMPTIONS.openingsPct * 100,
+        roomAspectRatio: PROJECT_ASSUMPTIONS.roomAspectRatio,
+        perimeterNote: "أطوال الحيطان غير مسجلة، فالمحيط مقدّر من مساحة الغرفة بنسبة طول/عرض ثابتة",
+        plasterRule: "المحارة تُحسب فقط لو الشقة على الطوب الأحمر، وتشمل حوائط الحمامات والمطابخ",
+        paintRule: "الدهان = حوائط الغرف غير المكسية بالسيراميك + أسقف كل الغرف الداخلية",
+        tileRule: "سيراميك حوائط الحمامات والمطابخ لحد ارتفاع السقف، فتخرج من الدهان",
+        baseboardRule: `محيط الغرف الجافة (بدون الحمامات) ناقص ${PROJECT_ASSUMPTIONS.doorWidthM} م لباب كل غرفة`,
+        waterproofRule: "العزل = أرضية الحمامات والمطابخ والبلكونات",
+        gypsumRule: "الجبس بورد على الغرف المفعّلة في تاب الأسقف فقط",
+        missingDataRule: "لو مساحات الغرف أو حالة الشقة أو ارتفاع السقف ناقصة، الحصر يقف برسالة بدل ما يخمّن",
+        laborRules: "مصنعيات المحارة والدهانات والجبس بورد والسيراميك بالمتر، والكهرباء والسباكة مقطوعة (السباكة حسب عدد الحمامات ونوع التأسيس دفن أو عادي)"
       }
     };
   }

@@ -10,12 +10,16 @@ import {
   BOM_FINAL_NOTE,
   computeBom,
   deriveAreas,
+  PLUMBING_INSTALL_LABELS,
   type BomItem,
   type BomMaterial,
   type BomResult,
   type BomRoomFactor,
-  type DerivedAreas
+  type DerivedAreas,
+  type LaborConfig,
+  type PlumbingInstall
 } from "@/lib/bomEngine";
+import { fetchLaborConfig } from "@/lib/laborLoader";
 import { buildQuickRooms } from "@/lib/takeoffEngine";
 
 type AreaKey = keyof DerivedAreas;
@@ -34,6 +38,8 @@ export default function BomSimulator() {
   const [items, setItems] = useState<BomItem[]>([]);
   const [materials, setMaterials] = useState<BomMaterial[]>([]);
   const [factors, setFactors] = useState<BomRoomFactor[]>([]);
+  const [labor, setLabor] = useState<LaborConfig | null>(null);
+  const [plumbingInstall, setPlumbingInstall] = useState<"" | PlumbingInstall>("");
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -50,17 +56,21 @@ export default function BomSimulator() {
 
   useEffect(() => {
     async function load() {
-      const [i, m, f] = await Promise.all([
+      const [i, m, f, lab] = await Promise.all([
         supabase.from("takeoff_items").select("*").order("sort_order"),
         supabase.from("takeoff_materials").select("*").order("sort_order"),
-        supabase.from("takeoff_room_factors").select("*")
+        supabase.from("takeoff_room_factors").select("*"),
+        fetchLaborConfig()
       ]);
-      if (i.error || m.error || f.error) {
+      if (lab.error) {
+        setLoadError(lab.error);
+      } else if (i.error || m.error || f.error) {
         setLoadError("تعذّر تحميل جداول المعاملات. تأكد من تشغيل ملف takeoff_bom_setup.sql في Supabase.");
       } else {
         setItems(((i.data || []) as any[]).map((x) => ({ ...x, labor_per_m2: Number(x.labor_per_m2 || 0) })) as BomItem[]);
         setMaterials(((m.data || []) as any[]).map((x) => ({ ...x, coefficient: Number(x.coefficient), pack_size: Number(x.pack_size), unit_price: Number(x.unit_price || 0) })));
         setFactors(((f.data || []) as any[]).map((x) => ({ ...x, factor: Number(x.factor) })));
+        setLabor(lab.config);
         if ((i.data || []).length === 0) setLoadError("جداول المعاملات فاضية. شغّل ملف takeoff_bom_setup.sql في Supabase.");
       }
       setLoading(false);
@@ -110,7 +120,7 @@ export default function BomSimulator() {
 
   function handleCalculate() {
     if (!(totalArea > 0)) { alert("أدخل مساحة الشقة الإجمالية بالمتر المربع."); return; }
-    setResult(computeBom(items, materials, factors, { ...baseInput, overrides: numericOverrides() }));
+    setResult(computeBom(items, materials, factors, { ...baseInput, overrides: numericOverrides(), plumbingInstall: plumbingInstall || undefined }, labor || undefined));
   }
 
   // اختيار البنود والخامات اللي تدخل تقرير الـ PDF
@@ -129,6 +139,7 @@ export default function BomSimulator() {
       materials += sel.reduce((s, l) => s + l.cost, 0);
       labor += g.laborCost;
     });
+    labor += result.lumpLabor.reduce((s, l) => s + l.amount, 0);
     return { materials, labor, grand: materials + labor };
   })();
 
@@ -144,7 +155,7 @@ export default function BomSimulator() {
           .filter((k) => k !== "paint_area" && (a[k] > 0))
           .map((k) => `| ${AREA_LABELS[k]} | ${fmt(a[k])} |`).join("\n") + "\n\n";
     }
-    const priced = result.groups.some((g) => g.lines.some((l) => isIncluded(l.materialId) && l.unitPrice > 0));
+    const priced = result.groups.some((g) => g.lines.some((l) => isIncluded(l.materialId) && l.unitPrice > 0)) || result.groups.some((g) => g.laborCost > 0);
     result.groups.forEach((g) => {
       const lines = g.lines.filter((l) => isIncluded(l.materialId));
       if (lines.length === 0) return;
@@ -158,7 +169,12 @@ export default function BomSimulator() {
         md += `**خامات: ${fmt(mat)} جنيه | مصنعيات: ${fmt(g.laborCost)} جنيه | إجمالي البند: ${fmt(mat + g.laborCost)} جنيه**\n\n`;
       }
     });
-    if (priced) {
+    if (result.lumpLabor.length > 0) {
+      md += `## المصنعيات المقطوعة\n| البند | المبلغ (جنيه) | الأساس |\n|---|---|---|\n` +
+        result.lumpLabor.map((l) => `| ${l.name} | ${fmt(l.amount)} | ${l.basis} |`).join("\n") + "\n\n";
+    }
+    if (result.warnings.length > 0) md += result.warnings.map((w) => `> ${w}`).join("\n") + "\n\n";
+    if (priced || result.lumpLabor.length > 0) {
       md += `## إجمالي التكلفة التقديرية\n| البيان | القيمة (جنيه) |\n|---|---|\n| إجمالي الخامات | ${fmt(selectedTotals.materials)} |\n| إجمالي المصنعيات | ${fmt(selectedTotals.labor)} |\n| **الإجمالي** | **${fmt(selectedTotals.grand)}** |\n\n`;
     }
     if (result.info.length && selectedCount > 0) md += result.info.map((x) => `- ${x.label}: ${x.value}`).join("\n") + "\n\n";
@@ -213,6 +229,14 @@ export default function BomSimulator() {
               </select>
             </div>
           ))}
+        </div>
+
+        <div>
+          <label className={labelClass}>نوع تأسيس السباكة (لمصنعية السباكة المقطوعة)</label>
+          <select value={plumbingInstall} onChange={(e) => { setPlumbingInstall(e.target.value as "" | PlumbingInstall); touch(); }} className={inputClass}>
+            <option value="">اختر النوع</option>
+            {(Object.keys(PLUMBING_INSTALL_LABELS) as PlumbingInstall[]).map((k) => <option key={k} value={k}>{PLUMBING_INSTALL_LABELS[k]}</option>)}
+          </select>
         </div>
 
         <div>
@@ -299,6 +323,23 @@ export default function BomSimulator() {
                 </div>
               ))}
             </div>
+          ))}
+          {result.lumpLabor.length > 0 && (
+            <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-2">
+              <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">المصنعيات المقطوعة</h4>
+              {result.lumpLabor.map((l) => (
+                <div key={l.itemKey} className="flex items-start justify-between gap-3 border-b border-[#1f2d4d] last:border-0 pb-2 last:pb-0">
+                  <div>
+                    <p className="text-white text-xs font-black">{l.name}</p>
+                    <p className="text-gray-500 text-[10px] font-bold">{l.basis}</p>
+                  </div>
+                  <span className="text-[#D4AF37] text-xs font-black whitespace-nowrap">{fmt(l.amount)} جنيه</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {result.warnings.map((w) => (
+            <p key={w} className="text-amber-300 text-[11px] font-bold bg-amber-950/20 border border-amber-500/30 rounded-lg p-2">⚠️ {w}</p>
           ))}
           {result.info.map((x) => (
             <p key={x.label} className="text-gray-300 text-[11px] font-bold">• {x.label}: {x.value}</p>
