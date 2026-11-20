@@ -130,15 +130,22 @@ export async function POST(request: Request) {
         .single();
       if (projError || !project) throw projError || new Error("المشروع غير موجود.");
 
-      const { data: specs } = await supabaseAdmin
+      const { data: specs, error: specsError } = await supabaseAdmin
         .from("finishing_specs")
-        .select("category, value")
+        .select("*")
         .eq("project_id", projectId)
         .in("category", ["areas", "ceiling", "masonry", "plumbing"]);
+      if (specsError) {
+        return NextResponse.json({ error: "تعذّر قراءة مواصفات المشروع من قاعدة البيانات: " + specsError.message }, { status: 500 });
+      }
 
+      // لو القسم اتحفظ أكتر من مرة (حذف ثم إدراج) ممكن يفضل أكتر من صف: نقرا الأحدث، زي ما شاشة المشروع بتعرض آخر صف
+      const rowTime = (r: any) => Date.parse(r.updated_at || r.created_at || "") || 0;
       const parse = (cat: string): any => {
-        const row = (specs || []).find((s: any) => s.category === cat);
-        try { return row ? JSON.parse(row.value) : {}; } catch { return {}; }
+        const rows = (specs || []).filter((s: any) => s.category === cat);
+        if (rows.length === 0) return {};
+        const latest = [...rows].sort((x: any, y: any) => rowTime(x) - rowTime(y))[rows.length - 1];
+        try { return typeof latest.value === "string" ? JSON.parse(latest.value) : latest.value || {}; } catch { return {}; }
       };
       const areasSpec = parse("areas");
       const ceilingSpec = parse("ceiling");
@@ -173,7 +180,10 @@ export async function POST(request: Request) {
         bricksCount: Number(masonrySpec.brickCount) > 0 ? Number(masonrySpec.brickCount) : undefined
       });
       if (!pr.ok || !pr.bom) {
-        return NextResponse.json({ error: "لا يمكن حساب الحصر قبل استكمال بيانات المشروع:\n- " + pr.blockers.join("\n- ") }, { status: 400 });
+        // سطر تشخيص: اللي اتقرا فعلاً من قاعدة البيانات لهذا المشروع، عشان نعرف سبب النقص بدل التخمين
+        const areaRows = (specs || []).filter((x: any) => x.category === "areas").length;
+        const found = `المقروء من قاعدة البيانات: صفوف المساحات ${areaRows}، غرف بمساحات ${rooms.length}، حالة الشقة ${areasSpec.apartmentState || "غير مسجلة"}، ارتفاع السقف ${areasSpec.ceilingHeight || "غير مسجل"}.`;
+        return NextResponse.json({ error: "لا يمكن حساب الحصر قبل استكمال بيانات المشروع:\n- " + pr.blockers.join("\n- ") + "\n" + found }, { status: 400 });
       }
       const bom = pr.bom;
       const a = bom.areas;

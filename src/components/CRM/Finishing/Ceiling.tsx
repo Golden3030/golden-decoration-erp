@@ -54,7 +54,7 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
 
   const [state, setState] = useState({
     enabled: true,
-    spacesConfig: {} as Record<string, { enabled: boolean; area: number; type: string }>,
+    spacesConfig: {} as Record<string, { enabled: boolean; area: number; type: string; length?: number; width?: number }>,
     magneticTrack: 0,
     ledProfile: 0,
     shadowGap: 0,
@@ -182,7 +182,7 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
 
   useEffect(() => {
     if (activeRoomsList && activeRoomsList.length > 0) {
-      const initialConfig: Record<string, { enabled: boolean; area: number; type: string }> = {};
+      const initialConfig: Record<string, { enabled: boolean; area: number; type: string; length?: number; width?: number }> = {};
       
       activeRoomsList.forEach((area: DynamicRoomItem) => {
         initialConfig[area.id] = {
@@ -244,12 +244,13 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
     spaceId: string, 
     enabled: boolean, 
     area: number, 
-    type: string
+    type: string,
+    dims?: { length?: number; width?: number } // طول وعرض غرفة بيت النور (متر)، تُحفظ مع الغرفة
   ) => {
     updateStateAndSave(prev => ({
       spacesConfig: {
         ...prev.spacesConfig,
-        [spaceId]: { enabled, area, type }
+        [spaceId]: { ...(prev.spacesConfig[spaceId] || {}), enabled, area, type, ...(dims || {}) }
       }
     }));
   };
@@ -446,6 +447,49 @@ export default function CeilingTab({ projectId }: CeilingTabProps) {
                             })}
                           </div>
                         </div>
+
+                        {config.type === 'light_pocket' && (
+                          <div className="space-y-2 p-3 rounded-xl bg-[#020B1C] border border-[#D4AF37]/30 text-right">
+                            <span className="text-xs text-[#D4AF37] font-black block">أبعاد غرفة بيت النور ({area.name}): تُستخدم لحساب محيط بيت النور بالمتر الطولي</span>
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <label className="block text-[10px] text-gray-400 font-bold mb-1">الطول (م)</label>
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={config.length ?? ''}
+                                  onChange={(e) => {
+                                    const len = Number(e.target.value.replace(/[^0-9.]/g, '')) || 0;
+                                    const wid = Number(config.width) || 0;
+                                    handleSpaceConfigChange(area.id, true, len > 0 && wid > 0 ? Math.round(len * wid * 100) / 100 : config.area, config.type, { length: len || undefined, width: wid || undefined });
+                                  }}
+                                  className="h-9 w-full rounded-lg bg-[#07132a] border border-[#D4AF37]/30 text-white px-2.5 outline-none text-xs font-bold"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-[10px] text-gray-400 font-bold mb-1">العرض (م)</label>
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={config.width ?? ''}
+                                  onChange={(e) => {
+                                    const wid = Number(e.target.value.replace(/[^0-9.]/g, '')) || 0;
+                                    const len = Number(config.length) || 0;
+                                    handleSpaceConfigChange(area.id, true, len > 0 && wid > 0 ? Math.round(len * wid * 100) / 100 : config.area, config.type, { length: len || undefined, width: wid || undefined });
+                                  }}
+                                  className="h-9 w-full rounded-lg bg-[#07132a] border border-[#D4AF37]/30 text-white px-2.5 outline-none text-xs font-bold"
+                                />
+                              </div>
+                            </div>
+                            {Number(config.length) > 0 && Number(config.width) > 0 ? (
+                              <p className="text-[11px] text-emerald-300 font-bold">
+                                محيط بيت النور = {Number(config.length)} + {Number(config.width)} + {Number(config.length)} + {Number(config.width)} = {2 * (Number(config.length) + Number(config.width))} م.ط، والمساحة {config.area} م²
+                              </p>
+                            ) : (
+                              <p className="text-[11px] text-rose-300 font-bold">سجّل الطول والعرض، وبدونهم مصنعية بيت النور مش هتتحسب في الحصر.</p>
+                            )}
+                          </div>
+                        )}
 
                         {getExpandedSpaceSteps(area.id).length > 0 && (
                           <div className="p-2.5 rounded bg-[#020B1C] border border-[#1f2d4d]/60 space-y-1.5 text-right">
