@@ -68,8 +68,7 @@ function bomPayload(bom: BomResult) {
       name: g.item.name_ar,
       materialsCost: g.materialsCost,
       laborCost: g.laborCost,
-      laborBase: g.laborBase,
-      laborRate: g.laborRate,
+      laborLines: g.laborLines.map((l) => ({ name: l.name, unit: l.unit, base: l.base, rate: l.rate, cost: l.cost })),
       lines: g.lines.map((l) => ({ name: l.name, quantity: l.quantity, unit: l.unit, unitPrice: l.unitPrice, cost: l.cost, basis: l.basis }))
     })),
     lump: bom.lumpLabor.map((l) => ({ name: l.name, amount: l.amount, basis: l.basis })),
@@ -135,7 +134,7 @@ export async function POST(request: Request) {
         .from("finishing_specs")
         .select("category, value")
         .eq("project_id", projectId)
-        .in("category", ["areas", "ceiling"]);
+        .in("category", ["areas", "ceiling", "masonry", "plumbing"]);
 
       const parse = (cat: string): any => {
         const row = (specs || []).find((s: any) => s.category === cat);
@@ -143,13 +142,24 @@ export async function POST(request: Request) {
       };
       const areasSpec = parse("areas");
       const ceilingSpec = parse("ceiling");
+      const masonrySpec = parse("masonry");
+      const plumbingSpec = parse("plumbing");
 
       const rooms: TakeoffRoom[] = Object.entries(areasSpec.values || {})
         .map(([name, area]) => ({ name, kind: classifyRoom(name), area: Number(area) }))
         .filter((r) => Number.isFinite(r.area) && r.area > 0);
       const ceilingSpaces = Object.entries(ceilingSpec.spacesConfig || {})
         .filter(([, c]: [string, any]) => c?.enabled && Number(c.area) > 0)
-        .map(([name, c]: [string, any]) => ({ name, area: Number(c.area) }));
+        .map(([name, c]: [string, any]) => ({
+          name, area: Number(c.area), type: String(c.type || ""),
+          length: Number(c.length) || undefined, width: Number(c.width) || undefined
+        }));
+      // مشروع مسجل: نوع التأسيس من تاب السباكة (concealed = دفن، regular = عادي) ولا يُسأل عنه
+      const projectInstall: PlumbingInstall | undefined =
+        plumbingSpec.activeSystem === "concealed" ? "buried" : plumbingSpec.activeSystem === "regular" ? "regular" : undefined;
+      const plasterRoomNames: string[] | undefined = Array.isArray(body.plasterRoomNames)
+        ? body.plasterRoomNames.map((x: any) => String(x))
+        : undefined;
 
       // نفس محرك المحاكي والتقدير السريع، بمساحات مشتقة من الغرف الفعلية (projectBom.ts)
       const pr = computeProjectBom(tables.items, tables.materials, tables.factors, tables.labor, {
@@ -158,7 +168,9 @@ export async function POST(request: Request) {
         ceilingHeight: Number(areasSpec.ceilingHeight) > 0 ? Number(areasSpec.ceilingHeight) : null,
         ceilingSpaces,
         declaredTotalArea: Number(project.area) || undefined,
-        plumbingInstall
+        plumbingInstall: projectInstall,
+        plasterRoomNames,
+        bricksCount: Number(masonrySpec.brickCount) > 0 ? Number(masonrySpec.brickCount) : undefined
       });
       if (!pr.ok || !pr.bom) {
         return NextResponse.json({ error: "لا يمكن حساب الحصر قبل استكمال بيانات المشروع:\n- " + pr.blockers.join("\n- ") }, { status: 400 });
@@ -181,7 +193,11 @@ export async function POST(request: Request) {
             : []),
           bom.note
         ],
-        warnings: [...pr.derived.warnings, ...bom.warnings],
+        warnings: [
+          ...pr.derived.warnings,
+          ...(projectInstall ? [] : ["نوع تأسيس السباكة (دفن أو عادي) غير مسجل في تاب السباكة بالمشروع، فلم تُحسب مصنعية السباكة. اختر النظام في تاب السباكة."]),
+          ...bom.warnings.filter((w) => !w.includes("نوع التأسيس"))
+        ],
         totals: {
           floorArea: Math.round(a.floor_area * 10) / 10,
           netWallArea: Math.round(a.wall_area * 10) / 10,

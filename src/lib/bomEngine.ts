@@ -4,7 +4,8 @@
 
 export type Basis =
   | "wall_area" | "ceiling_area" | "perimeter_ml" | "floor_area" | "wall_tile_area"
-  | "waterproof_area" | "apartment_area" | "paint_area" | "masonry_area" | "per_unit";
+  | "waterproof_area" | "apartment_area" | "paint_area" | "masonry_area" | "per_unit"
+  | "flat_ceiling_area" | "light_pocket_ml"; // جبس فلات بالمتر المربع، وبيت نور بالمتر الطولي
 
 export type Rounding = "ceil" | "half" | "none";
 
@@ -47,14 +48,29 @@ export interface BomRoomFactor {
 }
 
 // ---------- المصنعيات (تاب منفصل في الإعدادات): بالمتر، أو مقطوعة، أو سباكة حسب عدد الحمامات ونوع التأسيس ----------
-export type LaborKind = "per_m2" | "lump" | "plumbing_tiers";
+// per_m2: جنيه لكل م² | per_ml: جنيه لكل متر طولي | lump: مبلغ مقطوع للشقة
+// per_1000_bricks: جنيه لكل ألف طوبة | plumbing_tiers: سباكة مقطوعة حسب عدد الحمامات ونوع التأسيس
+export type LaborKind = "per_m2" | "per_ml" | "lump" | "per_1000_bricks" | "plumbing_tiers";
 export type PlumbingInstall = "buried" | "regular"; // دفن أو عادي
 
+// البند الواحد ممكن يكون له أكتر من سطر مصنعية (مثلاً سيراميك أرضيات وسيراميك حوائط، أو جبس فلات وبيت نور)
 export interface LaborRate {
   item_key: string;
+  line_key: string;
+  line_name: string;
+  sort_order: number;
   kind: LaborKind;
-  basis: Basis;   // المساحة التي تُحسب عليها المصنعية (للنوع per_m2 فقط)
-  rate: number;   // جنيه لكل م² (per_m2) أو مبلغ مقطوع (lump)
+  basis: Basis;   // المساحة/الطول اللي تُحسب عليه المصنعية (للنوعين per_m2 و per_ml فقط)
+  rate: number;   // سعر الوحدة أو المبلغ المقطوع
+}
+
+export interface LaborLine {
+  name: string;
+  kind: LaborKind;
+  unit: string;   // م² أو م.ط أو ألف طوبة
+  base: number;   // الكمية المحسوب عليها
+  rate: number;
+  cost: number;
 }
 
 export interface PlumbingTier {
@@ -90,6 +106,8 @@ export const AREA_LABELS: Record<Basis, string> = {
   apartment_area: "مساحة الشقة الإجمالية",
   paint_area: "مساحة الدهان (حوائط + أسقف)",
   masonry_area: "مساحة المباني",
+  flat_ceiling_area: "مساحة الجبس بورد الفلات (م²)",
+  light_pocket_ml: "طول بيت النور (م.ط)",
   per_unit: "لكل شقة"
 };
 
@@ -114,6 +132,7 @@ export interface SimInput {
   masonryArea?: number;                               // مساحة المباني (تُدخل يدوياً، الافتراضي 0)
   overrides?: Partial<Record<keyof DerivedAreas, number>>; // تعديل يدوي لأي مساحة مشتقة
   plumbingInstall?: PlumbingInstall;                  // نوع تأسيس السباكة (دفن أو عادي) لمصنعية السباكة المقطوعة
+  bricksCount?: number;                               // عدد الطوب (لمصنعية المباني بالألف طوبة). غير مدخل = لا تُحسب ويظهر تحذير
 }
 
 export function deriveAreas(inp: SimInput): DerivedAreas {
@@ -130,7 +149,9 @@ export function deriveAreas(inp: SimInput): DerivedAreas {
     waterproof_area: A * DEFAULT_RATIOS.waterproof,
     apartment_area: A,
     paint_area: 0,
-    masonry_area: Math.max(0, inp.masonryArea ?? 0)
+    masonry_area: Math.max(0, inp.masonryArea ?? 0),
+    flat_ceiling_area: 0,
+    light_pocket_ml: 0
   };
   const ov = inp.overrides || {};
   (Object.keys(ov) as (keyof DerivedAreas)[]).forEach((k) => {
@@ -139,6 +160,8 @@ export function deriveAreas(inp: SimInput): DerivedAreas {
   });
   // مساحة الدهان المركّبة تُحسب بعد التعديلات اليدوية (ما لم تُعدَّل بنفسها)
   if (ov.paint_area === undefined) base.paint_area = base.wall_area + base.ceiling_area;
+  // الجبس بدون تحديد نوع الأسقف يُعتبر فلات بالكامل (بيت النور بيتحدد من تاب الأسقف في وضع المشروع)
+  if (ov.flat_ceiling_area === undefined) base.flat_ceiling_area = base.ceiling_area;
   return base;
 }
 
@@ -166,8 +189,7 @@ export interface BomGroup {
   item: BomItem;
   lines: BomLine[];
   materialsCost: number;
-  laborBase: number;    // مساحة حساب المصنعية
-  laborRate: number;    // جنيه لكل م²
+  laborLines: LaborLine[]; // سطور المصنعية (بالمتر أو بالمتر الطولي أو بالألف طوبة)
   laborCost: number;
   totalCost: number;
 }
@@ -200,13 +222,34 @@ export const BOM_FINAL_NOTE = "جميع الكميات تقريبية للحصر
 
 const fmt = (n: number) => Number(Math.round(n * 1000) / 1000).toLocaleString("en-US", { maximumFractionDigits: 3 });
 
-// دمج جدول المصنعيات في البنود: البند اللي نوعه "بالمتر" ياخد سعره وأساسه من التاب، وغيره بدون مصنعية متر
-export function applyLaborRates(items: BomItem[], rates: LaborRate[]): BomItem[] {
-  return items.map((it) => {
-    const r = rates.find((x) => x.item_key === it.key);
-    if (r && r.kind === "per_m2") return { ...it, labor_per_m2: r.rate, labor_basis: r.basis };
-    return { ...it, labor_per_m2: 0 };
-  });
+// سطور المصنعية المحسوبة على كمية (بالمتر أو بالمتر الطولي أو بالألف طوبة) لبند واحد
+function computeGroupLabor(
+  item: BomItem,
+  labor: LaborConfig | undefined,
+  areas: DerivedAreas,
+  bricksCount: number | undefined,
+  warnings: string[]
+): LaborLine[] {
+  if (!labor) return [];
+  const out: LaborLine[] = [];
+  const rates = labor.rates.filter((r) => r.item_key === item.key).sort((a, b) => a.sort_order - b.sort_order);
+  for (const r of rates) {
+    const name = r.line_name || `مصنعية ${item.name_ar}`;
+    if (r.kind === "per_m2" || r.kind === "per_ml") {
+      if (!(r.rate > 0)) continue;
+      const base = r.basis === "per_unit" ? 1 : areas[r.basis as Exclude<Basis, "per_unit">] || 0;
+      out.push({ name, kind: r.kind, unit: r.kind === "per_ml" ? "م.ط" : "م²", base, rate: r.rate, cost: base * r.rate });
+    } else if (r.kind === "per_1000_bricks") {
+      if (!(r.rate > 0)) continue;
+      if (bricksCount === undefined || !(bricksCount > 0)) {
+        warnings.push(`${name} لم تُحسب: أدخل عدد الطوب (المصنعية بالألف طوبة).`);
+        continue;
+      }
+      const base = bricksCount / 1000;
+      out.push({ name, kind: r.kind, unit: "ألف طوبة", base, rate: r.rate, cost: base * r.rate });
+    }
+  }
+  return out;
 }
 
 // المصنعيات المقطوعة: كهرباء وأمثالها (مبلغ ثابت للشقة)، والسباكة (سعر حسب عدد الحمامات ونوع التأسيس)
@@ -219,37 +262,39 @@ export function computeLumpLabor(
   const lines: LumpLabor[] = [];
   const warnings: string[] = [];
   for (const it of items.filter((i) => i.is_active).sort((a, b) => a.sort_order - b.sort_order)) {
-    const r = labor.rates.find((x) => x.item_key === it.key);
-    if (!r) continue;
     const category = it.estimate_category || "decorations";
-    if (r.kind === "lump") {
-      if (r.rate > 0) {
-        lines.push({ itemKey: it.key, name: `مصنعية ${it.name_ar}`, amount: r.rate, basis: "مصنعية مقطوعة للشقة", category });
-      } else {
-        warnings.push(`مصنعية ${it.name_ar} (مقطوعة) غير مضبوطة في تاب المصنعيات، فلم تُحسب.`);
-      }
-    } else if (r.kind === "plumbing_tiers") {
-      if (!(bathrooms >= 1)) {
-        warnings.push(`مصنعية ${it.name_ar} لم تُحسب لأن عدد الحمامات صفر.`);
-        continue;
-      }
-      if (!install) {
-        warnings.push(`مصنعية ${it.name_ar} لم تُحسب: اختر نوع التأسيس (دفن أو عادي).`);
-        continue;
-      }
-      const tier = (bathrooms >= 3 ? 3 : bathrooms) as 1 | 2 | 3;
-      const row = labor.plumbing.find((x) => x.bathrooms_tier === tier && x.install_type === install);
-      if (row && row.price > 0) {
+    const rates = labor.rates.filter((x) => x.item_key === it.key).sort((a, b) => a.sort_order - b.sort_order);
+    for (const r of rates) {
+      const name = r.line_name || `مصنعية ${it.name_ar}`;
+      if (r.kind === "lump") {
+        if (r.rate > 0) {
+          lines.push({ itemKey: it.key, name, amount: r.rate, basis: "مصنعية مقطوعة للشقة", category });
+        } else {
+          warnings.push(`${name} (مقطوعة) غير مضبوطة في تاب المصنعيات، فلم تُحسب.`);
+        }
+      } else if (r.kind === "plumbing_tiers") {
+        if (!(bathrooms >= 1)) {
+          warnings.push(`${name} لم تُحسب لأن عدد الحمامات صفر.`);
+          continue;
+        }
+        if (!install) {
+          warnings.push(`${name} لم تُحسب: نوع التأسيس (دفن أو عادي) غير محدد.`);
+          continue;
+        }
+        const tier = (bathrooms >= 3 ? 3 : bathrooms) as 1 | 2 | 3;
         const tierLabel = tier === 1 ? "حمام واحد" : tier === 2 ? "حمامان" : "ثلاثة حمامات فأكثر";
-        lines.push({
-          itemKey: it.key,
-          name: `مصنعية ${it.name_ar}`,
-          amount: row.price,
-          basis: `مقطوعة: ${tierLabel} (${bathrooms} فعلياً)، ${PLUMBING_INSTALL_LABELS[install]}`,
-          category
-        });
-      } else {
-        warnings.push(`سعر مصنعية ${it.name_ar} لـ ${tier === 1 ? "حمام واحد" : tier === 2 ? "حمامين" : "ثلاثة حمامات فأكثر"} (${PLUMBING_INSTALL_LABELS[install]}) غير مضبوط في تاب المصنعيات.`);
+        const row = labor.plumbing.find((x) => x.bathrooms_tier === tier && x.install_type === install);
+        if (row && row.price > 0) {
+          lines.push({
+            itemKey: it.key,
+            name,
+            amount: row.price,
+            basis: `مقطوعة: ${tierLabel} (${bathrooms} فعلياً)، ${PLUMBING_INSTALL_LABELS[install]}`,
+            category
+          });
+        } else {
+          warnings.push(`سعر ${name} لـ ${tierLabel} (${PLUMBING_INSTALL_LABELS[install]}) غير مضبوط في تاب المصنعيات.`);
+        }
       }
     }
   }
@@ -264,7 +309,7 @@ export function computeBom(
   labor?: LaborConfig
 ): BomResult {
   const areas = deriveAreas(inp);
-  if (labor) items = applyLaborRates(items, labor.rates);
+  const groupWarnings: string[] = [];
   const counts: Record<string, number> = {
     bedroom: inp.bedrooms, kitchen: inp.kitchens, bathroom: inp.bathrooms, reception: inp.receptions
   };
@@ -313,11 +358,9 @@ export function computeBom(
     }
     if (lines.length > 0) {
       const materialsCost = lines.reduce((s, l) => s + l.cost, 0);
-      const laborBasis = (item.labor_basis || "apartment_area") as Basis;
-      const laborBase = laborBasis === "per_unit" ? 1 : areas[laborBasis];
-      const laborRate = Number(item.labor_per_m2) || 0;
-      const laborCost = laborBase * laborRate;
-      groups.push({ item, lines, materialsCost, laborBase, laborRate, laborCost, totalCost: materialsCost + laborCost });
+      const laborLines = computeGroupLabor(item, labor, areas, inp.bricksCount, groupWarnings);
+      const laborCost = laborLines.reduce((sum, l) => sum + l.cost, 0);
+      groups.push({ item, lines, materialsCost, laborLines, laborCost, totalCost: materialsCost + laborCost });
     }
   }
 
@@ -328,7 +371,7 @@ export function computeBom(
 
   const lump = labor ? computeLumpLabor(items, labor, inp.bathrooms, inp.plumbingInstall) : { lines: [], warnings: [] };
   return {
-    areas, groups, lumpLabor: lump.lines, info, warnings: lump.warnings,
+    areas, groups, lumpLabor: lump.lines, info, warnings: [...groupWarnings, ...lump.warnings],
     totals: sumTotals(groups, lump.lines), note: BOM_FINAL_NOTE
   };
 }
@@ -411,15 +454,16 @@ export function bomToEstimateLines(groups: BomGroup[], lump: LumpLabor[] = []): 
         description: `من الحصر الفني: ${l.basis}`
       });
     }
-    if (g.laborCost > 0) {
+    for (const ll of g.laborLines) {
+      if (!(ll.cost > 0)) continue;
       out.push({
         category,
-        name: `مصنعية ${g.item.name_ar}`,
-        unit: "م²",
-        quantity: Math.round(g.laborBase * 100) / 100,
+        name: ll.name,
+        unit: ll.unit,
+        quantity: Math.round(ll.base * 100) / 100,
         unitPrice: 0,
-        laborCost: Math.round(g.laborCost),
-        description: `مصنعية ${g.item.name_ar}: ${fmt(g.laborBase)} م² × ${fmt(g.laborRate)} جنيه/م²`
+        laborCost: Math.round(ll.cost),
+        description: `${ll.name}: ${fmt(ll.base)} ${ll.unit} × ${fmt(ll.rate)} جنيه/${ll.unit}`
       });
     }
   }

@@ -1,21 +1,23 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { isOnline } from "@/lib/offline-sync";
 import GoldButton from "@/components/ui/GoldButton";
 import CloseButton from "@/components/ui/CloseButton";
-import { quickRoomNames } from "@/lib/takeoffEngine";
+import { classifyRoom, quickRoomNames } from "@/lib/takeoffEngine";
+import { supabase } from "@/lib/supabaseClient";
 import { DEFAULT_FINISH_LEVEL, FINISH_LEVELS, type FinishLevel } from "@/lib/finishLevels";
 import { AREA_LABELS, PLUMBING_INSTALL_LABELS, type Basis, type PlumbingInstall } from "@/lib/bomEngine";
 import { openReportPdf } from "@/lib/reportPrint";
+import ToggleSwitch from "@/components/ui/ToggleSwitch";
 
 type Mode = "project" | "quick";
 
 interface EstimateLine { stage: string; item: string; quantity: number; unit: string; basis: string }
 interface BomPayloadLine { name: string; quantity: number; unit: string; unitPrice: number; cost: number; basis: string }
 interface BomPayloadGroup {
-  key: string; name: string; materialsCost: number; laborCost: number; laborBase: number; laborRate: number; lines: BomPayloadLine[];
+  key: string; name: string; materialsCost: number; laborCost: number; laborLines: { name: string; unit: string; base: number; rate: number; cost: number }[]; lines: BomPayloadLine[];
 }
 interface BomPayload {
   areas: Record<string, number>;
@@ -69,6 +71,10 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
   const [corridors, setCorridors] = useState("1");
   const [ceilingRooms, setCeilingRooms] = useState<string[]>([]);
   const [plumbingInstall, setPlumbingInstall] = useState<"" | PlumbingInstall>("");
+  // مساحة المحارة في المشروع المسجل: الشقة كلها، أو بدون الحمامات والمطبخ، أو غرف محددة
+  const [projectRooms, setProjectRooms] = useState<{ name: string; kind: string }[]>([]);
+  const [plasterScope, setPlasterScope] = useState<"all" | "no_wet" | "custom">("all");
+  const [plasterCustom, setPlasterCustom] = useState<string[]>([]);
   const [excludedStages, setExcludedStages] = useState<string[]>([]); // بنود مستبعدة من تقرير الـ PDF
   const [includeLump, setIncludeLump] = useState(true);
 
@@ -87,6 +93,33 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
     corridors: Number(corridors)
   });
   const selectedCeilingRooms = ceilingRooms.filter((n) => roomOptions.some((r) => r.name === n));
+
+  // غرف المشروع المسجل (الداخلية فقط) لاختيار مساحة المحارة
+  useEffect(() => {
+    let cancelled = false;
+    setProjectRooms([]);
+    setPlasterScope("all");
+    setPlasterCustom([]);
+    if (!projectId) return;
+    (async () => {
+      const { data } = await supabase.from("finishing_specs").select("value").eq("project_id", projectId).eq("category", "areas").limit(1);
+      if (cancelled) return;
+      let values: Record<string, unknown> = {};
+      try { values = data && data[0] ? JSON.parse(data[0].value).values || {} : {}; } catch { values = {}; }
+      const list = Object.entries(values)
+        .map(([name, area]) => ({ name, kind: classifyRoom(name), area: Number(area) }))
+        .filter((r) => r.area > 0 && r.kind !== "balcony" && r.kind !== "garden")
+        .map((r) => ({ name: r.name, kind: r.kind as string }));
+      setProjectRooms(list);
+    })();
+    return () => { cancelled = true; };
+  }, [projectId]);
+
+  function plasterRoomNames(): string[] | undefined {
+    if (plasterScope === "all") return undefined;
+    if (plasterScope === "no_wet") return projectRooms.filter((r) => r.kind !== "bathroom" && r.kind !== "kitchen").map((r) => r.name);
+    return plasterCustom.filter((n) => projectRooms.some((r) => r.name === n));
+  }
 
   function resetResult() {
     setResult(null);
@@ -124,7 +157,7 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
     try {
       const body =
         mode === "project"
-          ? { mode, projectId, plumbingInstall: plumbingInstall || undefined }
+          ? { mode, projectId, plasterRoomNames: plasterRoomNames() }
           : {
               mode,
               plumbingInstall: plumbingInstall || undefined,
@@ -194,6 +227,9 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
           g.lines.map((l) => `| ${l.name} | ${f2(l.quantity)} | ${l.unit} | ${l.unitPrice > 0 ? f2(l.unitPrice) : "-"} | ${l.cost > 0 ? f2(l.cost) : "-"} | ${l.basis} |`).join("\n") + "\n\n"
         : `## ${g.name}\n| الخامة | الكمية | الوحدة | طريقة الحساب |\n|---|---|---|---|\n` +
           g.lines.map((l) => `| ${l.name} | ${f2(l.quantity)} | ${l.unit} | ${l.basis} |`).join("\n") + "\n\n";
+      if (g.laborLines.length > 0) {
+        md += g.laborLines.map((ll) => `- ${ll.name}: ${f2(ll.base)} ${ll.unit} × ${f2(ll.rate)} = ${f2(ll.cost)} جنيه`).join("\n") + "\n\n";
+      }
       if (priced && (g.materialsCost > 0 || g.laborCost > 0)) {
         md += `**خامات: ${f2(g.materialsCost)} جنيه | مصنعيات: ${f2(g.laborCost)} جنيه | إجمالي البند: ${f2(g.materialsCost + g.laborCost)} جنيه**\n\n`;
       }
@@ -301,7 +337,7 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
         {mode === "project" ? (
           <div className="space-y-3">
             <p className="text-white text-xs font-semibold">
-              يقرأ الحصر مساحات الغرف وأسقف الجبس وحالة الشقة والارتفاع من بيانات المشروع نفسه.
+              يقرأ الحصر مساحات الغرف وأسقف الجبس (فلات أو بيت نور) وحالة الشقة والارتفاع وعدد الطوب ونوع تأسيس السباكة من بيانات المشروع نفسه.
             </p>
             <label className={labelClass}>اختر المشروع *</label>
             <select
@@ -317,6 +353,30 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
                 </option>
               ))}
             </select>
+
+            {projectId && projectRooms.length > 0 && (
+              <div className="space-y-2 rounded-xl border border-[#D4AF37]/30 bg-[#07132a] p-3">
+                <label className={labelClass}>مساحة المحارة</label>
+                <div className="grid grid-cols-3 gap-2">
+                  <GoldButton toggle size="fill" active={plasterScope === "all"} onClick={() => { setPlasterScope("all"); resetResult(); }}>الشقة كلها</GoldButton>
+                  <GoldButton toggle size="fill" active={plasterScope === "no_wet"} onClick={() => { setPlasterScope("no_wet"); resetResult(); }}>بدون الحمام والمطبخ</GoldButton>
+                  <GoldButton toggle size="fill" active={plasterScope === "custom"} onClick={() => { setPlasterScope("custom"); setPlasterCustom((c) => (c.length ? c : projectRooms.map((r) => r.name))); resetResult(); }}>غرف محددة</GoldButton>
+                </div>
+                {plasterScope === "custom" && (
+                  <div className="space-y-2 pt-1">
+                    {projectRooms.map((r) => (
+                      <ToggleSwitch
+                        key={r.name}
+                        checked={plasterCustom.includes(r.name)}
+                        onChange={() => { setPlasterCustom((c) => (c.includes(r.name) ? c.filter((n) => n !== r.name) : [...c, r.name])); resetResult(); }}
+                        label={r.name}
+                        className="w-full"
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <div className="space-y-4">
@@ -430,6 +490,7 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
           </div>
         )}
 
+        {mode === "quick" && (
         <div>
           <label className={labelClass}>نوع تأسيس السباكة (لمصنعية السباكة المقطوعة)</label>
           <select value={plumbingInstall} onChange={(e) => { setPlumbingInstall(e.target.value as "" | PlumbingInstall); resetResult(); }} className={selectClass}>
@@ -437,6 +498,7 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
             {(Object.keys(PLUMBING_INSTALL_LABELS) as PlumbingInstall[]).map((k) => <option key={k} value={k}>{PLUMBING_INSTALL_LABELS[k]}</option>)}
           </select>
         </div>
+        )}
 
         {!loading && (
           <GoldButton size="lg" className="w-full" onClick={handleRun}>
@@ -495,15 +557,14 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
 
             {stages.map((s) => (
               <div key={s.name} className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
+                <div className="flex items-center gap-2.5">
+                  <ToggleSwitch
                     checked={!excludedStages.includes(s.name)}
                     onChange={() => setExcludedStages((p) => (p.includes(s.name) ? p.filter((x) => x !== s.name) : [...p, s.name]))}
-                    aria-label={`تضمين بند ${s.name} في التقرير`}
+                    ariaLabel={`تضمين بند ${s.name} في التقرير`}
                   />
                   <h4 className="text-[#A17A4C] font-black text-xs border-r-2 border-[#D4AF37] pr-2">{s.name}</h4>
-                </label>
+                </div>
                 {s.items.map((l) => (
                   <div key={l.item} className="border-b border-[#1f2d4d] last:border-0 pb-2 last:pb-0">
                     <div className="flex items-center justify-between gap-3">
@@ -520,10 +581,10 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
 
             {result.bom && result.bom.lump.length > 0 && (
               <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={includeLump} onChange={(e) => setIncludeLump(e.target.checked)} aria-label="تضمين المصنعيات المقطوعة في التقرير" />
+                <div className="flex items-center gap-2.5">
+                  <ToggleSwitch checked={includeLump} onChange={setIncludeLump} ariaLabel="تضمين المصنعيات المقطوعة في التقرير" />
                   <h4 className="text-[#A17A4C] font-black text-xs border-r-2 border-[#D4AF37] pr-2">المصنعيات المقطوعة</h4>
-                </label>
+                </div>
                 {result.bom.lump.map((l) => (
                   <div key={l.name} className="flex items-start justify-between gap-3 border-b border-[#1f2d4d] last:border-0 pb-2 last:pb-0">
                     <div>

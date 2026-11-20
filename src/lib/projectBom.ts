@@ -34,7 +34,10 @@ export interface ProjectRoom {
 
 export interface CeilingSpace {
   name: string;
-  area: number; // م² الغرفة المفعّلة في تاب الأسقف
+  area: number;      // م² الغرفة المفعّلة في تاب الأسقف
+  type?: string;     // flat_gypsum (فلات) أو light_pocket (بيت نور)
+  length?: number;   // طول الغرفة بالمتر (لغرف بيت النور)
+  width?: number;    // عرض الغرفة بالمتر (لغرف بيت النور)
 }
 
 export interface ProjectBomInput {
@@ -43,7 +46,9 @@ export interface ProjectBomInput {
   ceilingHeight: number | null;       // null = لم يُحدد
   ceilingSpaces: CeilingSpace[];      // الأسقف المعلقة (جبس بورد) المفعّلة
   declaredTotalArea?: number;         // المساحة الإجمالية المسجلة للمشروع
-  plumbingInstall?: PlumbingInstall;  // دفن أو عادي
+  plumbingInstall?: PlumbingInstall;  // دفن أو عادي (من تاب السباكة في المشروع المسجل)
+  plasterRoomNames?: string[];        // الغرف اللي تدخل المحارة (غير محدد = كل الغرف الداخلية)
+  bricksCount?: number;               // عدد الطوب من تاب المباني (لمصنعية الألف طوبة)
   wastePct?: number;                  // 0 = بدون هالك وبدون خصم فراغات (القاعدة المعتمدة)، > 0 = هالك مع خصم الفراغات
 }
 
@@ -61,7 +66,7 @@ export interface ProjectAreasResult {
   warnings: string[];
   assumptions: string[];
   areas: DerivedAreas | null;
-  gypsum: { area: number; perimeter: number };
+  gypsum: { area: number; perimeter: number; flatArea: number; pocketMl: number };
   counts: { bedrooms: number; bathrooms: number; kitchens: number; receptions: number };
   rooms: RoomDetail[];
 }
@@ -89,7 +94,7 @@ export function deriveProjectAreas(input: ProjectBomInput): ProjectAreasResult {
   if (!(h > 0)) blockers.push("حدد ارتفاع السقف في تاب المساحات (قيمة واحدة للشقة كلها).");
 
   const empty = {
-    ok: false, blockers, warnings, assumptions, areas: null, gypsum: { area: 0, perimeter: 0 },
+    ok: false, blockers, warnings, assumptions, areas: null, gypsum: { area: 0, perimeter: 0, flatArea: 0, pocketMl: 0 },
     counts: { bedrooms: 0, bathrooms: 0, kitchens: 0, receptions: 0 }, rooms: []
   };
   if (blockers.length > 0) return empty;
@@ -114,8 +119,11 @@ export function deriveProjectAreas(input: ProjectBomInput): ProjectAreasResult {
   const interiorArea = interior.reduce((s, r) => s + r.area, 0);
   const floorArea = floorRooms.reduce((s, r) => s + r.area, 0);
 
-  // المحارة: حوائط كل الغرف الداخلية (بما فيها الحمامات والمطبخ لأن السيراميك بيتركب على المحارة)
-  const wallArea = sumWalls(interior);
+  // المحارة: الغرف اللي اختارها المستخدم (الافتراضي كل الغرف الداخلية، بما فيها الحمامات والمطبخ لأن السيراميك بيتركب على المحارة)
+  const plasterRooms = input.plasterRoomNames
+    ? interior.filter((r) => input.plasterRoomNames!.includes(r.name))
+    : interior;
+  const wallArea = sumWalls(plasterRooms);
   // سيراميك الحوائط: حمامات ومطابخ لحد ارتفاع السقف
   const wallTileArea = sumWalls(tiled);
   // الدهان: حوائط الغرف غير المكسية بالسيراميك + أسقف كل الغرف الداخلية
@@ -128,7 +136,16 @@ export function deriveProjectAreas(input: ProjectBomInput): ProjectAreasResult {
   // الجبس بورد: الغرف المفعّلة في تاب الأسقف فقط
   const spaces = (input.ceilingSpaces || []).filter((c) => Number.isFinite(c.area) && c.area > 0);
   const gypsumArea = spaces.reduce((s, c) => s + c.area, 0);
-  const gypsumPerimeter = spaces.reduce((s, c) => s + perimeterFromArea(c.area), 0);
+  const isPocket = (c: CeilingSpace) => c.type === "light_pocket";
+  const hasDims = (c: CeilingSpace) => Number(c.length) > 0 && Number(c.width) > 0;
+  // بيت النور: المحيط بالظبط من الطول والعرض (3+4+3+4). الفلات: بالمساحة. غرفة بيت نور بدون أبعاد لا تُحسب مصنعيتها
+  const flatArea = spaces.filter((c) => !isPocket(c)).reduce((s, c) => s + c.area, 0);
+  const pocketSpaces = spaces.filter(isPocket);
+  const pocketMl = pocketSpaces.filter(hasDims).reduce((s, c) => s + 2 * (Number(c.length) + Number(c.width)), 0);
+  const pocketMissing = pocketSpaces.filter((c) => !hasDims(c)).map((c) => c.name);
+  const gypsumPerimeter = spaces.reduce(
+    (s, c) => s + (isPocket(c) && hasDims(c) ? 2 * (Number(c.length) + Number(c.width)) : perimeterFromArea(c.area)), 0
+  );
 
   const declared = Number(input.declaredTotalArea) || 0;
   const apartmentArea = declared > 0 ? declared : floorArea;
@@ -149,7 +166,9 @@ export function deriveProjectAreas(input: ProjectBomInput): ProjectAreasResult {
     waterproof_area: round2(waterproofArea),
     apartment_area: round2(apartmentArea),
     paint_area: round2(paintArea),
-    masonry_area: 0
+    masonry_area: 0,
+    flat_ceiling_area: round2(flatArea),
+    light_pocket_ml: round2(pocketMl)
   };
 
   // ---------- التحذيرات (مفيش تخمين: كل نقص بيتكتب) ----------
@@ -170,6 +189,12 @@ export function deriveProjectAreas(input: ProjectBomInput): ProjectAreasResult {
   if (gypsumArea > interiorArea + 0.01) {
     warnings.push(`مساحة الأسقف المعلقة (${round1(gypsumArea)} م²) أكبر من مساحة الغرف الداخلية (${round1(interiorArea)} م²).`);
   }
+  if (pocketMissing.length > 0) {
+    warnings.push(`غرف بيت النور بدون طول وعرض في تاب الأسقف (${pocketMissing.join("، ")}): مصنعية بيت النور بتاعتها لم تُحسب. سجّل الأبعاد.`);
+  }
+  if (input.plasterRoomNames && plasterRooms.length === 0) {
+    warnings.push("لم تُختر أي غرفة للمحارة، فأعمال المحارة صفر.");
+  }
   if (gypsumArea === 0) assumptions.push("لا توجد أسقف جبس بورد مفعّلة في تاب الأسقف، فلم تُحتسب خاماتها (الأسقف تُدهن كلها).");
 
   // ---------- الافتراضات المعروضة ----------
@@ -182,7 +207,12 @@ export function deriveProjectAreas(input: ProjectBomInput): ProjectAreasResult {
         : "بدون نسبة هالك فلا تُخصم الفراغات (الأبواب والشبابيك). ") +
       `المحيط مقدّر من مساحة الغرفة بنسبة طول/عرض ${PROJECT_ASSUMPTIONS.roomAspectRatio} لأن أطوال الحيطان غير مسجلة.`
   );
-  assumptions.push("المحارة تشمل حوائط الحمامات والمطابخ (السيراميك يتركب على المحارة). البلكونات والحديقة خارج الحوائط.");
+  assumptions.push(
+    input.plasterRoomNames
+      ? `المحارة على الغرف المختارة فقط (${plasterRooms.length} من ${interior.length} غرفة داخلية).`
+      : "المحارة تشمل حوائط كل الغرف الداخلية بما فيها الحمامات والمطابخ (السيراميك يتركب على المحارة). البلكونات والحديقة خارج الحوائط."
+  );
+  if (pocketSpaces.length > 0) assumptions.push("بيت النور: المحيط من طول وعرض الغرفة المسجلين في تاب الأسقف (مصنعية بالمتر الطولي)، والفلات بالمتر المربع.");
   assumptions.push("سيراميك الحوائط: حوائط الحمامات والمطابخ لحد ارتفاع السقف، ولذلك تخرج من الدهان.");
   assumptions.push("الدهان: حوائط الغرف غير المكسية بالسيراميك + أسقف كل الغرف الداخلية.");
   assumptions.push(`الوزرة: محيط الغرف الجافة (بدون الحمامات) ناقص ${PROJECT_ASSUMPTIONS.doorWidthM} م لباب كل غرفة.`);
@@ -190,7 +220,11 @@ export function deriveProjectAreas(input: ProjectBomInput): ProjectAreasResult {
   assumptions.push("أعمال المباني غير محسوبة في هذا الوضع (تُدخل يدوياً في المحاكي لو لزم).");
   assumptions.push("عدد الغرف (للعلب والمخارج) محسوب من تصنيف أسماء الغرف المسجلة؛ الطرقات والبلكونات لا تدخل في العدد.");
 
-  return { ok: true, blockers, warnings, assumptions, areas, gypsum: { area: round2(gypsumArea), perimeter: round2(gypsumPerimeter) }, counts, rooms: detail };
+  return {
+    ok: true, blockers, warnings, assumptions, areas,
+    gypsum: { area: round2(gypsumArea), perimeter: round2(gypsumPerimeter), flatArea: round2(flatArea), pocketMl: round2(pocketMl) },
+    counts, rooms: detail
+  };
 }
 
 export interface ProjectBomResult {
@@ -217,7 +251,8 @@ export function computeProjectBom(
     bathrooms: derived.counts.bathrooms,
     kitchens: derived.counts.kitchens,
     receptions: derived.counts.receptions,
-    plumbingInstall: input.plumbingInstall
+    plumbingInstall: input.plumbingInstall,
+    bricksCount: input.bricksCount
   };
 
   // كل البنود ما عدا الجبس بورد (والمحارة لو الشقة متحارة): المساحات كلها من بيانات الغرف
@@ -228,7 +263,8 @@ export function computeProjectBom(
       ...base,
       overrides: {
         wall_area: a.wall_area, ceiling_area: a.ceiling_area, perimeter_ml: a.perimeter_ml, floor_area: a.floor_area,
-        wall_tile_area: a.wall_tile_area, waterproof_area: a.waterproof_area, paint_area: a.paint_area, masonry_area: 0
+        wall_tile_area: a.wall_tile_area, waterproof_area: a.waterproof_area, paint_area: a.paint_area, masonry_area: 0,
+        flat_ceiling_area: derived.gypsum.flatArea, light_pocket_ml: derived.gypsum.pocketMl
       }
     },
     labor
@@ -240,7 +276,13 @@ export function computeProjectBom(
   if (derived.gypsum.area > 0 && gypsumItem) {
     gypsumGroups = computeBom(
       [gypsumItem], materials, factors,
-      { ...base, overrides: { ceiling_area: derived.gypsum.area, perimeter_ml: derived.gypsum.perimeter } },
+      {
+        ...base,
+        overrides: {
+          ceiling_area: derived.gypsum.area, perimeter_ml: derived.gypsum.perimeter,
+          flat_ceiling_area: derived.gypsum.flatArea, light_pocket_ml: derived.gypsum.pocketMl
+        }
+      },
       labor
     ).groups; // المصنعيات المقطوعة تُحسب مرة واحدة من النتيجة الأساسية
   }

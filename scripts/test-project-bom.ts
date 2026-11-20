@@ -1,6 +1,6 @@
 // اختبار حسابات حصر المشروع المسجل (بدون قاعدة بيانات). التشغيل: npx tsx scripts/test-project-bom.ts
 import { computeProjectBom, deriveProjectAreas, perimeterFromArea, type ProjectBomInput } from "../src/lib/projectBom";
-import { computeBom, computeQuickBom, bomToEstimateLines, applyLaborRates, type BomItem, type BomMaterial, type LaborConfig } from "../src/lib/bomEngine";
+import { computeBom, computeQuickBom, bomToEstimateLines, type BomItem, type BomMaterial, type LaborConfig } from "../src/lib/bomEngine";
 import { classifyRoom } from "../src/lib/takeoffEngine";
 
 let fails = 0;
@@ -20,7 +20,8 @@ const mk = (key: string, name: string, order: number, cat: string): BomItem =>
   ({ key, name_ar: name, sort_order: order, active_set: "A", golden_notes: null, is_active: true, estimate_category: cat });
 const items: BomItem[] = [
   mk("plaster", "المحارة", 1, "plaster"), mk("paint", "الدهانات", 2, "paint"), mk("gypsum", "الجبس بورد", 3, "ceiling"),
-  mk("ceramic", "السيراميك", 4, "flooring"), mk("electric", "الكهرباء", 5, "electricity"), mk("plumb", "السباكة", 6, "plumbing")
+  mk("ceramic", "السيراميك", 4, "flooring"), mk("electric", "الكهرباء", 5, "electricity"), mk("plumb", "السباكة", 6, "plumbing"),
+  mk("masonry", "المباني", 7, "masonry")
 ];
 let mid = 0;
 const mat = (item: string, basis: any, name: string): BomMaterial => ({
@@ -31,16 +32,22 @@ const mat = (item: string, basis: any, name: string): BomMaterial => ({
 const materials: BomMaterial[] = [
   mat("plaster", "wall_area", "محارة"), mat("paint", "paint_area", "دهان"), mat("gypsum", "ceiling_area", "جبس سقف"),
   mat("gypsum", "perimeter_ml", "شادو جاب"), mat("ceramic", "floor_area", "سيراميك أرضيات"), mat("ceramic", "wall_tile_area", "سيراميك حوائط"),
-  mat("ceramic", "waterproof_area", "عزل"), mat("ceramic", "perimeter_ml", "وزرة"), mat("ceramic", "apartment_area", "مساحة الشقة")
+  mat("ceramic", "waterproof_area", "عزل"), mat("ceramic", "perimeter_ml", "وزرة"), mat("ceramic", "apartment_area", "مساحة الشقة"),
+  mat("masonry", "apartment_area", "مباني")
 ];
+const L = (item_key: string, line_key: string, line_name: string, sort_order: number, kind: any, basis: any, rate: number) =>
+  ({ item_key, line_key, line_name, sort_order, kind, basis, rate });
 const labor: LaborConfig = {
   rates: [
-    { item_key: "plaster", kind: "per_m2", basis: "wall_area", rate: 10 },
-    { item_key: "paint", kind: "per_m2", basis: "paint_area", rate: 5 },
-    { item_key: "gypsum", kind: "per_m2", basis: "ceiling_area", rate: 20 },
-    { item_key: "ceramic", kind: "per_m2", basis: "floor_area", rate: 30 },
-    { item_key: "electric", kind: "lump", basis: "apartment_area", rate: 8000 },
-    { item_key: "plumb", kind: "plumbing_tiers", basis: "apartment_area", rate: 0 }
+    L("plaster", "main", "مصنعية المحارة", 0, "per_m2", "wall_area", 10),
+    L("paint", "main", "مصنعية الدهانات", 0, "per_m2", "paint_area", 5),
+    L("gypsum", "main", "جبس فلات", 0, "per_m2", "flat_ceiling_area", 20),
+    L("gypsum", "light_pocket", "جبس بيت نور", 1, "per_ml", "light_pocket_ml", 35),
+    L("ceramic", "main", "سيراميك أرضيات", 0, "per_m2", "floor_area", 30),
+    L("ceramic", "wall", "سيراميك حوائط", 1, "per_m2", "wall_tile_area", 25),
+    L("electric", "main", "مصنعية الكهرباء", 0, "lump", "apartment_area", 8000),
+    L("plumb", "main", "مصنعية السباكة", 0, "plumbing_tiers", "apartment_area", 0),
+    L("masonry", "main", "مصنعية المباني (1000 طوبة)", 0, "per_1000_bricks", "apartment_area", 600)
   ],
   plumbing: [
     { bathrooms_tier: 1, install_type: "buried", price: 6000 }, { bathrooms_tier: 1, install_type: "regular", price: 4000 },
@@ -53,7 +60,11 @@ const R = (name: string, area: number) => ({ name, kind: classifyRoom(name), are
 const rooms = [R("الريسبشن", 25), R("غرفة نوم 1", 16), R("غرفة نوم 2", 14), R("المطبخ", 10), R("الحمام", 6), R("الطرقة", 8), R("بلكونة", 5)];
 const input: ProjectBomInput = {
   rooms, state: "brick", ceilingHeight: 3, declaredTotalArea: 85,
-  ceilingSpaces: [{ name: "الريسبشن", area: 25 }, { name: "غرفة نوم 1", area: 16 }], plumbingInstall: "buried"
+  ceilingSpaces: [
+    { name: "الريسبشن", area: 25, type: "flat_gypsum" },
+    { name: "غرفة نوم 1", area: 12, type: "light_pocket", length: 3, width: 4 } // 3+4+3+4 = 14 م.ط
+  ],
+  plumbingInstall: "buried", bricksCount: 12000
 };
 
 const d = deriveProjectAreas(input);
@@ -70,8 +81,11 @@ eq("ceiling_area (all interior)", A.ceiling_area, 79);
 eq("perimeter_ml baseboard = dry perimeters - 0.9 per dry room", A.perimeter_ml, [25, 16, 14, 10, 8].reduce((s, a) => s + P(a), 0) - 5 * 0.9);
 eq("waterproof = bathroom+kitchen+balcony floors", A.waterproof_area, 21);
 eq("apartment_area = declared", A.apartment_area, 85);
-eq("gypsum area", d.gypsum.area, 41);
-eq("gypsum perimeter", d.gypsum.perimeter, P(25) + P(16));
+eq("gypsum area = flat + pocket rooms", d.gypsum.area, 37);
+eq("flat ceiling area (flat rooms only)", d.gypsum.flatArea, 25);
+eq("light pocket length = 3+4+3+4 = 14", d.gypsum.pocketMl, 14);
+eq("gypsum shadow-gap perimeter (estimated flat + exact pocket)", d.gypsum.perimeter, P(25) + 14);
+eq("areas expose flat_ceiling_area / light_pocket_ml", A.flat_ceiling_area * 1000 + A.light_pocket_ml, 25 * 1000 + 14);
 truthy("counts", d.counts.bedrooms === 2 && d.counts.bathrooms === 1 && d.counts.kitchens === 1 && d.counts.receptions === 1);
 
 // نفس المساحات تظهر في الكميات (معامل 1)
@@ -79,7 +93,7 @@ const res = computeProjectBom(items, materials, [], labor, input);
 const qty = (item: string, name: string) => res.bom!.groups.find((g) => g.item.key === item)!.lines.find((l) => l.name === name)!.rawQuantity;
 eq("plaster qty = wall_area", qty("plaster", "محارة"), A.wall_area);
 eq("paint qty = paint_area", qty("paint", "دهان"), A.paint_area);
-eq("gypsum ceiling qty = enabled spaces only", qty("gypsum", "جبس سقف"), 41);
+eq("gypsum ceiling qty = enabled spaces only", qty("gypsum", "جبس سقف"), 37);
 eq("gypsum shadow-gap perimeter", qty("gypsum", "شادو جاب"), d.gypsum.perimeter);
 eq("ceramic floor qty", qty("ceramic", "سيراميك أرضيات"), A.floor_area);
 eq("wall tile qty", qty("ceramic", "سيراميك حوائط"), A.wall_tile_area);
@@ -88,7 +102,11 @@ eq("baseboard qty", qty("ceramic", "وزرة"), A.perimeter_ml);
 // المصنعيات
 const g = (k: string) => res.bom!.groups.find((x) => x.item.key === k)!;
 eq("plaster labor = 10 x wall_area", g("plaster").laborCost, 10 * A.wall_area, 0.05);
-eq("gypsum labor = 20 x 41", g("gypsum").laborCost, 820, 0.05);
+eq("gypsum labor = flat 20 x 25 + pocket 35 x 14", g("gypsum").laborCost, 20 * 25 + 35 * 14, 0.05);
+truthy("gypsum has two labor lines (flat m2, pocket ml)", g("gypsum").laborLines.length === 2 && g("gypsum").laborLines[1].unit === "م.ط" && g("gypsum").laborLines[1].base === 14);
+eq("ceramic labor: floors 30 x floor_area + walls 25 x wall_tile_area", g("ceramic").laborCost, 30 * A.floor_area + 25 * A.wall_tile_area, 0.05);
+truthy("ceramic has separate floor and wall lines", g("ceramic").laborLines.length === 2);
+eq("masonry labor per 1000 bricks: 12000 bricks x 600/1000", g("masonry").laborCost, 7200, 0.05);
 const lump = res.bom!.lumpLabor;
 eq("lump electricity = 8000", lump.find((l) => l.itemKey === "electric")!.amount, 8000);
 eq("lump plumbing 1 bathroom buried = 6000", lump.find((l) => l.itemKey === "plumb")!.amount, 6000);
@@ -120,6 +138,28 @@ eq("with waste: walls minus 15% openings", w.areas!.wall_area, A.wall_area * 0.8
 const ng = computeProjectBom(items, materials, [], labor, { ...input, ceilingSpaces: [] });
 truthy("no enabled ceilings: no gypsum group", !ng.bom!.groups.some((x) => x.item.key === "gypsum"));
 
+// بيت نور بدون أبعاد: تحذير ومصنعيته لا تُحسب (لا تخمين)
+const noDims = computeProjectBom(items, materials, [], labor, {
+  ...input, ceilingSpaces: [{ name: "الريسبشن", area: 25, type: "flat_gypsum" }, { name: "غرفة نوم 1", area: 12, type: "light_pocket" }]
+});
+truthy("pocket room without dims: warning names the room", noDims.derived.warnings.some((w) => w.includes("غرفة نوم 1") && w.includes("بيت النور")));
+eq("pocket room without dims: no pocket labor (only flat 20 x 25)", noDims.bom!.groups.find((x) => x.item.key === "gypsum")!.laborCost, 500, 0.05);
+
+// المباني بالألف طوبة: بدون عدد طوب تحذير ولا تخمين
+const noBricks = computeProjectBom(items, materials, [], labor, { ...input, bricksCount: undefined });
+truthy("missing bricks count: warning and no masonry labor", noBricks.bom!.warnings.some((w) => w.includes("عدد الطوب")) && noBricks.bom!.groups.find((x) => x.item.key === "masonry")!.laborCost === 0);
+
+// مساحة المحارة: الشقة كلها / بدون الحمام والمطبخ / غرف محددة
+const noWet = deriveProjectAreas({ ...input, plasterRoomNames: ["الريسبشن", "غرفة نوم 1", "غرفة نوم 2", "الطرقة"] });
+eq("plaster scope: apartment without bathroom and kitchen", noWet.areas!.wall_area, [25, 16, 14, 8].reduce((s, a) => s + P(a), 0) * h);
+eq("plaster scope does not change paint area", noWet.areas!.paint_area, A.paint_area);
+const onlyBeds = deriveProjectAreas({ ...input, plasterRoomNames: ["غرفة نوم 1", "غرفة نوم 2"] });
+eq("plaster scope: specific rooms only", onlyBeds.areas!.wall_area, (P(16) + P(14)) * h);
+const noneSel = deriveProjectAreas({ ...input, plasterRoomNames: [] });
+truthy("plaster scope: no rooms selected -> zero + warning", noneSel.areas!.wall_area === 0 && noneSel.warnings.some((w) => w.includes("المحارة")));
+const scoped = computeProjectBom(items, materials, [], labor, { ...input, plasterRoomNames: ["غرفة نوم 1"] });
+eq("plaster labor follows the selected rooms", scoped.bom!.groups.find((x) => x.item.key === "plaster")!.laborCost, 10 * P(16) * h, 0.05);
+
 // التوقف عند نقص البيانات (لا تخمين)
 const b1 = deriveProjectAreas({ ...input, rooms: [] });
 truthy("no rooms blocks", !b1.ok && b1.blockers.length === 1 && b1.areas === null);
@@ -144,8 +184,11 @@ const quick = computeQuickBom(items, materials, [], { totalArea: 100, bedrooms: 
 truthy("quick: plastered removes plaster, gypsum present", !quick.groups.some((x) => x.item.key === "plaster") && quick.groups.some((x) => x.item.key === "gypsum"));
 eq("quick: lump labor counted once", quick.lumpLabor.filter((l) => l.itemKey === "electric").length, 1);
 eq("quick: totals.labor includes lump", quick.totals.labor, quick.groups.reduce((s, x) => s + x.laborCost, 0) + 8000 + 6000, 0.05);
-const merged = applyLaborRates(items, labor.rates);
-eq("applyLaborRates zeroes lump items", merged.find((i) => i.key === "electric")!.labor_per_m2 || 0, 0);
+eq("simulator: flat gypsum defaults to whole ceiling, no pocket", sim.areas.flat_ceiling_area * 1000 + sim.areas.light_pocket_ml, 100 * 1000);
+const simBricks = computeBom(items, materials, [], { totalArea: 100, bedrooms: 3, bathrooms: 2, kitchens: 1, receptions: 1, bricksCount: 5000 }, labor);
+eq("simulator: masonry labor per 1000 bricks", simBricks.groups.find((x) => x.item.key === "masonry")!.laborCost, 3000, 0.05);
+const simNoBricks = computeBom(items, materials, [], { totalArea: 100, bedrooms: 3, bathrooms: 2, kitchens: 1, receptions: 1 }, labor);
+truthy("simulator: masonry per-1000 without bricks warns", simNoBricks.warnings.some((w) => w.includes("عدد الطوب")));
 
 console.log(fails === 0 ? "\nALL TESTS PASSED" : `\n${fails} TEST(S) FAILED`);
 process.exit(fails === 0 ? 0 : 1);

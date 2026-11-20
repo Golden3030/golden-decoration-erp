@@ -77,7 +77,7 @@ async function loadGrounding(id: EmployeeId, db: any): Promise<any> {
     const [itemsRes, matsRes, laborRes, plumbRes] = await Promise.all([
       db.from("takeoff_items").select("key, name_ar, sort_order, active_set, is_active").order("sort_order"),
       db.from("takeoff_materials").select("item_key, set_name, name_ar, basis, coefficient, purchase_unit, pack_size, unit_price, is_active").order("sort_order"),
-      db.from("takeoff_labor").select("item_key, kind, basis, rate"),
+      db.from("takeoff_labor").select("item_key, line_name, kind, basis, rate, sort_order").order("sort_order"),
       db.from("takeoff_plumbing_labor").select("bathrooms_tier, install_type, price")
     ]);
     if (itemsRes.error || matsRes.error || laborRes.error || plumbRes.error) {
@@ -86,11 +86,16 @@ async function loadGrounding(id: EmployeeId, db: any): Promise<any> {
     }
     const price = (v: any) => (num(v) > 0 ? `${num(v)} جنيه` : "غير مضبوط");
     const laborText = (key: string) => {
-      const r = (laborRes.data || []).find((x: any) => x.item_key === key);
-      if (!r) return "غير مضبوطة";
-      if (r.kind === "per_m2") return `${price(r.rate)} لكل م² من ${AREA_LABELS[r.basis as Basis] || r.basis}`;
-      if (r.kind === "lump") return `مقطوعة للشقة: ${price(r.rate)}`;
-      return "مقطوعة حسب عدد الحمامات ونوع التأسيس (الجدول في plumbingLaborTiers)";
+      const rows = (laborRes.data || []).filter((x: any) => x.item_key === key);
+      if (rows.length === 0) return ["غير مضبوطة"];
+      return rows.map((r: any) => {
+        const nm = r.line_name ? `${r.line_name}: ` : "";
+        if (r.kind === "per_m2") return `${nm}${price(r.rate)} لكل م² من ${AREA_LABELS[r.basis as Basis] || r.basis}`;
+        if (r.kind === "per_ml") return `${nm}${price(r.rate)} لكل متر طولي من ${AREA_LABELS[r.basis as Basis] || r.basis}`;
+        if (r.kind === "per_1000_bricks") return `${nm}${price(r.rate)} لكل ألف طوبة`;
+        if (r.kind === "lump") return `${nm}مقطوعة للشقة: ${price(r.rate)}`;
+        return `${nm}مقطوعة حسب عدد الحمامات ونوع التأسيس (الجدول في plumbingLaborTiers)`;
+      });
     };
     return {
       sourceOfTruth: "جداول الحصر الفني في صفحة الإعدادات، وهي نفس المصدر في المحاكي والتقدير السريع والمقايسة المبدئية ووضع المشروع المسجل",
@@ -127,7 +132,8 @@ async function loadGrounding(id: EmployeeId, db: any): Promise<any> {
         waterproofRule: "العزل = أرضية الحمامات والمطابخ والبلكونات",
         gypsumRule: "الجبس بورد على الغرف المفعّلة في تاب الأسقف فقط",
         missingDataRule: "لو مساحات الغرف أو حالة الشقة أو ارتفاع السقف ناقصة، الحصر يقف برسالة بدل ما يخمّن",
-        laborRules: "مصنعيات المحارة والدهانات والجبس بورد والسيراميك بالمتر، والكهرباء والسباكة مقطوعة (السباكة حسب عدد الحمامات ونوع التأسيس دفن أو عادي)"
+        laborRules: "المحارة والدهانات بالمتر. الجبس بورد: الفلات بالمتر المربع وبيت النور بالمتر الطولي (المحيط من طول وعرض الغرفة في تاب الأسقف). السيراميك: سعر للأرضيات وسعر للحوائط. المباني: مقطوعة أو بالألف طوبة. الكهرباء مقطوعة، والسباكة مقطوعة حسب عدد الحمامات ونوع التأسيس (في المشروع المسجل يتقرأ من تاب السباكة)",
+        plasterScope: "المحارة تتحسب على الشقة كلها أو بدون الحمامات والمطبخ أو غرف محددة حسب اختيار المستخدم"
       }
     };
   }

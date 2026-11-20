@@ -1,21 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import GoldButton from "@/components/ui/GoldButton";
 import { AREA_LABELS, PLUMBING_INSTALL_LABELS, type Basis, type LaborKind, type PlumbingInstall } from "@/lib/bomEngine";
 
-// تاب المصنعيات: نوع مصنعية كل بند وسعرها. بالمتر للمحارة والدهانات والجبس بورد والسيراميك،
-// ومقطوعة للكهرباء، والسباكة سعر مقطوع حسب عدد الحمامات ونوع التأسيس (دفن أو عادي).
+// تاب المصنعيات: كل بند له سطر مصنعية أو أكتر. نوع السطر: بالمتر المربع (المحارة، الدهانات، جبس فلات، سيراميك)،
+// بالمتر الطولي (جبس بيت نور)، مقطوعة (الكهرباء، المباني)، بالألف طوبة (المباني)، أو سباكة بسعر حسب الحمامات ونوع التأسيس.
 // محرك الحصر بيقرا من هنا بس (المحاكي، التقدير السريع، المقايسة المبدئية، ووضع المشروع المسجل).
 
 const inputClass = "h-9 w-full rounded-lg bg-[#020B1C] border border-[#D4AF37]/30 text-white px-2.5 outline-none text-xs font-bold";
 const miniLabel = "block text-[10px] mb-1 font-bold text-gray-400";
-const BASIS_OPTIONS = Object.keys(AREA_LABELS).filter((b) => b !== "per_unit") as Basis[];
+const M2_BASES = Object.keys(AREA_LABELS).filter((b) => b !== "per_unit" && b !== "light_pocket_ml") as Basis[];
+const ML_BASES: Basis[] = ["light_pocket_ml", "perimeter_ml"];
 const KIND_LABELS: Record<LaborKind, string> = {
-  per_m2: "بالمتر (جنيه لكل م²)",
+  per_m2: "بالمتر المربع (جنيه لكل م²)",
+  per_ml: "بالمتر الطولي (جنيه لكل م.ط)",
   lump: "مقطوعة (مبلغ ثابت للشقة)",
+  per_1000_bricks: "بالألف طوبة (جنيه لكل 1000 طوبة)",
   plumbing_tiers: "سباكة: سعر حسب الحمامات ونوع التأسيس"
 };
 const TIERS: { tier: 1 | 2 | 3; label: string }[] = [
@@ -26,12 +29,15 @@ const TIERS: { tier: 1 | 2 | 3; label: string }[] = [
 const INSTALLS: PlumbingInstall[] = ["buried", "regular"];
 
 interface ItemRow { key: string; name_ar: string; sort_order: number; is_active: boolean }
-interface LaborRow { kind: LaborKind; basis: Basis; rate: string }
+interface LineRow { line_key: string; line_name: string; kind: LaborKind; basis: Basis; rate: string }
 type Msg = { type: "ok" | "error"; text: string } | null;
+
+const newKey = () => "l" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
 
 export default function LaborSettings() {
   const [items, setItems] = useState<ItemRow[]>([]);
-  const [rows, setRows] = useState<Record<string, LaborRow>>({});
+  const [lines, setLines] = useState<Record<string, LineRow[]>>({});
+  const [saved, setSaved] = useState<Record<string, string[]>>({}); // سطور الحفظ الأخير لكل بند (لتحديد المحذوف)
   const [dirty, setDirty] = useState<Record<string, boolean>>({});
   const [plumb, setPlumb] = useState<Record<string, string>>({});
   const [plumbDirty, setPlumbDirty] = useState(false);
@@ -43,52 +49,81 @@ export default function LaborSettings() {
   async function load() {
     const [i, l, p] = await Promise.all([
       supabase.from("takeoff_items").select("key, name_ar, sort_order, is_active").order("sort_order"),
-      supabase.from("takeoff_labor").select("*"),
+      supabase.from("takeoff_labor").select("*").order("sort_order"),
       supabase.from("takeoff_plumbing_labor").select("*")
     ]);
     if (i.error || l.error || p.error) {
-      setLoadError("تعذّر تحميل جداول المصنعيات. تأكد من تشغيل ملف migrate_labor_rates.sql في Supabase.");
+      setLoadError("تعذّر تحميل جداول المصنعيات. تأكد من تشغيل ملفي migrate_labor_rates.sql ثم migrate_labor_lines.sql في Supabase.");
       setLoading(false);
       return;
     }
     const itemList = ((i.data || []) as ItemRow[]).filter((x) => x.is_active);
-    const map: Record<string, LaborRow> = {};
+    const map: Record<string, LineRow[]> = {};
+    const savedMap: Record<string, string[]> = {};
     itemList.forEach((it) => {
-      const r = ((l.data || []) as any[]).find((x) => x.item_key === it.key);
-      map[it.key] = r
-        ? { kind: r.kind, basis: r.basis, rate: String(Number(r.rate || 0)) }
-        : { kind: "per_m2", basis: "apartment_area", rate: "0" };
+      const rows = ((l.data || []) as any[]).filter((x) => x.item_key === it.key);
+      savedMap[it.key] = rows.map((r) => r.line_key);
+      map[it.key] = rows.length
+        ? rows.map((r) => ({ line_key: r.line_key, line_name: r.line_name || "", kind: r.kind, basis: r.basis, rate: String(Number(r.rate || 0)) }))
+        : [{ line_key: "main", line_name: `مصنعية ${it.name_ar}`, kind: "per_m2", basis: "apartment_area", rate: "0" }];
     });
     const pm: Record<string, string> = {};
     TIERS.forEach((t) => INSTALLS.forEach((ins) => { pm[`${t.tier}:${ins}`] = "0"; }));
     ((p.data || []) as any[]).forEach((x) => { pm[`${x.bathrooms_tier}:${x.install_type}`] = String(Number(x.price || 0)); });
     setItems(itemList);
-    setRows(map);
+    setLines(map);
+    setSaved(savedMap);
     setPlumb(pm);
     setLoadError("");
     setLoading(false);
   }
   useEffect(() => { load(); }, []);
 
-  const patch = (key: string, v: Partial<LaborRow>) => {
-    setRows((p) => ({ ...p, [key]: { ...p[key], ...v } }));
-    setDirty((d) => ({ ...d, [key]: true }));
+  const patchLine = (itemKey: string, lineKey: string, v: Partial<LineRow>) => {
+    setLines((p) => ({ ...p, [itemKey]: p[itemKey].map((ln) => (ln.line_key === lineKey ? { ...ln, ...v } : ln)) }));
+    setDirty((d) => ({ ...d, [itemKey]: true }));
+  };
+  const changeKind = (itemKey: string, lineKey: string, kind: LaborKind) => {
+    const basis: Basis = kind === "per_ml" ? "light_pocket_ml" : kind === "per_m2" ? "apartment_area" : "apartment_area";
+    patchLine(itemKey, lineKey, { kind, basis });
+  };
+  const addLine = (it: ItemRow) => {
+    setLines((p) => ({
+      ...p,
+      [it.key]: [...p[it.key], { line_key: newKey(), line_name: `مصنعية ${it.name_ar}`, kind: "per_m2", basis: "apartment_area", rate: "0" }]
+    }));
+    setDirty((d) => ({ ...d, [it.key]: true }));
+  };
+  const removeLine = (itemKey: string, lineKey: string) => {
+    setLines((p) => ({ ...p, [itemKey]: p[itemKey].filter((ln) => ln.line_key !== lineKey) }));
+    setDirty((d) => ({ ...d, [itemKey]: true }));
   };
   const clean = (v: string) => v.replace(/[^0-9.]/g, "");
 
-  async function saveRow(key: string) {
-    const r = rows[key];
-    const rate = Number(r.rate || 0);
-    if (!Number.isFinite(rate) || rate < 0) { setMsg({ type: "error", text: "السعر لازم يكون رقم صحيح." }); return; }
-    setBusy(key);
-    const { error } = await supabase.from("takeoff_labor").upsert(
-      { item_key: key, kind: r.kind, basis: r.basis, rate: r.kind === "plumbing_tiers" ? 0 : rate, updated_at: new Date().toISOString() },
-      { onConflict: "item_key" }
-    );
+  async function saveItem(itemKey: string) {
+    const rows = lines[itemKey];
+    if (rows.some((r) => !Number.isFinite(Number(r.rate || 0)) || Number(r.rate || 0) < 0)) {
+      setMsg({ type: "error", text: "الأسعار لازم تكون أرقام صحيحة." });
+      return;
+    }
+    setBusy(itemKey);
+    const keep = rows.map((r) => r.line_key);
+    const removed = (saved[itemKey] || []).filter((k) => !keep.includes(k));
+    if (removed.length > 0) {
+      const del = await supabase.from("takeoff_labor").delete().eq("item_key", itemKey).in("line_key", removed);
+      if (del.error) { setBusy(""); setMsg({ type: "error", text: "تعذّر حذف السطر: " + del.error.message }); return; }
+    }
+    const payload = rows.map((r, idx) => ({
+      item_key: itemKey, line_key: r.line_key, line_name: r.line_name.trim(), sort_order: idx, kind: r.kind,
+      basis: r.kind === "per_m2" || r.kind === "per_ml" ? r.basis : "apartment_area",
+      rate: r.kind === "plumbing_tiers" ? 0 : Number(r.rate || 0), updated_at: new Date().toISOString()
+    }));
+    const { error } = await supabase.from("takeoff_labor").upsert(payload, { onConflict: "item_key,line_key" });
     setBusy("");
     if (error) { setMsg({ type: "error", text: "تعذّر الحفظ: " + error.message }); return; }
-    setDirty((d) => ({ ...d, [key]: false }));
-    setMsg({ type: "ok", text: "تم حفظ مصنعية البند." });
+    setSaved((s) => ({ ...s, [itemKey]: keep }));
+    setDirty((d) => ({ ...d, [itemKey]: false }));
+    setMsg({ type: "ok", text: "تم حفظ مصنعيات البند." });
   }
 
   async function savePlumbing() {
@@ -115,15 +150,16 @@ export default function LaborSettings() {
     return <div className="p-5 rounded-2xl border border-rose-500/40 bg-rose-950/20 text-rose-300 text-xs font-bold">{loadError}</div>;
   }
 
-  const hasPlumbingItem = items.some((it) => rows[it.key]?.kind === "plumbing_tiers");
+  const hasPlumbingItem = items.some((it) => (lines[it.key] || []).some((ln) => ln.kind === "plumbing_tiers"));
 
   return (
     <div className="space-y-5" dir="rtl">
       <div className="bg-[#07132a] border border-[#D4AF37]/30 rounded-2xl p-5 space-y-2">
         <h3 className="text-[#D4AF37] font-black text-sm">مصنعيات الحصر</h3>
         <p className="text-slate-300 text-xs font-bold leading-relaxed">
-          اختار لكل بند نوع المصنعية: بالمتر (المحارة والدهانات والجبس بورد والسيراميك)، أو مقطوعة (الكهرباء)،
-          أو سباكة بسعر حسب عدد الحمامات ونوع التأسيس. الأسعار دي بيستخدمها المحاكي والتقدير السريع والمقايسة المبدئية ووضع المشروع المسجل.
+          كل بند ليه سطر مصنعية أو أكتر. المحارة والدهانات بالمتر المربع، والجبس بورد فلات بالمتر المربع وبيت نور بالمتر الطولي،
+          والسيراميك سطر للأرضيات وسطر للحوائط، والمباني مقطوعة أو بالألف طوبة، والكهرباء مقطوعة، والسباكة سعر حسب الحمامات ونوع التأسيس.
+          الأسعار دي بيستخدمها المحاكي والتقدير السريع والمقايسة المبدئية ووضع المشروع المسجل.
         </p>
       </div>
 
@@ -134,55 +170,75 @@ export default function LaborSettings() {
       )}
 
       <div className="space-y-3">
-        {items.map((it) => {
-          const r = rows[it.key];
-          return (
-            <div key={it.key} className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
-              <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">{it.name_ar}</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="col-span-2">
-                  <label className={miniLabel}>نوع المصنعية</label>
-                  <select value={r.kind} onChange={(e) => patch(it.key, { kind: e.target.value as LaborKind })} className={inputClass}>
-                    {(Object.keys(KIND_LABELS) as LaborKind[]).map((k) => <option key={k} value={k}>{KIND_LABELS[k]}</option>)}
-                  </select>
-                </div>
-                {r.kind === "per_m2" && (
-                  <>
-                    <div>
-                      <label className={miniLabel}>السعر (جنيه لكل م²)</label>
-                      <input type="text" inputMode="decimal" value={r.rate} onChange={(e) => patch(it.key, { rate: clean(e.target.value) })} className={inputClass} />
-                    </div>
-                    <div>
-                      <label className={miniLabel}>تُحسب على</label>
-                      <select value={r.basis} onChange={(e) => patch(it.key, { basis: e.target.value as Basis })} className={inputClass}>
-                        {BASIS_OPTIONS.map((b) => <option key={b} value={b}>{AREA_LABELS[b]}</option>)}
-                      </select>
-                    </div>
-                  </>
-                )}
-                {r.kind === "lump" && (
-                  <div className="col-span-2">
-                    <label className={miniLabel}>المبلغ المقطوع للشقة (جنيه)</label>
-                    <input type="text" inputMode="decimal" value={r.rate} onChange={(e) => patch(it.key, { rate: clean(e.target.value) })} className={inputClass} />
+        {items.map((it) => (
+          <div key={it.key} className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
+            <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">{it.name_ar}</h4>
+
+            {(lines[it.key] || []).map((ln) => (
+              <div key={ln.line_key} className="rounded-lg border border-[#1f2d4d] bg-[#07132a] p-3 space-y-2">
+                <div className="flex items-end gap-2">
+                  <div className="flex-1">
+                    <label className={miniLabel}>اسم السطر</label>
+                    <input type="text" value={ln.line_name} onChange={(e) => patchLine(it.key, ln.line_key, { line_name: e.target.value })} className={inputClass} />
                   </div>
-                )}
-                {r.kind === "plumbing_tiers" && (
-                  <p className="col-span-2 text-gray-400 text-[11px] font-bold">الأسعار في جدول مصنعية السباكة تحت.</p>
-                )}
+                  {(lines[it.key] || []).length > 1 && (
+                    <button type="button" aria-label="حذف السطر" onClick={() => removeLine(it.key, ln.line_key)} className="h-9 w-9 shrink-0 rounded-lg border border-rose-500/40 text-rose-300 flex items-center justify-center">
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="col-span-2">
+                    <label className={miniLabel}>نوع المصنعية</label>
+                    <select value={ln.kind} onChange={(e) => changeKind(it.key, ln.line_key, e.target.value as LaborKind)} className={inputClass}>
+                      {(Object.keys(KIND_LABELS) as LaborKind[]).map((k) => <option key={k} value={k}>{KIND_LABELS[k]}</option>)}
+                    </select>
+                  </div>
+                  {(ln.kind === "per_m2" || ln.kind === "per_ml") && (
+                    <>
+                      <div>
+                        <label className={miniLabel}>{ln.kind === "per_ml" ? "السعر (جنيه لكل م.ط)" : "السعر (جنيه لكل م²)"}</label>
+                        <input type="text" inputMode="decimal" value={ln.rate} onChange={(e) => patchLine(it.key, ln.line_key, { rate: clean(e.target.value) })} className={inputClass} />
+                      </div>
+                      <div>
+                        <label className={miniLabel}>تُحسب على</label>
+                        <select value={ln.basis} onChange={(e) => patchLine(it.key, ln.line_key, { basis: e.target.value as Basis })} className={inputClass}>
+                          {(ln.kind === "per_ml" ? ML_BASES : M2_BASES).map((b) => <option key={b} value={b}>{AREA_LABELS[b]}</option>)}
+                        </select>
+                      </div>
+                    </>
+                  )}
+                  {(ln.kind === "lump" || ln.kind === "per_1000_bricks") && (
+                    <div className="col-span-2">
+                      <label className={miniLabel}>{ln.kind === "lump" ? "المبلغ المقطوع للشقة (جنيه)" : "السعر لكل 1000 طوبة (جنيه)"}</label>
+                      <input type="text" inputMode="decimal" value={ln.rate} onChange={(e) => patchLine(it.key, ln.line_key, { rate: clean(e.target.value) })} className={inputClass} />
+                      {ln.kind === "per_1000_bricks" && (
+                        <p className="text-gray-500 text-[10px] font-bold mt-1">عدد الطوب من تاب المباني في المشروع المسجل، ويُدخل يدوياً في المحاكي.</p>
+                      )}
+                    </div>
+                  )}
+                  {ln.kind === "plumbing_tiers" && (
+                    <p className="col-span-2 text-gray-400 text-[11px] font-bold">الأسعار في جدول مصنعية السباكة تحت.</p>
+                  )}
+                </div>
               </div>
-              <GoldButton size="fill" disabled={!dirty[it.key] || busy === it.key} onClick={() => saveRow(it.key)}>
-                {busy === it.key ? <Loader2 className="animate-spin w-4 h-4" /> : dirty[it.key] ? "حفظ" : "محفوظ"}
-              </GoldButton>
+            ))}
+
+            <div className="flex flex-wrap gap-2">
+              <GoldButton toggle active={false} onClick={() => addLine(it)}><Plus size={14} /> إضافة سطر مصنعية</GoldButton>
             </div>
-          );
-        })}
+            <GoldButton size="fill" disabled={!dirty[it.key] || busy === it.key} onClick={() => saveItem(it.key)}>
+              {busy === it.key ? <Loader2 className="animate-spin w-4 h-4" /> : dirty[it.key] ? "حفظ" : "محفوظ"}
+            </GoldButton>
+          </div>
+        ))}
       </div>
 
       <div className="bg-[#020B1C] border border-[#D4AF37]/50 rounded-xl p-4 space-y-3">
         <h4 className="text-[#D4AF37] font-black text-sm">مصنعية السباكة (مقطوعة)</h4>
         <p className="text-gray-400 text-[11px] font-bold leading-relaxed">
-          السعر حسب عدد الحمامات ونوع التأسيس (دفن أو عادي).
-          {!hasPlumbingItem && " تنبيه: مفيش بند نوعه \"سباكة\" حالياً، فاختار النوع ده لبند السباكة فوق عشان الأسعار دي تتحسب."}
+          السعر حسب عدد الحمامات ونوع التأسيس (دفن أو عادي). في المشروع المسجل نوع التأسيس بيتقرا من تاب السباكة بالمشروع.
+          {!hasPlumbingItem && " تنبيه: مفيش سطر نوعه \"سباكة\" حالياً، فاختار النوع ده لبند السباكة فوق عشان الأسعار دي تتحسب."}
         </p>
         <div className="grid grid-cols-3 gap-2 items-end">
           <span />
