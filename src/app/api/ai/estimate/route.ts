@@ -134,7 +134,7 @@ export async function POST(request: Request) {
         .from("finishing_specs")
         .select("*")
         .eq("project_id", projectId)
-        .in("category", ["areas", "ceiling", "masonry", "plumbing"]);
+        .in("category", ["areas", "ceiling", "masonry", "plumbing", "plaster"]);
       if (specsError) {
         return NextResponse.json({ error: "تعذّر قراءة مواصفات المشروع من قاعدة البيانات: " + specsError.message }, { status: 500 });
       }
@@ -151,6 +151,7 @@ export async function POST(request: Request) {
       const ceilingSpec = parse("ceiling");
       const masonrySpec = parse("masonry");
       const plumbingSpec = parse("plumbing");
+      const plasterSpec = parse("plaster");
 
       const rooms: TakeoffRoom[] = Object.entries(areasSpec.values || {})
         .map(([name, area]) => ({ name, kind: classifyRoom(name), area: Number(area) }))
@@ -164,9 +165,13 @@ export async function POST(request: Request) {
       // مشروع مسجل: نوع التأسيس من تاب السباكة (concealed = دفن، regular = عادي) ولا يُسأل عنه
       const projectInstall: PlumbingInstall | undefined =
         plumbingSpec.activeSystem === "concealed" ? "buried" : plumbingSpec.activeSystem === "regular" ? "regular" : undefined;
-      const plasterRoomNames: string[] | undefined = Array.isArray(body.plasterRoomNames)
-        ? body.plasterRoomNames.map((x: any) => String(x))
-        : undefined;
+      // نطاق المحارة محفوظ مع المشروع في تاب المحارة: الشقة كلها (افتراضي)، بدون الحمامات والمطبخ، أو غرف محددة
+      const plasterRoomNames: string[] | undefined =
+        plasterSpec.scope === "no_wet"
+          ? rooms.filter((r) => r.kind !== "bathroom" && r.kind !== "kitchen").map((r) => r.name)
+          : plasterSpec.scope === "custom" && Array.isArray(plasterSpec.scopeRooms)
+            ? plasterSpec.scopeRooms.map((x: any) => String(x))
+            : undefined;
 
       // نفس محرك المحاكي والتقدير السريع، بمساحات مشتقة من الغرف الفعلية (projectBom.ts)
       const pr = computeProjectBom(tables.items, tables.materials, tables.factors, tables.labor, {

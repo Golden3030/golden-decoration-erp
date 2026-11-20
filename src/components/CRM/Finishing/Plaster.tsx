@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useCRM } from "../context/CRMContext";
 import { supabase } from '@/lib/supabaseClient';
+import ToggleSwitch from '@/components/ui/ToggleSwitch';
+import { classifyRoom } from '@/lib/takeoffEngine';
 import TabActivationBanner from './TabActivationBanner'; // 👈 استدعاء المكون المشترك الموحد للأجهزة اللمسية للشركة
 import {
   Check,
@@ -96,6 +98,8 @@ const DEFAULT_PLASTER_STATE = {
   selectedCementId: '',
   selectedSandId: '',
   notes: '',
+  scope: 'all' as 'all' | 'no_wet' | 'custom', // نطاق المحارة في الحصر: الشقة كلها، بدون الحمامات والمطبخ، أو غرف محددة
+  scopeRooms: [] as string[],                  // أسماء الغرف المحددة (لنطاق custom)
   cementCoverageRate: 5,   // معدل فرد الأسمنت (م²/شكارة) — قابل للتعديل حسب براند الأسمنت
   plasterThicknessCm: 2.5, // سمك طبقة المحارة بالسنتيمتر
   meshMetalPrice: 180,   
@@ -192,6 +196,8 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
         selectedCementId: plasterContext.selectedCementId ?? '',
         selectedSandId: plasterContext.selectedSandId ?? '',
         notes: plasterContext.notes ?? '',
+        scope: plasterContext.scope === 'no_wet' || plasterContext.scope === 'custom' ? plasterContext.scope : 'all',
+        scopeRooms: Array.isArray(plasterContext.scopeRooms) ? plasterContext.scopeRooms : [],
         cementCoverageRate: plasterContext.cementCoverageRate ?? 5,
         plasterThicknessCm: plasterContext.plasterThicknessCm ?? 2.5,
         meshMetalPrice: plasterContext.meshMetalPrice ?? 180,   
@@ -252,6 +258,14 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
       }
     });
   };
+
+  // غرف الشقة الداخلية المسجلة في تاب المساحات (للاختيار في نطاق المحارة)
+  const scopeRoomOptions = useMemo(() => {
+    const values: Record<string, unknown> = crmData?.finishing?.areas?.values || {};
+    return Object.entries(values)
+      .map(([name, area]) => ({ name, kind: classifyRoom(name), area: Number(area) }))
+      .filter((r) => r.area > 0 && r.kind !== 'balcony' && r.kind !== 'garden');
+  }, [crmData?.finishing?.areas?.values]);
 
   const togglePlasterMode = (nextVal: boolean) => {
     updateStateAndSave(prev => ({
@@ -465,6 +479,55 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
         {/* 3. مسار أعمال المحارة الإنشائية الأساسية بياض ورميات مذهب */}
         {state.enabled && (
           <div className="space-y-8 animate-fade-in">
+            {/* نطاق المحارة: بيتحفظ مع المشروع ويقراه حصر الكميات */}
+            <div className="space-y-3 p-4 rounded-2xl border border-[#1f2d4d] bg-[#020B1C]/40">
+              <div className="flex items-center gap-2 border-r-4 border-[#D4AF37] pr-2">
+                <Layers className="w-5 h-5 text-[#D4AF37]" />
+                <h4 className="text-md font-bold text-[#D4AF37]">نطاق المحارة (يستخدمه حصر الكميات)</h4>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {([
+                  { key: 'all', label: 'الشقة كلها' },
+                  { key: 'no_wet', label: 'بدون الحمام والمطبخ' },
+                  { key: 'custom', label: 'غرف محددة' }
+                ] as const).map((opt) => (
+                  <button
+                    key={opt.key}
+                    type="button"
+                    onClick={() => updateStateAndSave((prev) => ({
+                      scope: opt.key,
+                      scopeRooms: opt.key === 'custom' && prev.scopeRooms.length === 0 ? scopeRoomOptions.map((r) => r.name) : prev.scopeRooms
+                    }))}
+                    className={`px-3 py-2.5 rounded-xl border text-xs font-bold transition-all ${
+                      state.scope === opt.key ? 'bg-[#D4AF37] text-[#020B1C] border-[#D4AF37]' : 'bg-[#020B1C] text-gray-300 border-[#1f2d4d] hover:border-[#D4AF37]'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {state.scope === 'custom' && (
+                scopeRoomOptions.length > 0 ? (
+                  <div className="space-y-2 pt-1">
+                    {scopeRoomOptions.map((r) => (
+                      <ToggleSwitch
+                        key={r.name}
+                        checked={state.scopeRooms.includes(r.name)}
+                        onChange={() => updateStateAndSave((prev) => ({
+                          scopeRooms: prev.scopeRooms.includes(r.name) ? prev.scopeRooms.filter((n) => n !== r.name) : [...prev.scopeRooms, r.name]
+                        }))}
+                        label={`${r.name} (${r.area} م²)`}
+                        className="w-full"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-amber-300 font-bold">سجّل مساحات الغرف في تاب المساحات الأول عشان تختار منها.</p>
+                )
+              )}
+              <p className="text-[11px] text-gray-500 font-bold">الافتراضي: الشقة كلها. الحصر بيحسب المحارة على النطاق المختار هنا بس.</p>
+            </div>
+
             {/* كروت اختيار باقة ومواصفة الاستلام */}
             <div className="space-y-4">
               <div className="flex items-center gap-2 p-2 border-r-4 border-[#D4AF37] mr-2">
