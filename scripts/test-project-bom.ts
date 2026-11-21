@@ -1,6 +1,6 @@
 // اختبار حسابات حصر المشروع المسجل (بدون قاعدة بيانات). التشغيل: npx tsx scripts/test-project-bom.ts
 import { computeProjectBom, deriveProjectAreas, perimeterFromArea, type ProjectBomInput } from "../src/lib/projectBom";
-import { computeBom, computeQuickBom, bomToEstimateLines, type BomItem, type BomMaterial, type LaborConfig } from "../src/lib/bomEngine";
+import { computeBom, computeQuickBom, bomToEstimateLines, materialPurchaseQty, type BomItem, type BomMaterial, type LaborConfig } from "../src/lib/bomEngine";
 import { classifyRoom } from "../src/lib/takeoffEngine";
 
 let fails = 0;
@@ -91,7 +91,7 @@ truthy("counts", d.counts.bedrooms === 2 && d.counts.bathrooms === 1 && d.counts
 // نفس المساحات تظهر في الكميات (معامل 1)
 const res = computeProjectBom(items, materials, [], labor, input);
 const qty = (item: string, name: string) => res.bom!.groups.find((g) => g.item.key === item)!.lines.find((l) => l.name === name)!.rawQuantity;
-eq("plaster qty = wall_area", qty("plaster", "محارة"), A.wall_area);
+eq("plaster qty = wall_area x 1.25 (unsaved thickness uses tab default 2.5 cm)", qty("plaster", "محارة"), A.wall_area * 1.25);
 eq("paint qty = paint_area", qty("paint", "دهان"), A.paint_area);
 eq("gypsum ceiling qty = enabled spaces only", qty("gypsum", "جبس سقف"), 37);
 eq("gypsum shadow-gap perimeter", qty("gypsum", "شادو جاب"), d.gypsum.perimeter);
@@ -189,6 +189,24 @@ const simBricks = computeBom(items, materials, [], { totalArea: 100, bedrooms: 3
 eq("simulator: masonry labor per 1000 bricks", simBricks.groups.find((x) => x.item.key === "masonry")!.laborCost, 3000, 0.05);
 const simNoBricks = computeBom(items, materials, [], { totalArea: 100, bedrooms: 3, bathrooms: 2, kitchens: 1, receptions: 1 }, labor);
 truthy("simulator: masonry per-1000 without bricks warns", simNoBricks.warnings.some((w) => w.includes("عدد الطوب")));
+
+// سمك المحارة في حصر المشروع: خامات المحارة × (السمك ÷ 2)، وباقي البنود ما بتتأثرش
+const th = (t: number | undefined) => computeProjectBom(items, materials, [], labor, { ...input, plasterThicknessCm: t }).bom!;
+const plasterQty = (b: any) => b.groups.find((x: any) => x.item.key === "plaster").lines.find((l: any) => l.name === "محارة").rawQuantity;
+eq("project plaster thickness 2 cm = factor 1", plasterQty(th(2)), A.wall_area);
+eq("project plaster thickness 3 cm = factor 1.5", plasterQty(th(3)), A.wall_area * 1.5);
+eq("project plaster thickness unsaved = tab default 2.5 -> factor 1.25", plasterQty(th(undefined)), A.wall_area * 1.25);
+truthy("thickness assumption is written", th(3) && computeProjectBom(items, materials, [], labor, { ...input, plasterThicknessCm: 3 }).derived.assumptions.some((a) => a.includes("سمك المحارة 3 سم")));
+eq("paint unaffected by plaster thickness", th(3).groups.find((x) => x.item.key === "paint")!.lines[0].rawQuantity, A.paint_area);
+eq("plaster labor unaffected by thickness", th(3).groups.find((x) => x.item.key === "plaster")!.laborCost, 10 * A.wall_area, 0.05);
+
+// تاب المحارة: الأسمنت والرمل من معاملات الحصر (0.18 شيكارة/م² و 0.024 م³/م² لسمك 2 سم) × (السمك ÷ 2)
+const cementM = { coefficient: 0.18, pack_size: 1, rounding: "ceil" as const };
+const sandM = { coefficient: 0.024, pack_size: 1, rounding: "half" as const };
+eq("plaster tab cement at 2 cm, 450 m2 = 81 bags", materialPurchaseQty(cementM, 450, 1), 81);
+eq("plaster tab cement at 2.5 cm (x1.25): 450 x 0.18 x 1.25 = 101.25 -> 102", materialPurchaseQty(cementM, 450, 1.25), 102);
+eq("plaster tab sand at 2.5 cm: 450 x 0.024 x 1.25 = 13.5 m3", materialPurchaseQty(sandM, 450, 1.25), 13.5);
+eq("plaster tab zero area = 0", materialPurchaseQty(cementM, 0, 1.25), 0);
 
 console.log(fails === 0 ? "\nALL TESTS PASSED" : `\n${fails} TEST(S) FAILED`);
 process.exit(fails === 0 ? 0 : 1);

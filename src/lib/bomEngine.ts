@@ -132,6 +132,7 @@ export interface SimInput {
   masonryArea?: number;                               // مساحة المباني (تُدخل يدوياً، الافتراضي 0)
   overrides?: Partial<Record<keyof DerivedAreas, number>>; // تعديل يدوي لأي مساحة مشتقة
   plumbingInstall?: PlumbingInstall;                  // نوع تأسيس السباكة (دفن أو عادي) لمصنعية السباكة المقطوعة
+  itemFactors?: Record<string, number>;               // معامل ضرب لكل خامات بند معين (مثلاً سمك المحارة ÷ 2)
   bricksCount?: number;                               // عدد الطوب (لمصنعية المباني بالألف طوبة). غير مدخل = لا تُحسب ويظهر تحذير
 }
 
@@ -163,6 +164,21 @@ export function deriveAreas(inp: SimInput): DerivedAreas {
   // الجبس بدون تحديد نوع الأسقف يُعتبر فلات بالكامل (بيت النور بيتحدد من تاب الأسقف في وضع المشروع)
   if (ov.flat_ceiling_area === undefined) base.flat_ceiling_area = base.ceiling_area;
   return base;
+}
+
+// سمك المحارة: معاملات الحصر مبنية على 2 سم (من اسم الخامتين)، وافتراضي تاب المحارة 2.5 سم
+export const PLASTER_BASE_THICKNESS_CM = 2;
+export const DEFAULT_PLASTER_THICKNESS_CM = 2.5;
+
+// كمية الشراء لخامة واحدة: القاعدة × المعامل × معامل إضافي (مثلاً السمك ÷ السمك الأساسي)، ثم ÷ حجم العبوة والتقريب
+// نفس المعادلة المستخدمة في الحصر، لتقدر شاشات تانية (تاب المحارة) تحسب من نفس المعاملات بدل أرقام خاصة بيها
+export function materialPurchaseQty(
+  m: { coefficient: number; pack_size: number; rounding: Rounding },
+  base: number,
+  factor = 1
+): number {
+  const raw = base * (Number(m.coefficient) || 0) * factor;
+  return roundQty(raw / (Number(m.pack_size) || 1), m.rounding);
 }
 
 // التقريب لأقرب وحدة شراء: ceil للأعداد الصحيحة، وhalf لأقرب 0.5 (الأمتار المكعبة) لأعلى
@@ -325,8 +341,9 @@ export function computeBom(
     const lines: BomLine[] = [];
     for (const m of mats) {
       const base = m.basis === "per_unit" ? 1 : areas[m.basis];
-      let raw = base * m.coefficient;
-      let extraText = "";
+      const itemFactor = inp.itemFactors?.[item.key] ?? 1;
+      let raw = base * m.coefficient * itemFactor;
+      let extraText = itemFactor !== 1 ? ` × ${fmt(itemFactor)} (معامل البند)` : "";
 
       // علب الكهرباء (وأي خامة لها معامل مخارج): الكمية = المساحة × معامل + عدد الغرف × معامل المخارج
       if (m.extra_factor_key) {

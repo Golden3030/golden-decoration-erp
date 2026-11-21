@@ -182,6 +182,7 @@ export async function POST(request: Request) {
         declaredTotalArea: Number(project.area) || undefined,
         plumbingInstall: projectInstall,
         plasterRoomNames,
+        plasterThicknessCm: Number(plasterSpec.plasterThicknessCm) > 0 ? Number(plasterSpec.plasterThicknessCm) : undefined,
         bricksCount: Number(masonrySpec.brickCount) > 0 ? Number(masonrySpec.brickCount) : undefined
       });
       if (!pr.ok || !pr.bom) {

@@ -5,6 +5,8 @@
 
 import {
   computeBom,
+  DEFAULT_PLASTER_THICKNESS_CM,
+  PLASTER_BASE_THICKNESS_CM,
   sumTotals,
   BOM_FINAL_NOTE,
   type BomGroup,
@@ -49,6 +51,7 @@ export interface ProjectBomInput {
   plumbingInstall?: PlumbingInstall;  // دفن أو عادي (من تاب السباكة في المشروع المسجل)
   plasterRoomNames?: string[];        // الغرف اللي تدخل المحارة (غير محدد = كل الغرف الداخلية)
   bricksCount?: number;               // عدد الطوب من تاب المباني (لمصنعية الألف طوبة)
+  plasterThicknessCm?: number;        // سمك المحارة من تاب المحارة (غير مسجل = افتراضي التاب 2.5 سم)
   wastePct?: number;                  // 0 = بدون هالك وبدون خصم فراغات (القاعدة المعتمدة)، > 0 = هالك مع خصم الفراغات
 }
 
@@ -245,6 +248,11 @@ export function computeProjectBom(
   if (!derived.ok || !derived.areas) return { ok: false, blockers: derived.blockers, bom: null, derived };
 
   const a = derived.areas;
+  const thicknessSaved = Number(input.plasterThicknessCm) > 0;
+  const plasterThickness = thicknessSaved ? Number(input.plasterThicknessCm) : DEFAULT_PLASTER_THICKNESS_CM;
+  derived.assumptions.push(
+    `سمك المحارة ${plasterThickness} سم${thicknessSaved ? " (من تاب المحارة)" : " (افتراضي التاب، لم يُغيَّر في المشروع)"}: خامات المحارة (أسمنت ورمل) = معاملات الحصر لسمك ${PLASTER_BASE_THICKNESS_CM} سم × ${Math.round((plasterThickness / PLASTER_BASE_THICKNESS_CM) * 100) / 100}.`
+  );
   const base: SimInput = {
     totalArea: a.apartment_area,
     bedrooms: derived.counts.bedrooms,
@@ -252,7 +260,9 @@ export function computeProjectBom(
     kitchens: derived.counts.kitchens,
     receptions: derived.counts.receptions,
     plumbingInstall: input.plumbingInstall,
-    bricksCount: input.bricksCount
+    bricksCount: input.bricksCount,
+    // سمك المحارة بيضرب خامات بند المحارة (أسمنت ورمل) بنسبة السمك ÷ 2 سم (أساس معاملات الحصر)
+    itemFactors: { plaster: plasterThickness / PLASTER_BASE_THICKNESS_CM }
   };
 
   // كل البنود ما عدا الجبس بورد (والمحارة لو الشقة متحارة): المساحات كلها من بيانات الغرف

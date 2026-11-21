@@ -5,6 +5,7 @@ import { useCRM } from "../context/CRMContext";
 import { supabase } from '@/lib/supabaseClient';
 import ToggleSwitch from '@/components/ui/ToggleSwitch';
 import { classifyRoom } from '@/lib/takeoffEngine';
+import { DEFAULT_PLASTER_THICKNESS_CM, PLASTER_BASE_THICKNESS_CM, materialPurchaseQty, type BomMaterial } from '@/lib/bomEngine';
 import TabActivationBanner from './TabActivationBanner'; // 👈 استدعاء المكون المشترك الموحد للأجهزة اللمسية للشركة
 import {
   Check,
@@ -100,8 +101,7 @@ const DEFAULT_PLASTER_STATE = {
   notes: '',
   scope: 'all' as 'all' | 'no_wet' | 'custom', // نطاق المحارة في الحصر: الشقة كلها، بدون الحمامات والمطبخ، أو غرف محددة
   scopeRooms: [] as string[],                  // أسماء الغرف المحددة (لنطاق custom)
-  cementCoverageRate: 5,   // معدل فرد الأسمنت (م²/شكارة) — قابل للتعديل حسب براند الأسمنت
-  plasterThicknessCm: 2.5, // سمك طبقة المحارة بالسنتيمتر
+  plasterThicknessCm: DEFAULT_PLASTER_THICKNESS_CM, // سمك طبقة المحارة بالسنتيمتر (معاملات الحصر مبنية على 2 سم، والكمية بتتعدل بنسبة السمك)
   meshMetalPrice: 180,   
   meshFiberPrice: 90,     
   nailsBoxPrice: 75,      
@@ -198,8 +198,7 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
         notes: plasterContext.notes ?? '',
         scope: plasterContext.scope === 'no_wet' || plasterContext.scope === 'custom' ? plasterContext.scope : 'all',
         scopeRooms: Array.isArray(plasterContext.scopeRooms) ? plasterContext.scopeRooms : [],
-        cementCoverageRate: plasterContext.cementCoverageRate ?? 5,
-        plasterThicknessCm: plasterContext.plasterThicknessCm ?? 2.5,
+        plasterThicknessCm: plasterContext.plasterThicknessCm ?? DEFAULT_PLASTER_THICKNESS_CM,
         meshMetalPrice: plasterContext.meshMetalPrice ?? 180,   
         meshFiberPrice: plasterContext.meshFiberPrice ?? 90,     
         nailsBoxPrice: plasterContext.nailsBoxPrice ?? 75,      
@@ -258,6 +257,35 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
       }
     });
   };
+
+  // معاملات الأسمنت والرمل لبند المحارة من جداول الحصر الفني (مصدر واحد مع الحصر والمقايسة)
+  const [plasterCoeffs, setPlasterCoeffs] = useState<{ cement: BomMaterial | null; sand: BomMaterial | null; error: string }>({ cement: null, sand: null, error: '' });
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data: item, error: itemErr } = await supabase.from('takeoff_items').select('active_set').eq('key', 'plaster').limit(1);
+      if (cancelled) return;
+      if (itemErr || !item || item.length === 0) {
+        setPlasterCoeffs({ cement: null, sand: null, error: 'بند المحارة غير موجود في معاملات الحصر الفنية.' });
+        return;
+      }
+      const { data: mats, error: matErr } = await supabase
+        .from('takeoff_materials').select('*').eq('item_key', 'plaster').eq('set_name', item[0].active_set).eq('is_active', true);
+      if (cancelled) return;
+      if (matErr || !mats) {
+        setPlasterCoeffs({ cement: null, sand: null, error: 'تعذّر قراءة معاملات المحارة من الحصر الفني.' });
+        return;
+      }
+      const list = (mats as any[]).map((m) => ({ ...m, coefficient: Number(m.coefficient), pack_size: Number(m.pack_size) })) as BomMaterial[];
+      const cement = list.find((m) => /[أا]سمنت/.test(m.name_ar)) || null;
+      const sand = list.find((m) => /رمل/.test(m.name_ar)) || null;
+      setPlasterCoeffs({
+        cement, sand,
+        error: !cement || !sand ? 'خامة الأسمنت أو الرمل غير موجودة في معاملات بند المحارة بالحصر (لازم الاسم يحتوي أسمنت / رمل).' : ''
+      });
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // غرف الشقة الداخلية المسجلة في تاب المساحات (للاختيار في نطاق المحارة)
   const scopeRoomOptions = useMemo(() => {
@@ -322,16 +350,11 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
 
   const totalPlasterArea = state.wallArea + (state.includeCeilings ? state.ceilingArea : 0);
 
-  // ✅ إصلاح: المعادلة القديمة كانت بتضرب المساحة فى نسبة ثابتة (0.25 شكارة/م²) من غير أي اعتبار
-  // لمعدل فرد الأسمنت الفعلي أو سمك طبقة المحارة، فكانت بتطلع كمية أسمنت أعلى من الحقيقي بـ 25%
-  // وكمية رمل أقل من الحقيقي بـ 25% تقريباً. المعادلة الصح: عدد الشكاير = المساحة ÷ معدل الفرد،
-  // وحجم الرمل = المساحة × سمك المحارة (بالمتر) × معامل انتفاخ الرمل السائب القياسي (4/3).
-  const coverageRate = Number(state.cementCoverageRate) > 0 ? Number(state.cementCoverageRate) : 5;
-  const thicknessMeters = Number(state.plasterThicknessCm || 2.5) / 100;
-  const SAND_BULKING_FACTOR = 4 / 3;
-
-  const requiredCementBags = Math.ceil(totalPlasterArea / coverageRate);
-  const requiredSandVolume = Number((totalPlasterArea * thicknessMeters * SAND_BULKING_FACTOR).toFixed(2));
+  // كمية الأسمنت والرمل من معاملات الحصر لبند المحارة (مبنية على سمك 2 سم)، مضروبة في (السمك المختار ÷ 2).
+  // مفيش أرقام خاصة بالتاب: لو المعاملات مش موجودة الكمية صفر وبتظهر رسالة.
+  const thicknessFactor = (Number(state.plasterThicknessCm) || PLASTER_BASE_THICKNESS_CM) / PLASTER_BASE_THICKNESS_CM;
+  const requiredCementBags = plasterCoeffs.cement ? materialPurchaseQty(plasterCoeffs.cement, totalPlasterArea, thicknessFactor) : 0;
+  const requiredSandVolume = plasterCoeffs.sand ? materialPurchaseQty(plasterCoeffs.sand, totalPlasterArea, thicknessFactor) : 0;
 
   const activeCement = dbProducts.find((p) => p.id === state.selectedCementId) || cementProducts[0];
   const activeSand = dbProducts.find((p) => p.id === state.selectedSandId) || sandProducts[0];
@@ -707,27 +730,32 @@ export default function PlasterTab({ projectId }: PlasterTabProps) {
                 <h4 className="text-lg font-bold text-[#D4AF37] flex items-center gap-2">ثالثاً: مون التأسيس لأعمال المحارة المعتمدة  🧪:</h4>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-4 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d]">
-                  <span className="text-xs font-semibold text-[#F0E6D2] block mb-1.5">معدل فرد الأسمنت (م² / شكارة):</span>
-                  <input
-                    type="number"
-                    value={state.cementCoverageRate}
-                    onChange={(e) => updateStateAndSave(() => ({ cementCoverageRate: Number(e.target.value) || 5 }))}
-                    className="p-2 rounded-lg bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] text-xs font-bold outline-none w-full font-mono"
-                  />
+              <div className="p-4 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d] flex items-center justify-between gap-4">
+                <div className="text-right">
+                  <span className="text-sm font-semibold text-[#D4AF37] block">سمك طبقة المحارة</span>
+                  <p className="text-xs text-white mt-1">معاملات الحصر مبنية على 2 سم، والأسمنت والرمل بيتعدلوا بنسبة السمك</p>
                 </div>
-                <div className="p-4 rounded-2xl bg-[#020B1C]/60 border border-[#1f2d4d]">
-                  <span className="text-xs font-semibold text-[#F0E6D2] block mb-1.5">سمك طبقة المحارة (سم):</span>
-                  <input
-                    type="number"
-                    step="0.5"
-                    value={state.plasterThicknessCm}
-                    onChange={(e) => updateStateAndSave(() => ({ plasterThicknessCm: Number(e.target.value) || 2.5 }))}
-                    className="p-2 rounded-lg bg-[#07132a] border border-[#1f2d4d] text-[#D4AF37] text-xs font-bold outline-none w-full font-mono"
-                  />
+                <div className="flex items-center justify-between bg-[#07132a] border border-[#1f2d4d] rounded-xl h-11 px-2 select-none w-36" dir="ltr">
+                  <button
+                    type="button"
+                    onClick={() => updateStateAndSave(prev => ({ plasterThicknessCm: Math.min(6, Number((Number(prev.plasterThicknessCm || 2.5) + 0.5).toFixed(1))) }))}
+                    className="w-6 h-6 rounded-full bg-[#020B1C] border border-[#243556] hover:border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#020B1C] text-[#D4AF37] flex items-center justify-center font-bold text-sm transition active:scale-90"
+                  >
+                    <Plus size={12} className="stroke-3" />
+                  </button>
+                  <span className="text-base font-black text-white font-mono">{state.plasterThicknessCm} <span className="text-[10px] text-gray-500 font-bold">سم</span></span>
+                  <button
+                    type="button"
+                    onClick={() => updateStateAndSave(prev => ({ plasterThicknessCm: Math.max(1, Number((Number(prev.plasterThicknessCm || 2.5) - 0.5).toFixed(1))) }))}
+                    className="w-6 h-6 rounded-full bg-rose-950/40 border border-rose-500/30 hover:bg-rose-600 text-rose-400 hover:text-white flex items-center justify-center font-bold text-xs cursor-pointer transition active:scale-90"
+                  >
+                    <Minus size={12} className="stroke-3" />
+                  </button>
                 </div>
               </div>
+              {plasterCoeffs.error && (
+                <p className="text-xs text-amber-300 font-bold">⚠️ {plasterCoeffs.error} فكميات الأسمنت والرمل مش هتتحسب. راجع الإعدادات ثم ضبط المعاملات الفنية.</p>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
