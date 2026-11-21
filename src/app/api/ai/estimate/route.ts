@@ -25,6 +25,8 @@ import {
   type PlumbingTier
 } from "@/lib/bomEngine";
 import { computeProjectBom } from "@/lib/projectBom";
+import { compareTakeoffToEstimate } from "@/lib/estimateCompare";
+import { pickEstimateHeader } from "@/lib/estimateHeader";
 
 // يضمن عدم انقطاع الاتصال على Vercel عند توليد التقارير
 export const maxDuration = 60;
@@ -112,6 +114,7 @@ export async function POST(request: Request) {
     let contextLabel = "";
     let result: TakeoffResult;
     let bomOut: ReturnType<typeof bomPayload> | null = null;
+    let comparisonOut: any = null; // مقارنة الحصر بالمقايسة (وضع المشروع المسجل فقط)
     let cost: { level: string; min: number; max: number } | null = null;
     let duration: { minDays: number; maxDays: number } | null = null;
     let costNote = "";
@@ -195,6 +198,22 @@ export async function POST(request: Request) {
       const a = bom.areas;
       const state = areasSpec.apartmentState as ApartmentState;
       bomOut = bomPayload(bom);
+
+      // مقارنة بالمقايسة المعتمدة للمشروع (النهائية أولاً ثم الأحدث). للمراجعة فقط، مفيش كتابة.
+      const { data: headers } = await supabaseAdmin
+        .from("estimate_headers").select("id, status, created_at, estimate_number").eq("project_id", projectId);
+      const header = pickEstimateHeader(headers as any[] | null);
+      if (!header) {
+        comparisonOut = { estimate: null, message: "لا توجد مقايسة لهذا المشروع بعد، فلا توجد مقارنة." };
+      } else {
+        const { data: estItems } = await supabaseAdmin.from("estimate_items").select("category, quantity, unit_price, labor_cost").eq("estimate_id", header.id);
+        const covered = Array.from(new Set(tables.items.filter((i) => i.is_active).map((i) => i.estimate_category || "decorations")));
+        comparisonOut = {
+          estimate: { number: (header as any).estimate_number || null, status: header.status || null, itemsCount: (estItems || []).length },
+          ...compareTakeoffToEstimate(bom, (estItems || []) as any[], covered)
+        };
+      }
+
       result = {
         rooms: pr.derived.rooms.map((r) => ({ name: r.name, kind: r.kind, area: r.area })),
         lines: bom.groups.flatMap((g) =>
@@ -388,7 +407,8 @@ ${mode === "quick" ? `4) رسالة للعميل: write a short WhatsApp reply (
       costNote,
       analysis: responseText,
       whatsappMessage,
-      bom: bomOut
+      bom: bomOut,
+      comparison: comparisonOut
     });
   } catch (error: any) {
     console.error("Error in Estimate AI Route:", error);
