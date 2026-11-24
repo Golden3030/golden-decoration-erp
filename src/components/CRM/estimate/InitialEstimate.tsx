@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useCRM } from "@/components/CRM/context/CRMContext";
 import QuickBomPanel from "@/components/CRM/estimate/QuickBomPanel";
+import TakeoffReviewPanel from "@/components/CRM/estimate/TakeoffReviewPanel";
 import { supabase } from "@/lib/supabaseClient";
 import { generateSequentialCode } from "@/lib/generateSequentialCode";
 import EstimateHeader from "./EstimateHeader";
@@ -1872,6 +1873,8 @@ export default function InitialEstimate() {
       </div>
 
       <QuickBomPanel />
+
+      <TakeoffReviewPanel />
 
       {detailedBOQ.length === 0 ? (
         <div className="p-12 rounded-2xl bg-[#020B1C] border border-[#1f2d4d] border-dashed text-center">

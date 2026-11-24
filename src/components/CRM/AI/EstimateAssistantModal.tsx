@@ -10,6 +10,7 @@ import { DEFAULT_FINISH_LEVEL, FINISH_LEVELS, type FinishLevel } from "@/lib/fin
 import { AREA_LABELS, PLUMBING_INSTALL_LABELS, type Basis, type PlumbingInstall } from "@/lib/bomEngine";
 import { openReportPdf } from "@/lib/reportPrint";
 import ToggleSwitch from "@/components/ui/ToggleSwitch";
+import ComparisonCard, { COMPARE_STATUS, signed, type ComparisonPayload } from "@/components/CRM/estimate/ComparisonCard";
 
 type Mode = "project" | "quick";
 
@@ -26,29 +27,6 @@ interface BomPayload {
   totals: { materials: number; labor: number; grand: number; unpricedLines: number };
   note: string;
 }
-interface CompareRowPayload {
-  category: string; label: string;
-  takeoffMaterials: number; takeoffLabor: number; takeoffTotal: number;
-  estimateMaterials: number; estimateLabor: number; estimateTotal: number;
-  diff: number; diffPct: number | null;
-  status: "match" | "review" | "only_takeoff" | "only_estimate" | "not_covered";
-}
-interface ComparisonPayload {
-  estimate: { number: string | null; status: string | null; itemsCount: number } | null;
-  message?: string;
-  rows?: CompareRowPayload[];
-  covered?: { takeoff: number; estimate: number; diff: number; diffPct: number | null };
-  outsideScopeEstimate?: number;
-  notes?: string[];
-}
-const COMPARE_STATUS: Record<CompareRowPayload["status"], { label: string; cls: string }> = {
-  match: { label: "مطابق تقريباً", cls: "text-emerald-300 border-emerald-500/40 bg-emerald-950/20" },
-  review: { label: "يحتاج مراجعة", cls: "text-amber-300 border-amber-500/40 bg-amber-950/20" },
-  only_takeoff: { label: "في الحصر فقط", cls: "text-amber-300 border-amber-500/40 bg-amber-950/20" },
-  only_estimate: { label: "في المقايسة فقط", cls: "text-rose-300 border-rose-500/40 bg-rose-950/20" },
-  not_covered: { label: "خارج نطاق الحصر", cls: "text-gray-400 border-[#1f2d4d] bg-[#07132a]" }
-};
-const signed = (n: number) => (n > 0 ? "+" : "") + Math.round(n).toLocaleString("en-US");
 interface EstimateResult {
   mode: Mode;
   comparison?: ComparisonPayload | null;
@@ -557,45 +535,7 @@ export default function EstimateAssistantModal({ projects, loadingProjects, onCl
             ))}
 
             {result.mode === "project" && result.comparison && (
-              <div className="bg-[#020B1C] border border-[#D4AF37]/50 rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between gap-2">
-                  <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">مقارنة الحصر بالمقايسة</h4>
-                  {result.comparison.estimate && (
-                    <ToggleSwitch checked={includeCompare} onChange={setIncludeCompare} ariaLabel="تضمين المقارنة في التقرير" />
-                  )}
-                </div>
-                {!result.comparison.estimate ? (
-                  <p className="text-gray-400 text-xs font-bold">{result.comparison.message}</p>
-                ) : (
-                  <>
-                    <p className="text-gray-400 text-[11px] font-bold">
-                      المقايسة رقم {result.comparison.estimate.number || "-"}{result.comparison.estimate.status ? ` (${result.comparison.estimate.status})` : ""}، عدد بنودها {result.comparison.estimate.itemsCount}
-                    </p>
-                    {(result.comparison.rows || []).map((r) => (
-                      <div key={r.category} className="rounded-lg border border-[#1f2d4d] bg-[#07132a] p-3 space-y-1.5">
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-white text-xs font-black">{r.label}</p>
-                          <span className={`text-[10px] font-black border rounded-full px-2 py-0.5 whitespace-nowrap ${COMPARE_STATUS[r.status].cls}`}>{COMPARE_STATUS[r.status].label}</span>
-                        </div>
-                        <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
-                          <div><p className="text-gray-500">الحصر</p><p className="text-white">{fmt(r.takeoffTotal)}</p></div>
-                          <div><p className="text-gray-500">المقايسة</p><p className="text-white">{fmt(r.estimateTotal)}</p></div>
-                          <div><p className="text-gray-500">الفرق</p><p className={r.status === "match" ? "text-emerald-300" : r.status === "not_covered" ? "text-gray-400" : "text-amber-300"} dir="ltr">{signed(r.diff)}{r.diffPct !== null ? ` (${r.diffPct}%)` : ""}</p></div>
-                        </div>
-                      </div>
-                    ))}
-                    {result.comparison.covered && (
-                      <div className="flex justify-between text-xs font-black text-white border-t border-[#1f2d4d] pt-2">
-                        <span>إجمالي الأقسام المغطاة بالحصر (فرق)</span>
-                        <span dir="ltr" className="text-[#D4AF37]">{signed(result.comparison.covered.diff)}{result.comparison.covered.diffPct !== null ? ` (${result.comparison.covered.diffPct}%)` : ""}</span>
-                      </div>
-                    )}
-                    {(result.comparison.notes || []).map((n) => (
-                      <p key={n} className="text-gray-500 text-[10px] font-bold leading-relaxed">• {n}</p>
-                    ))}
-                  </>
-                )}
-              </div>
+              <ComparisonCard comparison={result.comparison} include={includeCompare} onIncludeChange={setIncludeCompare} />
             )}
 
             {result.bom && result.bom.lump.length > 0 && (

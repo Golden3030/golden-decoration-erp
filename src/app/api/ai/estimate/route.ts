@@ -341,6 +341,11 @@ export async function POST(request: Request) {
       }
     }
 
+    // مراجعة المقايسة بالحصر (تاب المقايسة): حصر ومقارنة فقط بدون استدعاء الذكاء الاصطناعي
+    if (body.reviewOnly === true && mode === "project") {
+      return NextResponse.json({ mode, reviewOnly: true, warnings: result.warnings, bom: bomOut, comparison: comparisonOut });
+    }
+
     // 2. دور الذكاء الاصطناعي: مراجعة وشرح وصياغة، بدون تغيير أي رقم
     const dataForAI = {
       context: contextLabel,
