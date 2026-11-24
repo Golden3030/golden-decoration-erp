@@ -42,9 +42,11 @@ interface Props {
   comparison: ComparisonPayload;
   include?: boolean;                       // حالة تضمين المقارنة في التقرير (اختياري)
   onIncludeChange?: (next: boolean) => void;
+  // اختيار الأقسام اللي تتطبق على المقايسة المبدئية (لوحة المراجعة في تاب المقايسة)
+  selectable?: { selected: string[]; onToggle: (category: string) => void };
 }
 
-export default function ComparisonCard({ comparison, include, onIncludeChange }: Props) {
+export default function ComparisonCard({ comparison, include, onIncludeChange, selectable }: Props) {
   return (
     <div className="bg-[#020B1C] border border-[#D4AF37]/50 rounded-xl p-4 space-y-3" dir="rtl">
       <div className="flex items-center justify-between gap-2">
@@ -71,6 +73,14 @@ export default function ComparisonCard({ comparison, include, onIncludeChange }:
                   {COMPARE_STATUS[r.status].label}
                 </span>
               </div>
+              {selectable && r.takeoffTotal > 0 && r.status !== "not_covered" && (
+                <ToggleSwitch
+                  checked={selectable.selected.includes(r.category)}
+                  onChange={() => selectable.onToggle(r.category)}
+                  label="طبّق هذا القسم على المقايسة المبدئية"
+                  className="w-full"
+                />
+              )}
               <div className="grid grid-cols-3 gap-2 text-[11px] font-bold">
                 <div><p className="text-gray-500">الحصر</p><p className="text-white">{fmt(r.takeoffTotal)}</p></div>
                 <div><p className="text-gray-500">المقايسة</p><p className="text-white">{fmt(r.estimateTotal)}</p></div>

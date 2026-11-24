@@ -14,7 +14,9 @@ import {
   type TakeoffRoom
 } from "@/lib/takeoffEngine";
 import {
+  bomToEstimateLines,
   computeQuickBom,
+  type EstimateLineShape,
   type BomItem,
   type BomMaterial,
   type BomResult,
@@ -115,6 +117,7 @@ export async function POST(request: Request) {
     let result: TakeoffResult;
     let bomOut: ReturnType<typeof bomPayload> | null = null;
     let comparisonOut: any = null; // مقارنة الحصر بالمقايسة (وضع المشروع المسجل فقط)
+    let reviewLines: EstimateLineShape[] | null = null; // بنود الحصر بشكل بنود مقايسة (للتطبيق على المقايسة المبدئية)
     let cost: { level: string; min: number; max: number } | null = null;
     let duration: { minDays: number; maxDays: number } | null = null;
     let costNote = "";
@@ -198,6 +201,7 @@ export async function POST(request: Request) {
       const a = bom.areas;
       const state = areasSpec.apartmentState as ApartmentState;
       bomOut = bomPayload(bom);
+      reviewLines = bomToEstimateLines(bom.groups, bom.lumpLabor);
 
       // مقارنة بالمقايسة المعتمدة للمشروع (النهائية أولاً ثم الأحدث). للمراجعة فقط، مفيش كتابة.
       const { data: headers } = await supabaseAdmin
@@ -343,7 +347,7 @@ export async function POST(request: Request) {
 
     // مراجعة المقايسة بالحصر (تاب المقايسة): حصر ومقارنة فقط بدون استدعاء الذكاء الاصطناعي
     if (body.reviewOnly === true && mode === "project") {
-      return NextResponse.json({ mode, reviewOnly: true, warnings: result.warnings, bom: bomOut, comparison: comparisonOut });
+      return NextResponse.json({ mode, reviewOnly: true, warnings: result.warnings, bom: bomOut, comparison: comparisonOut, lines: reviewLines });
     }
 
     // 2. دور الذكاء الاصطناعي: مراجعة وشرح وصياغة، بدون تغيير أي رقم
