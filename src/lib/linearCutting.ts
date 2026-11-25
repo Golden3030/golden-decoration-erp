@@ -1,4 +1,3 @@
-
 // قص الأطوال (1D): بروفيلات الجبس بورد، الوزرة، المواسير، الخراطيم... قطع بأطوال مطلوبة تتقص من قضبان/لفات بطول ثابت.
 // دوال بحتة. كل الأطوال بالمللي (أعداد صحيحة).
 //
@@ -50,7 +49,7 @@ export function simulateLinear(spec: LinearSpec, pieces: PieceInput[]): LinearRe
     totals: { requiredMm: 0, barsCount: 0, purchasedMm: 0, wasteMm: 0, wastePct: 0, usableLeftovers: 0, leftoverMm: 0, splices: 0 },
     warnings
   };
-  if (!(stock > 0)) { warnings.push("طول القضيب غير صحيح."); return empty; }
+  if (!(stock > 0)) { warnings.push("طول العود غير صحيح."); return empty; }
 
   // فرد القطع (الكمية) وتقسيم الأطول من القضيب
   const list: { name: string; len: number; spliced: boolean }[] = [];
@@ -67,7 +66,7 @@ export function simulateLinear(spec: LinearSpec, pieces: PieceInput[]): LinearRe
         while (rest > stock) { list.push({ name: p.name, len: stock, spliced: true }); rest -= stock; splices++; }
         if (rest > 0) list.push({ name: p.name, len: rest, spliced: true });
       } else {
-        warnings.push(`القطعة "${p.name}" (${p.lengthM} م) أطول من القضيب (${stock / 1000} م) والتوصيل مقفول، فلم تُحسب.`);
+        warnings.push(`القطعة "${p.name}" (${p.lengthM} م) أطول من العود (${stock / 1000} م) والتوصيل مقفول، فلم تُحسب.`);
         break;
       }
     }

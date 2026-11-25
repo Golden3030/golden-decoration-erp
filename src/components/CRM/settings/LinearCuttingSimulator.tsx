@@ -20,7 +20,7 @@ const m = (mm: number) => f2(mm / 1000);
 
 export default function LinearCuttingSimulator() {
   const [stock, setStock] = useState("");
-  const [kerf, setKerf] = useState("3");
+  const [kerf, setKerf] = useState("0");
   const [minOff, setMinOff] = useState("10");
   const [splice, setSplice] = useState(true);
   const [share, setShare] = useState(true);
@@ -29,7 +29,7 @@ export default function LinearCuttingSimulator() {
   const [error, setError] = useState("");
 
   function loadExample() {
-    setStock("3"); setKerf("3"); setMinOff("10"); setSplice(true); setShare(true);
+    setStock("3"); setKerf("0"); setMinOff("10"); setSplice(true); setShare(true);
     setPieces([
       { id: newId(), name: "ضلع 3 م", lengthM: "3", count: "2" },
       { id: newId(), name: "ضلع 4 م", lengthM: "4", count: "2" }
@@ -39,7 +39,7 @@ export default function LinearCuttingSimulator() {
 
   function run() {
     setError("");
-    if (!(num(stock) > 0)) { setError("اكتب طول القضيب بالمتر."); setResult(null); return; }
+    if (!(num(stock) > 0)) { setError("اكتب طول العود بالمتر."); setResult(null); return; }
     const valid = pieces.filter((p) => num(p.lengthM) > 0 && num(p.count) > 0);
     if (valid.length === 0) { setError("أضف قطعة واحدة على الأقل بطولها وعددها."); setResult(null); return; }
     setResult(simulateLinear(
@@ -55,22 +55,22 @@ export default function LinearCuttingSimulator() {
   return (
     <div className="space-y-5" dir="rtl">
       <div className="bg-[#07132a] border border-[#D4AF37]/30 rounded-2xl p-5 space-y-2">
-        <h3 className="text-[#D4AF37] font-black text-sm">محاكي قص الأطوال (بروفيلات، وزرة، مواسير، كابلات)</h3>
+        <h3 className="text-[#D4AF37] font-black text-sm">محاكي قص الأعواد والأطوال (سي، أوميجا، زاوية، شادو جاب، وزرة، مواسير)</h3>
         <p className="text-slate-300 text-xs font-bold leading-relaxed">
-          اكتب طول القضيب أو اللفة والقطع المطلوبة بأطوالها. المحاكاة بتوزع القطع على القضبان بأقل هالك، وبتخصم المنشار بين القطعتين.
+          اكتب طول العود الجاهز (زي عود 3 م) والقطع المطلوبة بأطوالها. المحاكاة بتوزع القطع على الأعواد بأقل هالك. فاقد القص هو الشريحة اللي بتضيع من العود مع كل قطع، وسيبه صفر لو مش عايز تحسبه.
         </p>
-        <GoldButton toggle active={false} onClick={loadExample}>تحميل مثال: زاوية حول غرفة 3 × 4 م (قضبان 3 م)</GoldButton>
+        <GoldButton toggle active={false} onClick={loadExample}>تحميل مثال: زاوية حول غرفة 3 × 4 م (أعواد 3 م)</GoldButton>
       </div>
 
       <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
-        <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">القضيب</h4>
+        <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">العود</h4>
         <div className="grid grid-cols-3 gap-2">
-          <div><label className={labelClass}>طول القضيب (م)</label><input type="text" inputMode="decimal" value={stock} onChange={(e) => { setStock(clean(e.target.value)); setResult(null); }} className={inputClass} /></div>
-          <div><label className={labelClass}>المنشار (مم)</label><input type="text" inputMode="decimal" value={kerf} onChange={(e) => { setKerf(clean(e.target.value)); setResult(null); }} className={inputClass} /></div>
+          <div><label className={labelClass}>طول العود (م)</label><input type="text" inputMode="decimal" value={stock} onChange={(e) => { setStock(clean(e.target.value)); setResult(null); }} className={inputClass} /></div>
+          <div><label className={labelClass}>فاقد القص (مم)</label><input type="text" inputMode="decimal" value={kerf} onChange={(e) => { setKerf(clean(e.target.value)); setResult(null); }} className={inputClass} /></div>
           <div><label className={labelClass}>أقل باقي صالح (سم)</label><input type="text" inputMode="decimal" value={minOff} onChange={(e) => { setMinOff(clean(e.target.value)); setResult(null); }} className={inputClass} /></div>
         </div>
-        <ToggleSwitch checked={share} onChange={(v) => { setShare(v); setResult(null); }} label="القطع تتشارك نفس القضيب" className="w-full" />
-        <ToggleSwitch checked={splice} onChange={(v) => { setSplice(v); setResult(null); }} label="توصيل القطعة الأطول من القضيب (وصلة)" className="w-full" />
+        <ToggleSwitch checked={share} onChange={(v) => { setShare(v); setResult(null); }} label="القطع تتشارك نفس العود" className="w-full" />
+        <ToggleSwitch checked={splice} onChange={(v) => { setSplice(v); setResult(null); }} label="توصيل القطعة الأطول من العود (وصلة)" className="w-full" />
       </div>
 
       <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
@@ -96,7 +96,7 @@ export default function LinearCuttingSimulator() {
             <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">النتيجة</h4>
             {([
               ["الأطوال المطلوبة", `${m(t.requiredMm)} م`],
-              ["عدد القضبان المطلوب شراؤها", `${t.barsCount}`],
+              ["عدد الأعواد المطلوب شراؤها", `${t.barsCount}`],
               ["الطول المشترى", `${m(t.purchasedMm)} م`],
               ["الهالك", `${m(t.wasteMm)} م (${f2(t.wastePct)}% من المشترى)`],
               ["عدد الوصلات", `${t.splices}`],
@@ -113,7 +113,7 @@ export default function LinearCuttingSimulator() {
           ))}
 
           <div className="bg-[#020B1C] border border-[#1f2d4d] rounded-xl p-4 space-y-2">
-            <p className="text-[#D4AF37] text-[11px] font-black">خطة القص (كل صف = قضيب)</p>
+            <p className="text-[#D4AF37] text-[11px] font-black">خطة القص (كل صف = عود)</p>
             {result.bars.map((b, i) => (
               <div key={i} className="space-y-1">
                 <div className="flex h-5 w-full overflow-hidden rounded-md border border-[#1f2d4d] bg-[#07132a]" dir="ltr">
@@ -122,7 +122,7 @@ export default function LinearCuttingSimulator() {
                   ))}
                 </div>
                 <p className="text-gray-400 text-[10px] font-bold">
-                  قضيب {i + 1}: {b.pieces.map((p) => `${m(p.lengthMm)}${p.spliced ? " (وصلة)" : ""}`).join(" + ")} | باقي {m(b.remainingMm)} م
+                  عود {i + 1}: {b.pieces.map((p) => `${m(p.lengthMm)}${p.spliced ? " (وصلة)" : ""}`).join(" + ")} | باقي {m(b.remainingMm)} م
                 </p>
               </div>
             ))}
