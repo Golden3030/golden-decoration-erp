@@ -8,10 +8,11 @@ import QuickPricesCard from "@/components/CRM/settings/QuickPricesCard";
 import BomSimulator from "@/components/CRM/settings/BomSimulator";
 import BomSettings from "@/components/CRM/settings/BomSettings";
 import LaborSettings from "@/components/CRM/settings/LaborSettings";
+import CuttingSimulator from "@/components/CRM/settings/CuttingSimulator";
 import GoldButton from "@/components/ui/GoldButton";
 
 export default function SettingsPage() {
-  const [tab, setTab] = useState<"sim" | "coeffs" | "labor" | "prices">("sim");
+  const [tab, setTab] = useState<"sim" | "coeffs" | "labor" | "cutting" | "prices">("sim");
 
   useEffect(() => {
     document.title = "حصر الكميــات | Golden Decoration";
@@ -64,16 +65,18 @@ export default function SettingsPage() {
             <p className="text-white text-xs mt-2 font-semibold">إدارة الثوابت الحسابية ومعاملات حصر الكميات الهندسية والمصنعيات للتحكم الفوري ببنود ومقايسات الـ BOQ.</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 select-none">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 select-none">
             <GoldButton toggle size="fill" active={tab === "sim"} onClick={() => setTab("sim")}>محاكي الحصر الفوري</GoldButton>
             <GoldButton toggle size="fill" active={tab === "coeffs"} onClick={() => setTab("coeffs")}>ضبط المعاملات الفنية</GoldButton>
             <GoldButton toggle size="fill" active={tab === "labor"} onClick={() => setTab("labor")}>المصنعيات</GoldButton>
+            <GoldButton toggle size="fill" active={tab === "cutting"} onClick={() => setTab("cutting")}>محاكي القص</GoldButton>
             <GoldButton toggle size="fill" active={tab === "prices"} onClick={() => setTab("prices")}>أسعار التقدير السريع</GoldButton>
           </div>
 
           {tab === "sim" && <BomSimulator />}
           {tab === "coeffs" && <BomSettings />}
           {tab === "labor" && <LaborSettings />}
+          {tab === "cutting" && <CuttingSimulator />}
           {tab === "prices" && <QuickPricesCard />}
         </div>
       </section>
