@@ -8,7 +8,7 @@ import QuickPricesCard from "@/components/CRM/settings/QuickPricesCard";
 import BomSimulator from "@/components/CRM/settings/BomSimulator";
 import BomSettings from "@/components/CRM/settings/BomSettings";
 import LaborSettings from "@/components/CRM/settings/LaborSettings";
-import CuttingSimulator from "@/components/CRM/settings/CuttingSimulator";
+import CuttingTab from "@/components/CRM/settings/CuttingTab";
 import GoldButton from "@/components/ui/GoldButton";
 
 export default function SettingsPage() {
@@ -76,7 +76,7 @@ export default function SettingsPage() {
           {tab === "sim" && <BomSimulator />}
           {tab === "coeffs" && <BomSettings />}
           {tab === "labor" && <LaborSettings />}
-          {tab === "cutting" && <CuttingSimulator />}
+          {tab === "cutting" && <CuttingTab />}
           {tab === "prices" && <QuickPricesCard />}
         </div>
       </section>

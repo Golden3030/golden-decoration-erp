@@ -66,6 +66,14 @@ export default function CuttingSimulator() {
     setResult(null); setError("");
   }
 
+  // مثال ألواح جبس بورد: لوح 120 × 240 سم بدون فاصل على سقف 3 × 4 م
+  function loadGypsumExample() {
+    setTw("120"); setTl("240"); setGrout("0"); setPerBox(""); setMinOff("10");
+    setReuse(true); setRotate(true); setOrientation("along_length");
+    setSurfaces([{ id: newId(), name: "سقف جبس بورد 3 × 4 م", widthM: "3", lengthM: "4" }]);
+    setResult(null); setError("");
+  }
+
   function run() {
     setError("");
     if (!(num(tw) > 0) || !(num(tl) > 0)) { setError("اكتب مقاس البلاطة (العرض والطول بالسم)."); setResult(null); return; }
@@ -91,7 +99,11 @@ export default function CuttingSimulator() {
         <p className="text-slate-300 text-xs font-bold leading-relaxed">
           بيقسّم كل سطح لبلاط كامل وقطع، ويقص القطع من البلاط ويعيد استخدام القصاصات. الهالك بيطلع من المحاكاة نفسها، مفيش نسبة هالك ثابتة. الأبعاد بالمتر والبلاط بالسنتيمتر.
         </p>
-        <GoldButton toggle active={false} onClick={loadExample}>تحميل مثال: حمام 2 × 2.8 م</GoldButton>
+        <div className="flex flex-wrap gap-2">
+          <GoldButton toggle active={false} onClick={loadExample}>تحميل مثال: حمام 2 × 2.8 م</GoldButton>
+          <GoldButton toggle active={false} onClick={loadGypsumExample}>تحميل مثال: سقف جبس بورد 3 × 4 م (لوح 120 × 240)</GoldButton>
+        </div>
+        <p className="text-gray-500 text-[10px] font-bold">الألواح (زي الجبس بورد) نفس الفكرة: اكتب مقاس اللوح في خانتي البلاطة، والفوغة = الفاصل بين الألواح.</p>
       </div>
 
       <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
