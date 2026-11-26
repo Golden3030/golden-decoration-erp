@@ -59,6 +59,9 @@ eq("hangers = ceil(3/0.9) x 5 = 4 x 5 = 20", w.hangers, 20);
 const wk = computeFlatGypsumCeiling({ ...base, cDirection: "along_width", kerfMm: 3 });
 eq("kerf 3 mm: omega perpendicular needs 8 bars (2 pieces of 1 m per bar)", wk.omega.result.totals.barsCount, 8);
 
+// بيانات الرسم التوضيحي: أبعاد السقف واتجاه السي وعدد التيش لكل صف (ceil(4/0.9) = 5)
+truthy("layout data for the drawing", r.layout.widthM === 3 && r.layout.lengthM === 4 && r.layout.cDirection === "along_length" && r.layout.hangersPerRow === 5);
+
 // شادو جاب بدل الزاوية: نفس الأطوال والعدد
 const sg = computeFlatGypsumCeiling({ ...base, edge: "shadow_gap" });
 eq("shadow gap: same 5 bars", sg.edge.result.totals.barsCount, 5);

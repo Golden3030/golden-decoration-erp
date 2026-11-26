@@ -36,6 +36,7 @@ export interface FlatCeilingResult {
   hangers: number;           // تيش
   clips: number;             // كليبسات تقاطع سي × أوميجا
   connectors: number;        // وصلات سي وأوميجا (لتوصيل الأعواد)
+  layout: { widthM: number; lengthM: number; cDirection: CDirection; hangersPerRow: number }; // للرسم التوضيحي
   assumptions: string[];
   warnings: string[];
 }
@@ -99,6 +100,7 @@ export function computeFlatGypsumCeiling(inp: FlatCeilingInput): FlatCeilingResu
     hangers,
     clips,
     connectors,
+    layout: { widthM: W, lengthM: L, cDirection: inp.cDirection, hangersPerRow },
     assumptions,
     warnings
   };

@@ -1,6 +1,6 @@
 // اختبار محاكي القص. التشغيل: npx tsx scripts/test-cutting.ts
 // كل النتايج المتوقعة محسوبة بالإيد (مكتوب الحساب جنب كل فحص).
-import { simulateTiling, type TileSpec } from "../src/lib/cuttingEngine";
+import { simulateTiling, simulateSkirting, type TileSpec } from "../src/lib/cuttingEngine";
 
 let fails = 0;
 const eq = (name: string, got: number | null, want: number | null, tol = 0.0005) => {
@@ -81,6 +81,27 @@ truthy("cells are tagged: 12 full, 4 new cuts, 4 reused", r.surfaces[0].cells.fi
 const sliver = simulateTiling({ ...base, groutMm: 0 }, [{ name: "ضيق", widthM: 1.23, lengthM: 1.2 }], "along_length");
 truthy("sliver warning for a 30 mm strip", sliver.warnings.some((w) => w.includes("ضيقة")));
 truthy("invalid tile size is rejected", simulateTiling({ ...base, widthCm: 0 }, bath).warnings.length > 0);
+
+// الوزرة: بلاط 60×60 ووزرة 10 سم: الشريط 60 سم، 6 أشرطة من البلاطة.
+// حمام 2 × 2.8 م: أضلاع 2 و2 و2.8 و2.8 (9.6 م). 2.0 = 3 أشرطة كاملة + 20 سم، 2.8 = 4 كاملة + 40 سم.
+// أشرطة كاملة 3+3+4+4 = 14، البواقي 20 و20 و40 و40: (40+20) في شريط ×2 = شريطين. المجموع 16 شريط = 3 بلاطات (16 ÷ 6)
+const floorBath = [{ widthM: 2, lengthM: 2.8 }];
+const sk = simulateSkirting({ widthCm: 60, lengthCm: 60 }, floorBath, 10, 0);
+eq("skirting: perimeter 9.6 m", sk.perimeterM, 9.6);
+eq("skirting: 6 strips per tile", sk.stripsPerTile, 6);
+eq("skirting: 16 strips", sk.strips, 16);
+eq("skirting: 3 tiles", sk.tilesNeeded, 3);
+// باب 0.8 م بيتخصم من أطول ضلع (2.8 يبقى 2.0): الأضلاع 2 و2 و2 و2.8 = 8.8 م. 3 × (3 كاملة + 20) = 9 كاملة، 2.8 = 4 كاملة + 40.
+// البواقي 20 و20 و20 و40: (40+20) في شريط، (20+20) في شريط = شريطين. المجموع 9 + 4 + 2 = 15 شريط = 3 بلاطات
+const skDoor = simulateSkirting({ widthCm: 60, lengthCm: 60 }, floorBath, 10, 0.8);
+eq("skirting with a 0.8 m door: net 8.8 m", skDoor.netLengthM, 8.8);
+eq("skirting with a 0.8 m door: 15 strips", skDoor.strips, 15);
+eq("skirting with a 0.8 m door: 3 tiles", skDoor.tilesNeeded, 3);
+// ارتفاع 15 سم: 4 أشرطة من البلاطة، 15 شريط = 4 بلاطات
+const sk15 = simulateSkirting({ widthCm: 60, lengthCm: 60 }, floorBath, 15, 0.8);
+eq("skirting 15 cm: 4 strips per tile", sk15.stripsPerTile, 4);
+eq("skirting 15 cm: 4 tiles", sk15.tilesNeeded, 4);
+truthy("skirting taller than the tile warns", simulateSkirting({ widthCm: 60, lengthCm: 60 }, floorBath, 70, 0).warnings.length > 0);
 
 console.log(fails === 0 ? "\nALL TESTS PASSED" : `\n${fails} TEST(S) FAILED`);
 process.exit(fails === 0 ? 0 : 1);

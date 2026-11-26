@@ -1,22 +1,52 @@
 "use client";
 
 import { useState } from "react";
-import GoldButton from "@/components/ui/GoldButton";
+import SegmentedTabs from "@/components/ui/SegmentedTabs";
 import CuttingSimulator from "@/components/CRM/settings/CuttingSimulator";
-import LinearCuttingSimulator from "@/components/CRM/settings/LinearCuttingSimulator";
 import GypsumCeilingCalculator from "@/components/CRM/settings/GypsumCeilingCalculator";
 
-// تاب محاكي القص: بلاط وألواح (قص ثنائي الأبعاد) أو أطوال (قص أحادي الأبعاد)
+// تاب محاكي القص: صف بنود الحصر (كل بند له محاكيه)، وتحته الأقسام الفرعية للبند. البنود اللي لسه ما اتبنتش بتظهر "قريباً".
+// أداة قص الأعواد والأطوال (LinearCuttingSimulator) متخبية دلوقتي، وترجع مع الكهرباء والسباكة.
+type Module = "ceramic" | "gypsum" | "insulation" | "masonry" | "electrical" | "plumbing";
+type GypsumKind = "flat" | "light_pocket";
+
 export default function CuttingTab() {
-  const [mode, setMode] = useState<"2d" | "1d" | "gypsum">("2d");
+  const [module, setModule] = useState<Module>("ceramic");
+  const [gypsum, setGypsum] = useState<GypsumKind>("flat");
+
   return (
-    <div className="space-y-5" dir="rtl">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-        <GoldButton toggle size="fill" active={mode === "2d"} onClick={() => setMode("2d")}>بلاط وألواح (2D)</GoldButton>
-        <GoldButton toggle size="fill" active={mode === "1d"} onClick={() => setMode("1d")}>أعواد وأطوال (1D)</GoldButton>
-        <GoldButton toggle size="fill" active={mode === "gypsum"} onClick={() => setMode("gypsum")}>سقف جبس بورد فلات</GoldButton>
-      </div>
-      {mode === "2d" ? <CuttingSimulator /> : mode === "1d" ? <LinearCuttingSimulator /> : <GypsumCeilingCalculator />}
+    <div className="space-y-4" dir="rtl">
+      <SegmentedTabs
+        ariaLabel="بنود محاكي القص"
+        value={module}
+        onChange={setModule}
+        options={[
+          { key: "ceramic", label: "السيراميك" },
+          { key: "gypsum", label: "الجبس بورد" },
+          { key: "insulation", label: "العزل", disabled: true },
+          { key: "masonry", label: "المباني", disabled: true },
+          { key: "electrical", label: "الكهرباء", disabled: true },
+          { key: "plumbing", label: "السباكة", disabled: true }
+        ]}
+      />
+
+      {module === "ceramic" && <CuttingSimulator />}
+
+      {module === "gypsum" && (
+        <div className="space-y-4">
+          <SegmentedTabs
+            size="sm"
+            ariaLabel="نوع السقف"
+            value={gypsum}
+            onChange={setGypsum}
+            options={[
+              { key: "flat", label: "سقف فلات" },
+              { key: "light_pocket", label: "بيت نور", disabled: true }
+            ]}
+          />
+          {gypsum === "flat" && <GypsumCeilingCalculator />}
+        </div>
+      )}
     </div>
   );
 }

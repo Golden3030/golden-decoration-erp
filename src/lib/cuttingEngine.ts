@@ -223,3 +223,57 @@ function emptyTotals(): TilingTotals {
     purchasedM2: 0, placedM2: 0, wasteM2: 0, wastePct: 0, overNetPct: 0, usableLeftovers: 0
   };
 }
+
+// ---------- الوزرة: أشرطة بتتقص من بلاط الأرضية ----------
+// الشريط طوله = الضلع الأطول للبلاطة، وارتفاعه ارتفاع الوزرة. عدد الأشرطة من البلاطة = الضلع الأقصر ÷ الارتفاع (للأدنى).
+// أضلاع الغرفة بتتوزع على الأشرطة بقص الأطوال (1D) مع وصلات، وفتحات الأبواب بتتخصم من أطول الأضلاع.
+
+import { simulateLinear } from "@/lib/linearCutting";
+
+export interface SkirtingResult {
+  heightCm: number;
+  stripLengthMm: number;
+  stripsPerTile: number;
+  perimeterM: number;     // محيط الأرضيات
+  doorsM: number;         // الفتحات المخصومة
+  netLengthM: number;     // الطول المطلوب بعد خصم الأبواب
+  strips: number;         // أشرطة محتاجة
+  tilesNeeded: number;    // بلاط محتاج للوزرة
+  warnings: string[];
+}
+
+export function simulateSkirting(
+  tile: { widthCm: number; lengthCm: number },
+  floors: { widthM: number; lengthM: number }[],
+  heightCm: number,
+  doorsM: number
+): SkirtingResult {
+  const warnings: string[] = [];
+  const longSide = Math.max(tile.widthCm, tile.lengthCm);
+  const shortSide = Math.min(tile.widthCm, tile.lengthCm);
+  const stripsPerTile = heightCm > 0 ? Math.floor(shortSide / heightCm) : 0;
+  const out: SkirtingResult = {
+    heightCm, stripLengthMm: Math.round(longSide * 10), stripsPerTile, perimeterM: 0, doorsM: Math.max(0, doorsM),
+    netLengthM: 0, strips: 0, tilesNeeded: 0, warnings
+  };
+  if (!(heightCm > 0)) { warnings.push("ارتفاع الوزرة غير صحيح."); return out; }
+  if (stripsPerTile < 1) { warnings.push("ارتفاع الوزرة أكبر من عرض البلاطة."); return out; }
+
+  // أضلاع كل أرضية (2 عرض + 2 طول)
+  let walls: number[] = [];
+  floors.forEach((f) => { walls.push(f.widthM, f.widthM, f.lengthM, f.lengthM); });
+  walls = walls.filter((w) => w > 0).sort((a, b) => b - a);
+  out.perimeterM = walls.reduce((s, w) => s + w, 0);
+  let door = out.doorsM;
+  if (door > out.perimeterM) warnings.push("عرض الأبواب أكبر من محيط الأرضيات.");
+  walls = walls.map((w) => { const cut = Math.min(door, w); door -= cut; return w - cut; }).filter((w) => w > 0.0005);
+  out.netLengthM = walls.reduce((s, w) => s + w, 0);
+
+  const lin = simulateLinear(
+    { stockMm: out.stripLengthMm, kerfMm: 0, minOffcutMm: 100, allowSplice: true, shareBars: true },
+    walls.map((w, i) => ({ name: `ضلع ${i + 1}`, lengthM: w, count: 1 }))
+  );
+  out.strips = lin.totals.barsCount;
+  out.tilesNeeded = Math.ceil(out.strips / stripsPerTile);
+  return out;
+}

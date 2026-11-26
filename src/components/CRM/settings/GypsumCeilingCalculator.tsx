@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import GoldButton from "@/components/ui/GoldButton";
+import GhostButton from "@/components/ui/GhostButton";
 import { computeFlatGypsumCeiling, type CDirection, type EdgeType, type FlatCeilingResult } from "@/lib/gypsumCeiling";
 
 // حاسبة سقف جبس بورد فلات: بتدخل أبعاد السقف، وبتطلع ألواح الجبس، وأعواد الزاوية أو الشادو جاب، والسي، والأوميجا، والوصلات، والكليبسات، والتيش.
@@ -13,6 +14,59 @@ const num = (v: string) => Number(v.replace(",", ".")) || 0;
 const clean = (v: string) => v.replace(/[^0-9.]/g, "");
 const f2 = (n: number) => (Math.round(n * 100) / 100).toLocaleString("en-US");
 const m = (mm: number) => f2(mm / 1000);
+
+// رسم توضيحي للسقف من فوق: الألواح، صفوف السي والأوميجا، التيش، وحافة السقف (زاوية أو شادو جاب).
+// التوزيع تقريبي (الصفوف موزعة بالتساوي بعددها المحسوب)، والغرض منه يوضح الفكرة مش يكون مخطط تنفيذ.
+function CeilingPlanSvg({ r }: { r: FlatCeilingResult }) {
+  const { widthM, lengthM, cDirection, hangersPerRow } = r.layout;
+  const W = 320;
+  const scale = W / widthM;
+  const H = Math.max(60, lengthM * scale);
+  const cells = r.boards.surfaces[0]?.cells || [];
+  const mmScale = scale / 1000;
+  const cAlongLength = cDirection === "along_length";
+  const across = cAlongLength ? widthM : lengthM;      // البعد اللي بتتوزع عليه صفوف السي (متر)
+  const along = cAlongLength ? lengthM : widthM;       // طول صف السي (متر)
+  const evenly = (n: number, total: number) => Array.from({ length: n }, (_, i) => ((i + 0.5) * total) / n);
+  const cPos = evenly(r.c.rows, across);               // مواضع صفوف السي
+  const oPos = evenly(r.omega.rows, along);            // مواضع صفوف الأوميجا
+  const hPos = evenly(hangersPerRow, along);           // مواضع التيش على صف السي
+  // تحويل (موضع عبر، موضع طول) لإحداثيات الرسم: x = العرض، y = الطول
+  const pt = (a: number, l: number) => (cAlongLength ? { x: a * scale, y: l * scale } : { x: l * scale, y: a * scale });
+  const edgeColor = r.edge.type === "angle" ? "#e5e7eb" : "#38bdf8";
+  return (
+    <div className="space-y-2">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full max-w-sm rounded-lg border border-[#1f2d4d] bg-[#020B1C]" role="img" aria-label="رسم توضيحي للسقف من فوق">
+        {cells.map((c, i) => (
+          <rect key={i} x={c.x * mmScale} y={c.y * mmScale} width={Math.max(1, c.w * mmScale)} height={Math.max(1, c.h * mmScale)}
+            fill={c.kind === "full" ? "#16345f" : "#7a6420"} fillOpacity={0.55} stroke="#020B1C" strokeWidth={1} />
+        ))}
+        {oPos.map((o, i) => {
+          const a = pt(0, o), b = pt(across, o);
+          return <line key={`o${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#2f9e6a" strokeWidth={1.2} />;
+        })}
+        {cPos.map((c, i) => {
+          const a = pt(c, 0), b = pt(c, along);
+          return <line key={`c${i}`} x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="#D4AF37" strokeWidth={2.2} />;
+        })}
+        {cPos.flatMap((c, i) => hPos.map((h, j) => {
+          const p = pt(c, h);
+          return <circle key={`h${i}-${j}`} cx={p.x} cy={p.y} r={2.6} fill="#ffffff" stroke="#020B1C" strokeWidth={0.8} />;
+        }))}
+        <rect x={1.5} y={1.5} width={W - 3} height={H - 3} fill="none" stroke={edgeColor} strokeWidth={3} />
+      </svg>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-bold text-gray-400">
+        <span><span className="inline-block w-4 h-1 align-middle ml-1" style={{ background: "#D4AF37" }} />سي</span>
+        <span><span className="inline-block w-4 h-0.5 align-middle ml-1" style={{ background: "#2f9e6a" }} />أوميجا</span>
+        <span><span className="inline-block w-2 h-2 rounded-full align-middle ml-1 bg-white" />تيش</span>
+        <span><span className="inline-block w-4 h-1 align-middle ml-1" style={{ background: edgeColor }} />{r.edge.type === "angle" ? "زاوية" : "شادو جاب"} على المحيط</span>
+        <span><span className="inline-block w-3 h-3 rounded-sm align-middle ml-1" style={{ background: "#16345f" }} />لوح كامل</span>
+        <span><span className="inline-block w-3 h-3 rounded-sm align-middle ml-1" style={{ background: "#7a6420" }} />لوح مقصوص</span>
+      </div>
+      <p className="text-gray-500 text-[10px] font-bold">رسم توضيحي: الصفوف موزعة بالتساوي بعددها المحسوب، مش مخطط تنفيذ.</p>
+    </div>
+  );
+}
 
 export default function GypsumCeilingCalculator() {
   const [w, setW] = useState("");
@@ -74,7 +128,7 @@ export default function GypsumCeilingCalculator() {
         <p className="text-slate-300 text-xs font-bold leading-relaxed">
           اكتب أبعاد السقف، وهتطلع ألواح الجبس وأعواد الزاوية أو الشادو جاب والسي والأوميجا والوصلات والكليبسات والتيش. القيم المكتوبة هي النظام القياسي، وتقدر تعدّلها.
         </p>
-        <GoldButton toggle active={false} onClick={loadExample}>تحميل مثال: سقف فلات 3 × 4 م</GoldButton>
+        <GhostButton onClick={loadExample}>جرّب مثال: سقف فلات 3 × 4 م</GhostButton>
       </div>
 
       <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
@@ -131,6 +185,11 @@ export default function GypsumCeilingCalculator() {
                 {r.note && <p className="text-gray-500 text-[10px] font-bold mt-0.5">{r.note}</p>}
               </div>
             ))}
+          </div>
+
+          <div className="bg-[#020B1C] border border-[#1f2d4d] rounded-xl p-4 space-y-2">
+            <p className="text-[#D4AF37] text-[11px] font-black">رسم السقف من فوق</p>
+            <CeilingPlanSvg r={result} />
           </div>
 
           {altBars && (

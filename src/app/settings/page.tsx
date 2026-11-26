@@ -9,7 +9,7 @@ import BomSimulator from "@/components/CRM/settings/BomSimulator";
 import BomSettings from "@/components/CRM/settings/BomSettings";
 import LaborSettings from "@/components/CRM/settings/LaborSettings";
 import CuttingTab from "@/components/CRM/settings/CuttingTab";
-import GoldButton from "@/components/ui/GoldButton";
+import SegmentedTabs from "@/components/ui/SegmentedTabs";
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<"sim" | "coeffs" | "labor" | "cutting" | "prices">("sim");
@@ -65,13 +65,18 @@ export default function SettingsPage() {
             <p className="text-white text-xs mt-2 font-semibold">إدارة الثوابت الحسابية ومعاملات حصر الكميات الهندسية والمصنعيات للتحكم الفوري ببنود ومقايسات الـ BOQ.</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 select-none">
-            <GoldButton toggle size="fill" active={tab === "sim"} onClick={() => setTab("sim")}>محاكي الحصر الفوري</GoldButton>
-            <GoldButton toggle size="fill" active={tab === "coeffs"} onClick={() => setTab("coeffs")}>ضبط المعاملات الفنية</GoldButton>
-            <GoldButton toggle size="fill" active={tab === "labor"} onClick={() => setTab("labor")}>المصنعيات</GoldButton>
-            <GoldButton toggle size="fill" active={tab === "cutting"} onClick={() => setTab("cutting")}>محاكي القص</GoldButton>
-            <GoldButton toggle size="fill" active={tab === "prices"} onClick={() => setTab("prices")}>أسعار التقدير السريع</GoldButton>
-          </div>
+          <SegmentedTabs
+            ariaLabel="أقسام الحصر"
+            value={tab}
+            onChange={setTab}
+            options={[
+              { key: "sim", label: "محاكي الحصر الفوري" },
+              { key: "coeffs", label: "ضبط المعاملات الفنية" },
+              { key: "labor", label: "المصنعيات" },
+              { key: "cutting", label: "محاكي القص" },
+              { key: "prices", label: "أسعار التقدير السريع" }
+            ]}
+          />
 
           {tab === "sim" && <BomSimulator />}
           {tab === "coeffs" && <BomSettings />}

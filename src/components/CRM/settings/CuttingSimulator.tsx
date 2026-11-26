@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import GoldButton from "@/components/ui/GoldButton";
 import ToggleSwitch from "@/components/ui/ToggleSwitch";
-import { simulateTiling, type Orientation, type SurfaceResult, type TilingResult } from "@/lib/cuttingEngine";
+import GhostButton from "@/components/ui/GhostButton";
+import { simulateSkirting, simulateTiling, type Orientation, type SkirtingResult, type SurfaceResult, type TilingResult } from "@/lib/cuttingEngine";
 
 // محاكي القص: بلاط/سيراميك على أسطح مستطيلة. الهالك بيطلع من محاكاة حقيقية للقص وإعادة استخدام القصاصات، مش نسبة ثابتة.
 // بيبدأ فاضي، وفيه زرار لتحميل مثال حمام 2 × 2.8 م.
@@ -12,7 +13,7 @@ import { simulateTiling, type Orientation, type SurfaceResult, type TilingResult
 const inputClass = "h-10 w-full rounded-lg bg-[#020B1C] border border-[#D4AF37]/30 text-white px-2.5 outline-none text-xs font-bold";
 const labelClass = "block text-[10px] mb-1 font-bold text-gray-400";
 
-interface SurfaceRow { id: string; name: string; widthM: string; lengthM: string }
+interface SurfaceRow { id: string; name: string; widthM: string; lengthM: string; floor: boolean }
 const newId = () => Math.random().toString(36).slice(2, 8);
 const num = (v: string) => Number(v.replace(",", ".")) || 0;
 const clean = (v: string) => v.replace(/[^0-9.]/g, "");
@@ -57,21 +58,17 @@ export default function CuttingSimulator() {
   const [orientation, setOrientation] = useState<Orientation>("auto");
   const [surfaces, setSurfaces] = useState<SurfaceRow[]>([]);
   const [result, setResult] = useState<TilingResult | null>(null);
+  const [skirt, setSkirt] = useState(false);          // حساب الوزرة من بلاط الأرضية
+  const [skirtH, setSkirtH] = useState("10");         // ارتفاع الوزرة (سم)
+  const [doors, setDoors] = useState("0");            // إجمالي عرض الأبواب المخصومة (م)
+  const [skirting, setSkirting] = useState<SkirtingResult | null>(null);
   const [error, setError] = useState("");
 
   function loadExample() {
     setTw("60"); setTl("60"); setGrout("3"); setPerBox("4"); setMinOff("10");
     setReuse(true); setRotate(true); setOrientation("auto");
-    setSurfaces([{ id: newId(), name: "أرضية حمام 2 × 2.8 م", widthM: "2", lengthM: "2.8" }]);
-    setResult(null); setError("");
-  }
-
-  // مثال ألواح جبس بورد: لوح 120 × 240 سم بدون فاصل على سقف 3 × 4 م
-  function loadGypsumExample() {
-    setTw("120"); setTl("240"); setGrout("0"); setPerBox(""); setMinOff("10");
-    setReuse(true); setRotate(true); setOrientation("along_length");
-    setSurfaces([{ id: newId(), name: "سقف جبس بورد 3 × 4 م", widthM: "3", lengthM: "4" }]);
-    setResult(null); setError("");
+    setSurfaces([{ id: newId(), name: "أرضية حمام 2 × 2.8 م", widthM: "2", lengthM: "2.8", floor: true }]);
+    setResult(null); setSkirting(null); setError("");
   }
 
   function run() {
@@ -79,6 +76,7 @@ export default function CuttingSimulator() {
     if (!(num(tw) > 0) || !(num(tl) > 0)) { setError("اكتب مقاس البلاطة (العرض والطول بالسم)."); setResult(null); return; }
     const valid = surfaces.filter((s) => num(s.widthM) > 0 && num(s.lengthM) > 0);
     if (valid.length === 0) { setError("أضف سطح واحد على الأقل بأبعاده بالمتر."); setResult(null); return; }
+    if (skirt && !valid.some((s) => s.floor)) { setError("الوزرة محتاجة أرضية واحدة على الأقل. علّم سطح كأرضية."); setResult(null); return; }
     setResult(simulateTiling(
       {
         widthCm: num(tw), lengthCm: num(tl), groutMm: num(grout), piecesPerBox: num(perBox) || undefined,
@@ -87,9 +85,12 @@ export default function CuttingSimulator() {
       valid.map((s) => ({ name: s.name || "سطح", widthM: num(s.widthM), lengthM: num(s.lengthM) })),
       orientation
     ));
+    // الوزرة: من أرضيات مختارة، بأشرطة من بلاط الأرضية نفسه
+    const floors = valid.filter((s) => s.floor).map((s) => ({ widthM: num(s.widthM), lengthM: num(s.lengthM) }));
+    setSkirting(skirt && floors.length > 0 ? simulateSkirting({ widthCm: num(tw), lengthCm: num(tl) }, floors, num(skirtH), num(doors)) : null);
   }
 
-  const patch = (id: string, v: Partial<SurfaceRow>) => { setSurfaces((p) => p.map((s) => (s.id === id ? { ...s, ...v } : s))); setResult(null); };
+  const patch = (id: string, v: Partial<SurfaceRow>) => { setSurfaces((p) => p.map((s) => (s.id === id ? { ...s, ...v } : s))); setResult(null); setSkirting(null); };
   const t = result?.totals;
 
   return (
@@ -99,11 +100,7 @@ export default function CuttingSimulator() {
         <p className="text-slate-300 text-xs font-bold leading-relaxed">
           بيقسّم كل سطح لبلاط كامل وقطع، ويقص القطع من البلاط ويعيد استخدام القصاصات. الهالك بيطلع من المحاكاة نفسها، مفيش نسبة هالك ثابتة. الأبعاد بالمتر والبلاط بالسنتيمتر.
         </p>
-        <div className="flex flex-wrap gap-2">
-          <GoldButton toggle active={false} onClick={loadExample}>تحميل مثال: حمام 2 × 2.8 م</GoldButton>
-          <GoldButton toggle active={false} onClick={loadGypsumExample}>تحميل مثال: سقف جبس بورد 3 × 4 م (لوح 120 × 240)</GoldButton>
-        </div>
-        <p className="text-gray-500 text-[10px] font-bold">الألواح (زي الجبس بورد) نفس الفكرة: اكتب مقاس اللوح في خانتي البلاطة، والفوغة = الفاصل بين الألواح.</p>
+        <GhostButton onClick={loadExample}>جرّب مثال: حمام 2 × 2.8 م</GhostButton>
       </div>
 
       <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
@@ -135,11 +132,27 @@ export default function CuttingSimulator() {
             <div><label className={labelClass}>الاسم</label><input type="text" value={s.name} onChange={(e) => patch(s.id, { name: e.target.value })} className={inputClass} /></div>
             <div><label className={labelClass}>العرض (م)</label><input type="text" inputMode="decimal" value={s.widthM} onChange={(e) => patch(s.id, { widthM: clean(e.target.value) })} className={inputClass} /></div>
             <div><label className={labelClass}>الطول (م)</label><input type="text" inputMode="decimal" value={s.lengthM} onChange={(e) => patch(s.id, { lengthM: clean(e.target.value) })} className={inputClass} /></div>
+            {skirt && (
+              <div className="col-span-full -mt-1">
+                <ToggleSwitch checked={s.floor} onChange={(v) => patch(s.id, { floor: v })} label="أرضية (تتحسب لها وزرة)" />
+              </div>
+            )}
             <button type="button" aria-label="حذف السطح" onClick={() => { setSurfaces((p) => p.filter((x) => x.id !== s.id)); setResult(null); }} className="h-10 w-10 rounded-lg border border-rose-500/40 text-rose-300 flex items-center justify-center"><Trash2 size={14} /></button>
           </div>
         ))}
-        <GoldButton toggle active={false} onClick={() => { setSurfaces((p) => [...p, { id: newId(), name: `سطح ${p.length + 1}`, widthM: "", lengthM: "" }]); setResult(null); }}><Plus size={14} /> إضافة سطح</GoldButton>
+        <GoldButton toggle active={false} onClick={() => { setSurfaces((p) => [...p, { id: newId(), name: `سطح ${p.length + 1}`, widthM: "", lengthM: "", floor: true }]); setResult(null); }}><Plus size={14} /> إضافة سطح</GoldButton>
         <p className="text-gray-500 text-[10px] font-bold">الأسطح بتتشارك القصاصات مع بعض. الفتحات (أبواب وشبابيك) لسه مش محسوبة: اطرحها من أبعاد السطح أو قسّم السطح.</p>
+      </div>
+
+      <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
+        <ToggleSwitch checked={skirt} onChange={(v) => { setSkirt(v); setResult(null); setSkirting(null); }} label="حساب الوزرة (أشرطة من بلاط الأرضية)" className="w-full" />
+        {skirt && (
+          <div className="grid grid-cols-2 gap-2">
+            <div><label className={labelClass}>ارتفاع الوزرة (سم)</label><input type="text" inputMode="decimal" value={skirtH} onChange={(e) => { setSkirtH(clean(e.target.value)); setResult(null); setSkirting(null); }} className={inputClass} /></div>
+            <div><label className={labelClass}>إجمالي عرض الأبواب (م)</label><input type="text" inputMode="decimal" value={doors} onChange={(e) => { setDoors(clean(e.target.value)); setResult(null); setSkirting(null); }} className={inputClass} /></div>
+            <p className="col-span-2 text-gray-500 text-[10px] font-bold leading-relaxed">الشريط طوله = الضلع الأطول للبلاطة. الأبواب بتتخصم من أطول الأضلاع.</p>
+          </div>
+        )}
       </div>
 
       <GoldButton size="lg" className="w-full" onClick={run}>ابدأ المحاكاة</GoldButton>
@@ -168,6 +181,25 @@ export default function CuttingSimulator() {
               </div>
             ))}
           </div>
+
+          {skirting && (
+            <div className="bg-[#020B1C] border border-[#D4AF37]/50 rounded-xl p-4 space-y-2">
+              <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">الوزرة</h4>
+              {([
+                ["محيط الأرضيات", `${f2(skirting.perimeterM)} م`],
+                ["الطول المطلوب بعد خصم الأبواب", `${f2(skirting.netLengthM)} م`],
+                ["أشرطة الوزرة", `${skirting.strips} شريط (${f1(skirting.stripLengthMm / 10)} × ${skirting.heightCm} سم)`],
+                ["أشرطة من البلاطة الواحدة", `${skirting.stripsPerTile}`],
+                ["بلاط للوزرة", `${skirting.tilesNeeded} بلاطة`],
+                ["إجمالي البلاط شامل الوزرة", `${t.totalTiles + skirting.tilesNeeded} بلاطة`]
+              ] as [string, string][]).map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-3 text-xs font-bold border-b border-[#1f2d4d] last:border-0 pb-1.5 last:pb-0">
+                  <span className="text-gray-400">{k}</span><span className="text-white text-left">{v}</span>
+                </div>
+              ))}
+              {skirting.warnings.map((w) => <p key={w} className="text-amber-300 text-[11px] font-bold">⚠️ {w}</p>)}
+            </div>
+          )}
 
           {result.warnings.map((w) => (
             <p key={w} className="text-amber-300 text-[11px] font-bold bg-amber-950/20 border border-amber-500/30 rounded-lg p-2">⚠️ {w}</p>
