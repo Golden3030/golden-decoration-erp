@@ -4,6 +4,7 @@ import { useState } from "react";
 import GoldButton from "@/components/ui/GoldButton";
 import GhostButton from "@/components/ui/GhostButton";
 import { computeFlatGypsumCeiling, type CDirection, type EdgeType, type FlatCeilingResult } from "@/lib/gypsumCeiling";
+import { computeLightPocketCeiling, type PocketResult } from "@/lib/gypsumPocket";
 
 // حاسبة سقف جبس بورد فلات: بتدخل أبعاد السقف، وبتطلع ألواح الجبس، وأعواد الزاوية أو الشادو جاب، والسي، والأوميجا، والوصلات، والكليبسات، والتيش.
 // القيم الافتراضية هي النظام القياسي (عود 3 م، سي كل 80 سم، أوميجا كل 60 سم، تيش كل 90 سم، لوح 120 × 240).
@@ -17,7 +18,7 @@ const m = (mm: number) => f2(mm / 1000);
 
 // رسم توضيحي للسقف من فوق: الألواح، صفوف السي والأوميجا، التيش، وحافة السقف (زاوية أو شادو جاب).
 // التوزيع تقريبي (الصفوف موزعة بالتساوي بعددها المحسوب)، والغرض منه يوضح الفكرة مش يكون مخطط تنفيذ.
-function CeilingPlanSvg({ r }: { r: FlatCeilingResult }) {
+function CeilingPlanSvg({ r, pocket }: { r: FlatCeilingResult; pocket?: { shelfM: number } }) {
   const { widthM, lengthM, cDirection, hangersPerRow } = r.layout;
   const W = 320;
   const scale = W / widthM;
@@ -53,13 +54,26 @@ function CeilingPlanSvg({ r }: { r: FlatCeilingResult }) {
           const p = pt(c, h);
           return <circle key={`h${i}-${j}`} cx={p.x} cy={p.y} r={2.6} fill="#ffffff" stroke="#020B1C" strokeWidth={0.8} />;
         }))}
-        <rect x={1.5} y={1.5} width={W - 3} height={H - 3} fill="none" stroke={edgeColor} strokeWidth={3} />
+        {pocket && (
+          <>
+            <rect x={0} y={0} width={W} height={H} fill="#f59e0b" fillOpacity={0.18} />
+            <rect x={pocket.shelfM * scale} y={pocket.shelfM * scale} width={Math.max(0, W - 2 * pocket.shelfM * scale)} height={Math.max(0, H - 2 * pocket.shelfM * scale)} fill="#020B1C" fillOpacity={0.15} stroke="#22d3ee" strokeWidth={2} strokeDasharray="5 3" />
+          </>
+        )}
+        <rect x={1.5} y={1.5} width={W - 3} height={H - 3} fill="none" stroke={pocket ? "#e5e7eb" : edgeColor} strokeWidth={3} />
       </svg>
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-bold text-gray-400">
         <span><span className="inline-block w-4 h-1 align-middle ml-1" style={{ background: "#D4AF37" }} />سي</span>
         <span><span className="inline-block w-4 h-0.5 align-middle ml-1" style={{ background: "#2f9e6a" }} />أوميجا</span>
         <span><span className="inline-block w-2 h-2 rounded-full align-middle ml-1 bg-white" />تيش</span>
-        <span><span className="inline-block w-4 h-1 align-middle ml-1" style={{ background: edgeColor }} />{r.edge.type === "angle" ? "زاوية" : "شادو جاب"} على المحيط</span>
+        {pocket ? (
+          <>
+            <span><span className="inline-block w-4 h-1 align-middle ml-1" style={{ background: "#f59e0b" }} />رف بيت النور</span>
+            <span><span className="inline-block w-4 h-0.5 align-middle ml-1" style={{ background: "#22d3ee" }} />شريط الليد (المحيط الداخلي)</span>
+          </>
+        ) : (
+          <span><span className="inline-block w-4 h-1 align-middle ml-1" style={{ background: edgeColor }} />{r.edge.type === "angle" ? "زاوية" : "شادو جاب"} على المحيط</span>
+        )}
         <span><span className="inline-block w-3 h-3 rounded-sm align-middle ml-1" style={{ background: "#16345f" }} />لوح كامل</span>
         <span><span className="inline-block w-3 h-3 rounded-sm align-middle ml-1" style={{ background: "#7a6420" }} />لوح مقصوص</span>
       </div>
@@ -68,7 +82,7 @@ function CeilingPlanSvg({ r }: { r: FlatCeilingResult }) {
   );
 }
 
-export default function GypsumCeilingCalculator() {
+export default function GypsumCeilingCalculator({ pocket = false }: { pocket?: boolean }) {
   const [w, setW] = useState("");
   const [l, setL] = useState("");
   const [bw, setBw] = useState("120");
@@ -80,25 +94,34 @@ export default function GypsumCeilingCalculator() {
   const [oSp, setOSp] = useState("60");
   const [hSp, setHSp] = useState("90");
   const [result, setResult] = useState<FlatCeilingResult | null>(null);
+  const [shelf, setShelf] = useState("40");        // بيت نور: عرض الرف (سم)
+  const [drop, setDrop] = useState("15");          // سقوط بيت النور (سم)
+  const [mirror, setMirror] = useState("6");       // ارتفاع المراية (سم)
+  const [crossSp, setCrossSp] = useState("40");    // تباعد المدادات العرضية (سم)
+  const [studSp, setStudSp] = useState("60");      // تباعد القوايم الرأسية (سم)
+  const [pk, setPk] = useState<PocketResult | null>(null);
   const [altBars, setAltBars] = useState<{ dir: CDirection; bars: number } | null>(null);
   const [error, setError] = useState("");
 
   function loadExample() {
     setW("3"); setL("4"); setBw("120"); setBl("240"); setBar("3"); setEdge("angle");
-    setCDir("along_length"); setCSp("80"); setOSp("60"); setHSp("90"); setResult(null); setAltBars(null); setError("");
+    setCDir("along_length"); setCSp("80"); setOSp("60"); setHSp("90"); setShelf("40"); setDrop("15"); setMirror("6"); setCrossSp("40"); setStudSp("60"); setResult(null); setPk(null); setAltBars(null); setError("");
   }
 
-  const build = (dir: CDirection) => computeFlatGypsumCeiling({
+  const flatInput = (dir: CDirection) => ({
     widthM: num(w), lengthM: num(l), boardWidthCm: num(bw), boardLengthCm: num(bl), barLengthM: num(bar), edge,
     cSpacingCm: num(cSp), omegaSpacingCm: num(oSp), hangerSpacingCm: num(hSp), cDirection: dir, kerfMm: 0
   });
+  const build = (dir: CDirection) => computeFlatGypsumCeiling({ ...flatInput(dir), skipEdge: pocket });
 
   function run() {
     setError("");
     if (!(num(w) > 0) || !(num(l) > 0)) { setError("اكتب عرض وطول السقف بالمتر."); setResult(null); return; }
     if (![bw, bl, bar, cSp, oSp, hSp].every((v) => num(v) > 0)) { setError("كل المقاسات والتباعدات لازم تكون أكبر من صفر."); setResult(null); return; }
+    if (pocket && ![shelf, drop, mirror, crossSp, studSp].every((v) => num(v) > 0)) { setError("مقاسات بيت النور والتباعدات لازم تكون أكبر من صفر."); setResult(null); return; }
     const main = build(cDir);
     setResult(main);
+    setPk(pocket ? computeLightPocketCeiling({ flat: flatInput(cDir), shelfCm: num(shelf), dropCm: num(drop), mirrorCm: num(mirror), crossSpacingCm: num(crossSp), studSpacingCm: num(studSp) }) : null);
     // اقتراح: لو الاتجاه التاني للسي بيوفر أعواد
     const otherDir: CDirection = cDir === "along_length" ? "along_width" : "along_length";
     const alt = build(otherDir);
@@ -107,28 +130,40 @@ export default function GypsumCeilingCalculator() {
     setAltBars(altTotal < mainBars ? { dir: otherDir, bars: mainBars - altTotal } : null);
   }
 
-  const touch = () => { setResult(null); setAltBars(null); };
+  const touch = () => { setResult(null); setPk(null); setAltBars(null); };
 
   const rows: { k: string; v: string; note?: string }[] = result
     ? [
-        { k: "ألواح جبس بورد", v: `${result.boards.totals.totalTiles} لوح`, note: `${f2(result.boards.totals.purchasedM2)} م² للسقف ${f2(result.boards.totals.netAreaM2)} م² (هالك ${f2(result.boards.totals.wastePct)}% من المشترى)` },
-        { k: result.edge.type === "angle" ? "أعواد زاوية" : "أعواد شادو جاب", v: `${result.edge.result.totals.barsCount} عود`, note: `محيط ${f2(result.edge.perimeterM)} م، هالك ${m(result.edge.result.totals.wasteMm)} م` },
-        { k: "أعواد سي", v: `${result.c.result.totals.barsCount} عود`, note: `${result.c.rows} صفوف × ${f2(result.c.rowLengthM)} م = ${m(result.c.result.totals.requiredMm)} م، هالك ${m(result.c.result.totals.wasteMm)} م` },
-        { k: "أعواد أوميجا", v: `${result.omega.result.totals.barsCount} عود`, note: `${result.omega.rows} صفوف × ${f2(result.omega.rowLengthM)} م = ${m(result.omega.result.totals.requiredMm)} م، هالك ${m(result.omega.result.totals.wasteMm)} م` },
+        { k: pocket ? "ألواح جبس بورد (السقف الفلات)" : "ألواح جبس بورد", v: `${result.boards.totals.totalTiles} لوح`, note: `${f2(result.boards.totals.purchasedM2)} م² للسقف ${f2(result.boards.totals.netAreaM2)} م² (هالك ${f2(result.boards.totals.wastePct)}% من المشترى)` },
+        ...(pocket && pk
+          ? [
+              { k: "ألواح بيت النور", v: `${pk.pocketBoards} لوح`, note: `شرائح الرف ${pk.shelfStrips.strips} (لوحين: ${pk.shelfStrips.boards})، وشرائح الجنب والمراية ${pk.lipStrips.strips} (${pk.lipStrips.boards} لوح)` },
+              { k: "أعواد زاوية (حيطان + محيط داخلي)", v: `${pk.angle.totals.barsCount} عود`, note: `${m(pk.angle.totals.requiredMm)} م مطلوبة، هالك ${m(pk.angle.totals.wasteMm)} م` }
+            ]
+          : [{ k: result.edge.type === "angle" ? "أعواد زاوية" : "أعواد شادو جاب", v: `${result.edge.result.totals.barsCount} عود`, note: `محيط ${f2(result.edge.perimeterM)} م، هالك ${m(result.edge.result.totals.wasteMm)} م` }]),
+        { k: pocket ? "أعواد سي (السقف الفلات)" : "أعواد سي", v: `${result.c.result.totals.barsCount} عود`, note: `${result.c.rows} صفوف × ${f2(result.c.rowLengthM)} م = ${m(result.c.result.totals.requiredMm)} م، هالك ${m(result.c.result.totals.wasteMm)} م` },
+        { k: pocket ? "أعواد أوميجا (السقف الفلات)" : "أعواد أوميجا", v: `${result.omega.result.totals.barsCount} عود`, note: `${result.omega.rows} صفوف × ${f2(result.omega.rowLengthM)} م = ${m(result.omega.result.totals.requiredMm)} م، هالك ${m(result.omega.result.totals.wasteMm)} م` },
+        ...(pocket && pk
+          ? [
+              { k: "أعواد أوميجا (مدادات ومراية بيت النور)", v: `${pk.omega.totals.barsCount} عود`, note: `${pk.crossPieces} مداد عرضي + أوميجا طولي للمراية، ${m(pk.omega.totals.requiredMm)} م مطلوبة` },
+              { k: "أعواد سي (قوايم بيت النور)", v: `${pk.studs.totals.barsCount} عود`, note: `${pk.studPieces} قائم رأسي` }
+            ]
+          : []),
         { k: "وصلات (لتوصيل الأعواد)", v: `${result.connectors}` },
         { k: "كليبسات تقاطع سي × أوميجا", v: `${result.clips}` },
-        { k: "تيش تعليق", v: `${result.hangers}` }
+        { k: "تيش تعليق", v: `${result.hangers}` },
+        ...(pocket && pk ? [{ k: "شريط ليد", v: `${f2(pk.ledM)} م`, note: "على المحيط الداخلي لبيت النور" }] : [])
       ]
     : [];
 
   return (
     <div className="space-y-5" dir="rtl">
       <div className="bg-[#07132a] border border-[#D4AF37]/30 rounded-2xl p-5 space-y-2">
-        <h3 className="text-[#D4AF37] font-black text-sm">حاسبة سقف جبس بورد فلات</h3>
+        <h3 className="text-[#D4AF37] font-black text-sm">{pocket ? "حاسبة سقف جبس بورد بيت نور" : "حاسبة سقف جبس بورد فلات"}</h3>
         <p className="text-slate-300 text-xs font-bold leading-relaxed">
-          اكتب أبعاد السقف، وهتطلع ألواح الجبس وأعواد الزاوية أو الشادو جاب والسي والأوميجا والوصلات والكليبسات والتيش. القيم المكتوبة هي النظام القياسي، وتقدر تعدّلها.
+          {pocket ? "اكتب أبعاد السقف ومقاسات بيت النور. السقف الفلات بيتحسب كامل، وبيت النور بيتضاف حواليه (رف ساقط وشريط ليد). القيم المكتوبة هي النظام القياسي، وتقدر تعدّلها." : "اكتب أبعاد السقف، وهتطلع ألواح الجبس وأعواد الزاوية أو الشادو جاب والسي والأوميجا والوصلات والكليبسات والتيش. القيم المكتوبة هي النظام القياسي، وتقدر تعدّلها."}
         </p>
-        <GhostButton onClick={loadExample}>جرّب مثال: سقف فلات 3 × 4 م</GhostButton>
+        <GhostButton onClick={loadExample}>جرّب مثال: سقف {pocket ? "بيت نور" : "فلات"} 3 × 4 م</GhostButton>
       </div>
 
       <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
@@ -145,13 +180,15 @@ export default function GypsumCeilingCalculator() {
         <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">الأعواد والتقسيط</h4>
         <div className="grid grid-cols-2 gap-2">
           <div><label className={labelClass}>طول العود (م)</label><input type="text" inputMode="decimal" value={bar} onChange={(e) => { setBar(clean(e.target.value)); touch(); }} className={inputClass} /></div>
-          <div>
-            <label className={labelClass}>حافة السقف على الحيطان</label>
-            <select value={edge} onChange={(e) => { setEdge(e.target.value as EdgeType); touch(); }} className={inputClass}>
-              <option value="angle">زاوية</option>
-              <option value="shadow_gap">شادو جاب</option>
-            </select>
-          </div>
+          {!pocket && (
+            <div>
+              <label className={labelClass}>حافة السقف على الحيطان</label>
+              <select value={edge} onChange={(e) => { setEdge(e.target.value as EdgeType); touch(); }} className={inputClass}>
+                <option value="angle">زاوية</option>
+                <option value="shadow_gap">شادو جاب</option>
+              </select>
+            </div>
+          )}
           <div className="col-span-2">
             <label className={labelClass}>اتجاه أعواد السي</label>
             <select value={cDir} onChange={(e) => { setCDir(e.target.value as CDirection); touch(); }} className={inputClass}>
@@ -169,6 +206,19 @@ export default function GypsumCeilingCalculator() {
           <div className="col-span-2"><label className={labelClass}>تباعد التيش على طول عود السي (سم)</label><input type="text" inputMode="decimal" value={hSp} onChange={(e) => { setHSp(clean(e.target.value)); touch(); }} className={inputClass} /></div>
         </div>
       </div>
+
+      {pocket && (
+        <div className="bg-[#020B1C] border border-[#D4AF37]/30 rounded-xl p-4 space-y-3">
+          <h4 className="text-[#D4AF37] font-black text-sm border-r-4 border-[#D4AF37] pr-2">بيت النور</h4>
+          <div className="grid grid-cols-2 gap-2">
+            <div><label className={labelClass}>عرض الرف (سم) 40 إلى 50</label><input type="text" inputMode="decimal" value={shelf} onChange={(e) => { setShelf(clean(e.target.value)); touch(); }} className={inputClass} /></div>
+            <div><label className={labelClass}>السقوط عن الفلات (سم) 10 إلى 15</label><input type="text" inputMode="decimal" value={drop} onChange={(e) => { setDrop(clean(e.target.value)); touch(); }} className={inputClass} /></div>
+            <div><label className={labelClass}>ارتفاع المراية (سم) 5 إلى 7</label><input type="text" inputMode="decimal" value={mirror} onChange={(e) => { setMirror(clean(e.target.value)); touch(); }} className={inputClass} /></div>
+            <div><label className={labelClass}>تباعد المدادات العرضية (سم)</label><input type="text" inputMode="decimal" value={crossSp} onChange={(e) => { setCrossSp(clean(e.target.value)); touch(); }} className={inputClass} /></div>
+            <div className="col-span-2"><label className={labelClass}>تباعد القوايم الرأسية (سم) 60 إلى 80</label><input type="text" inputMode="decimal" value={studSp} onChange={(e) => { setStudSp(clean(e.target.value)); touch(); }} className={inputClass} /></div>
+          </div>
+        </div>
+      )}
 
       <GoldButton size="lg" className="w-full" onClick={run}>احسب</GoldButton>
       {error && <div className="rounded-xl border border-rose-500/40 bg-rose-950/20 p-3 text-rose-300 text-xs font-bold">{error}</div>}
@@ -189,7 +239,7 @@ export default function GypsumCeilingCalculator() {
 
           <div className="bg-[#020B1C] border border-[#1f2d4d] rounded-xl p-4 space-y-2">
             <p className="text-[#D4AF37] text-[11px] font-black">رسم السقف من فوق</p>
-            <CeilingPlanSvg r={result} />
+            <CeilingPlanSvg r={result} pocket={pocket && pk ? { shelfM: num(shelf) / 100 } : undefined} />
           </div>
 
           {altBars && (
@@ -197,12 +247,12 @@ export default function GypsumCeilingCalculator() {
               💡 لو مديت السي في اتجاه {altBars.dir === "along_length" ? "الطول" : "العرض"} بتوفّر {altBars.bars} عود (سي + أوميجا).
             </p>
           )}
-          {result.warnings.map((x) => (
+          {(pocket && pk ? pk.warnings : result.warnings).map((x) => (
             <p key={x} className="text-amber-300 text-[11px] font-bold bg-amber-950/20 border border-amber-500/30 rounded-lg p-2">⚠️ {x}</p>
           ))}
           <div className="bg-[#020B1C] border border-[#1f2d4d] rounded-xl p-4 space-y-1">
             <p className="text-[#D4AF37] text-[11px] font-black">طريقة الحساب</p>
-            {result.assumptions.map((a) => (
+            {(pocket && pk ? pk.assumptions : result.assumptions).map((a) => (
               <p key={a} className="text-gray-400 text-[10px] font-bold leading-relaxed">• {a}</p>
             ))}
           </div>

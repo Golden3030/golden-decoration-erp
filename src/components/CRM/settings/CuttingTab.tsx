@@ -41,10 +41,11 @@ export default function CuttingTab() {
             onChange={setGypsum}
             options={[
               { key: "flat", label: "سقف فلات" },
-              { key: "light_pocket", label: "بيت نور", disabled: true }
+              { key: "light_pocket", label: "بيت نور" }
             ]}
           />
-          {gypsum === "flat" && <GypsumCeilingCalculator />}
+          {gypsum === "flat" && <GypsumCeilingCalculator key="flat" />}
+          {gypsum === "light_pocket" && <GypsumCeilingCalculator key="pocket" pocket />}
         </div>
       )}
     </div>

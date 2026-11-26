@@ -19,7 +19,8 @@ export interface FlatCeilingInput {
   omegaSpacingCm: number;    // تباعد الأوميجا (40 أو 50 أو 60)
   hangerSpacingCm: number;   // تباعد التيش على طول عود السي (80 إلى 100)
   cDirection: CDirection;
-  kerfMm: number;            // المنشار
+  kerfMm: number;            // فاقد القص
+  skipEdge?: boolean;        // بدون زاوية/شادو جاب على المحيط (لما بيت النور هو اللي بيمسك الحيطان)
 }
 
 export interface ProfileLine {
@@ -43,6 +44,9 @@ export interface FlatCeilingResult {
 
 const BAR_OPTS = { minOffcutMm: 100, allowSplice: true, shareBars: true };
 
+// عدد الصفوف = البعد ÷ التباعد مقرّب لأعلى، بالسنتيمتر ومع هامش صغير لتفادي أخطاء الكسور (14 ÷ 0.4 مثلاً)
+export const ceilDiv = (aM: number, spacingCm: number) => Math.ceil((aM * 100) / spacingCm - 1e-9);
+
 export function computeFlatGypsumCeiling(inp: FlatCeilingInput): FlatCeilingResult {
   const warnings: string[] = [];
   const W = inp.widthM;
@@ -61,21 +65,23 @@ export function computeFlatGypsumCeiling(inp: FlatCeilingInput): FlatCeilingResu
 
   // الزاوية أو الشادو جاب على المحيط كله
   const perimeterM = 2 * (W + L);
-  const edge = lin(inp.edge === "angle" ? "زاوية" : "شادو جاب", [{ lengthM: W, count: 2 }, { lengthM: L, count: 2 }]);
+  const edge = inp.skipEdge
+    ? lin("-", [])
+    : lin(inp.edge === "angle" ? "زاوية" : "شادو جاب", [{ lengthM: W, count: 2 }, { lengthM: L, count: 2 }]);
 
   // السي في الاتجاه المختار: صفوف بتتوزع على البعد التاني بتباعد السي
   const cAlongLength = inp.cDirection === "along_length";
   const cRowLen = cAlongLength ? L : W;        // طول عود السي الواحد = بعد السقف في اتجاهه
   const across = cAlongLength ? W : L;         // البعد اللي بتتوزع عليه صفوف السي
-  const cRows = Math.max(1, Math.ceil(across / (inp.cSpacingCm / 100)));
+  const cRows = Math.max(1, ceilDiv(across, inp.cSpacingCm));
   const cRes = lin("سي", [{ lengthM: cRowLen, count: cRows }]);
 
   // الأوميجا متعامدة على السي: صفوفها بتتوزع على طول السي بتباعد الأوميجا
   const omegaRowLen = across;
-  const omegaRows = Math.max(1, Math.ceil(cRowLen / (inp.omegaSpacingCm / 100)));
+  const omegaRows = Math.max(1, ceilDiv(cRowLen, inp.omegaSpacingCm));
   const omegaRes = lin("أوميجا", [{ lengthM: omegaRowLen, count: omegaRows }]);
 
-  const hangersPerRow = Math.max(1, Math.ceil(cRowLen / (inp.hangerSpacingCm / 100)));
+  const hangersPerRow = Math.max(1, ceilDiv(cRowLen, inp.hangerSpacingCm));
   const hangers = hangersPerRow * cRows;
   const clips = cRows * omegaRows;
   const connectors = cRes.totals.splices + omegaRes.totals.splices;
@@ -85,7 +91,9 @@ export function computeFlatGypsumCeiling(inp: FlatCeilingInput): FlatCeilingResu
     `الأوميجا ${omegaRows} صفوف كل ${inp.omegaSpacingCm} سم، متعامدة على السي، كل صف ${omegaRowLen} م.`,
     `عدد الصفوف = البعد ÷ التباعد مقرّب لأعلى.`,
     `التيش ${hangersPerRow} لكل صف سي (كل ${inp.hangerSpacingCm} سم)، والكليبسات = صفوف السي × صفوف الأوميجا (نقطة تقاطع لكل كليبس).`,
-    `${inp.edge === "angle" ? "الزاوية" : "الشادو جاب"} على محيط السقف كله (${perimeterM} م طولي). مش بيتجمع الاتنين في السقف الفلات.`,
+    inp.skipEdge
+      ? "الزاوية على الحيطان محسوبة ضمن بيت النور (مش بتتكرر هنا)."
+      : `${inp.edge === "angle" ? "الزاوية" : "الشادو جاب"} على محيط السقف كله (${perimeterM} م طولي). مش بيتجمع الاتنين في السقف الفلات.`,
     "الأعواد بتتقص بأقل هالك: القطعة الأطول من العود بتتوصّل، والباقي بيتستخدم في قطع تانية.",
     "ألواح الجبس بدون فاصل بينها، وبتتقص مع إعادة استخدام القصاصات."
   ];
