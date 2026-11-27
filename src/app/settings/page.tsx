@@ -73,7 +73,7 @@ export default function SettingsPage() {
               { key: "sim", label: "محاكي الحصر الفوري" },
               { key: "coeffs", label: "ضبط المعاملات الفنية" },
               { key: "labor", label: "المصنعيات" },
-              { key: "cutting", label: "محاكي القص" },
+              { key: "cutting", label: "محاكي الخامات" },
               { key: "prices", label: "أسعار التقدير السريع" }
             ]}
           />
